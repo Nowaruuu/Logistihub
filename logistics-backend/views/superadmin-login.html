@@ -1,3 +1,4 @@
+You've been out of storage for 32 days … Not enough storage. Get more now, or remove files from Drive, Google Photos, or Gmail. Get 30 GB for ₱49/mo.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,25 +122,11 @@ async function doLogin() {
   btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
 
   try {
-    var res = await fetch('/api/superadmin/login', {
-      method:      'POST',
-      headers:     { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body:        JSON.stringify({ email, password }),
-    });
-    var data = await res.json();
-
-    if (!res.ok) {
-      showErr(data.error || 'Login failed.');
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
-      return;
-    }
-
+    await SuperadminAPI.login(email, password);
     // Success — redirect to superadmin panel
-    window.location.href = '/superadmin';
+    window.location.href = '/superadmin.html';
   } catch (e) {
-    showErr('Network error. Please try again.');
+    showErr(e.message || 'Login failed or network error.');
     btn.disabled = false;
     btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
   }

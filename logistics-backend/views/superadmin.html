@@ -1,3 +1,4 @@
+You've been out of storage for 32 days … Not enough storage. Get more now, or remove files from Drive, Google Photos, or Gmail. Get 30 GB for ₱49/mo.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -171,7 +172,7 @@ textarea{resize:vertical;}
   <div class="sidebar-bottom">
     <div class="user-row">
       <div class="uavatar"><span class="material-symbols-outlined">person</span></div>
-      <div><div class="uname">Super Admin</div><div class="uemail">sa@logisticsos.io</div></div>
+      <div><div class="uname">Super Admin</div><div class="uemail">sa@logistihub.ddns.net</div></div>
     </div>
   </div>
 </aside>
@@ -200,10 +201,10 @@ textarea{resize:vertical;}
         </div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value">0</div><div class="stat-note">No tenants yet</div></div>
-        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">$0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value" id="stat-tenants">0</div><div class="stat-note">Registered on platform</div></div>
+        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value" id="stat-subs">0</div><div class="stat-note">Currently active</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value" id="stat-invites">0</div><div class="stat-note">Awaiting registration</div></div>
+        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="stat-rev">$0</div><div class="stat-note">Est. monthly recurring</div></div>
       </div>
 
       <div class="card">
@@ -264,11 +265,11 @@ textarea{resize:vertical;}
                 <th></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tenants-tbody">
               <tr><td colspan="9">
                 <div class="empty-state" style="padding:36px;">
                   <span class="material-symbols-outlined">corporate_fare</span>
-                  <p>No tenants yet — send an invitation to get started</p>
+                  <p>Loading tenants...</p>
                 </div>
               </td></tr>
             </tbody>
@@ -353,16 +354,16 @@ textarea{resize:vertical;}
     <div id="s-subscriptions" class="screen">
       <div class="page-header"><h2>Subscriptions</h2><p>Platform-wide subscription overview.</p></div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Startup ($99/mo)<div class="stat-icon si-purple"><span class="material-symbols-outlined">rocket_launch</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
-        <div class="stat-card"><div class="stat-label">Enterprise ($499/mo)<div class="stat-icon si-blue"><span class="material-symbols-outlined">business</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
-        <div class="stat-card"><div class="stat-label">Global ($999/mo)<div class="stat-icon si-green"><span class="material-symbols-outlined">public</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
+        <div class="stat-card"><div class="stat-label">Startup ($99/mo)<div class="stat-icon si-purple"><span class="material-symbols-outlined">rocket_launch</span></div></div><div class="stat-value" id="sub-startup">0</div><div class="stat-note">Active tenants</div></div>
+        <div class="stat-card"><div class="stat-label">Enterprise ($499/mo)<div class="stat-icon si-blue"><span class="material-symbols-outlined">business</span></div></div><div class="stat-value" id="sub-enterprise">0</div><div class="stat-note">Active tenants</div></div>
+        <div class="stat-card"><div class="stat-label">Global ($999/mo)<div class="stat-icon si-green"><span class="material-symbols-outlined">public</span></div></div><div class="stat-value" id="sub-global">0</div><div class="stat-note">Active tenants</div></div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Subscriptions</span></div>
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>Tenant ID</th><th>Company</th><th>Plan</th><th>Amount</th><th>Billing Date</th><th>Status</th></tr></thead>
-            <tbody><tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No subscriptions yet</p></div></td></tr></tbody>
+            <tbody id="subs-tbody"><tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>Loading subscriptions...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -412,17 +413,132 @@ function setTab(el) {
   var bar = el.closest('.tabs') || el.parentElement;
   bar.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   el.classList.add('active');
+  // Simple client side filtering if needed. 
 }
 
-function sendInvite() {
+async function sendInvite() {
   var email = document.getElementById('inv-email').value.trim();
   var company = document.getElementById('inv-company').value.trim();
+  var notes = document.getElementById('inv-notes').value.trim();
+  
   if (!email) { alert('Please enter the company email.'); return; }
   if (!company) { alert('Please enter the company name.'); return; }
-  var html = '<strong>' + company + '</strong><br>' + email;
-  document.getElementById('sent-display').innerHTML = html;
-  go('invite-success', null);
+  
+  var btn = document.querySelector('#s-invite .btn-primary');
+  var origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Sending...';
+
+  try {
+    const invite = await SuperadminAPI.inviteTenant(email, company, notes);
+    
+    var html = `<strong>${company}</strong><br>${email}<br><br><div style="font-size:11px;color:#94a3b8;">Invitation sent to tenant.<br>If needed manually, the link is:<br><a href="${invite.invite_url || 'https://logistihub.ddns.net/admin-onboarding.html?invite=' + invite.token}" style="color:#3b82f6;">${invite.invite_url || 'https://logistihub.ddns.net/admin-onboarding.html?invite=' + invite.token}</a></div>`;
+    
+    document.getElementById('sent-display').innerHTML = html;
+    go('invite-success', null);
+    
+    // Clear form
+    document.getElementById('inv-email').value = '';
+    document.getElementById('inv-company').value = '';
+    document.getElementById('inv-notes').value = '';
+    
+    loadSuperadminData(); // Refresh counts
+  } catch(e) {
+    alert(e.message || "Failed to send invitation.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origText;
+  }
 }
+
+async function loadSuperadminData() {
+  try {
+    const overview = await SuperadminAPI.getOverview().catch(() => ({}));
+    const tenantsRes = await SuperadminAPI.getTenants().catch(() => []);
+    
+    // The backend might return stats under .stats or directly on the object.
+    const stats = overview.stats || overview || {};
+    
+    // Map stats
+    document.getElementById('stat-tenants').textContent = stats.total_tenants || 0;
+    document.getElementById('stat-subs').textContent = stats.active_subscriptions || 0;
+    document.getElementById('stat-invites').textContent = stats.pending_invites || 0;
+    document.getElementById('stat-rev').textContent = `$${stats.mrr || 0}`;
+
+    // Map table
+    const tbody = document.getElementById('tenants-tbody');
+    const subsBody = document.getElementById('subs-tbody');
+    
+    let subCounts = { startup: 0, enterprise: 0, global: 0 };
+    
+    const tenantsArray = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes.tenants || []);
+
+    if (!tenantsArray || tenantsArray.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">corporate_fare</span><p>No tenants registered yet.</p></div></td></tr>`;
+      subsBody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No subscriptions yet</p></div></td></tr>`;
+      return;
+    }
+
+    let html = '';
+    let subsHtml = '';
+
+    tenantsArray.forEach(t => {
+      const planId = (t.plan_id || 'startup').toLowerCase();
+      const planBadge = `<span class="badge b-${planId}">${t.plan_name || 'Startup'}</span>`;
+      const statusBadge = `<span class="badge b-${(t.status || 'pending').toLowerCase()}">${t.status || 'Pending'}</span>`;
+      
+      const adminUrl = t.slug ? `logistihub.ddns.net/${t.slug}/admin` : '-';
+      const regUrl = t.slug ? `logistihub.ddns.net/${t.slug}/register` : '-';
+
+      if (t.status === 'ACTIVE') {
+        if (subCounts[planId] !== undefined) subCounts[planId]++;
+      }
+
+      html += `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;">${t.id || '-'}</td>
+        <td><strong>${t.company_name || '-'}</strong></td>
+        <td>${planBadge}</td>
+        <td>${t.admin_email || '-'}</td>
+        <td><div class="url-chip">${adminUrl}</div></td>
+        <td><div class="url-chip">${regUrl}</div></td>
+        <td>${statusBadge}</td>
+        <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
+        <td><button class="btn btn-ghost btn-sm">Manage</button></td>
+      </tr>`;
+
+      if (t.status === 'ACTIVE' || t.status === 'SUSPENDED') {
+        const amt = planId === 'enterprise' ? '$499' : planId === 'global' ? '$999' : '$99';
+        // Mock next billing date as 30 days from creation
+        const d = new Date(t.created_at);
+        d.setDate(d.getDate() + 30);
+        subsHtml += `<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;">${t.id || '-'}</td>
+          <td><strong>${t.company_name || '-'}</strong></td>
+          <td>${planBadge}</td>
+          <td><strong>${amt}</strong><span style="color:#94a3b8;font-size:11px;">/mo</span></td>
+          <td>${d.toLocaleDateString()}</td>
+          <td>${statusBadge}</td>
+        </tr>`;
+      }
+    });
+
+    tbody.innerHTML = html;
+    subsBody.innerHTML = subsHtml || `<tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No active subscriptions</p></div></td></tr>`;
+    
+    document.getElementById('sub-startup').textContent = subCounts.startup;
+    document.getElementById('sub-enterprise').textContent = subCounts.enterprise;
+    document.getElementById('sub-global').textContent = subCounts.global;
+
+  } catch (e) {
+    console.error("Superadmin load failed", e);
+  }
+}
+
+// Load data on boot
+window.addEventListener('DOMContentLoaded', () => {
+  loadSuperadminData();
+});
 </script>
+<style>@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}</style>
 </body>
 </html>

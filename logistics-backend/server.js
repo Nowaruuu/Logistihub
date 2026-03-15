@@ -9,11 +9,11 @@ const rateLimit    = require('express-rate-limit');
 const path         = require('path');
 
 // ─── Route modules ────────────────────────────────────────────────────────────
-const pagesRouter      = require('../routes/pages');
-const superadminRouter = require('../routes/superadmin');
-const onboardingRouter = require('../routes/onboarding');
-const adminRouter      = require('../routes/admin');
-const userRouter       = require('../routes/user');
+const pagesRouter      = require('./routes/pages');
+const superadminRouter = require('./routes/superadmin');
+const onboardingRouter = require('./routes/onboarding');
+const adminRouter      = require('./routes/admin');
+const userRouter       = require('./routes/user');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
