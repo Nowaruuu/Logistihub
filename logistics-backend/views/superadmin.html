@@ -431,7 +431,8 @@ async function sendInvite() {
   try {
     const invite = await SuperadminAPI.inviteTenant(email, company, notes);
     
-    var html = `<strong>${company}</strong><br>${email}<br><br><div style="font-size:11px;color:#94a3b8;">Invitation sent to tenant.<br>If needed manually, the link is:<br><a href="${invite.invite_url || 'https://logistihub.ddns.net/admin-onboarding?invite=' + invite.dev_token}" style="color:#3b82f6;">${invite.invite_url || 'https://logistihub.ddns.net/admin-onboarding.html?invite=' + invite.token}</a></div>`;
+    const inviteLink = invite.invite_url || `https://logistihub.ddns.net/admin-onboarding?invite=${invite.dev_token}`;
+    var html = `<strong>${company}</strong><br>${email}<br><br><div style="font-size:11px;color:#94a3b8;">Invitation sent to tenant.<br>If needed manually, the link is:<br><a href="${inviteLink}" style="color:#3b82f6;">${inviteLink}</a></div>`;
     
     document.getElementById('sent-display').innerHTML = html;
     go('invite-success', null);
