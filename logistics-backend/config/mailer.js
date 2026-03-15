@@ -1,86 +1,78 @@
-'use strict';
-
 const nodemailer = require('nodemailer');
 
+// Setup a transporter. During dev, you can use ethereal.email or a real SMTP
 const transporter = nodemailer.createTransport({
-  host:   process.env.MAIL_HOST || 'smtp.gmail.com',
-  port:   parseInt(process.env.MAIL_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
+    host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+    port: process.env.SMTP_PORT || 587,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
 });
 
-/**
- * Send tenant invitation email.
- * @param {string} toEmail  - Recipient
- * @param {string} company  - Company name
- * @param {string} token    - Signed invitation JWT
- */
-async function sendInviteEmail(toEmail, company, token) {
-  const link = `${process.env.BASE_URL}/onboarding?invite=${token}`;
+async function sendInviteEmail(email, companyName, token) {
+    const inviteLink = `${process.env.BASE_URL}/onboarding?invite=${token}`;
+    
+    // In dev mode, if SMTP credentials are not fully set, we just log the link.
+    if (!process.env.SMTP_USER) {
+        console.log('====================================================');
+        console.log(`[MAIL MOCK] Sending Invite to ${companyName} (${email})`);
+        console.log(`Link: ${inviteLink}`);
+        console.log('====================================================');
+        return true;
+    }
 
-  await transporter.sendMail({
-    from:    process.env.MAIL_FROM || '"Logistics OS" <noreply@logisticsos.io>',
-    to:      toEmail,
-    subject: `You've been invited to Logistics OS`,
-    html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
-        <h2 style="color:#0f2235;margin-bottom:8px;">Welcome to Logistics OS</h2>
-        <p style="color:#475569;line-height:1.6;">
-          You've been invited to create an admin workspace for <strong>${company}</strong>.
-          Click the button below to choose your subscription and complete your account setup.
-        </p>
-        <p style="color:#64748b;font-size:13px;margin-top:4px;">
-          This link expires in <strong>48 hours</strong>.
-        </p>
-        <a href="${link}"
-           style="display:inline-block;margin-top:24px;padding:12px 28px;background:#0f2235;
-                  color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
-          Set Up My Workspace
-        </a>
-        <p style="margin-top:28px;font-size:12px;color:#94a3b8;">
-          If you didn't expect this email, you can safely ignore it.<br/>
-          Your workspace is private and isolated from all other companies on this platform.
-        </p>
-      </div>
-    `,
-  });
+    const mailOptions = {
+        from: '"Logistics OS Admin" <noreply@logistihub.ddns.net>',
+        to: email,
+        subject: `Invitation to set up ${companyName} on Logistics OS`,
+        html: `
+            <div style="font-family: sans-serif; padding: 20px;">
+                <h2>Welcome to Logistics OS</h2>
+                <p>Hello,</p>
+                <p>You have been invited to set up the Logistics OS workspace for <strong>${companyName}</strong>.</p>
+                <p>Click the button below to choose your plan and configure your workspace.</p>
+                <a href="${inviteLink}" style="display:inline-block; padding: 10px 20px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Set up workspace</a>
+                <p style="margin-top:20px; font-size: 12px; color: #64748b;">If the button doesn't work, copy and paste this link: ${inviteLink}</p>
+            </div>
+        `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Message sent: %s', info.messageId);
+    return info;
 }
 
-/**
- * Send welcome email after admin account is created.
- */
-async function sendWelcomeEmail(toEmail, adminName, companyName, slug) {
-  const adminUrl    = `${process.env.BASE_URL}/${slug}/admin`;
-  const registerUrl = `${process.env.BASE_URL}/${slug}/register`;
+async function sendWelcomeEmail(email, name, companyName, slug) {
+    const adminLink = `${process.env.BASE_URL}/${slug}/admin`;
 
-  await transporter.sendMail({
-    from:    process.env.MAIL_FROM,
-    to:      toEmail,
-    subject: `Your Logistics OS workspace is live — ${companyName}`,
-    html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
-        <h2 style="color:#0f2235;">Your workspace is ready, ${adminName}!</h2>
-        <p style="color:#475569;line-height:1.6;">
-          <strong>${companyName}</strong>'s private Logistics OS workspace has been activated.
-        </p>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:20px 0;">
-          <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#0f2235;">Your private URLs</p>
-          <p style="margin:4px 0;font-size:12px;color:#64748b;">
-            Admin dashboard: <a href="${adminUrl}" style="color:#3b82f6;">${adminUrl}</a>
-          </p>
-          <p style="margin:4px 0;font-size:12px;color:#64748b;">
-            Staff registration: <a href="${registerUrl}" style="color:#3b82f6;">${registerUrl}</a>
-          </p>
-        </div>
-        <p style="font-size:12px;color:#94a3b8;">
-          Keep your registration URL private — only share it with your own staff and drivers.
-        </p>
-      </div>
-    `,
-  });
+    if (!process.env.SMTP_USER) {
+        console.log('====================================================');
+        console.log(`[MAIL MOCK] Sending Welcome to ${name} at ${companyName} (${email})`);
+        console.log(`Admin Link: ${adminLink}`);
+        console.log('====================================================');
+        return true;
+    }
+
+    const mailOptions = {
+        from: '"Logistics OS Admin" <noreply@logistihub.ddns.net>',
+        to: email,
+        subject: `Welcome to Logistics OS, ${name}!`,
+        html: `
+            <div style="font-family: sans-serif; padding: 20px;">
+                <h2>Workspace is Ready!</h2>
+                <p>Hello ${name},</p>
+                <p>Your workspace for <strong>${companyName}</strong> has been successfully provisioned.</p>
+                <p>You can access your isolated admin dashboard using the link below:</p>
+                <a href="${adminLink}" style="display:inline-block; padding: 10px 20px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Go to Dashboard</a>
+            </div>
+        `
+    };
+
+    return transporter.sendMail(mailOptions);
 }
 
-module.exports = { sendInviteEmail, sendWelcomeEmail };
+module.exports = {
+    sendInviteEmail,
+    sendWelcomeEmail
+};
