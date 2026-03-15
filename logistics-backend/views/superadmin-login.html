@@ -123,7 +123,7 @@ async function doLogin() {
   try {
     await SuperadminAPI.login(email, password);
     // Success — redirect to superadmin panel
-    window.location.href = '/superadmin.html';
+    window.location.href = '/superadmin';
   } catch (e) {
     showErr(e.message || 'Login failed or network error.');
     btn.disabled = false;
