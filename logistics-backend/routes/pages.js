@@ -53,7 +53,7 @@ router.get('/superadmin', requireSuperadminPage, (req, res) => {
 });
 
 // Onboarding
-router.get('/onboarding', (req, res) => {
+router.get('/admin-onboarding', (req, res) => {
   const { invite } = req.query;
   if (!invite) {
     return res.status(400).send(`
@@ -65,6 +65,7 @@ router.get('/onboarding', (req, res) => {
   }
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
+
 
 // Tenant pages
 router.get('/:slug/admin', async (req, res) => {
