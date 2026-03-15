@@ -133,7 +133,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
 </style>
 </head>
 <script src="/public/frontend-api.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <body>
 
 <!-- LEFT PANEL -->
@@ -284,9 +283,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
           <div class="dl-arrow"><span class="material-symbols-outlined">open_in_new</span></div>
         </a>
 
-        <!-- QR Code Container -->
-        <div id="qr-container" style="margin: 20px auto; display: flex; justify-content: center; align-items: center; padding: 15px; background: white; border-radius: 12px; width: fit-content; border: 2px solid #e2e8f0;"></div>
-
         <div class="ac-box">
           <div class="ac-title">Account Summary</div>
           <div class="ac-row"><span class="ac-key">Name</span><span class="ac-val" id="ac-name">—</span></div>
@@ -320,17 +316,14 @@ function showErr(msg){
   document.getElementById('reg-err').style.display='flex';
 }
 
-function doRegister() {
+function doRegister(){
   document.getElementById('reg-err').style.display='none';
   var fname=document.getElementById('r-fname').value.trim();
   var lname=document.getElementById('r-lname').value.trim();
   var email=document.getElementById('r-email').value.trim();
-  var phone=document.getElementById('r-phone').value.trim();
-  var empid=document.getElementById('r-empid').value.trim();
   var role=document.getElementById('r-role').value;
   var pw=document.getElementById('r-pw').value;
   var pw2=document.getElementById('r-pw2').value;
-
   if(!fname||!lname){showErr('Please enter your first and last name.');return;}
   if(!email){showErr('Please enter your email address.');return;}
   if(!role){showErr('Please select your role.');return;}
@@ -341,50 +334,16 @@ function doRegister() {
   btn.disabled=true;
   btn.innerHTML='<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Creating Account…';
 
-  // Construct payload payload
-  const payload = {
-    first_name: fname,
-    last_name: lname,
-    email: email,
-    phone: phone,
-    employee_id: empid,
-    role: role,
-    password: pw
-  };
-
-  UserAPI.register(payload)
-    .then(data => {
-      // Success
-      document.getElementById('dl-name').textContent = fname;
-      document.getElementById('ac-name').textContent = fname + ' ' + lname;
-      document.getElementById('ac-email').textContent = email;
-      document.getElementById('ac-role').textContent = role;
-      document.getElementById('ac-company').textContent = TENANT_NAME;
-
-      // Generate App Download link QR Code
-      const appDownloadUrl = `https://logistihub.ddns.net/app-download?tenant=${SLUG}`; // Example download URL
-      
-      const qrContainer = document.getElementById('qr-container');
-      qrContainer.innerHTML = ''; // clear any existing
-      new QRCode(qrContainer, {
-        text: appDownloadUrl,
-        width: 128,
-        height: 128,
-        colorDark : "#0f2235",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
-
-      document.getElementById('reg-screen').style.display = 'none';
-      document.getElementById('dl-screen').style.display = 'block';
-      window.scrollTo(0,0);
-    })
-    .catch(err => {
-      // Error
-      showErr(err.message || 'Registration failed.');
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined">person_add</span>Create My Account';
-    });
+  setTimeout(function(){
+    document.getElementById('dl-name').textContent=fname;
+    document.getElementById('ac-name').textContent=fname+' '+lname;
+    document.getElementById('ac-email').textContent=email;
+    document.getElementById('ac-role').textContent=role;
+    document.getElementById('ac-company').textContent=TENANT_NAME;
+    document.getElementById('reg-screen').style.display='none';
+    document.getElementById('dl-screen').style.display='block';
+    window.scrollTo(0,0);
+  },1000);
 }
 </script>
 <style>@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}</style>

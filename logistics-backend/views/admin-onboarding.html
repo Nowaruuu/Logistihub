@@ -1,4 +1,3 @@
-You've been out of storage for 32 days … Not enough storage. Get more now, or remove files from Drive, Google Photos, or Gmail. Get 30 GB for ₱49/mo.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,10 +291,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
       <div class="form-group">
         <label class="form-label">Workspace &amp; User Registration Slug</label>
         <div class="slug-wrap">
-          <div class="slug-prefix">logistihub.ddns.net/</div>
+          <div class="slug-prefix">logisticsos.io/</div>
           <input id="c-slug" type="text" placeholder=""/>
         </div>
-        <span class="hint">Your admin dashboard: logistihub.ddns.net/{slug}/admin &nbsp;|&nbsp; User registration: logistihub.ddns.net/{slug}/register</span>
+        <span class="hint">Your admin dashboard: logisticsos.io/{slug}/admin &nbsp;|&nbsp; User registration: logisticsos.io/{slug}/register</span>
       </div>
       <div class="form-group">
         <label class="form-label">Tagline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
@@ -318,10 +317,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
         </div>
       </div>
 
-      <div id="err3" class="err-box" style="display:none;margin-top:14px;"><span class="material-symbols-outlined">error</span><span id="err3-msg"></span></div>
       <div style="display:flex;gap:9px;margin-top:16px;">
         <button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button>
-        <button class="btn btn-primary btn-full" id="btn-finish" onclick="finishSetup()">Launch My Workspace<span class="material-symbols-outlined">rocket_launch</span></button>
+        <button class="btn btn-primary btn-full" onclick="finishSetup()">Launch My Workspace<span class="material-symbols-outlined">rocket_launch</span></button>
       </div>
     </div>
   </div>
@@ -340,12 +338,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
         <div class="sum-row"><span class="sum-key">Plan</span><span class="sum-val" id="sum-plan" style="color:#3b82f6;">—</span></div>
       </div>
 
-        <div class="provisioned-list">
-          <div class="pl-title">&#x2728; Provisioned for your company</div>
-          <div class="pl-item"><span class="material-symbols-outlined">dashboard</span><div>Admin Dashboard: <strong id="sum-admin-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
-          <div class="pl-item"><span class="material-symbols-outlined">person_add</span><div>User Registration: <strong id="sum-reg-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
-          <div class="pl-item"><span class="material-symbols-outlined">lock</span><div>Fully isolated — other companies cannot access these URLs.</div></div>
-        </div>
+      <div class="provisioned-list">
+        <div class="pl-title">&#x2728; Provisioned for your company</div>
+        <div class="pl-item"><span class="material-symbols-outlined">dashboard</span><div>Admin Dashboard: <strong id="sum-admin-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
+        <div class="pl-item"><span class="material-symbols-outlined">person_add</span><div>User Registration: <strong id="sum-reg-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
+        <div class="pl-item"><span class="material-symbols-outlined">lock</span><div>Fully isolated — other companies cannot access these URLs.</div></div>
+      </div>
 
       <button class="btn btn-primary btn-full" onclick="window.location.href='admin-dashboard.html'">Go to Admin Dashboard →</button>
       <p style="font-size:11px;color:#94a3b8;margin-top:10px;">A confirmation has been sent to your email.</p>
@@ -429,95 +427,19 @@ function autoSlug(inp){
   document.getElementById('c-slug').value=slug;
 }
 
-function showErr3(msg){
-  document.getElementById('err3-msg').textContent=msg;
-  document.getElementById('err3').style.display='flex';
+function finishSetup(){
+  var name=document.getElementById('f-name').value||'—';
+  var email=document.getElementById('f-email').value||'—';
+  var company=document.getElementById('f-company').value||'—';
+  var slug=document.getElementById('c-slug').value||'your-workspace';
+  document.getElementById('sum-name').textContent=name;
+  document.getElementById('sum-email').textContent=email;
+  document.getElementById('sum-company').textContent=company;
+  document.getElementById('sum-plan').textContent=selectedPlan.name+' ('+selectedPlan.price+'/mo)';
+  document.getElementById('sum-admin-url').textContent='logisticsos.io/'+slug+'/admin';
+  document.getElementById('sum-reg-url').textContent='logisticsos.io/'+slug+'/register';
+  goStep(4);
 }
-
-async function finishSetup(){
-  document.getElementById('err3').style.display='none';
-  var name=document.getElementById('f-name').value;
-  var email=document.getElementById('f-email').value;
-  var company=document.getElementById('f-company').value;
-  var phone=document.getElementById('f-phone').value;
-  var pw=document.getElementById('f-pw').value;
-  
-  var org=document.getElementById('c-org').value;
-  var slug=document.getElementById('c-slug').value;
-  var tagline=document.getElementById('c-tagline').value;
-  var color=document.getElementById('c-color').value;
-
-  if(!org || !slug) {
-    showErr3("Organization name and slug are required.");
-    return;
-  }
-
-  // Look for an invite token from the URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const inviteToken = urlParams.get('invite') || '';
-
-  const payload = {
-    plan: selectedPlan.id,
-    admin_name: name,
-    admin_email: email,
-    admin_phone: phone,
-    password: pw,
-    company_name: company,
-    workspace_name: org,
-    workspace_slug: slug,
-    brand_color: color,
-    tagline: tagline,
-    invite_token: inviteToken
-  };
-
-  var btn = document.getElementById('btn-finish');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Provisioning...';
-
-  try {
-    await OnboardingAPI.createTenant(payload);
-    
-    // Update success screen
-    document.getElementById('sum-name').textContent=name;
-    document.getElementById('sum-email').textContent=email;
-    document.getElementById('sum-company').textContent=company;
-    document.getElementById('sum-plan').textContent=selectedPlan.name+' ('+selectedPlan.price+'/mo)';
-    document.getElementById('sum-admin-url').textContent='logistihub.ddns.net/'+slug+'/admin';
-    document.getElementById('sum-reg-url').textContent='logistihub.ddns.net/'+slug+'/register';
-    
-    // Configure the redirect button with the new slug context
-    document.querySelector('.success-center .btn').onclick = () => {
-      window.location.href = `/${slug}/admin`;
-    };
-
-    goStep(4);
-  } catch (e) {
-    showErr3(e.message || "Failed to provision workspace.");
-    btn.disabled = false;
-    btn.innerHTML = 'Launch My Workspace<span class="material-symbols-outlined">rocket_launch</span>';
-  }
-}
-
-// Auto-verify invite token on load if present
-window.addEventListener('DOMContentLoaded', async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('invite');
-  if (token) {
-    try {
-      const invite = await OnboardingAPI.verifyInvite(token);
-      // Pre-fill email and company if provided by the invite
-      if (invite.email) document.getElementById('f-email').value = invite.email;
-      if (invite.company_name) {
-        document.getElementById('f-company').value = invite.company_name;
-        document.getElementById('c-org').value = invite.company_name;
-        autoSlug(document.getElementById('c-org'));
-      }
-    } catch(e) {
-      console.error("Invite token invalid:", e);
-    }
-  }
-});
 </script>
-<style>@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}</style>
 </body>
 </html>
