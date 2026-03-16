@@ -116,9 +116,13 @@ app.get('/', (req, res) => res.redirect('/superadmin'));
 // 404
 // ─────────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Endpoint not found.' });
+  const isApi = req.path.includes('/api/');
+  if (isApi) {
+    console.warn(`[404 API] ${req.method} ${req.path}`);
+    return res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.path}` });
   }
+
+  console.warn(`[404 PAGE] ${req.method} ${req.path}`);
   res.status(404).send(`
     <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
       <h2 style="color:#0f2235;">404 — Page not found</h2>
@@ -133,12 +137,12 @@ app.use((req, res) => {
 app.use((err, req, res, _next) => {
   console.error('Unhandled error:', err);
 
-  // Don't leak stack traces in production
+  const isApi = req.path.includes('/api/');
   const message = process.env.NODE_ENV === 'production'
     ? 'An unexpected error occurred.'
     : err.message;
 
-  if (req.path.startsWith('/api/')) {
+  if (isApi) {
     return res.status(500).json({ error: message });
   }
   res.status(500).send(`<p>Server error: ${message}</p>`);
