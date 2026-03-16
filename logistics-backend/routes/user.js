@@ -127,6 +127,41 @@ router.post('/:slug/api/login', async (req, res) => {
   res.json({ ok: true, name: user.first_name, slug });
 });
 
+// POST /:slug/api/staff-login
+router.post('/:slug/api/staff-login', async (req, res) => {
+  const { slug } = req.params;
+  const { email, password } = req.body;
+  const [tenants] = await query(
+    "SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1",
+    [slug]
+  );
+  if (!tenants.length || tenants[0].status !== 'active') {
+    return res.status(404).json({ error: 'Workspace not found.' });
+  }
+  const tenantId = tenants[0].tenant_id;
+  const [rows] = await query(
+    "SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1",
+    [tenantId, email]
+  );
+  if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
+  const staff = rows[0];
+  const valid = await bcrypt.compare(password, staff.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  const token = jwt.sign(
+    { role: staff.role, staff_id: staff.staff_id, tenant_id: tenantId, slug, name: staff.name, email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+  );
+  res.cookie('staff_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 8 * 60 * 60 * 1000,
+  });
+  res.json({ ok: true, name: staff.name, role: staff.role, slug });
+});
+
+module.exports = router;
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /:slug/api/me  — get current user's profile
 // ─────────────────────────────────────────────────────────────────────────────
