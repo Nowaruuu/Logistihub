@@ -89,7 +89,9 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 
 // GET /:slug/api/admin/shipments
 router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { status, item_type_flag, limit = 50, offset = 0 } = req.query;
+  const { status, item_type_flag } = req.query;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = parseInt(req.query.offset) || 0;
   const tid = req.tenantId;
 
   let sql = `
