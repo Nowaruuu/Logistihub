@@ -101,7 +101,7 @@ async function getTenantBySlug(slug) {
 async function getTenantById(tenantId) {
   const [rows] = await pool.execute(
     'SELECT * FROM TENANT WHERE tenant_id = ? LIMIT 1',
-    [tenantId]
+    [parseInt(tenantId)]
   );
   return rows[0] || null;
 }
