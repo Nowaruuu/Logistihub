@@ -82,6 +82,13 @@ router.get('/:slug/register', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
+router.get('/:slug/staff-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('staff-login.html');
+  res.send(injectTenantData(html, tenant));
+});
+
 async function resolveTenant(slug, res) {
   const [rows] = await query(
     "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
