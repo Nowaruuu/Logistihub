@@ -228,7 +228,13 @@ async function doLogin() {
   btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
 
   try {
-    const data = await UserAPI.login(email, password);
+    const data = await fetch(`/${SLUG}/api/staff-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+    }).then(r => r.json());
+    if (!data.ok) throw new Error(data.error || 'Login failed.');
 
     // Redirect based on role
     const role = data.role || '';
