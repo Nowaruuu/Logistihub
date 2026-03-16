@@ -152,7 +152,8 @@ router.post('/:slug/api/staff-login', async (req, res) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
-  res.cookie('staff_token', token, {
+  const cookieName = staff.role === 'Admin' ? 'admin_token' : 'staff_token';
+  res.cookie(cookieName, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
