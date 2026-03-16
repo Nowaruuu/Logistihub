@@ -95,22 +95,27 @@ app.use('/api/superadmin', superadminRouter);
 // Onboarding API  →  /api/onboarding/...
 app.use('/api/onboarding', onboardingRouter);
 
-// Tenant admin API  →  /:slug/api/admin/...
-app.use('/', adminRouter);
+// Tenant API Group – scoped by /:slug/api
+// Admin API  →  /:slug/api/admin/...
+app.use('/:slug/api/admin', adminRouter);
 
-// User/app API  →  /:slug/api/...
-app.use('/', userRouter);
+// General Tenant API (Staff & User login/register) →  /:slug/api/...
+app.use('/:slug/api', userRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE ROUTES (serve HTML files)
-// Must come AFTER API routes so /:slug doesn't swallow API calls
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('/', pagesRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROOT  →  redirect to superadmin
+// ROOT  →  explicit subdomain fallback or superadmin redirect
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/', (req, res) => res.redirect('/superadmin'));
+app.get('/', (req, res) => {
+  // If the user managed to hit this via register.logistihub.ddns.net (unlikely due to DNS issue)
+  // we redirect them to a working path if we have a way to know their intent, 
+  // otherwise default to login.
+  res.redirect('/superadmin-login');
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 404

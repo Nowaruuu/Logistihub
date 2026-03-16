@@ -10,9 +10,9 @@ const { sendRegistrationEmail } = require('../config/mailer');
 const router = express.Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /:slug/api/tenant-info  (PUBLIC — no auth required)
+// GET /tenant-info  (PUBLIC — no auth required)
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/:slug/api/tenant-info', async (req, res) => {
+router.get('/tenant-info', async (req, res) => {
   try {
     const { slug } = req.params;
     const [rows] = await query(
@@ -28,167 +28,131 @@ router.get('/:slug/api/tenant-info', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/register
+// POST /staff/register
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:slug/api/register', async (req, res) => {
+router.post('/staff/register', async (req, res) => {
   const { slug } = req.params;
+  const start = Date.now();
+  console.log(`[STAFF REG] Starting for slug: ${slug}`);
 
-  const [tenants] = await query(
-    "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
-    [slug]
-  );
-  if (!tenants.length || tenants[0].status !== 'active') {
-    return res.status(404).json({ error: 'This registration page is not available.' });
+  try {
+    const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+    if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
+    const tenantId = tenants[0].tenant_id;
+
+    const { first_name, last_name, email, phone, employee_id, role, password } = req.body;
+    if (!first_name || !last_name || !email || !role || !password) return res.status(400).json({ error: 'Missing required fields.' });
+
+    const [existing] = await query('SELECT staff_id FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1', [tenantId, email]);
+    if (existing.length > 0) return res.status(409).json({ error: 'This email is already registered as staff.' });
+
+    const hash = await bcrypt.hash(password, 12);
+    const fullName = `${first_name} ${last_name}`;
+
+    const allowedRoles = ['Document Controller', 'Driver'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role selected.' });
+    }
+
+    const [result] = await query(
+      `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status, phone, employee_id, created_at)
+       VALUES (?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
+      [tenantId, fullName, role, email, hash, phone || null, employee_id || null]
+    );
+
+    const token = jwt.sign(
+      { role, staff_id: result.insertId, tenant_id: tenantId, slug, name: fullName, email },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    res.cookie('staff_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
+    res.status(201).json({ ok:true, staff_id: result.insertId, name: fullName });
+
+  } catch (err) {
+    console.error(`[STAFF REG ERROR] ${err.message}`);
+    res.status(500).json({ error: 'Internal server error.' });
   }
-  const tenant = tenants[0];
-  const tenantId = tenant.tenant_id;
+});
 
-  const { first_name, last_name, email, phone, address, password } = req.body;
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /register (Customer)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/register', async (req, res) => {
+  const { slug } = req.params;
+  const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
+  const tenantId = tenants[0].tenant_id;
 
-  if (!first_name || !last_name || !email || !password) {
-    return res.status(400).json({ error: 'first_name, last_name, email, and password are required.' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-  }
+  const { first_name, last_name, email, phone, password } = req.body;
+  if (!first_name || !last_name || !email || !password) return res.status(400).json({ error: 'Missing required fields.' });
 
-  const [existing] = await query(
-    'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
-    [tenantId, email]
-  );
-  if (existing.length > 0) {
-    return res.status(409).json({ error: 'An account with this email already exists.' });
-  }
+  const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
+  if (existing.length > 0) return res.status(409).json({ error: 'Email already registered.' });
 
-  const hash = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS || '12'));
-
+  const hash = await bcrypt.hash(password, 12);
   const [result] = await query(
-    `INSERT INTO APP_USER
-       (tenant_id, first_name, last_name, email, phone, address, password_hash, status, created_at)
-     VALUES (?,?,?,?,?,?,?,'active',NOW())`,
-    [tenantId, first_name, last_name, email, phone || null, address || null, hash]
+    `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
+     VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
+    [tenantId, first_name, last_name, email, phone||null, hash]
   );
 
   const token = jwt.sign(
     { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    process.env.JWT_SECRET, { expiresIn: '8h' }
   );
 
-  res.cookie('user_token', token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge:   8 * 60 * 60 * 1000,
-  });
+  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
 
-  // ── Send registration email (non-blocking) ─────────────
-  sendRegistrationEmail(email, `${first_name} ${last_name}`, tenant.company_name, slug).catch(e =>
-    console.error('Registration mail failed:', e.message)
-  );
+  sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug).catch(e => console.error('Mail failed:', e.message));
 
-  res.status(201).json({
-    token,
-    user: {
-      user_id:    result.insertId,
-      tenant_id:  tenantId,
-      first_name,
-      last_name,
-      email,
-      phone:      phone || null,
-      address:    address || null,
-      status:     'active',
-      created_at: new Date().toISOString(),
-    },
-    company_name: tenant.company_name,
-  });
+  res.status(201).json({ ok:true, user_id: result.insertId, name: `${first_name} ${last_name}` });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/login
+// POST /login (Customer)
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:slug/api/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
 
-  const [tenants] = await query(
-    "SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1",
-    [slug]
-  );
-  if (!tenants.length || tenants[0].status !== 'active') {
-    return res.status(404).json({ error: 'Workspace not found.' });
-  }
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query(
-    "SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1",
-    [tenantId, email]
-  );
+  const [rows] = await query("SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
   const user = rows[0];
 
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  if (!await bcrypt.compare(password, user.password_hash)) return res.status(401).json({ error: 'Invalid credentials.' });
 
   const token = jwt.sign(
     { role: 'user', user_id: user.user_id, tenant_id: tenantId, slug, name: `${user.first_name} ${user.last_name}`, email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    process.env.JWT_SECRET, { expiresIn: '8h' }
   );
-
-  res.cookie('user_token', token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge:   8 * 60 * 60 * 1000,
-  });
-
-  res.json({
-    token,
-    user: {
-      user_id:    user.user_id,
-      tenant_id:  tenantId,
-      first_name: user.first_name,
-      last_name:  user.last_name,
-      email:      user.email,
-      phone:      user.phone,
-      address:    user.address,
-      status:     user.status,
-      created_at: user.created_at,
-    },
-  });
+  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
+  res.json({ ok:true, name:user.first_name, slug });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/staff-login
+// POST /staff-login
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:slug/api/staff-login', async (req, res) => {
+router.post('/staff-login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
 
-  const [tenants] = await query(
-    "SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1",
-    [slug]
-  );
-  if (!tenants.length || tenants[0].status !== 'active') {
-    return res.status(404).json({ error: 'Workspace not found.' });
-  }
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query(
-    "SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1",
-    [tenantId, email]
-  );
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
+  
   const staff = rows[0];
-
-  const valid = await bcrypt.compare(password, staff.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  if (!await bcrypt.compare(password, staff.password_hash)) return res.status(401).json({ error: 'Invalid credentials.' });
 
   const token = jwt.sign(
     { role: staff.role, staff_id: staff.staff_id, tenant_id: tenantId, slug, name: staff.name, email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
 
   const cookieName = staff.role === 'Admin' ? 'admin_token' : 'staff_token';
