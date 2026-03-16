@@ -356,7 +356,18 @@ function doRegister() {
     password: pw
   };
 
-  UserAPI.register(payload)
+  const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : 'demo';
+  const endpoint = `/${SLUG}/api/staff/register`;
+  
+  fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => {
+    if(!res.ok) return res.json().then(e => { throw new Error(e.error || 'Registration failed'); });
+    return res.json();
+  })
     .then(data => {
       // Success
       document.getElementById('dl-name').textContent = fname;

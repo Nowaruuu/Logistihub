@@ -36,9 +36,13 @@ function requireSuperadminPage(req, res, next) {
   }
 }
 
-// Root → superadmin login
-router.get('/', (req, res) => res.redirect('/superadmin-login'));
-
+// Root → superadmin login or registration landing
+router.get('/', (req, res) => {
+  if (req.isRegistrationSubdomain) {
+    return res.send(readView('client-register.html'));
+  }
+  res.redirect('/superadmin-login');
+});
 // Login page
 router.get('/superadmin-login', (req, res) => {
   const token = req.cookies && req.cookies.sa_token;

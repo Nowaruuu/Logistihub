@@ -9,7 +9,52 @@ const { requireUser } = require('../middleware/auth');
 const router = express.Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/register
+// POST /:slug/api/staff/register
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/:slug/api/staff/register', async (req, res) => {
+  const { slug } = req.params;
+  const start = Date.now();
+  console.log(`[STAFF REG] Starting for slug: ${slug}`);
+
+  try {
+    const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+    if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
+    const tenantId = tenants[0].tenant_id;
+
+    const { first_name, last_name, email, phone, employee_id, role, password } = req.body;
+    if (!first_name || !last_name || !email || !role || !password) return res.status(400).json({ error: 'Missing required fields.' });
+
+    const [existing] = await query('SELECT staff_id FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1', [tenantId, email]);
+    if (existing.length > 0) return res.status(409).json({ error: 'This email is already registered as staff.' });
+
+    const hash = await bcrypt.hash(password, 12);
+    const fullName = `${first_name} ${last_name}`;
+
+    const [result] = await query(
+      `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status, phone, employee_id, created_at)
+       VALUES (?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
+      [tenantId, fullName, role, email, hash, phone || null, employee_id || null]
+    );
+
+    console.log(`[STAFF REG] Completed in ${Date.now() - start}ms`);
+
+    const token = jwt.sign(
+      { role, staff_id: result.insertId, tenant_id: tenantId, slug, name: fullName, email },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    res.cookie('staff_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
+    res.status(201).json({ ok:true, staff_id: result.insertId, name: fullName });
+
+  } catch (err) {
+    console.error(`[STAFF REG ERROR] ${err.message}`, err);
+    res.status(500).json({ error: 'Internal server error during registration.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /:slug/api/register (General Client Registration)
 // Called when a user submits the registration form on the tenant's private page.
 // The tenant_id is resolved from the slug — the user never supplies it.
 // ─────────────────────────────────────────────────────────────────────────────

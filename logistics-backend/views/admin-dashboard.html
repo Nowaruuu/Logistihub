@@ -248,6 +248,21 @@
             <p>Scan to download the User App</p>
           </div>
         </div>
+        <div class="card" style="margin-top:14px;">
+            <div class="card-head"><span class="card-title">Customer Mobile App</span></div>
+            <div class="card-body">
+              <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Share this link with your customers/shippers. They can download the mobile app and register their own accounts to track shipments.</p>
+              <div class="reg-link-box">
+                <div class="reg-label">Public Registration Link</div>
+                <div class="reg-url" id="reg-url-customer">https://register.logistihub.ddns.net</div>
+                <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="copyRegLink('customer')">Copy Link</button>
+              </div>
+              <div style="margin-top:20px; text-align:center;">
+                <div id="customer-qr-container" style="display:inline-block; background:#fff; padding:10px; border-radius:12px; border:1px solid #e2e8f0;"></div>
+                <p style="font-size:11px; color:#94a3b8; margin-top:8px;">Scan to open public registration</p>
+              </div>
+            </div>
+          </div>
       </div>
 
       <!-- SETTINGS -->
@@ -354,7 +369,10 @@
       const m = pgMeta[id]||[id,'']; document.getElementById('page-title').textContent=m[0]; document.getElementById('page-sub').textContent=m[1];
     }
     function copyRegLink(type) {
-      const id = type === 'staff' ? 'reg-url-staff' : 'reg-url';
+      let id = 'reg-url';
+      if (type === 'staff') id = 'reg-url';
+      if (type === 'customer') id = 'reg-url-customer';
+      
       const url = document.getElementById(id).textContent;
       navigator.clipboard.writeText(url);
       alert('Link copied to clipboard!');
@@ -375,6 +393,18 @@
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
       });
+
+      const qrCustomer = document.getElementById('customer-qr-container');
+      if (qrCustomer) {
+        new QRCode(qrCustomer, {
+          text: regUrl,
+          width: 140,
+          height: 140,
+          colorDark : "#0f2235",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+      }
     }
     window.onload = () => {
       loadAll();
