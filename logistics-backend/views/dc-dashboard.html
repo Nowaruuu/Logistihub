@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Document Controller Dashboard — Logistics OS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#f1f5f9;color:#0f172a;min-height:100vh;display:flex;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+.sidebar{width:220px;background:#0f2235;display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
+.sidebar-logo{padding:20px 16px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);}
+.logo-box{width:34px;height:34px;background:rgba(34,197,94,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.logo-box .material-symbols-outlined{color:#4ade80;font-size:18px;}
+.logo-name{font-weight:800;font-size:14px;color:#fff;}
+.logo-role{font-size:9px;color:rgba(255,255,255,.3);font-family:'DM Mono',monospace;letter-spacing:.1em;margin-top:1px;}
+nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;}
+.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;padding:12px 10px 5px;}
+.nav-link{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.nav-link:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.nav-link.active{background:rgba(34,197,94,.15);color:#4ade80;font-weight:600;}
+.nav-link .material-symbols-outlined{font-size:17px;}
+.sidebar-bottom{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,.07);}
+.user-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;}
+.uavatar{width:30px;height:30px;border-radius:50%;background:rgba(34,197,94,.2);display:flex;align-items:center;justify-content:center;}
+.uavatar .material-symbols-outlined{font-size:16px;color:#4ade80;}
+.uname{font-size:12px;font-weight:600;color:#fff;}
+.urole{font-size:10px;color:rgba(255,255,255,.3);}
+
+.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;}
+.topbar{height:54px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10;}
+.topbar-title{font-weight:700;font-size:15px;color:#0f2235;}
+.topbar-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
+.tb-actions{display:flex;gap:8px;align-items:center;}
+
+.content{padding:24px;flex:1;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:13px;padding:18px;}
+.stat-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.stat-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.stat-icon .material-symbols-outlined{font-size:16px;}
+.si-green{background:#f0fdf4;} .si-green .material-symbols-outlined{color:#22c55e;}
+.si-blue{background:#eff6ff;} .si-blue .material-symbols-outlined{color:#3b82f6;}
+.si-amber{background:#fffbeb;} .si-amber .material-symbols-outlined{color:#f59e0b;}
+.si-red{background:#fef2f2;} .si-red .material-symbols-outlined{color:#ef4444;}
+.stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
+.stat-note{font-size:11px;color:#94a3b8;margin-top:4px;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:13px;overflow:hidden;margin-bottom:14px;}
+.card-head{padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
+.card-title .material-symbols-outlined{font-size:16px;color:#94a3b8;}
+
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-primary{background:#0f2235;color:#fff;}
+.btn-primary:hover{opacity:.87;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-ghost{background:none;color:#64748b;border:1px solid #e2e8f0;}
+.btn-ghost:hover{background:#f1f5f9;}
+.btn .material-symbols-outlined{font-size:14px;}
+
+table{width:100%;border-collapse:collapse;}
+th{padding:9px 14px;text-align:left;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e2e8f0;}
+td{padding:11px 14px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
+tr:last-child td{border:none;}
+tr:hover td{background:#f8fafc;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.b-pending{background:#f1f5f9;color:#64748b;}
+.b-active{background:#dbeafe;color:#1d4ed8;}
+.b-done{background:#dcfce7;color:#15803d;}
+.b-failed{background:#fef2f2;color:#dc2626;}
+
+.empty-state{padding:40px 20px;text-align:center;}
+.empty-state .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:8px;}
+.empty-state p{font-size:12px;color:#94a3b8;}
+
+.ph-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.ph-row h2{font-size:18px;font-weight:800;color:#0f2235;}
+.ph-row p{font-size:12px;color:#64748b;margin-top:2px;}
+
+.profile-card{background:#fff;border:1px solid #e2e8f0;border-radius:13px;padding:24px;max-width:480px;}
+.profile-avatar{width:60px;height:60px;border-radius:50%;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.profile-avatar .material-symbols-outlined{font-size:32px;color:#22c55e;}
+.profile-name{font-size:20px;font-weight:800;color:#0f2235;margin-bottom:4px;}
+.profile-role{display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;margin-bottom:16px;}
+.profile-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;}
+.profile-row:last-child{border:none;}
+.profile-key{color:#94a3b8;font-weight:500;}
+.profile-val{color:#0f2235;font-weight:600;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box"><span class="material-symbols-outlined">description</span></div>
+    <div>
+      <div class="logo-name" id="sb-company">Company</div>
+      <div class="logo-role">DOC CONTROLLER</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-sec">My Work</div>
+    <button class="nav-link active" onclick="go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
+    <button class="nav-link" onclick="go('shipments',this)"><span class="material-symbols-outlined">inventory_2</span>Shipments</button>
+    <button class="nav-link" onclick="go('documents',this)"><span class="material-symbols-outlined">folder_open</span>Documents</button>
+    <button class="nav-link" onclick="go('clients',this)"><span class="material-symbols-outlined">people</span>Clients</button>
+    <div class="nav-sec">Account</div>
+    <button class="nav-link" onclick="go('profile',this)"><span class="material-symbols-outlined">person</span>Profile</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-row">
+      <div class="uavatar"><span class="material-symbols-outlined">person</span></div>
+      <div>
+        <div class="uname" id="sb-name">DC Staff</div>
+        <div class="urole">Document Controller</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">Document Controller Overview</div>
+    </div>
+    <div class="tb-actions">
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">
+        <span class="material-symbols-outlined">logout</span>Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="s-dashboard" class="screen active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Shipments<div class="stat-icon si-green"><span class="material-symbols-outlined">inventory_2</span></div></div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-note">All shipments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending<div class="stat-icon si-amber"><span class="material-symbols-outlined">pending</span></div></div>
+          <div class="stat-value" id="stat-pending">0</div>
+          <div class="stat-note">Awaiting processing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed<div class="stat-icon si-blue"><span class="material-symbols-outlined">check_circle</span></div></div>
+          <div class="stat-value" id="stat-completed">0</div>
+          <div class="stat-note">This month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Issues<div class="stat-icon si-red"><span class="material-symbols-outlined">error</span></div></div>
+          <div class="stat-value" id="stat-issues">0</div>
+          <div class="stat-note">Needs attention</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>DN #</th><th>AWB</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="recent-shipments">
+              <tr><td colspan="7"><div class="empty-state" style="padding:24px;"><span class="material-symbols-outlined">inventory_2</span><p>No shipments found</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIPMENTS -->
+    <div id="s-shipments" class="screen">
+      <div class="ph-row"><div><h2>All Shipments</h2><p>Manage and track all shipments</p></div></div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>DN #</th><th>AWB</th><th>Client</th><th>Type</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="shipments-tbody">
+              <tr><td colspan="8"><div class="empty-state" style="padding:24px;"><span class="material-symbols-outlined">inventory_2</span><p>No shipments found</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div id="s-documents" class="screen">
+      <div class="ph-row"><div><h2>Documents</h2><p>Shipment documents and records</p></div></div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>DN #</th><th>Type</th><th>Client</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody id="docs-tbody">
+              <tr><td colspan="5"><div class="empty-state" style="padding:24px;"><span class="material-symbols-outlined">folder_open</span><p>No documents found</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div id="s-clients" class="screen">
+      <div class="ph-row"><div><h2>Clients</h2><p>All registered clients</p></div></div>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Shipments</th></tr></thead>
+            <tbody id="clients-tbody">
+              <tr><td colspan="5"><div class="empty-state" style="padding:24px;"><span class="material-symbols-outlined">people</span><p>No clients found</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="s-profile" class="screen">
+      <div class="ph-row"><div><h2>My Profile</h2><p>Your account details</p></div></div>
+      <div class="profile-card">
+        <div class="profile-avatar"><span class="material-symbols-outlined">person</span></div>
+        <div class="profile-name" id="prof-name">—</div>
+        <div class="profile-role"><span class="material-symbols-outlined" style="font-size:13px;">description</span>Document Controller</div>
+        <div class="profile-row"><span class="profile-key">Email</span><span class="profile-val" id="prof-email">—</span></div>
+        <div class="profile-row"><span class="profile-key">Company</span><span class="profile-val" id="prof-company">—</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var TENANT_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Company';
+var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+
+document.getElementById('sb-company').textContent = TENANT_NAME;
+document.getElementById('prof-company').textContent = TENANT_NAME;
+
+var pageMeta = {
+  dashboard: ['Dashboard','Document Controller Overview'],
+  shipments: ['Shipments','All shipment records'],
+  documents: ['Documents','Shipment documents'],
+  clients: ['Clients','Registered clients'],
+  profile: ['Profile','Account details'],
+};
+
+function go(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  var meta = pageMeta[id] || [id, ''];
+  document.getElementById('page-title').textContent = meta[0];
+  document.getElementById('page-sub').textContent = meta[1];
+}
+
+async function doLogout() {
+  await fetch('/' + SLUG + '/api/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+  window.location.href = '/' + SLUG + '/staff-login';
+}
+
+async function loadData() {
+  try {
+    const res = await fetch('/' + SLUG + '/api/admin/shipments', { credentials: 'include' });
+    if (res.status === 401) { window.location.href = '/' + SLUG + '/staff-login'; return; }
+    const data = await res.json();
+
+    const shipments = Array.isArray(data) ? data : (data.shipments || []);
+    document.getElementById('stat-total').textContent = shipments.length;
+    document.getElementById('stat-pending').textContent = shipments.filter(s => s.status === 'Pending').length;
+    document.getElementById('stat-completed').textContent = shipments.filter(s => s.status === 'Delivered').length;
+    document.getElementById('stat-issues').textContent = shipments.filter(s => s.status === 'Failed' || s.status === 'Cancelled').length;
+
+    if (shipments.length > 0) {
+      let h = '';
+      shipments.slice(0, 10).forEach(s => {
+        h += `<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.delivery_number||'-'}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.airway_bill_number||'-'}</td>
+          <td>${s.client_name||'-'}</td>
+          <td>${s.item_type_flag||'-'}</td>
+          <td>${s.driver_name||'-'}</td>
+          <td><span class="badge b-${(s.status||'').toLowerCase()}">${s.status||'-'}</span></td>
+          <td>${s.created_at ? new Date(s.created_at).toLocaleDateString() : '-'}</td>
+        </tr>`;
+      });
+      document.getElementById('recent-shipments').innerHTML = h;
+
+      let h2 = '';
+      shipments.forEach(s => {
+        h2 += `<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.delivery_number||'-'}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.airway_bill_number||'-'}</td>
+          <td>${s.client_name||'-'}</td>
+          <td>${s.item_type_flag||'-'}</td>
+          <td>${s.driver_name||'-'}</td>
+          <td>${s.assigned_vehicle_plate||'-'}</td>
+          <td><span class="badge b-${(s.status||'').toLowerCase()}">${s.status||'-'}</span></td>
+          <td>${s.created_at ? new Date(s.created_at).toLocaleDateString() : '-'}</td>
+        </tr>`;
+      });
+      document.getElementById('shipments-tbody').innerHTML = h2;
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+
+  // Load staff info from cookie/token
+  try {
+    const me = await fetch('/' + SLUG + '/api/dc/me', { credentials: 'include' });
+    if (me.ok) {
+      const d = await me.json();
+      document.getElementById('sb-name').textContent = d.name || 'DC Staff';
+      document.getElementById('prof-name').textContent = d.name || '—';
+      document.getElementById('prof-email').textContent = d.email || '—';
+    }
+  } catch(e) {}
+}
+
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+<script src="/public/frontend-api.js"></script>
+</body>
+</html>

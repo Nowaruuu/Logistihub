@@ -89,6 +89,20 @@ router.get('/:slug/staff-login', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
+router.get('/:slug/driver-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('driver-dashboard.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+router.get('/:slug/dc-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('dc-dashboard.html');
+  res.send(injectTenantData(html, tenant));
+});
+
 // POST /:slug/api/staff-login
 router.post('/:slug/api/staff-login', async (req, res) => {
   const { slug } = req.params;

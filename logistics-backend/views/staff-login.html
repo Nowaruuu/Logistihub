@@ -238,11 +238,13 @@ async function doLogin() {
     // Redirect based on role
     const role = data.role || '';
     if (role === 'Driver') {
-      window.location.href = '/' + SLUG + '/driver-dashboard';
-    } else if (role === 'Document Controller') {
-      window.location.href = '/' + SLUG + '/dc-dashboard';
-    } else {
-      window.location.href = '/' + SLUG + '/staff-dashboard';
+        window.location.href = '/' + SLUG + '/driver-dashboard';
+        } else if (role === 'Document Controller') {
+        window.location.href = '/' + SLUG + '/dc-dashboard';
+        } else if (role === 'Admin') {
+        window.location.href = '/' + SLUG + '/admin';
+        } else {
+        window.location.href = '/' + SLUG + '/admin';
     }
   } catch (e) {
     showErr(e.message || 'Login failed. Please check your credentials.');
