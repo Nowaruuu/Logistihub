@@ -97,7 +97,6 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 </style>
 </head>
-<script src="/public/frontend-api.js"></script>
 <body>
 
 <!-- LEFT PANEL -->
@@ -177,7 +176,7 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
       <div class="field-wrap pw-wrap">
         <span class="field-ico material-symbols-outlined">lock</span>
         <input id="password" type="password" placeholder="" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
-        <button class="pw-toggle" type="button" onclick="togglePw()"><span class="material-symbols-outlined">visibility</span></button>
+        <button class="pw-toggle" type="button" onclick="togglePw(this)"><span class="material-symbols-outlined">visibility</span></button>
       </div>
     </div>
 
@@ -252,5 +251,6 @@ async function doLogin() {
   }
 }
 </script>
+<script src="/public/frontend-api.js"></script>
 </body>
 </html>
