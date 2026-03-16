@@ -65,7 +65,8 @@
         <span class="material-symbols-outlined" style="color:#16a34a; font-size:32px;">check_circle</span>
       </div>
       <h1 style="font-size:20px;">Registration Complete!</h1>
-      <p>Your account is ready. Now, download the mobile app to get started with your logistics portal.</p>
+      <p>Your account is ready. We've sent a <strong>welcome email with your login details and app download QR code</strong> to your inbox.</p>
+      <p>You can also scan the code below to download the mobile app now.</p>
       
       <div id="qr-container">
         <!-- Placeholder for app download -->
@@ -90,8 +91,12 @@
       btn.textContent = 'Registering...';
       err.style.display = 'none';
 
+      // Use injected tenant slug for API call
+      const slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : 'demo';
+      const endpoint = `/${slug}/api/register`;
+
       try {
-        const res = await fetch('/geloop/api/register', {
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ first_name: fname, last_name: lname, email, password: pw, role: 'Other' })
@@ -100,6 +105,7 @@
         const data = await res.json();
         if(!res.ok) throw new Error(data.error || 'Failed to register');
 
+        // Success state
         document.getElementById('reg-form-wrap').style.display = 'none';
         document.getElementById('success-state').style.display = 'block';
       } catch(e) {

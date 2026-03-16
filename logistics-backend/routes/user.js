@@ -5,6 +5,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { query } = require('../config/db');
 const { requireUser } = require('../middleware/auth');
+const { sendRegistrationEmail } = require('../config/mailer');
 
 const router = express.Router();
 
@@ -80,6 +81,11 @@ router.post('/:slug/api/register', async (req, res) => {
     sameSite: 'strict',
     maxAge:   8 * 60 * 60 * 1000,
   });
+
+  // ── Send registration email (non-blocking) ─────────────
+  sendRegistrationEmail(email, `${first_name} ${last_name}`, tenant.company_name, slug).catch(e =>
+    console.error('Registration mail failed:', e.message)
+  );
 
   res.status(201).json({
     token,

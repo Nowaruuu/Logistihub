@@ -83,8 +83,8 @@ router.get('/:slug/admin', async (req, res) => {
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  // Redirecting to the new staff registration path
-  res.redirect(`/${req.params.slug}/staff-registration`);
+  const html = readView('client-register.html');
+  res.send(injectTenantData(html, tenant));
 });
 
 router.get('/:slug/staff-registration', async (req, res) => {

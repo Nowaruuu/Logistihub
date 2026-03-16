@@ -72,7 +72,38 @@ async function sendWelcomeEmail(email, name, companyName, slug) {
     return transporter.sendMail(mailOptions);
 }
 
+async function sendRegistrationEmail(email, name, companyName, slug) {
+    const downloadLink = `https://logistihub.ddns.net/app-download?tenant=${slug}`;
+
+    if (!process.env.SMTP_USER) {
+        console.log('====================================================');
+        console.log(`[MAIL MOCK] Sending Registration Email to ${name} (${email})`);
+        console.log(`Download Link: ${downloadLink}`);
+        console.log('====================================================');
+        return true;
+    }
+
+    const mailOptions = {
+        from: '"Logistics OS Admin" <noreply@logistihub.ddns.net>',
+        to: email,
+        subject: `Welcome to ${companyName}!`,
+        html: `
+            <div style="font-family: sans-serif; padding: 20px;">
+                <h2>Registration Successful</h2>
+                <p>Hello ${name},</p>
+                <p>You have successfully registered with <strong>${companyName}</strong> on Logistics OS.</p>
+                <p>To access your dashboard and start using the platform, please download our mobile app:</p>
+                <a href="${downloadLink}" style="display:inline-block; padding: 10px 20px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Download Mobile App</a>
+                <p style="margin-top:20px; font-size: 12px; color: #64748b;">If you need assistance, please contact your company administrator.</p>
+            </div>
+        `
+    };
+
+    return transporter.sendMail(mailOptions);
+}
+
 module.exports = {
     sendInviteEmail,
-    sendWelcomeEmail
+    sendWelcomeEmail,
+    sendRegistrationEmail
 };
