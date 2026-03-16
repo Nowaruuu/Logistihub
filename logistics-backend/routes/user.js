@@ -109,6 +109,12 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ ok:true, user_id: result.insertId, name: `${first_name} ${last_name}` });
 });
 
+// Helper for debugging manual browser tests
+router.get('/register', (req, res) => res.json({ message: 'Use POST to register a customer.' }));
+router.get('/staff/register', (req, res) => res.json({ message: 'Use POST to register staff.' }));
+router.get('/login', (req, res) => res.json({ message: 'Use POST to login.' }));
+router.get('/staff-login', (req, res) => res.json({ message: 'Use POST for staff-login.' }));
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /login (Customer)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,9 +174,9 @@ router.post('/staff-login', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /:slug/api/me  (PROTECTED)
+// GET /me  (PROTECTED)
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/:slug/api/me', requireUser, async (req, res) => {
+router.get('/me', requireUser, async (req, res) => {
   try {
     const [rows] = await query(
       `SELECT user_id, tenant_id, first_name, last_name, email, phone, address, status, created_at
@@ -186,9 +192,9 @@ router.get('/:slug/api/me', requireUser, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/logout
+// POST /logout
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:slug/api/logout', (req, res) => {
+router.post('/logout', (req, res) => {
   res.clearCookie('user_token');
   res.json({ ok: true });
 });
