@@ -103,6 +103,7 @@ router.get('/:slug/dc-dashboard', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
+
 // POST /:slug/api/staff-login
 router.post('/:slug/api/staff-login', async (req, res) => {
   const { slug } = req.params;
@@ -143,6 +144,12 @@ router.post('/:slug/api/staff-login', async (req, res) => {
   res.json({ ok: true, name: staff.name, role: staff.role, slug });
 });
 
+router.get('/:slug/admin-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('admin-login.html');
+  res.send(injectTenantData(html, tenant));
+});
 async function resolveTenant(slug, res) {
   const [rows] = await query(
     "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",

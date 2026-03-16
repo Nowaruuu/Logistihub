@@ -24,7 +24,7 @@ async function api(method, path, body) {
   if (!res.ok) {
     // 401 on an admin page → redirect to login
     if (res.status === 401 && path.includes('/api/admin')) {
-      window.location.href = `/${SLUG}/admin`;
+      window.location.href = `/${SLUG}/staff-login`;
     }
     throw new Error(data.error || `HTTP ${res.status}`);
   }
