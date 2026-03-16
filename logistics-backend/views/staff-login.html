@@ -167,7 +167,7 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
       <label class="form-label">Email</label>
       <div class="field-wrap">
         <span class="field-ico material-symbols-outlined">mail</span>
-        <input id="email" type="email" placeholder="" autocomplete="username"/>
+        <input id="email" type="email" placeholder="Email address" autocomplete="email" required/>
       </div>
     </div>
 
@@ -175,7 +175,7 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
       <label class="form-label">Password</label>
       <div class="field-wrap pw-wrap">
         <span class="field-ico material-symbols-outlined">lock</span>
-        <input id="password" type="password" placeholder="" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" required style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
         <button class="pw-toggle" type="button" onclick="togglePw(this)"><span class="material-symbols-outlined">visibility</span></button>
       </div>
     </div>

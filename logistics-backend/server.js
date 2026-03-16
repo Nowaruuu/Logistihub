@@ -26,6 +26,13 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Subdomain detection middleware
+app.use((req, res, next) => {
+  const host = req.headers.host || '';
+  req.isRegistrationSubdomain = host.startsWith('register.');
+  next();
+});
+
 // CORS — in production lock this down to your real domain
 app.use(cors({
   origin:      process.env.NODE_ENV === 'production'

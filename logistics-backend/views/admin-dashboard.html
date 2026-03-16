@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -69,6 +70,7 @@
     .t-pkg { background: #ede9fe; color: #6d28d9; }
     .btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all .15s; }
     .btn-primary { background: #0f2235; color: #fff; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
     .btn-ghost { background: none; color: #64748b; }
     .btn-sm { padding: 5px 11px; font-size: 11px; }
     .empty { padding: 44px 20px; text-align: center; }
@@ -82,15 +84,10 @@
     .field-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #cbd5e1; font-size: 16px; pointer-events: none; }
     .field-wrap input, .field-wrap select { padding-left: 32px !important; }
     input, select, textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; background: #fff; }
-    .tabs-bar { display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 14px; }
-    .tab { padding: 8px 13px; font-size: 12px; font-weight: 500; color: #94a3b8; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; }
-    .tab.active { color: #0f2235; font-weight: 700; border-bottom-color: #0f2235; }
-    .f-select { padding: 6px 24px 6px 10px; border: 1px solid #e2e8f0; border-radius: 7px; font-size: 11px; background: #fff; cursor: pointer; appearance: none; }
-    .reg-link-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .reg-link-text { font-size: 12px; color: #15803d; line-height: 1.6; }
-    .reg-link-url { font-family: 'DM Mono', monospace; font-size: 11px; color: #15803d; word-break: break-all; }
-    .copy-btn { flex-shrink: 0; padding: 6px 12px; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 7px; font-size: 11px; font-weight: 700; color: #15803d; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    
+    .reg-link-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .reg-label { font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: .05em; }
+    .reg-url { font-family: 'DM Mono', monospace; font-size: 11px; color: #15803d; word-break: break-all; }
+
     /* MODAL */
     .modal-ovl { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,34,53,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
     .modal-ovl.active { display: flex; }
@@ -143,10 +140,6 @@
         <div class="page-title" id="page-title">Dashboard</div>
         <div class="page-sub" id="page-sub">Welcome back</div>
       </div>
-      <div class="tb-right">
-        <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search workspace..." /></div>
-        <button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button>
-      </div>
     </div>
 
     <div class="content">
@@ -158,18 +151,9 @@
           <div class="stat-card"><div class="stat-label">Delivered <div class="stat-icon si-g"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value" id="stat-delivered">0</div></div>
           <div class="stat-card"><div class="stat-label">Pending Pay <div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value" id="stat-pending">0</div></div>
         </div>
-        <div class="reg-link-box" style="margin-bottom:14px;">
-          <div class="reg-link-text"><strong>Private Registration link</strong><span class="reg-link-url" id="dashboard-reg-url">...</span></div>
-          <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
-        </div>
-        <div class="grid-3-1">
-          <div class="card">
-            <div class="card-head"><span class="card-title">Recent Shipments</span><button class="card-action" onclick="go('shipments',null)">View all</button></div>
-            <div class="tbl-wrap"><table><thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead><tbody id="dash-recent-shipments-tbody"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Fleet</span></div><div class="card-body" id="dash-fleet-summary">Loading...</div>
-          </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Recent Shipments</span><button class="card-action" onclick="go('shipments',null)">View all</button></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead><tbody id="dash-recent-shipments-tbody"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
         </div>
       </div>
 
@@ -225,8 +209,31 @@
 
       <!-- USER REGISTRATION -->
       <div id="s-user-reg" class="screen">
-        <div class="ph-row"><div><h2>Registration</h2><p>Private link for staff</p></div></div>
-        <div class="card"><div class="card-body"><div class="reg-link-box"><span id="reg-page-url">...</span><button class="btn btn-sm" onclick="copyUrl()">Copy</button></div></div></div>
+        <div class="ph-row"><div><h2>Registration</h2><p>Access links for your team and customers</p></div></div>
+        
+        <div class="card">
+          <div class="card-head"><span class="card-title">Staff Registration</span></div>
+          <div class="card-body">
+            <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Private link for your employees (Drivers and Document Controllers) to register.</p>
+            <div class="reg-link-box">
+              <div class="reg-label">Staff Link</div>
+              <div class="reg-url" id="reg-url-staff">https://logistihub.ddns.net/${SLUG}/staff-registration</div>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px;" onclick="copyRegLink('staff')">Copy Link</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title">Customer Registration</span></div>
+          <div class="card-body">
+            <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Public link for your customers/shippers to register and download the app.</p>
+            <div class="reg-link-box">
+              <div class="reg-label">Public Link</div>
+              <div class="reg-url" id="reg-url-customer">https://register.logistihub.ddns.net</div>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px;" onclick="copyRegLink('customer')">Copy Link</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SETTINGS -->
@@ -239,22 +246,21 @@
   </div>
 
   <!-- MODALS -->
-  <div class="modal-ovl" id="m-staff"><div class="modal"><div class="modal-head"><h3>Add Staff</h3><button class="close-btn" onclick="hideModal()">X</button></div><div class="modal-body"><div class="form-group"><label>Name</label><input type="text" id="as-name"/></div><div class="form-group"><label>Role</label><select id="as-role"><option>Driver</option><option>Helper</option></select></div><div class="form-group"><label>User</label><input type="text" id="as-user"/></div><div class="form-group"><label>Pass</label><input type="password" id="as-pass"/></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="submitStaff()">Save</button></div></div></div>
+  <div class="modal-ovl" id="m-staff"><div class="modal"><div class="modal-head"><h3>Add Staff</h3><button class="close-btn" onclick="hideModal()">X</button></div><div class="modal-body"><div class="form-group"><label>Name</label><input type="text" id="as-name"/></div><div class="form-group"><label>Role</label><select id="as-role"><option>Document Controller</option><option>Driver</option></select></div><div class="form-group"><label>User</label><input type="text" id="as-user"/></div><div class="form-group"><label>Pass</label><input type="password" id="as-pass"/></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="submitStaff()">Save</button></div></div></div>
   <div class="modal-ovl" id="m-vehicle"><div class="modal"><div class="modal-head"><h3>Add Vehicle</h3><button class="close-btn" onclick="hideModal()">X</button></div><div class="modal-body"><div class="form-group"><label>Plate</label><input type="text" id="av-plate"/></div><div class="form-group"><label>Type</label><input type="text" id="av-type"/></div><div class="form-group"><label>Tons</label><input type="number" id="av-cap"/></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="submitVehicle()">Save</button></div></div></div>
   <div class="modal-ovl" id="m-client"><div class="modal"><div class="modal-head"><h3>Add Client</h3><button class="close-btn" onclick="hideModal()">X</button></div><div class="modal-body"><div class="form-group"><label>Company</label><input type="text" id="ac-name"/></div><div class="form-group"><label>Contact</label><input type="text" id="ac-contact"/></div><div class="form-group"><label>User</label><input type="text" id="ac-user"/></div><div class="form-group"><label>Pass</label><input type="password" id="ac-pass"/></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="submitClient()">Save</button></div></div></div>
   <div class="modal-ovl" id="m-route"><div class="modal"><div class="modal-head"><h3>Add Route</h3><button class="close-btn" onclick="hideModal()">X</button></div><div class="modal-body"><div class="form-group"><label>Name</label><input type="text" id="ar-name"/></div><div class="form-group"><label>Driver</label><select id="ar-driver"><option value="">Select</option></select></div><div class="form-group"><label>Vehicle</label><select id="ar-vehicle"><option value="">Select</option></select></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="submitRoute()">Save</button></div></div></div>
+  
   <script src="/public/frontend-api.js"></script>
 
   <script>
-    const pgMeta = { 'dashboard':['Dashboard','Welcome back'],'shipments':['Shipments','All records'],'new-shipment':['New Shipment','Shipments / New'],'staff':['Staff','Team'],'vehicles':['Vehicles','Fleet'],'clients':['Clients','Customers'],'routes':['Routes','Zones'],'user-reg':['Registration','Private link'],'settings':['Settings','Config'] };
+    const pgMeta = { 'dashboard':['Dashboard','Welcome back'],'shipments':['Shipments','All records'],'new-shipment':['New Shipment','Shipments / New'],'staff':['Staff','Team'],'vehicles':['Vehicles','Fleet'],'clients':['Clients','Customers'],'routes':['Routes','Zones'],'user-reg':['Registration','Access links'],'settings':['Settings','Config'] };
     async function loadAll(){
       try {
         const me = await AdminAPI.me();
         document.getElementById('sidebar-tenant-name').textContent = me.tenant.company_name;
         document.getElementById('sidebar-admin-email').textContent = me.admin.username;
-        const reg = window.location.origin + '/' + SLUG + '/register';
-        document.getElementById('dashboard-reg-url').textContent = reg;
-        document.getElementById('reg-page-url').textContent = reg;
+        document.getElementById('reg-url-staff').textContent = `https://logistihub.ddns.net/${SLUG}/staff-registration`;
         loadShipments(); loadStaff(); loadVehicles(); loadClients(); loadRoutes();
       } catch(e){ console.error(e); }
     }
@@ -263,6 +269,7 @@
         const data = await AdminAPI.getShipments();
         const tb = document.getElementById('shipments-tbody');
         const dbtb = document.getElementById('dash-recent-shipments-tbody');
+        if(!tb || !dbtb) return;
         if(!data || data.length === 0){ tb.innerHTML='<tr><td colspan="9">No shipments</td></tr>'; dbtb.innerHTML='<tr><td colspan="5">No shipments</td></tr>'; return; }
         let h='', dh='';
         data.forEach((s,i)=>{
@@ -315,21 +322,19 @@
     async function submitVehicle(){ const b={plate_number:document.getElementById('av-plate').value,vehicle_type:document.getElementById('av-type').value,capacity_tons:document.getElementById('av-cap').value}; await AdminAPI.addVehicle(b); hideModal(); loadVehicles(); }
     async function submitClient(){ const b={company_name:document.getElementById('ac-name').value,contact_person:document.getElementById('ac-contact').value,username:document.getElementById('ac-user').value,password:document.getElementById('ac-pass').value}; await AdminAPI.addClient(b); hideModal(); loadClients(); }
     async function submitRoute(){ const b={route_name:document.getElementById('ar-name').value,primary_driver_id:document.getElementById('ar-driver').value,assigned_vehicle_plate:document.getElementById('ar-vehicle').value}; await AdminAPI.addRoute(b); hideModal(); loadRoutes(); }
-    async function createShipment(){
-      const b={delivery_number:document.getElementById('ns-dn').value, airway_bill_number:document.getElementById('ns-awb').value, client_id:document.getElementById('ns-client').value, item_type_flag:document.getElementById('ns-type').value, pickup_location:document.getElementById('ns-pickup').value, dropoff_location:document.getElementById('ns-dropoff').value, assigned_driver_id:document.getElementById('ns-driver').value, assigned_vehicle_plate:document.getElementById('ns-vehicle').value};
-      try { await AdminAPI.createShipment(b); go('shipments'); loadShipments(); } catch(e){ alert(e.message); }
-    }
-    async function delStaff(id){ if(confirm('Delete?')){ await AdminAPI.deleteStaff(id); loadStaff(); } }
-    async function delVehicle(p){ if(confirm('Delete?')){ await AdminAPI.deleteVehicle(p); loadVehicles(); } }
-    async function delClient(id){ if(confirm('Delete?')){ await AdminAPI.deleteClient(id); loadClients(); } }
-    async function delRoute(id){ if(confirm('Delete?')){ await AdminAPI.deleteRoute(id); loadRoutes(); } }
     function go(id,btn){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      document.getElementById('s-'+id).classList.add('active');
+      const sc = document.getElementById('s-'+id); if(sc) sc.classList.add('active');
+      if(id === 'dashboard') loadShipments();
       if(btn){ document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active')); btn.classList.add('active'); }
-      const m = pgMeta[id]||[id,'']; document.getElementById('page-title').textContent=m[0]; document.getElementById('page-sub').textContent=m[1];
+      const m = pgMeta[id]||[id,'']; document.getElementById('page-title').textContent=m[0];
     }
-    function copyUrl(){ navigator.clipboard.writeText(document.getElementById('reg-page-url').textContent); alert('Copied'); }
+    function copyRegLink(type) {
+      const id = type === 'staff' ? 'reg-url-staff' : 'reg-url-customer';
+      const url = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
     window.onload = loadAll;
   </script>
 </body>

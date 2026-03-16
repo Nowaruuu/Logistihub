@@ -4,6 +4,7 @@ const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
 const jwt     = require('jsonwebtoken');
+const bcrypt  = require('bcryptjs');
 const { query } = require('../config/db');
 
 const router = express.Router();
@@ -35,9 +36,13 @@ function requireSuperadminPage(req, res, next) {
   }
 }
 
-// Root → superadmin login
-router.get('/', (req, res) => res.redirect('/superadmin-login'));
-
+// Root → superadmin login or registration landing
+router.get('/', (req, res) => {
+  if (req.isRegistrationSubdomain) {
+    return res.send(readView('client-register.html'));
+  }
+  res.redirect('/superadmin-login');
+});
 // Login page
 router.get('/superadmin-login', (req, res) => {
   const token = req.cookies && req.cookies.sa_token;
@@ -78,8 +83,22 @@ router.get('/:slug/admin', async (req, res) => {
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
+  // Redirecting to the new staff registration path
+  res.redirect(`/${req.params.slug}/staff-registration`);
+});
+
+router.get('/:slug/staff-registration', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
   const html = readView('user-register.html');
   res.send(injectTenantData(html, tenant));
+});
+
+// User/Client Registration (General)
+router.get('/register', (req, res) => {
+  // Serving client-registration only if on registration subdomain
+  const html = readView('client-register.html');
+  res.send(html);
 });
 
 router.get('/:slug/staff-login', async (req, res) => {
