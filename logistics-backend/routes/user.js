@@ -49,6 +49,13 @@ router.post('/:slug/api/staff/register', async (req, res) => {
 
   } catch (err) {
     console.error(`[STAFF REG ERROR] ${err.message}`, err);
+    // Explicitly check for "Unknown column" as it's the most likely cause of 500 here
+    if (err.message.includes('Unknown column')) {
+      return res.status(500).json({
+        error: 'Database schema mismatch. Please ensure migration_v2.sql has been applied.',
+        details: err.message
+      });
+    }
     res.status(500).json({ error: 'Internal server error during registration.' });
   }
 });

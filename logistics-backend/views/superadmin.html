@@ -258,7 +258,8 @@ textarea{resize:vertical;}
                 <th>Plan</th>
                 <th>Admin Email</th>
                 <th>Workspace URL</th>
-                <th>User Reg. Page</th>
+                <th>Staff Reg.</th>
+                <th>Customer App</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th></th>
@@ -474,7 +475,7 @@ async function loadSuperadminData() {
     const tenantsArray = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes.tenants || []);
 
     if (!tenantsArray || tenantsArray.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">corporate_fare</span><p>No tenants registered yet.</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">corporate_fare</span><p>No tenants registered yet.</p></div></td></tr>`;
       subsBody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No subscriptions yet</p></div></td></tr>`;
       return;
     }
@@ -488,7 +489,8 @@ async function loadSuperadminData() {
       const statusBadge = `<span class="badge b-${(t.status || 'pending').toLowerCase()}">${t.status || 'Pending'}</span>`;
       
       const adminUrl = t.slug ? `logistihub.ddns.net/${t.slug}/admin` : '-';
-      const regUrl = t.slug ? `logistihub.ddns.net/${t.slug}/register` : '-';
+      const staffRegUrl = t.slug ? `logistihub.ddns.net/${t.slug}/staff-registration` : '-';
+      const customerUrl = `register.logistihub.ddns.net`;
 
       if (t.status === 'ACTIVE') {
         if (subCounts[planId] !== undefined) subCounts[planId]++;
@@ -500,7 +502,8 @@ async function loadSuperadminData() {
         <td>${planBadge}</td>
         <td>${t.admin_email || '-'}</td>
         <td><div class="url-chip">${adminUrl}</div></td>
-        <td><div class="url-chip">${regUrl}</div></td>
+        <td><div class="url-chip">${staffRegUrl}</div></td>
+        <td><div class="url-chip" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">${customerUrl}</div></td>
         <td>${statusBadge}</td>
         <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
         <td><button class="btn btn-ghost btn-sm">Manage</button></td>
