@@ -7,7 +7,7 @@ const { query } = require('../config/db');
 const { requireUser } = require('../middleware/auth');
 const { sendRegistrationEmail } = require('../config/mailer');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /tenant-info  (PUBLIC — no auth required)

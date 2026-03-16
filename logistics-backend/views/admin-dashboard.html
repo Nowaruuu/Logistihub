@@ -229,7 +229,7 @@
             <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Public link for your customers/shippers to register and download the app.</p>
             <div class="reg-link-box">
               <div class="reg-label">Public Link</div>
-              <div class="reg-url" id="reg-url-customer">https://register.logistihub.ddns.net</div>
+              <div class="reg-url" id="reg-url-customer">https://logistihub.ddns.net/${SLUG}/register</div>
               <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px;" onclick="copyRegLink('customer')">Copy Link</button>
             </div>
           </div>
@@ -261,6 +261,7 @@
         document.getElementById('sidebar-tenant-name').textContent = me.tenant.company_name;
         document.getElementById('sidebar-admin-email').textContent = me.admin.username;
         document.getElementById('reg-url-staff').textContent = `https://logistihub.ddns.net/${SLUG}/staff-registration`;
+        document.getElementById('reg-url-customer').textContent = `https://logistihub.ddns.net/${SLUG}/register`;
         loadShipments(); loadStaff(); loadVehicles(); loadClients(); loadRoutes();
       } catch(e){ console.error(e); }
     }

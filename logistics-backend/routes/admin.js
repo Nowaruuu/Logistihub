@@ -6,7 +6,7 @@ const jwt     = require('jsonwebtoken');
 const { query, tenantQuery, findOne } = require('../config/db');
 const { requireAdmin, requireSlugMatch } = require('../middleware/auth');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // All routes in this file are scoped to /:slug
 // requireAdmin validates the JWT, requireSlugMatch ensures the JWT slug matches the URL slug
