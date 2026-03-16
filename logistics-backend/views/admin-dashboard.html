@@ -353,8 +353,33 @@
       if(btn){ document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active')); btn.classList.add('active'); }
       const m = pgMeta[id]||[id,'']; document.getElementById('page-title').textContent=m[0]; document.getElementById('page-sub').textContent=m[1];
     }
-    function copyUrl(){ navigator.clipboard.writeText(document.getElementById('reg-page-url').textContent); alert('Copied'); }
-    window.onload = loadAll;
+    function copyRegLink(type) {
+      const id = type === 'staff' ? 'reg-url-staff' : 'reg-url';
+      const url = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+
+    // Generate QR Code for user registration subdomain
+    function generateUserQR() {
+      const qrContainer = document.getElementById('user-qr-container');
+      if (!qrContainer) return;
+      
+      const regUrl = `https://register.logistihub.ddns.net`;
+      
+      new QRCode(qrContainer, {
+        text: regUrl,
+        width: 100,
+        height: 100,
+        colorDark : "#0f2235",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+    }
+    window.onload = () => {
+      loadAll();
+      generateUserQR();
+    };
   </script>
 </body>
 </html>
