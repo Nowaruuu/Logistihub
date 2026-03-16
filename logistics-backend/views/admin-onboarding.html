@@ -457,17 +457,17 @@ async function finishSetup(){
 
   const payload = {
     plan: selectedPlan.id,
-    admin_name: name,
-    admin_email: email,
-    admin_phone: phone,
+    name: name,          // was admin_name
+    email: email,        // was admin_email
+    phone: phone,        // was admin_phone
     password: pw,
     company_name: company,
-    workspace_name: org,
-    workspace_slug: slug,
+    org_name: org,       // was workspace_name
+    slug: slug,          // was workspace_slug
     brand_color: color,
     tagline: tagline,
     invite_token: inviteToken
-  };
+};
 
   var btn = document.getElementById('btn-finish');
   btn.disabled = true;
