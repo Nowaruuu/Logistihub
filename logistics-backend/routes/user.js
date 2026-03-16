@@ -30,6 +30,12 @@ router.post('/:slug/api/staff/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 12);
     const fullName = `${first_name} ${last_name}`;
 
+    // Valid roles for staff
+    const allowedRoles = ['Document Controller', 'Driver'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role selected. Only Document Controller and Driver are allowed.' });
+    }
+
     const [result] = await query(
       `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status, phone, employee_id, created_at)
        VALUES (?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
@@ -49,7 +55,6 @@ router.post('/:slug/api/staff/register', async (req, res) => {
 
   } catch (err) {
     console.error(`[STAFF REG ERROR] ${err.message}`, err);
-    // Explicitly check for "Unknown column" as it's the most likely cause of 500 here
     if (err.message.includes('Unknown column')) {
       return res.status(500).json({
         error: 'Database schema mismatch. Please ensure migration_v2.sql has been applied.',
@@ -62,13 +67,9 @@ router.post('/:slug/api/staff/register', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /:slug/api/register (General Client Registration)
-// Called when a user submits the registration form on the tenant's private page.
-// The tenant_id is resolved from the slug — the user never supplies it.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/register', async (req, res) => {
   const { slug } = req.params;
-
-  // Resolve tenant from slug — ISOLATION: the tenant_id is derived server-side
   const [tenants] = await query(
     "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
     [slug]
@@ -80,8 +81,6 @@ router.post('/:slug/api/register', async (req, res) => {
   const tenantId = tenant.tenant_id;
 
   const { first_name, last_name, email, phone, employee_id, role, password } = req.body;
-
-  // Basic validation
   if (!first_name || !last_name || !email || !role || !password) {
     return res.status(400).json({ error: 'first_name, last_name, email, role, and password are required.' });
   }
@@ -89,12 +88,6 @@ router.post('/:slug/api/register', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 8 characters.' });
   }
 
-  const validRoles = ['Driver','Helper','Dispatcher','Warehouse Staff','Supervisor','Other'];
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: `role must be one of: ${validRoles.join(', ')}` });
-  }
-
-  // Check email uniqueness within this tenant only
   const [existing] = await query(
     'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
     [tenantId, email]
@@ -103,8 +96,7 @@ router.post('/:slug/api/register', async (req, res) => {
     return res.status(409).json({ error: 'An account with this email already exists for this company.' });
   }
 
-  const hash = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS || '12'));
-
+  const hash = await bcrypt.hash(password, 12);
   const [result] = await query(
     `INSERT INTO APP_USER
        (tenant_id, first_name, last_name, email, phone, employee_id, role, password_hash, status, created_at)
@@ -112,11 +104,10 @@ router.post('/:slug/api/register', async (req, res) => {
     [tenantId, first_name, last_name, email, phone||null, employee_id||null, role, hash]
   );
 
-  // Build JWT for immediate use
   const token = jwt.sign(
     { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    { expiresIn: '8h' }
   );
 
   res.cookie('user_token', token, {
@@ -137,100 +128,60 @@ router.post('/:slug/api/register', async (req, res) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /:slug/api/login
-// ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
-
-  const [tenants] = await query(
-    "SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1",
-    [slug]
-  );
-  if (!tenants.length || tenants[0].status !== 'active') {
-    return res.status(404).json({ error: 'Workspace not found.' });
-  }
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query(
-    "SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1",
-    [tenantId, email]
-  );
+  const [rows] = await query("SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
   const user = rows[0];
 
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  if (!await bcrypt.compare(password, user.password_hash)) return res.status(401).json({ error: 'Invalid credentials.' });
 
   const token = jwt.sign(
     { role: 'user', user_id: user.user_id, tenant_id: tenantId, slug, name: `${user.first_name} ${user.last_name}`, email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    process.env.JWT_SECRET, { expiresIn: '8h' }
   );
-
-  res.cookie('user_token', token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge:   8 * 60 * 60 * 1000,
-  });
-
-  res.json({ ok: true, name: user.first_name, slug });
+  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
+  res.json({ ok:true, name:user.first_name, slug });
 });
 
-// POST /:slug/api/staff-login
 router.post('/:slug/api/staff-login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
-  const [tenants] = await query(
-    "SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1",
-    [slug]
-  );
-  if (!tenants.length || tenants[0].status !== 'active') {
-    return res.status(404).json({ error: 'Workspace not found.' });
-  }
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
-  const [rows] = await query(
-    "SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1",
-    [tenantId, email]
-  );
+
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
+  
   const staff = rows[0];
-  const valid = await bcrypt.compare(password, staff.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  if (!await bcrypt.compare(password, staff.password_hash)) return res.status(401).json({ error: 'Invalid credentials.' });
+
   const token = jwt.sign(
     { role: staff.role, staff_id: staff.staff_id, tenant_id: tenantId, slug, name: staff.name, email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    process.env.JWT_SECRET, { expiresIn: '8h' }
   );
   const cookieName = staff.role === 'Admin' ? 'admin_token' : 'staff_token';
-  res.cookie(cookieName, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 8 * 60 * 60 * 1000,
-  });
-  res.json({ ok: true, name: staff.name, role: staff.role, slug });
+  res.cookie(cookieName, token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
+  res.json({ ok:true, name:staff.name, role:staff.role, slug });
 });
 
-module.exports = router;
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /:slug/api/me  — get current user's profile
-// ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/me', requireUser, async (req, res) => {
-  const [rows] = await query(
-    'SELECT user_id, first_name, last_name, email, phone, role, status, created_at FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1',
-    [req.user.user_id, req.tenantId]
-  );
+  const [rows] = await query('SELECT user_id, first_name, last_name, email, phone, role, status, created_at FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1', [req.user.user_id, req.tenantId]);
   if (!rows.length) return res.status(404).json({ error: 'User not found.' });
   res.json(rows[0]);
 });
 
-// POST /:slug/api/logout
 router.post('/:slug/api/logout', (req, res) => {
   res.clearCookie('user_token');
-  res.json({ ok: true });
+  res.clearCookie('staff_token');
+  res.clearCookie('admin_token');
+  res.json({ ok:true });
 });
 
 module.exports = router;
