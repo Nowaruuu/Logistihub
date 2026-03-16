@@ -204,9 +204,9 @@ document.getElementById('left-tenant-name').textContent = TENANT_NAME;
 document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
 document.getElementById('info-tenant-name').textContent = TENANT_NAME;
 
-function togglePw() {
+function togglePw(btn) {
   var inp = document.getElementById('password');
-  var ico = document.querySelector('.pw-toggle .material-symbols-outlined');
+  var ico = btn.querySelector('.material-symbols-outlined');
   if (inp.type === 'password') { inp.type = 'text'; ico.textContent = 'visibility_off'; }
   else { inp.type = 'password'; ico.textContent = 'visibility'; }
 }
