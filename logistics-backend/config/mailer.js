@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendInviteEmail(email, companyName, token) {
-    const inviteLink = `${process.env.BASE_URL}/onboarding?invite=${token}`;
+    const inviteLink = `${process.env.BASE_URL}/admin-onboarding?invite=${token}`;
     
     // In dev mode, if SMTP credentials are not fully set, we just log the link.
     if (!process.env.SMTP_USER) {
