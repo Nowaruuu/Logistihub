@@ -153,6 +153,7 @@ router.post('/staff-login', async (req, res) => {
 
   const token = jwt.sign(
     { role: staff.role, staff_id: staff.staff_id, tenant_id: tenantId, slug, name: staff.name, email },
+    process.env.JWT_SECRET, { expiresIn: '8h' }
   );
 
   const cookieName = staff.role === 'Admin' ? 'admin_token' : 'staff_token';
