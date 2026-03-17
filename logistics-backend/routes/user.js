@@ -17,33 +17,44 @@ router.get('/debug-db-migration', async (req, res) => {
   const run = async (sql) => {
     try {
       await query(sql);
-      results.push({ sql: sql.substring(0, 50) + '...', status: 'SUCCESS' });
+      results.push({ sql: sql.substring(0, 60) + '...', status: 'SUCCESS' });
     } catch (err) {
-      results.push({ sql: sql.substring(0, 50) + '...', status: 'ERROR', message: err.message });
+      if (err.message.includes('Duplicate column') || err.message.includes('already exists')) {
+        results.push({ sql: sql.substring(0, 60) + '...', status: 'EXISTS' });
+      } else {
+        results.push({ sql: sql.substring(0, 60) + '...', status: 'ERROR', message: err.message });
+      }
     }
   };
 
-  await run(`ALTER TABLE staff ADD COLUMN first_name VARCHAR(255)`);
-  await run(`ALTER TABLE staff ADD COLUMN last_name VARCHAR(255)`);
-  await run(`ALTER TABLE staff ADD COLUMN phone VARCHAR(50)`);
-  await run(`ALTER TABLE staff ADD COLUMN employee_id VARCHAR(100)`);
-  await run(`CREATE TABLE IF NOT EXISTS app_user (
-      user_id       INT          PRIMARY KEY AUTO_INCREMENT,
-      tenant_id     INT          NOT NULL,
-      first_name    VARCHAR(255),
-      last_name     VARCHAR(255),
-      email         VARCHAR(255) NOT NULL,
-      phone         VARCHAR(50),
-      employee_id   VARCHAR(100),
-      role          VARCHAR(100),
-      password_hash VARCHAR(255) NOT NULL,
-      status        VARCHAR(50)  DEFAULT 'active',
-      created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id),
-      UNIQUE KEY (tenant_id, email)
-  )`);
+  // 1. Fix STAFF Table
+  await run(`ALTER TABLE STAFF ADD COLUMN first_name VARCHAR(255)`);
+  await run(`ALTER TABLE STAFF ADD COLUMN last_name VARCHAR(255)`);
+  await run(`ALTER TABLE STAFF ADD COLUMN phone VARCHAR(100)`);
+  await run(`ALTER TABLE STAFF ADD COLUMN employee_id VARCHAR(100)`);
 
-  res.json({ message: "Migration triggered via API", results });
+  // 2. Fix APP_USER Table (ensure it has role and employee_id)
+  await run(`CREATE TABLE IF NOT EXISTS APP_USER (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(100),
+    password_hash VARCHAR(255),
+    address VARCHAR(500),
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id)
+  )`);
+  await run(`ALTER TABLE APP_USER ADD COLUMN role VARCHAR(100) DEFAULT 'Other'`);
+  await run(`ALTER TABLE APP_USER ADD COLUMN employee_id VARCHAR(100)`);
+
+  res.json({ 
+    message: "Precise Migration completed based on provided schema.", 
+    results,
+    note: "Please restart the server after this succeeds." 
+  });
 });
 
 router.get('/debug-env', (req, res) => {
