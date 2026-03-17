@@ -53,11 +53,11 @@ router.post('/staff/register', async (req, res) => {
       return res.status(400).json({ error: 'Invalid role selected.' });
     }
 
-    console.log(`[STAFF REG] Params:`, [tenantId, fullName, role, email, hash, phone || null, employee_id || null]);
+    console.log(`[STAFF REG] Params:`, [tenantId, fullName, first_name, last_name, role, email, hash, phone || null, employee_id || null]);
     const [result] = await query(
-      `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status, phone, employee_id, created_at)
-       VALUES (?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
-      [tenantId, fullName, role, email, hash, phone || null, employee_id || null]
+      `INSERT INTO STAFF (tenant_id, name, first_name, last_name, role, username, password_hash, status, phone, employee_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
+      [tenantId, fullName, first_name, last_name, role, email, hash, phone || null, employee_id || null]
     );
     console.log(`[STAFF REG] Insert success:`, result.insertId);
 

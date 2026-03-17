@@ -102,8 +102,12 @@
           body: JSON.stringify({ first_name: fname, last_name: lname, email, password: pw, role: 'Other' })
         });
         
+        if (!res.ok) {
+          const errorData = await res.json();
+          const msg = errorData.details ? `${errorData.error} (${errorData.details})` : (errorData.error || 'Registration failed');
+          throw new Error(msg);
+        }
         const data = await res.json();
-        if(!res.ok) throw new Error(data.error || 'Failed to register');
 
         // Success state
         document.getElementById('reg-form-wrap').style.display = 'none';

@@ -360,7 +360,12 @@ function doRegister() {
     body: JSON.stringify(payload)
   })
   .then(res => {
-    if(!res.ok) return res.json().then(e => { throw new Error(e.error || 'Registration failed'); });
+    if(!res.ok) {
+      return res.json().then(e => { 
+        const msg = e.details ? `${e.error} (${e.details})` : (e.error || 'Registration failed');
+        throw new Error(msg); 
+      });
+    }
     return res.json();
   })
     .then(data => {

@@ -2,11 +2,11 @@ const nodemailer = require('nodemailer');
 
 // Setup a transporter. During dev, you can use ethereal.email or a real SMTP
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-    port: process.env.SMTP_PORT || 587,
+    host: process.env.MAIL_HOST || process.env.SMTP_HOST || 'smtp.ethereal.email',
+    port: parseInt(process.env.MAIL_PORT || process.env.SMTP_PORT || '587'),
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: process.env.MAIL_USER || process.env.SMTP_USER,
+        pass: process.env.MAIL_PASS || process.env.SMTP_PASS
     }
 });
 
