@@ -32,6 +32,7 @@ router.get('/debug-db-migration', async (req, res) => {
   await run(`ALTER TABLE STAFF ADD COLUMN last_name VARCHAR(255)`);
   await run(`ALTER TABLE STAFF ADD COLUMN phone VARCHAR(100)`);
   await run(`ALTER TABLE STAFF ADD COLUMN employee_id VARCHAR(100)`);
+  await run(`ALTER TABLE STAFF ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
   // 2. Fix APP_USER Table (ensure it has role and employee_id)
   await run(`CREATE TABLE IF NOT EXISTS APP_USER (
