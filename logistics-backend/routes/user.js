@@ -32,8 +32,7 @@ router.get('/tenant-info', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/staff/register', async (req, res) => {
   const { slug } = req.params;
-  const start = Date.now();
-  console.log(`[STAFF REG] Starting for slug: ${slug}`);
+  console.log(`[STAFF REG] Starting for slug: ${slug}`, req.body);
 
   try {
     const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
@@ -54,11 +53,13 @@ router.post('/staff/register', async (req, res) => {
       return res.status(400).json({ error: 'Invalid role selected.' });
     }
 
+    console.log(`[STAFF REG] Params:`, [tenantId, fullName, role, email, hash, phone || null, employee_id || null]);
     const [result] = await query(
       `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status, phone, employee_id, created_at)
        VALUES (?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
       [tenantId, fullName, role, email, hash, phone || null, employee_id || null]
     );
+    console.log(`[STAFF REG] Insert success:`, result.insertId);
 
     const token = jwt.sign(
       { role, staff_id: result.insertId, tenant_id: tenantId, slug, name: fullName, email },
@@ -70,8 +71,11 @@ router.post('/staff/register', async (req, res) => {
     res.status(201).json({ ok:true, staff_id: result.insertId, name: fullName });
 
   } catch (err) {
-    console.error(`[STAFF REG ERROR] ${err.message}`);
-    res.status(500).json({ error: 'Internal server error.' });
+    console.error('[STAFF REG] Error:', err);
+    res.status(500).json({ 
+      error: 'Internal server error.', 
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
   }
 });
 
@@ -80,31 +84,46 @@ router.post('/staff/register', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   const { slug } = req.params;
+  console.log(`[CUST REG] Starting for slug: ${slug}`, req.body);
   const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
   const { first_name, last_name, email, phone, password } = req.body;
   if (!first_name || !last_name || !email || !password) return res.status(400).json({ error: 'Missing required fields.' });
+  console.log(`[CUST REG] Input valid. Checking for existing user...`);
 
   const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
   if (existing.length > 0) return res.status(409).json({ error: 'Email already registered.' });
+  console.log(`[CUST REG] User not found. Hashing password...`);
 
   const hash = await bcrypt.hash(password, 12);
+  console.log(`[CUST REG] Inserting user...`);
   const [result] = await query(
     `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
      VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
     [tenantId, first_name, last_name, email, phone||null, hash]
   );
+  console.log(`[CUST REG] Insert success:`, result.insertId);
+  console.log(`[CUST REG] Generating token...`);
 
   const token = jwt.sign(
     { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
     process.env.JWT_SECRET, { expiresIn: '8h' }
   );
+  console.log(`[CUST REG] Token generated. Setting cookie and sending email...`);
 
   res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
 
-  sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug).catch(e => console.error('Mail failed:', e.message));
+  // Safe mail send - don't let it hang the response
+  try {
+    console.log(`[CUST REG] Calling sendRegistrationEmail for ${email}...`);
+    sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug)
+      .then(() => console.log(`[CUST REG] Email sent.`))
+      .catch(e => console.error(`[CUST REG] Email error: ${e.message}`));
+  } catch (err) {
+    console.error(`[CUST REG] Sync email error:`, err);
+  }
 
   res.status(201).json({ ok:true, user_id: result.insertId, name: `${first_name} ${last_name}` });
 });

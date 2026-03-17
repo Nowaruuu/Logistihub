@@ -490,7 +490,7 @@ async function loadSuperadminData() {
       
       const adminUrl = t.slug ? `logistihub.ddns.net/${t.slug}/admin` : '-';
       const staffRegUrl = t.slug ? `logistihub.ddns.net/${t.slug}/staff-registration` : '-';
-      const customerUrl = `register.logistihub.ddns.net`;
+      const customerUrl = t.slug ? `logistihub.ddns.net/${t.slug}/register` : '-';
 
       if (t.status === 'ACTIVE') {
         if (subCounts[planId] !== undefined) subCounts[planId]++;

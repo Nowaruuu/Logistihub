@@ -27,6 +27,18 @@ pool.getConnection()
     process.exit(1);
   });
 
+pool.on('acquire', (connection) => {
+  // console.log('Connection %d acquired', connection.threadId);
+});
+
+pool.on('enqueue', () => {
+  console.warn('⚠️  Waiting for available connection slot');
+});
+
+pool.on('release', (connection) => {
+  // console.log('Connection %d released', connection.threadId);
+});
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
