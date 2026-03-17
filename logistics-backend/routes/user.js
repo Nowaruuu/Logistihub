@@ -10,8 +10,52 @@ const { sendRegistrationEmail } = require('../config/mailer');
 const router = express.Router({ mergeParams: true });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /tenant-info  (PUBLIC — no auth required)
+// DEBUG / MIGRATION (TEMPORARY)
 // ─────────────────────────────────────────────────────────────────────────────
+router.get('/debug-db-migration', async (req, res) => {
+  const results = [];
+  const run = async (sql) => {
+    try {
+      await query(sql);
+      results.push({ sql: sql.substring(0, 50) + '...', status: 'SUCCESS' });
+    } catch (err) {
+      results.push({ sql: sql.substring(0, 50) + '...', status: 'ERROR', message: err.message });
+    }
+  };
+
+  await run(`ALTER TABLE staff ADD COLUMN first_name VARCHAR(255)`);
+  await run(`ALTER TABLE staff ADD COLUMN last_name VARCHAR(255)`);
+  await run(`ALTER TABLE staff ADD COLUMN phone VARCHAR(50)`);
+  await run(`ALTER TABLE staff ADD COLUMN employee_id VARCHAR(100)`);
+  await run(`CREATE TABLE IF NOT EXISTS app_user (
+      user_id       INT          PRIMARY KEY AUTO_INCREMENT,
+      tenant_id     INT          NOT NULL,
+      first_name    VARCHAR(255),
+      last_name     VARCHAR(255),
+      email         VARCHAR(255) NOT NULL,
+      phone         VARCHAR(50),
+      employee_id   VARCHAR(100),
+      role          VARCHAR(100),
+      password_hash VARCHAR(255) NOT NULL,
+      status        VARCHAR(50)  DEFAULT 'active',
+      created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id),
+      UNIQUE KEY (tenant_id, email)
+  )`);
+
+  res.json({ message: "Migration triggered via API", results });
+});
+
+router.get('/debug-env', (req, res) => {
+  res.json({
+    DB_HOST: process.env.DB_HOST,
+    DB_PORT: process.env.DB_PORT,
+    DB_NAME: process.env.DB_NAME,
+    NODE_ENV: process.env.NODE_ENV,
+    CWD: process.cwd()
+  });
+});
+
 router.get('/tenant-info', async (req, res) => {
   try {
     const { slug } = req.params;
