@@ -71,10 +71,10 @@ router.post('/staff/register', async (req, res) => {
     res.status(201).json({ ok:true, staff_id: result.insertId, name: fullName });
 
   } catch (err) {
-    console.error('[STAFF REG] Error:', err);
+    console.error('[STAFF REG] Critical Error:', err);
     res.status(500).json({ 
       error: 'Internal server error.', 
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+      details: err.message // Force details for immediate debugging
     });
   }
 });
@@ -85,47 +85,67 @@ router.post('/staff/register', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { slug } = req.params;
   console.log(`[CUST REG] Starting for slug: ${slug}`, req.body);
-  const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
-  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
-  const tenantId = tenants[0].tenant_id;
-
-  const { first_name, last_name, email, phone, password } = req.body;
-  if (!first_name || !last_name || !email || !password) return res.status(400).json({ error: 'Missing required fields.' });
-  console.log(`[CUST REG] Input valid. Checking for existing user...`);
-
-  const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
-  if (existing.length > 0) return res.status(409).json({ error: 'Email already registered.' });
-  console.log(`[CUST REG] User not found. Hashing password...`);
-
-  const hash = await bcrypt.hash(password, 12);
-  console.log(`[CUST REG] Inserting user...`);
-  const [result] = await query(
-    `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
-     VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
-    [tenantId, first_name, last_name, email, phone||null, hash]
-  );
-  console.log(`[CUST REG] Insert success:`, result.insertId);
-  console.log(`[CUST REG] Generating token...`);
-
-  const token = jwt.sign(
-    { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
-    process.env.JWT_SECRET, { expiresIn: '8h' }
-  );
-  console.log(`[CUST REG] Token generated. Setting cookie and sending email...`);
-
-  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
-
-  // Safe mail send - don't let it hang the response
+  
   try {
-    console.log(`[CUST REG] Calling sendRegistrationEmail for ${email}...`);
-    sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug)
-      .then(() => console.log(`[CUST REG] Email sent.`))
-      .catch(e => console.error(`[CUST REG] Email error: ${e.message}`));
-  } catch (err) {
-    console.error(`[CUST REG] Sync email error:`, err);
-  }
+    const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+    if (!tenants.length || tenants[0].status !== 'active') {
+      console.warn(`[CUST REG] Workspace not found or inactive: ${slug}`);
+      return res.status(404).json({ error: 'Workspace not found.' });
+    }
+    const tenantId = tenants[0].tenant_id;
 
-  res.status(201).json({ ok:true, user_id: result.insertId, name: `${first_name} ${last_name}` });
+    const { first_name, last_name, email, phone, password } = req.body;
+    if (!first_name || !last_name || !email || !password) {
+      console.warn(`[CUST REG] Missing fields:`, { first_name, last_name, email, hasPassword: !!password });
+      return res.status(400).json({ error: 'Missing required fields.' });
+    }
+
+    console.log(`[CUST REG] Checking existing user for: ${email}`);
+    const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
+    if (existing.length > 0) {
+      console.warn(`[CUST REG] Conflict: Email already registered: ${email}`);
+      return res.status(409).json({ error: 'Email already registered.' });
+    }
+
+    console.log(`[CUST REG] Hashing password...`);
+    const hash = await bcrypt.hash(password, 12);
+    
+    console.log(`[CUST REG] Inserting into APP_USER table...`);
+    const [result] = await query(
+      `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
+      [tenantId, first_name, last_name, email, phone||null, hash]
+    );
+    console.log(`[CUST REG] Insert success, ID:`, result.insertId);
+
+    const token = jwt.sign(
+      { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
+      process.env.JWT_SECRET, { expiresIn: '8h' }
+    );
+
+    res.cookie('user_token', token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict', 
+      maxAge: 8*3600*1000 
+    });
+
+    // Non-blocking email
+    console.log(`[CUST REG] Sending welcome email...`);
+    sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug)
+      .then(() => console.log(`[CUST REG] Email sent successfully to ${email}`))
+      .catch(e => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
+
+    res.status(201).json({ ok: true, user_id: result.insertId, name: `${first_name} ${last_name}` });
+
+  } catch (err) {
+    console.error('[CUST REG] Critical Error:', err);
+    // Returning 500 with message prevents 504 timeouts by closing the connection immediately
+    res.status(500).json({ 
+      error: 'Internal server error during customer registration.',
+      details: err.message // Force details for immediate debugging
+    });
+  }
 });
 
 // Helper for debugging manual browser tests
