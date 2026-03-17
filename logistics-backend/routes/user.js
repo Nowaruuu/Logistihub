@@ -246,7 +246,7 @@ router.post('/staff-login', async (req, res) => {
   if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND status = 'Available' LIMIT 1", [tenantId, email]);
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND (status = 'Available' OR status IS NULL) LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
   
   const staff = rows[0];

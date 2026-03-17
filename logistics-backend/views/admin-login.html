@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Login — Logistics OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;background:#f8fafc;}
+.login-card{width:100%;max-width:400px;margin:auto;background:#fff;padding:40px;border-radius:24px;box-shadow:0 10px 40px rgba(15,34,53,0.08);text-align:center;}
+.logo{font-family:'Fraunces',serif;font-weight:900;font-size:22px;color:#0f2235;margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.logo .material-symbols-outlined{font-size:28px;}
+h1{font-family:'Fraunces',serif;font-size:26px;font-weight:900;color:#0f2235;margin-bottom:8px;}
+p{font-size:14px;color:#94a3b8;margin-bottom:28px;}
+.form-group{text-align:left;margin-bottom:16px;}
+.label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;}
+input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:inherit;outline:none;transition:all .2s;}
+input:focus{border-color:#0f2235;box-shadow:0 0 0 4px rgba(15,34,53,0.05);}
+.btn{background:#0f2235;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;cursor:pointer;display:block;width:100%;font-size:15px;margin-top:24px;transition:opacity .2s;}
+.btn:hover{opacity:.9;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.err{color:#dc2626;font-size:13px;margin-bottom:20px;background:#fef2f2;padding:10px;border-radius:8px;display:none;}
+.tenant-info{font-size:12px;color:#64748b;margin-bottom:20px;background:#f1f5f9;padding:8px;border-radius:8px;}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo"><span class="material-symbols-outlined">package_2</span>Logistics OS</div>
+  <h1>Admin Login</h1>
+  <p>Access your workspace settings and dashboard.</p>
+  
+  <div class="tenant-info">Workspace: <strong id="t-name">Your Company</strong></div>
+  
+  <div id="err" class="err">Invalid credentials.</div>
+  
+  <div class="form-group">
+    <label class="label">Email Address</label>
+    <input type="email" id="email" placeholder="admin@example.com" required>
+  </div>
+  <div class="form-group">
+    <label class="label">Password</label>
+    <input type="password" id="pw" placeholder="••••••••" required onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  
+  <button class="btn" id="btn" onclick="doLogin()">Sign In</button>
+</div>
+
+<script>
+const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+const T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+document.getElementById('t-name').textContent = T_NAME;
+
+async function doLogin() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('pw').value;
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+
+  if(!email || !password) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch('/' + SLUG + '/api/staff-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+    
+    // Admins always go to /admin
+    window.location.href = '/' + SLUG + '/admin';
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+</script>
+</body>
+</html>

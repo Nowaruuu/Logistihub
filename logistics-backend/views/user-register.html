@@ -283,8 +283,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
           <div class="dl-arrow"><span class="material-symbols-outlined">open_in_new</span></div>
         </a>
 
-        <!-- QR Code Container -->
-        <div id="qr-container" style="margin: 20px auto; display: flex; justify-content: center; align-items: center; padding: 15px; background: white; border-radius: 12px; width: fit-content; border: 2px solid #e2e8f0;"></div>
+        <!-- (QR Code removed for staff) -->
 
         <div class="ac-box">
           <div class="ac-title">Account Summary</div>
@@ -376,20 +375,7 @@ function doRegister() {
       document.getElementById('ac-role').textContent = role;
       document.getElementById('ac-company').textContent = TENANT_NAME;
 
-      // Generate App Download link QR Code
-      const slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : 'demo';
-      const appDownloadUrl = `https://logistihub.ddns.net/app-download?tenant=${slug}`; 
-      
-      const qrContainer = document.getElementById('qr-container');
-      qrContainer.innerHTML = ''; // clear any existing
-      new QRCode(qrContainer, {
-        text: appDownloadUrl,
-        width: 128,
-        height: 128,
-        colorDark : "#0f2235",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
+      // QR Code removed for staff as requested
 
       document.getElementById('reg-screen').style.display = 'none';
       document.getElementById('dl-screen').style.display = 'block';

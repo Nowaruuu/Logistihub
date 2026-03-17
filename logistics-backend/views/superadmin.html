@@ -488,7 +488,7 @@ async function loadSuperadminData() {
       const planBadge = `<span class="badge b-${planId}">${t.plan || 'Startup'}</span>`;
       const statusBadge = `<span class="badge b-${(t.status || 'pending').toLowerCase()}">${t.status || 'Pending'}</span>`;
       
-      const adminUrl = t.slug ? `logistihub.ddns.net/${t.slug}/admin` : '-';
+      const adminUrl = t.slug ? `logistihub.ddns.net/${t.slug}/admin-login` : '-';
       const staffRegUrl = t.slug ? `logistihub.ddns.net/${t.slug}/staff-registration` : '-';
       const customerUrl = t.slug ? `logistihub.ddns.net/${t.slug}/register` : '-';
 
