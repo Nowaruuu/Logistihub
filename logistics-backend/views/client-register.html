@@ -60,20 +60,62 @@
       <button class="btn" id="reg-btn" onclick="doRegister()">Create Account</button>
     </div>
 
-    <div id="success-state" class="success-box">
-      <div style="width:52px; height:52px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
-        <span class="material-symbols-outlined" style="color:#16a34a; font-size:32px;">check_circle</span>
-      </div>
-      <h1 style="font-size:20px;">Registration Complete!</h1>
-      <p>Your account is ready. We've sent a <strong>welcome email with your login details and app download QR code</strong> to your inbox.</p>
-      <p>You can also scan the code below to download the mobile app now.</p>
-      
-      <div id="qr-container">
-        <img src="/public/images/qr_fake.png" alt="Download QR" style="width:160px; height:160px; border-radius:8px;">
-      </div>
-      <p style="font-size:12px; color:#94a3b8; margin-top:16px;">Scan to download app</p>
-    </div>
-  </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  const GET_APP_URL = 'https://logistihub.ddns.net/' + SLUG + '/get-app';
+
+  async function doRegister() {
+    const btn   = document.getElementById('reg-btn');
+    const err   = document.getElementById('error-msg');
+    const fname = document.getElementById('fname').value.trim();
+    const lname = document.getElementById('lname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pw    = document.getElementById('pw').value;
+
+    if (!fname || !lname || !email || !pw) return alert('Please fill all fields.');
+
+    btn.disabled    = true;
+    btn.textContent = 'Registering...';
+    err.style.display = 'none';
+
+    try {
+      const res = await fetch('/' + SLUG + '/api/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ first_name: fname, last_name: lname, email, password: pw, role: 'Other' })
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Registration failed');
+      }
+
+      // Show success screen
+      document.getElementById('reg-form-wrap').style.display = 'none';
+      document.getElementById('success-state').style.display = 'block';
+
+      // Set direct link
+      document.getElementById('get-app-link').href = GET_APP_URL;
+
+      // Generate QR pointing to /get-app
+      new QRCode(document.getElementById('qr-canvas'), {
+        text:         GET_APP_URL,
+        width:        180,
+        height:       180,
+        colorDark:    '#0a1628',
+        colorLight:   '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+    } catch (e) {
+      err.textContent   = e.message;
+      err.style.display = 'block';
+      btn.disabled      = false;
+      btn.textContent   = 'Create Account';
+    }
+  }
+</script>
 
   <script>
     async function doRegister() {
