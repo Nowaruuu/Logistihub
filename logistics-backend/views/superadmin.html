@@ -244,7 +244,7 @@
       <div class="dev-profile">
         <div class="avatar"><span class="material-symbols-rounded" style="color:#94a3b8;">code</span></div>
         <div class="dev-info">
-          <div class="dev-name">Super Admin</div>
+          <div class="dev-name" id="val-dev-name">Super Admin</div>
           <div class="dev-role">System Developer</div>
         </div>
       </div>
@@ -271,32 +271,32 @@
               <div class="stat-label">Total Tenants</div>
               <div class="stat-icon primary"><span class="material-symbols-rounded">corporate_fare</span></div>
             </div>
-            <div class="stat-value">124</div>
-            <div class="stat-trend trend-up"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> +12% this month</div>
+            <div class="stat-value" id="val-total-tenants">0</div>
+            <div class="stat-trend trend-up" id="trend-total-tenants"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> 0% this month</div>
           </div>
           <div class="stat-card green">
             <div class="stat-header">
               <div class="stat-label">Active Users</div>
               <div class="stat-icon success"><span class="material-symbols-rounded">group</span></div>
             </div>
-            <div class="stat-value">5,892</div>
-            <div class="stat-trend trend-up"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> +8% this week</div>
+            <div class="stat-value" id="val-active-users">0</div>
+            <div class="stat-trend trend-up" id="trend-active-users"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> 0% this week</div>
           </div>
           <div class="stat-card orange">
             <div class="stat-header">
               <div class="stat-label">Monthly Activity</div>
               <div class="stat-icon warning"><span class="material-symbols-rounded">local_shipping</span></div>
             </div>
-            <div class="stat-value">42.5K</div>
-            <div class="stat-trend trend-up"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> Shipments processed</div>
+            <div class="stat-value" id="val-monthly-activity">0</div>
+            <div class="stat-trend trend-up" id="trend-monthly-activity"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> Shipments processed</div>
           </div>
           <div class="stat-card purple">
             <div class="stat-header">
               <div class="stat-label">Platform Revenue</div>
               <div class="stat-icon purple"><span class="material-symbols-rounded">account_balance</span></div>
             </div>
-            <div class="stat-value">$142,500</div>
-            <div class="stat-trend trend-up"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> +15.2% vs last month</div>
+            <div class="stat-value" id="val-platform-revenue">$0</div>
+            <div class="stat-trend trend-up" id="trend-platform-revenue"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> 0% vs last month</div>
           </div>
         </div>
 
@@ -329,12 +329,8 @@
           <div class="table-responsive">
             <table>
               <thead><tr><th>Tenant Name</th><th>Plan</th><th>Registered Users</th><th>Shipments (Period)</th><th>Storage Used</th><th>API Calls</th></tr></thead>
-              <tbody>
-                <tr><td><strong>Acme Logistics</strong></td><td><span class="badge bg-active">Enterprise</span></td><td>1,245</td><td>8,432</td><td>4.2 GB</td><td>142K</td></tr>
-                <tr><td><strong>Global Freight Co.</strong></td><td><span class="badge bg-active">Global</span></td><td>3,820</td><td>24,105</td><td>12.8 GB</td><td>512K</td></tr>
-                <tr><td><strong>Swift Delivery</strong></td><td><span class="badge bg-active">Startup</span></td><td>85</td><td>412</td><td>0.5 GB</td><td>12K</td></tr>
-                <tr><td><strong>Urban Couriers</strong></td><td><span class="badge bg-active">Startup</span></td><td>112</td><td>890</td><td>0.8 GB</td><td>18K</td></tr>
-                <tr><td><strong>Express Line</strong></td><td><span class="badge bg-suspended">Enterprise</span></td><td>420</td><td>120</td><td>2.1 GB</td><td>5K</td></tr>
+              <tbody id="reports-tbody">
+                <tr><td colspan="6" style="text-align:center;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -346,15 +342,15 @@
         <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
           <div class="stat-card">
             <div class="stat-header"><div class="stat-label">Total Revenue (YTD)</div><div class="stat-icon success"><span class="material-symbols-rounded">attach_money</span></div></div>
-            <div class="stat-value">$1,245,600</div>
+            <div class="stat-value" id="val-rev-ytd">$0</div>
           </div>
           <div class="stat-card">
             <div class="stat-header"><div class="stat-label">Avg Revenue Per Tenant</div><div class="stat-icon primary"><span class="material-symbols-rounded">calculate</span></div></div>
-            <div class="stat-value">$10,045</div>
+            <div class="stat-value" id="val-avg-rev">$0</div>
           </div>
           <div class="stat-card">
             <div class="stat-header"><div class="stat-label">Pending Invoices</div><div class="stat-icon warning"><span class="material-symbols-rounded">receipt_long</span></div></div>
-            <div class="stat-value">$18,400</div>
+            <div class="stat-value" id="val-pending-inv">$0</div>
           </div>
         </div>
 
@@ -363,10 +359,8 @@
           <div class="table-responsive">
             <table>
               <thead><tr><th>Rank</th><th>Tenant Name</th><th>Total Sales Generated</th><th>Growth (MoM)</th><th>Plan Level</th></tr></thead>
-              <tbody>
-                <tr><td>#1</td><td><strong>Global Freight Co.</strong></td><td>$842,000</td><td class="trend-up">+24%</td><td>Global</td></tr>
-                <tr><td>#2</td><td><strong>Acme Logistics</strong></td><td>$215,400</td><td class="trend-up">+12%</td><td>Enterprise</td></tr>
-                <tr><td>#3</td><td><strong>Prime Shipping</strong></td><td>$98,200</td><td class="trend-up">+8%</td><td>Enterprise</td></tr>
+              <tbody id="sales-top-tenants-tbody">
+                <tr><td colspan="5" style="text-align:center;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -377,10 +371,8 @@
           <div class="table-responsive">
             <table>
               <thead><tr><th>Invoice ID</th><th>Tenant</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td>INV-2026-001</td><td>Acme Logistics</td><td>Mar 24, 2026</td><td>$499.00</td><td><span class="badge bg-active">Paid</span></td></tr>
-                <tr><td>INV-2026-002</td><td>Swift Delivery</td><td>Mar 23, 2026</td><td>$99.00</td><td><span class="badge bg-active">Paid</span></td></tr>
-                <tr><td>INV-2026-003</td><td>Global Freight Co.</td><td>Mar 22, 2026</td><td>$999.00</td><td><span class="badge bg-pending">Pending</span></td></tr>
+              <tbody id="sales-transactions-tbody">
+                <tr><td colspan="5" style="text-align:center;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -398,36 +390,8 @@
           <div class="table-responsive">
             <table>
               <thead><tr><th>Tenant ID</th><th>Company Name</th><th>Admin Contact</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td style="font-family: monospace; color:#64748b;">T-8942</td>
-                  <td><strong>Nexus Logistics</strong></td>
-                  <td>admin@nexus.com</td>
-                  <td>Startup</td>
-                  <td><span class="badge bg-pending">Pending Approval</span></td>
-                  <td>
-                    <div style="display:flex; gap:8px;">
-                      <button class="btn btn-success btn-sm" onclick="alert('Tenant Approved!')">Approve</button>
-                      <button class="btn btn-danger btn-sm" onclick="alert('Tenant Rejected!')">Reject</button>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-family: monospace; color:#64748b;">T-1024</td>
-                  <td><strong>Acme Logistics</strong></td>
-                  <td>john@acme.com</td>
-                  <td>Enterprise</td>
-                  <td><span class="badge bg-active">Active</span></td>
-                  <td><button class="btn btn-secondary btn-sm">Manage</button></td>
-                </tr>
-                <tr>
-                  <td style="font-family: monospace; color:#64748b;">T-0812</td>
-                  <td><strong>Express Line</strong></td>
-                  <td>founder@express.com</td>
-                  <td>Enterprise</td>
-                  <td><span class="badge bg-suspended">Suspended</span></td>
-                  <td><button class="btn btn-secondary btn-sm">Manage</button></td>
-                </tr>
+              <tbody id="tenants-tbody">
+                <tr><td colspan="6" style="text-align:center;">No tenants found</td></tr>
               </tbody>
             </table>
           </div>
@@ -447,12 +411,8 @@
           <div class="table-responsive">
             <table>
               <thead><tr><th>Timestamp</th><th>Actor (Admin)</th><th>Action</th><th>Target Entity</th><th>Details</th></tr></thead>
-              <tbody>
-                <tr><td>Mar 24, 10:45 AM</td><td>superadmin@sys.com</td><td><span class="badge bg-active">LOGIN</span></td><td>System</td><td>IP: 192.168.1.45</td></tr>
-                <tr><td>Mar 24, 09:12 AM</td><td>superadmin@sys.com</td><td><span class="badge bg-pending">APPROVE_TENANT</span></td><td>Tenant: T-8942</td><td>Changed status: Pending -> Active</td></tr>
-                <tr><td>Mar 23, 16:30 PM</td><td>superadmin@sys.com</td><td><span class="badge bg-neutral">UPDATE_SETTINGS</span></td><td>System</td><td>Updated global storage limit to 2048MB</td></tr>
-                <tr><td>Mar 23, 11:15 AM</td><td>system_job</td><td><span class="badge bg-active">BACKUP_COMPLETE</span></td><td>Database</td><td>SQL Dump successful (1.2GB)</td></tr>
-                <tr><td>Mar 22, 14:20 PM</td><td>superadmin@sys.com</td><td><span class="badge bg-suspended">SUSPEND_TENANT</span></td><td>Tenant: T-0812</td><td>Reason: Non-payment</td></tr>
+              <tbody id="audit-logs-tbody">
+                <tr><td colspan="5" style="text-align:center;">No audit logs found</td></tr>
               </tbody>
             </table>
           </div>
@@ -468,15 +428,15 @@
         <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
           <div class="stat-card">
             <div class="stat-label">Last Successful Backup</div>
-            <div class="stat-value" style="font-size:24px;">Today, 03:00 AM</div>
+            <div class="stat-value" id="val-last-backup">-</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Total Backups Stored</div>
-            <div class="stat-value" style="font-size:24px;">14 points</div>
+            <div class="stat-value" id="val-total-backups">0</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Total Storage Used</div>
-            <div class="stat-value" style="font-size:24px;">18.4 GB</div>
+            <div class="stat-value" id="val-storage-used">0 GB</div>
           </div>
         </div>
         <div class="card">
@@ -485,9 +445,7 @@
             <table>
               <thead><tr><th>Filename</th><th>Date Created</th><th>Size</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="backup-list">
-                <tr><td><span style="font-family: monospace;">backup_20260324_0300.sql.gz</span></td><td>Mar 24, 2026, 03:00 AM</td><td>1.2 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td></tr>
-                <tr><td><span style="font-family: monospace;">backup_20260323_0300.sql.gz</span></td><td>Mar 23, 2026, 03:00 AM</td><td>1.1 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td></tr>
-                <tr><td><span style="font-family: monospace;">backup_20260322_1530.sql.gz</span></td><td>Mar 22, 2026, 15:30 PM</td><td>-</td><td><span class="badge bg-suspended">Failed</span></td><td><button class="btn btn-secondary btn-sm" disabled>Download</button></td></tr>
+                <tr><td colspan="5" style="text-align:center;">No backups found</td></tr>
               </tbody>
             </table>
           </div>
@@ -511,15 +469,15 @@
                 <h3 style="margin-bottom:20px; font-size:16px;">System Branding & Config</h3>
                 <div class="form-group">
                   <label class="form-label">Platform Name</label>
-                  <input type="text" class="form-control" value="Logistics OS">
+                  <input type="text" class="form-control" id="form-platform-name" value="">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Support Email Contact</label>
-                  <input type="email" class="form-control" value="support@logistihub.com">
+                  <input type="email" class="form-control" id="form-support-email" value="">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Base Domain</label>
-                  <input type="text" class="form-control" value="logistihub.ddns.net">
+                  <input type="text" class="form-control" id="form-base-domain" value="">
                   <span style="font-size:12px; color:var(--text-muted); display:block; margin-top:6px;">All tenant workspaces will be subdomains of this root.</span>
                 </div>
                 <button class="btn btn-primary" style="margin-top:10px;">Save General Settings</button>
@@ -529,14 +487,14 @@
                 <h3 style="margin-bottom:20px; font-size:16px;">Default Tenant Limits</h3>
                 <div class="form-group">
                   <label class="form-label">Default Max Users (per workspace)</label>
-                  <input type="number" class="form-control" value="50">
+                  <input type="number" class="form-control" id="form-max-users" value="">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Default Storage Quota (MB)</label>
-                  <input type="number" class="form-control" value="1024">
+                  <input type="number" class="form-control" id="form-storage-quota" value="">
                 </div>
                 <div class="form-group" style="display:flex; gap:12px; align-items:center; margin-top:24px;">
-                  <input type="checkbox" checked style="width:16px; height:16px;">
+                  <input type="checkbox" id="form-require-approval" style="width:16px; height:16px;">
                   <label style="font-size:14px; font-weight:500;">Require explicit Superadmin approval for organic self-registration</label>
                 </div>
                 <button class="btn btn-primary" style="margin-top:20px;">Save Limits</button>
@@ -548,9 +506,8 @@
                 
                 <table style="margin-bottom:24px;">
                   <thead><tr><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    <tr><td>superadmin@sys.com</td><td><span class="badge bg-active">Owner</span></td><td>-</td></tr>
-                    <tr><td>dev_ops@sys.com</td><td><span class="badge bg-neutral">Moderator</span></td><td><button class="btn btn-sm btn-secondary">Edit</button></td></tr>
+                  <tbody id="roles-tbody">
+                    <tr><td colspan="3" style="text-align:center;">No developer roles found</td></tr>
                   </tbody>
                 </table>
                 <button class="btn btn-secondary"><span class="material-symbols-rounded">add</span> Add New Developer</button>
@@ -610,6 +567,12 @@
         // Add to history table randomly
         const tr = document.createElement('tr');
         tr.innerHTML = `<td><span style="font-family: monospace;">backup_manual_just_now.sql.gz</span></td><td>Just Now</td><td>1.3 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td>`;
+        
+        // Remove 'no data' row if present
+        const list = document.getElementById('backup-list');
+        if(list.innerText.includes('No backups found')){
+          list.innerHTML = '';
+        }
         document.getElementById('backup-list').prepend(tr);
         
         setTimeout(() => {
@@ -622,8 +585,10 @@
 
     // Chart.js Implementations
     let gChart, sChart;
-    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-    Chart.defaults.color = "#64748b";
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+      Chart.defaults.color = "#64748b";
+    }
 
     function renderCharts() {
       if(gChart) gChart.destroy();
@@ -637,7 +602,7 @@
           datasets: [
             {
               label: 'Total Users',
-              data: [1200, 1900, 3000, 4100, 4800, 5892],
+              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
               borderColor: '#2563eb',
               backgroundColor: 'rgba(37, 99, 235, 0.1)',
               borderWidth: 3,
@@ -646,7 +611,7 @@
             },
             {
               label: 'Active Tenants',
-              data: [42, 60, 85, 95, 110, 124],
+              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.0)',
               borderWidth: 2,
@@ -672,7 +637,7 @@
         data: {
           labels: ['Active', 'Pending Approval', 'Suspended'],
           datasets: [{
-            data: [102, 15, 7],
+            data: [0, 0, 0],  // Blank slate initialized array
             backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
             borderWidth: 0,
             hoverOffset: 4
@@ -690,7 +655,11 @@
     }
 
     // Init charts on load
-    window.onload = renderCharts;
+    window.onload = () => {
+      if (typeof Chart !== 'undefined') {
+        renderCharts();
+      }
+    };
 
   </script>
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
