@@ -11,6 +11,8 @@
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Superadmin API -->
+<script src="/frontend-api.js"></script>
 
 <style>
   :root {
@@ -654,13 +656,68 @@
       });
     }
 
-    // Init charts on load
+    // Init charts and data on load
     window.onload = () => {
       if (typeof Chart !== 'undefined') {
         renderCharts();
       }
+      if (typeof loadSuperadminData === 'function') {
+        loadSuperadminData();
+      }
     };
 
+    // --- RECONNECTED BACKEND LOGIC ---
+    async function loadSuperadminData() {
+      try {
+        if (typeof SuperadminAPI === 'undefined') return;
+        
+        const overview = await SuperadminAPI.getOverview().catch(() => ({}));
+        const tenantsRes = await SuperadminAPI.getTenants().catch(() => []);
+        
+        const stats = overview.stats || overview || {};
+        
+        // Map Stats
+        document.getElementById('val-total-tenants').textContent = stats.total_tenants || 0;
+        document.getElementById('val-platform-revenue').textContent = '$' + (stats.mrr || 0);
+        
+        // Map Tenants Table
+        const tbody = document.getElementById('tenants-tbody');
+        const tenantsArray = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes.tenants || []);
+
+        if (!tenantsArray || tenantsArray.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tenants found</td></tr>`;
+          return;
+        }
+
+        let html = '';
+        tenantsArray.forEach(t => {
+          const plan = t.plan || 'Startup';
+          const status = t.status || 'Pending';
+          
+          let statusBadgeClass = 'bg-neutral';
+          if (status.toUpperCase() === 'ACTIVE') statusBadgeClass = 'bg-active';
+          if (status.toUpperCase() === 'PENDING') statusBadgeClass = 'bg-pending';
+          if (status.toUpperCase() === 'SUSPENDED') statusBadgeClass = 'bg-suspended';
+
+          html += `<tr>
+            <td style="font-family: monospace; color:#64748b;">${t.tenant_id || '-'}</td>
+            <td><strong>${t.company_name || '-'}</strong></td>
+            <td>${t.admin_email || '-'}</td>
+            <td>${plan}</td>
+            <td><span class="badge ${statusBadgeClass}">${status}</span></td>
+            <td>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="alert('Manage Tenant: ${t.tenant_id}')">Manage</button>
+              </div>
+            </td>
+          </tr>`;
+        });
+
+        tbody.innerHTML = html;
+      } catch (e) {
+        console.error("Superadmin load failed", e);
+      }
+    }
   </script>
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </body>
