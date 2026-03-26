@@ -50,32 +50,28 @@ async function sendInviteEmail(toEmail, company, token) {
 }
 
 async function sendRegistrationEmail(email, name, companyName, slug, downloadUrl, emailToken) {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const appUrl = downloadUrl
-    ? downloadUrl
-    : `${baseUrl}/${slug}/get-app`;
+    // Attach the permanent emailToken to the link!
+    const emailLink = `https://logistihub.ddns.net/${slug}/get-app?token=${emailToken}`;
 
-  const emailLink = `${baseUrl}/${slug}/get-app`;
-
-  await transporter.sendMail({
-    from:    `"${companyName}" <${process.env.MAIL_FROM}>`,
-    to:      email,
-    subject: `Welcome to ${companyName} — Download Your App`,
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
-        <h2 style="color:#0a1628;">Welcome, ${name}! 👋</h2>
-        <p style="color:#475569;">Your account for <strong>${companyName}</strong> has been created successfully.</p>
-        <p style="color:#475569;">Download the mobile app to track your shipments:</p>
-        <a href="${appUrl}" style="display:inline-block;margin:16px 0;background:#0a1628;color:#fff;padding:14px 28px;border-radius:12px;text-decoration:none;font-weight:700;">
-          📱 Download App
-        </a>
-        <p style="color:#94a3b8;font-size:12px;">Or visit: <a href="${emailLink}">${emailLink}</a></p>
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
-        <p style="color:#94a3b8;font-size:11px;">This link is permanent and will always work.</p>
-      </div>
-    `,
-  });
-}
+    await transporter.sendMail({
+      from:    `"${companyName}" <${process.env.MAIL_FROM}>`,
+      to:      email,
+      subject: `Welcome to ${companyName} — Download Your App`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+          <h2 style="color:#0a1628;">Welcome, ${name}! 👋</h2>
+          <p style="color:#475569;">Your account for <strong>${companyName}</strong> has been created successfully.</p>
+          <p style="color:#475569;">Download the mobile app to track your shipments:</p>
+          <a href="${emailLink}" style="display:inline-block;margin:16px 0;background:#0a1628;color:#fff;padding:14px 28px;border-radius:12px;text-decoration:none;font-weight:700;">
+            📱 Download App
+          </a>
+          <p style="color:#94a3b8;font-size:12px;">Or visit: <a href="${emailLink}">${emailLink}</a></p>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+          <p style="color:#94a3b8;font-size:11px;">This link is permanent and will always work.</p>
+        </div>
+      `,
+    });
+  }
 /**
  * Send welcome email after admin account is created.
  */
