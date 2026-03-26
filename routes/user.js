@@ -283,7 +283,7 @@ router.post('/staff-login', async (req, res) => {
     maxAge:   8 * 60 * 60 * 1000,
   });
 
-  res.json({ ok: true, name: staff.name, role: staff.role, slug });
+  res.json({ ok: true, name: staff.name, role: staff.role, slug, token });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

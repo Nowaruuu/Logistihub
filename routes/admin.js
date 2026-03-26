@@ -113,7 +113,7 @@ router.get('/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
   if (item_type_flag) { sql += ' AND s.item_type_flag = ?';  params.push(item_type_flag); }
 
   sql += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?';
-  params.push(parseInt(limit), parseInt(offset));
+  params.push(Number(limit), Number(offset));
 
   const [rows] = await query(sql, params);
   res.json(rows);
@@ -373,7 +373,7 @@ router.post('/clients', requireAdmin, requireSlugMatch, async (req, res) => {
 });
 
 router.delete('/clients/:id', requireAdmin, requireSlugMatch, async (req, res) => {
-  await query('DELETE FROM CLIENT WHERE client_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
+  await query('DELETE FROM APP_USER WHERE user_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
   res.json({ ok: true });
 });
 
