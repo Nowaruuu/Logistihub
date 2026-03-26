@@ -9,6 +9,9 @@ const { sendRegistrationEmail } = require('../config/mailer');
 
 const router = express.Router({ mergeParams: true });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DEBUG / MIGRATION
+// ─────────────────────────────────────────────────────────────────────────────
 router.get('/debug-db-migration', async (req, res) => {
   const results = [];
   const run = async (sql) => {
@@ -43,6 +46,11 @@ router.get('/debug-db-migration', async (req, res) => {
   )`);
   await run(`ALTER TABLE APP_USER ADD COLUMN role VARCHAR(100) DEFAULT 'Other'`);
   await run(`ALTER TABLE APP_USER ADD COLUMN employee_id VARCHAR(100)`);
+  // Add status column to CLIENT if missing
+  await run(`ALTER TABLE CLIENT ADD COLUMN status VARCHAR(50) DEFAULT 'active'`);
+  // Add app_download_url and app_name to TENANT if missing
+  await run(`ALTER TABLE TENANT ADD COLUMN app_download_url VARCHAR(1000)`);
+  await run(`ALTER TABLE TENANT ADD COLUMN app_name VARCHAR(255)`);
   res.json({ message: "Migration completed.", results });
 });
 
@@ -56,6 +64,9 @@ router.get('/debug-env', (req, res) => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT INFO (public)
+// ─────────────────────────────────────────────────────────────────────────────
 router.get('/tenant-info', async (req, res) => {
   try {
     const { slug } = req.params;
@@ -71,6 +82,9 @@ router.get('/tenant-info', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAFF REGISTER
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/staff/register', async (req, res) => {
   const { slug } = req.params;
   try {
@@ -103,6 +117,10 @@ router.post('/staff/register', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER REGISTER
+// Creates APP_USER + syncs to CLIENT table so admin can see them
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   const { slug } = req.params;
   console.log(`[CUST REG] Starting for slug: ${slug}`, req.body);
@@ -143,20 +161,27 @@ router.post('/register', async (req, res) => {
     );
     const userId = result.insertId;
 
-    // Also create/update CLIENT record so admin can see them and assign shipments
+    // Sync to CLIENT table so admin Client Directory shows them
+    // CLIENT.company_name = full name, contact_person = full name
     const [existingClient] = await query(
       'SELECT client_id FROM CLIENT WHERE tenant_id = ? AND username = ? LIMIT 1',
       [tenantId, email]
     );
     if (!existingClient.length) {
       await query(
-        `INSERT INTO CLIENT (tenant_id, company_name, contact_person, phone_number, username, password_hash)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO CLIENT (tenant_id, company_name, contact_person, phone_number, username, password_hash, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'active')`,
         [tenantId, fullName, fullName, phone || null, email, hash]
+      );
+    } else {
+      // Update existing CLIENT record to keep in sync
+      await query(
+        `UPDATE CLIENT SET company_name = ?, contact_person = ?, phone_number = ?, status = 'active' WHERE tenant_id = ? AND username = ?`,
+        [fullName, fullName, phone || null, tenantId, email]
       );
     }
 
-    // Generate JWT token for immediate login
+    // Generate JWT token
     const token = jwt.sign(
       { role: 'user', user_id: userId, tenant_id: tenantId, slug, name: fullName, email },
       process.env.JWT_SECRET,
@@ -170,27 +195,27 @@ router.post('/register', async (req, res) => {
       maxAge:   8 * 3600 * 1000
     });
 
-    // Generate a 10-minute QR token
+    // 10-minute QR token (for page scan)
     const qrToken = jwt.sign(
       { slug, tenant_id: tenantId, type: 'app_download' },
       process.env.JWT_SECRET,
       { expiresIn: '10m' }
     );
 
-    // Generate permanent email token (no expiry)
+    // Permanent email token (no expiry)
     const emailToken = jwt.sign(
       { slug, tenant_id: tenantId, type: 'app_download' },
       process.env.JWT_SECRET
     );
 
-    // Get app download URL from tenant
+    // Get tenant app info
     const [tenantData] = await query(
       'SELECT app_download_url, app_name FROM TENANT WHERE tenant_id = ? LIMIT 1',
       [tenantId]
     );
     const downloadUrl = tenantData[0]?.app_download_url || null;
 
-    // Send registration email with permanent download link
+    // Send email with permanent download link
     sendRegistrationEmail(
       email,
       fullName,
@@ -201,11 +226,11 @@ router.post('/register', async (req, res) => {
     ).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
-      ok:        true,
-      user_id:   userId,
-      name:      fullName,
+      ok:       true,
+      user_id:  userId,
+      name:     fullName,
       token,
-      qr_token:  qrToken,  // 10-minute token for page QR
+      qr_token: qrToken,
     });
 
   } catch (err) {
@@ -214,11 +239,14 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.get('/register', (req, res) => res.json({ message: 'Use POST to register a customer.' }));
+router.get('/register',       (req, res) => res.json({ message: 'Use POST to register a customer.' }));
 router.get('/staff/register', (req, res) => res.json({ message: 'Use POST to register staff.' }));
-router.get('/login', (req, res) => res.json({ message: 'Use POST to login.' }));
-router.get('/staff-login', (req, res) => res.json({ message: 'Use POST for staff-login.' }));
+router.get('/login',          (req, res) => res.json({ message: 'Use POST to login.' }));
+router.get('/staff-login',    (req, res) => res.json({ message: 'Use POST for staff-login.' }));
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER LOGIN — returns { token, user } for mobile app
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
@@ -255,6 +283,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAFF LOGIN
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/staff-login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
@@ -274,6 +305,9 @@ router.post('/staff-login', async (req, res) => {
   res.json({ ok: true, name: staff.name, role: staff.role, slug });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /me — returns logged-in user profile
+// ─────────────────────────────────────────────────────────────────────────────
 router.get('/me', requireUser, async (req, res) => {
   try {
     const [rows] = await query(
@@ -289,18 +323,77 @@ router.get('/me', requireUser, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /my-shipments — shipments for logged-in client (mobile dashboard)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/my-shipments', requireUser, async (req, res) => {
+  try {
+    const { user_id, tenant_id } = req.user;
+
+    // Find the CLIENT record linked to this APP_USER by email
+    const [userRows] = await query(
+      'SELECT email FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1',
+      [user_id, tenant_id]
+    );
+    if (!userRows.length) return res.status(404).json({ error: 'User not found.' });
+
+    const email = userRows[0].email;
+    const [clientRows] = await query(
+      'SELECT client_id FROM CLIENT WHERE tenant_id = ? AND username = ? LIMIT 1',
+      [tenant_id, email]
+    );
+
+    if (!clientRows.length) {
+      // No client record yet — return empty
+      return res.json({ shipments: [], stats: { total: 0, pending: 0, in_transit: 0, delivered: 0 } });
+    }
+
+    const clientId = clientRows[0].client_id;
+
+    const [shipments] = await query(
+      `SELECT s.delivery_number, s.status, s.pickup_location, s.dropoff_location,
+              s.item_type_flag, s.created_at,
+              r.route_name,
+              d.name AS driver_name
+       FROM SHIPMENT s
+       LEFT JOIN ROUTE r ON r.route_id = s.route_id
+       LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
+       WHERE s.tenant_id = ? AND s.client_id = ?
+       ORDER BY s.created_at DESC`,
+      [tenant_id, clientId]
+    );
+
+    const stats = {
+      total:      shipments.length,
+      pending:    shipments.filter(s => s.status === 'Pending').length,
+      in_transit: shipments.filter(s => s.status === 'In-Transit').length,
+      delivered:  shipments.filter(s => s.status === 'Delivered').length,
+    };
+
+    res.json({ shipments, stats });
+  } catch (err) {
+    console.error('my-shipments error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /logout
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.clearCookie('user_token');
   res.json({ ok: true });
 });
 
-// GET /:slug/api/app-download — validates QR token and returns APK URL
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /app-download — validates QR token, returns tenant-scoped APK URL
+// ─────────────────────────────────────────────────────────────────────────────
 router.get('/app-download', async (req, res) => {
   const { slug } = req.params;
   const { token } = req.query;
 
   try {
-    // If token provided, validate it (10-min expiry for page QR)
+    // If token provided, validate it
     if (token) {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       if (payload.type !== 'app_download' || payload.slug !== slug) {
@@ -309,53 +402,19 @@ router.get('/app-download', async (req, res) => {
     }
 
     const [rows] = await query(
-      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = ? LIMIT 1',
-      [slug, 'active']
+      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
+      [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
 
     const tenant = rows[0];
     if (!tenant.app_download_url) {
-      return res.status(404).json({ error: 'App not available yet.' });
+      return res.status(404).json({ error: 'App not available yet. Contact your admin.' });
     }
 
     res.json({
       download_url: tenant.app_download_url,
-      app_name:     tenant.app_name || tenant.company_name,
-    });
-
-  } catch (e) {
-    return res.status(401).json({ error: 'QR code expired. Please re-register or request a new link.' });
-  }
-});
-
-// GET /:slug/api/app-download — validates QR token and returns APK URL
-router.get('/app-download', async (req, res) => {
-  const { slug } = req.params;
-  const { token } = req.query;
-
-  try {
-    // If token provided, validate it (10-min expiry for page QR)
-    if (token) {
-      const payload = jwt.verify(token, process.env.JWT_SECRET);
-      if (payload.type !== 'app_download' || payload.slug !== slug) {
-        return res.status(401).json({ error: 'Invalid or expired QR code.' });
-      }
-    }
-
-    const [rows] = await query(
-      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = ? LIMIT 1',
-      [slug, 'active']
-    );
-    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
-
-    const tenant = rows[0];
-    if (!tenant.app_download_url) {
-      return res.status(404).json({ error: 'App not available yet.' });
-    }
-
-    res.json({
-      download_url: tenant.app_download_url,
+      // App name is tenant company name so it shows "Amogus" or "Geloop" etc.
       app_name:     tenant.app_name || tenant.company_name,
     });
 
