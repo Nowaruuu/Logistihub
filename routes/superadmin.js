@@ -83,14 +83,14 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
     const [rows] = await query(`
       SELECT
         t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at,
-        s.username AS admin_email,
+        ANY_VALUE(s.username) AS admin_email,
         COUNT(DISTINCT u.user_id)  AS user_count,
         COUNT(DISTINCT sh.delivery_number) AS shipment_count
       FROM TENANT t
       LEFT JOIN STAFF s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
       LEFT JOIN APP_USER u ON u.tenant_id = t.tenant_id
       LEFT JOIN SHIPMENT sh ON sh.tenant_id = t.tenant_id
-      GROUP BY t.tenant_id
+      GROUP BY t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at
       ORDER BY t.created_at DESC
     `);
     res.json(rows);
@@ -100,6 +100,40 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/subscriptions  — all subscription/payment data
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/subscriptions', requireSuperadmin, async (req, res) => {
+  try {
+    const [rows] = await query(`
+      SELECT
+        t.tenant_id, t.company_name, t.plan, t.status, t.created_at,
+        COALESCE(SUM(p.total_amount), 0) AS revenue,
+        CASE t.plan
+          WHEN 'startup'    THEN 99
+          WHEN 'enterprise' THEN 499
+          WHEN 'global'     THEN 999
+          ELSE 0
+        END AS monthly_fee
+      FROM TENANT t
+      LEFT JOIN PAYMENT p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
+      GROUP BY t.tenant_id, t.company_name, t.plan, t.status, t.created_at
+      ORDER BY revenue DESC
+    `);
+
+    const totalRevenue = rows.reduce((sum, r) => sum + Number(r.revenue), 0);
+    const pendingCount = rows.filter(r => r.status === 'pending').length;
+
+    res.json({
+      totalRevenue,
+      pendingCount,
+      topTenants: rows,
+    });
+  } catch(e) {
+    console.error('Subscriptions error:', e);
+    res.status(500).json({ error: 'Failed to load subscriptions.' });
+  }
+});
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/superadmin/tenants/invite  — send invitation email
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +224,19 @@ router.get('/subscriptions', requireSuperadmin, async (req, res) => {
   } catch(e) {
     console.error('Subscriptions error:', e);
     res.status(500).json({ error: 'Failed to load subscriptions.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/audit-logs
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/audit-logs', requireSuperadmin, async (req, res) => {
+  try {
+    // For now, return an empty array or a simple message so the frontend doesn't crash
+    res.json([]); 
+  } catch(e) {
+    console.error('Audit logs error:', e);
+    res.status(500).json({ error: 'Failed to load audit logs.' });
   }
 });
 
