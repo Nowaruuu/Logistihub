@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<!--
+  NOTE: This page is tenant-scoped.
+  URL structure: logistihub.ddns.net/{tenant_slug}/staff-login
+  Only staff created by the tenant admin can login here.
+-->
+<title>Staff Login — Logistics OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+/* Left panel */
+.left{width:420px;flex-shrink:0;background:#0f2235;display:flex;flex-direction:column;justify-content:space-between;padding:36px 38px;position:relative;overflow:hidden;}
+@media(max-width:800px){.left{display:none;}}
+.left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(99,102,241,.18) 0%,transparent 60%);}
+.hex{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpolygon points='28,2 54,16 54,44 28,48 2,44 2,16' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3C/svg%3E");background-size:56px 48px;}
+.left-content{position:relative;z-index:1;}
+
+.tenant-brand{display:flex;align-items:center;gap:10px;margin-bottom:44px;}
+.tenant-logo-box{width:40px;height:40px;background:rgba(255,255,255,.1);border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.tenant-logo-box .material-symbols-outlined{color:#fff;font-size:21px;}
+.tenant-name-display{font-family:'Fraunces',serif;font-weight:900;font-size:17px;color:#fff;line-height:1;}
+.tenant-powered{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;}
+
+.left h2{font-family:'Fraunces',serif;font-size:32px;font-weight:900;color:#fff;line-height:1.25;margin-bottom:14px;}
+.left h2 span{color:#a78bfa;}
+.left p{font-size:13px;color:rgba(255,255,255,.45);line-height:1.75;max-width:280px;}
+
+.role-cards{margin-top:28px;display:flex;flex-direction:column;gap:10px;}
+.role-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:11px;}
+.role-card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ri-driver{background:rgba(99,102,241,.2);}
+.ri-driver .material-symbols-outlined{color:#a78bfa;font-size:18px;}
+.ri-dc{background:rgba(34,197,94,.2);}
+.ri-dc .material-symbols-outlined{color:#4ade80;font-size:18px;}
+.role-card-title{font-size:13px;font-weight:700;color:#fff;}
+.role-card-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:1px;}
+
+.left-bottom{position:relative;z-index:1;}
+.security-note{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);border-radius:8px;padding:10px 12px;}
+.security-note .material-symbols-outlined{font-size:14px;color:rgba(255,255,255,.3);}
+.security-note p{font-size:11px;color:rgba(255,255,255,.3);line-height:1.5;}
+
+/* Right panel */
+.right{flex:1;background:#fff;display:flex;flex-direction:column;overflow-y:auto;}
+.right-inner{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 40px;max-width:440px;margin:0 auto;width:100%;}
+@media(max-width:540px){.right-inner{padding:28px 20px;}}
+
+.mobile-header{display:none;align-items:center;gap:9px;margin-bottom:26px;}
+@media(max-width:800px){.mobile-header{display:flex;}}
+.mobile-logo-box{width:32px;height:32px;border-radius:8px;background:#0f2235;display:flex;align-items:center;justify-content:center;}
+.mobile-logo-box .material-symbols-outlined{color:#fff;font-size:17px;}
+.mobile-tenant-name{font-family:'Fraunces',serif;font-weight:900;font-size:15px;color:#0f2235;}
+
+.form-eyebrow{display:inline-flex;align-items:center;gap:5px;background:#f5f3ff;color:#7c3aed;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
+.form-eyebrow .material-symbols-outlined{font-size:13px;}
+
+.form-title{font-family:'Fraunces',serif;font-size:28px;font-weight:900;color:#0f2235;margin-bottom:6px;}
+.form-sub{font-size:13px;color:#94a3b8;margin-bottom:28px;line-height:1.55;}
+
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;color:#475569;}
+.field-wrap{position:relative;}
+.field-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:17px;pointer-events:none;}
+.field-wrap input{padding-left:36px!important;}
+input{width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
+input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:38px;}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#cbd5e1;display:flex;align-items:center;padding:0;}
+.pw-toggle:hover{color:#64748b;}
+
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 13px;font-size:12px;color:#dc2626;display:flex;align-items:center;gap:7px;margin-bottom:14px;}
+.err-box .material-symbols-outlined{font-size:15px;flex-shrink:0;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;background:#0f2235;color:#fff;transition:opacity .15s;margin-top:4px;}
+.btn:hover{opacity:.87;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn .material-symbols-outlined{font-size:15px;}
+
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;}
+.divider-line{flex:1;height:1px;background:#f1f5f9;}
+.divider-text{font-size:11px;color:#cbd5e1;white-space:nowrap;}
+
+.tenant-info{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:10px 13px;margin-bottom:20px;}
+.tenant-info .material-symbols-outlined{font-size:16px;color:#94a3b8;flex-shrink:0;}
+.tenant-info-text{font-size:12px;color:#64748b;}
+.tenant-info-name{font-weight:700;color:#0f2235;}
+
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left">
+  <div class="hex"></div>
+  <div class="left-content">
+    <div class="tenant-brand">
+      <div class="tenant-logo-box"><span class="material-symbols-outlined">package_2</span></div>
+      <div>
+        <div class="tenant-name-display" id="left-tenant-name">Your Company</div>
+        <div class="tenant-powered">Powered by Logistics OS</div>
+      </div>
+    </div>
+
+    <h2>Staff<br/><span>Portal</span></h2>
+    <p>Sign in to access your assigned tasks, deliveries, and workspace tools.</p>
+
+    <div class="role-cards">
+      <div class="role-card">
+        <div class="role-card-icon ri-driver"><span class="material-symbols-outlined">local_shipping</span></div>
+        <div>
+          <div class="role-card-title">Driver</div>
+          <div class="role-card-sub">Route assignments & delivery tracking</div>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-card-icon ri-dc"><span class="material-symbols-outlined">description</span></div>
+        <div>
+          <div class="role-card-title">Document Controller</div>
+          <div class="role-card-sub">Shipment documents & records</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="left-bottom">
+    <div class="security-note">
+      <span class="material-symbols-outlined">shield</span>
+      <p>This portal is private to your company. All logins are monitored and logged.</p>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right">
+  <div class="right-inner">
+
+    <div class="mobile-header">
+      <div class="mobile-logo-box"><span class="material-symbols-outlined">package_2</span></div>
+      <div class="mobile-tenant-name" id="mobile-tenant-name">Your Company</div>
+    </div>
+
+    <div class="form-eyebrow"><span class="material-symbols-outlined">badge</span>Staff Portal</div>
+    <div class="form-title">Welcome back</div>
+    <div class="form-sub">Sign in with your staff credentials to continue.</div>
+
+    <div class="tenant-info">
+      <span class="material-symbols-outlined">corporate_fare</span>
+      <div class="tenant-info-text">Signing in to <span class="tenant-info-name" id="info-tenant-name">Your Company</span></div>
+    </div>
+
+    <div id="err-box" class="err-box" style="display:none;">
+      <span class="material-symbols-outlined">error</span>
+      <span id="err-msg">Invalid credentials.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <div class="field-wrap">
+        <span class="field-ico material-symbols-outlined">mail</span>
+        <input id="email" type="email" placeholder="Email address" autocomplete="email" required/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="field-wrap pw-wrap">
+        <span class="field-ico material-symbols-outlined">lock</span>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" required style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="pw-toggle" type="button" onclick="togglePw(this)"><span class="material-symbols-outlined">visibility</span></button>
+      </div>
+    </div>
+
+    <button class="btn" id="login-btn" onclick="doLogin()">
+      <span class="material-symbols-outlined">login</span>Sign In
+    </button>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">need help?</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <p style="font-size:12px;color:#94a3b8;text-align:center;">Contact your admin if you forgot your credentials or need access.</p>
+
+  </div>
+</div>
+
+<script>
+var TENANT_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+
+document.getElementById('left-tenant-name').textContent = TENANT_NAME;
+document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
+document.getElementById('info-tenant-name').textContent = TENANT_NAME;
+
+function togglePw(btn) {
+  var inp = document.getElementById('password');
+  var ico = btn.querySelector('.material-symbols-outlined');
+  if (inp.type === 'password') { inp.type = 'text'; ico.textContent = 'visibility_off'; }
+  else { inp.type = 'password'; ico.textContent = 'visibility'; }
+}
+
+function showErr(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  document.getElementById('err-box').style.display = 'flex';
+}
+
+async function doLogin() {
+  var email    = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var btn      = document.getElementById('login-btn');
+
+  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+
+  document.getElementById('err-box').style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
+
+  try {
+    const data = await fetch(`/${SLUG}/api/staff-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+    }).then(r => r.json());
+    if (!data.ok) throw new Error(data.error || 'Login failed.');
+
+    // Redirect based on role
+    const role = data.role || '';
+    if (role === 'Driver') {
+        window.location.href = '/' + SLUG + '/driver-dashboard';
+        } else if (role === 'Document Controller') {
+        window.location.href = '/' + SLUG + '/dc-dashboard';
+        } else if (role === 'Admin') {
+        window.location.href = '/' + SLUG + '/admin';
+        } else {
+        window.location.href = '/' + SLUG + '/admin';
+    }
+  } catch (e) {
+    showErr(e.message || 'Login failed. Please check your credentials.');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+  }
+}
+</script>
+<script src="/public/frontend-api.js"></script>
+</body>
+</html>

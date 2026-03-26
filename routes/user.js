@@ -105,44 +105,112 @@ router.post('/staff/register', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   const { slug } = req.params;
+  console.log(`[CUST REG] Starting for slug: ${slug}`, req.body);
+
   try {
-    const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
-    if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
-    const tenantId = tenants[0].tenant_id;
-    const { first_name, last_name, email, phone, password, address } = req.body;
-    if (!first_name || !last_name || !email || !password) return res.status(400).json({ error: 'Missing required fields.' });
-    const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
-    if (existing.length > 0) return res.status(409).json({ error: 'Email already registered.' });
-    const hash = await bcrypt.hash(password, 12);
+    const [tenants] = await query(
+      "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
+      [slug]
+    );
+    if (!tenants.length || tenants[0].status !== 'active') {
+      return res.status(404).json({ error: 'Workspace not found.' });
+    }
+    const tenantId    = tenants[0].tenant_id;
+    const companyName = tenants[0].company_name;
+
+    const { first_name, last_name, email, phone, password } = req.body;
+    if (!first_name || !last_name || !email || !password) {
+      return res.status(400).json({ error: 'Missing required fields.' });
+    }
+
+    // Check existing APP_USER
+    const [existing] = await query(
+      'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
+      [tenantId, email]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already registered.' });
+    }
+
+    const hash     = await bcrypt.hash(password, 12);
+    const fullName = `${first_name} ${last_name}`;
+
+    // Insert APP_USER
     const [result] = await query(
-      `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, address, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'Other', ?, ?, 'active', NOW())`,
-      [tenantId, first_name, last_name, email, phone||null, hash, address||null]
+      `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
+      [tenantId, first_name, last_name, email, phone || null, hash]
     );
+    const userId = result.insertId;
+
+    // Also create/update CLIENT record so admin can see them and assign shipments
+    const [existingClient] = await query(
+      'SELECT client_id FROM CLIENT WHERE tenant_id = ? AND username = ? LIMIT 1',
+      [tenantId, email]
+    );
+    if (!existingClient.length) {
+      await query(
+        `INSERT INTO CLIENT (tenant_id, company_name, contact_person, phone_number, username, password_hash)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [tenantId, fullName, fullName, phone || null, email, hash]
+      );
+    }
+
+    // Generate JWT token for immediate login
     const token = jwt.sign(
-      { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
-      process.env.JWT_SECRET, { expiresIn: '8h' }
+      { role: 'user', user_id: userId, tenant_id: tenantId, slug, name: fullName, email },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
     );
-    res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
-    sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug)
-      .catch(e => console.error(`[CUST REG] Email error: ${e.message}`));
-    res.status(201).json({
-      token,
-      user: {
-        user_id:    result.insertId,
-        tenant_id:  tenantId,
-        first_name,
-        last_name,
-        email,
-        phone:      phone || null,
-        address:    address || null,
-        status:     'active',
-        created_at: new Date().toISOString(),
-      }
+
+    res.cookie('user_token', token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge:   8 * 3600 * 1000
     });
+
+    // Generate a 10-minute QR token
+    const qrToken = jwt.sign(
+      { slug, tenant_id: tenantId, type: 'app_download' },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
+    );
+
+    // Generate permanent email token (no expiry)
+    const emailToken = jwt.sign(
+      { slug, tenant_id: tenantId, type: 'app_download' },
+      process.env.JWT_SECRET
+    );
+
+    // Get app download URL from tenant
+    const [tenantData] = await query(
+      'SELECT app_download_url, app_name FROM TENANT WHERE tenant_id = ? LIMIT 1',
+      [tenantId]
+    );
+    const downloadUrl = tenantData[0]?.app_download_url || null;
+
+    // Send registration email with permanent download link
+    sendRegistrationEmail(
+      email,
+      fullName,
+      companyName,
+      slug,
+      downloadUrl,
+      emailToken
+    ).catch(e => console.error('Email error:', e.message));
+
+    res.status(201).json({
+      ok:        true,
+      user_id:   userId,
+      name:      fullName,
+      token,
+      qr_token:  qrToken,  // 10-minute token for page QR
+    });
+
   } catch (err) {
     console.error('[CUST REG] Error:', err);
-    res.status(500).json({ error: 'Internal server error.', details: err.message });
+    res.status(500).json({ error: 'Registration failed.', details: err.message });
   }
 });
 
@@ -224,6 +292,76 @@ router.get('/me', requireUser, async (req, res) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('user_token');
   res.json({ ok: true });
+});
+
+// GET /:slug/api/app-download — validates QR token and returns APK URL
+router.get('/app-download', async (req, res) => {
+  const { slug } = req.params;
+  const { token } = req.query;
+
+  try {
+    // If token provided, validate it (10-min expiry for page QR)
+    if (token) {
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      if (payload.type !== 'app_download' || payload.slug !== slug) {
+        return res.status(401).json({ error: 'Invalid or expired QR code.' });
+      }
+    }
+
+    const [rows] = await query(
+      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = ? LIMIT 1',
+      [slug, 'active']
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
+
+    const tenant = rows[0];
+    if (!tenant.app_download_url) {
+      return res.status(404).json({ error: 'App not available yet.' });
+    }
+
+    res.json({
+      download_url: tenant.app_download_url,
+      app_name:     tenant.app_name || tenant.company_name,
+    });
+
+  } catch (e) {
+    return res.status(401).json({ error: 'QR code expired. Please re-register or request a new link.' });
+  }
+});
+
+// GET /:slug/api/app-download — validates QR token and returns APK URL
+router.get('/app-download', async (req, res) => {
+  const { slug } = req.params;
+  const { token } = req.query;
+
+  try {
+    // If token provided, validate it (10-min expiry for page QR)
+    if (token) {
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      if (payload.type !== 'app_download' || payload.slug !== slug) {
+        return res.status(401).json({ error: 'Invalid or expired QR code.' });
+      }
+    }
+
+    const [rows] = await query(
+      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = ? LIMIT 1',
+      [slug, 'active']
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
+
+    const tenant = rows[0];
+    if (!tenant.app_download_url) {
+      return res.status(404).json({ error: 'App not available yet.' });
+    }
+
+    res.json({
+      download_url: tenant.app_download_url,
+      app_name:     tenant.app_name || tenant.company_name,
+    });
+
+  } catch (e) {
+    return res.status(401).json({ error: 'QR code expired. Please re-register or request a new link.' });
+  }
 });
 
 module.exports = router;
