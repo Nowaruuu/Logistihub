@@ -257,7 +257,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
         <span class="material-symbols-outlined">person_add</span>Create My Account
       </button>
       <div class="terms">By registering, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
-      <div class="signin">Already have an account? <a>Sign in</a></div>
+      <div class="signin">Already have an account? <a id="staff-login-link">Sign in</a></div>
     </div>
 
     <!-- DOWNLOAD SCREEN -->
@@ -305,6 +305,7 @@ var TENANT_NAME = 'Your Company';
 document.getElementById('left-tenant-name').textContent = TENANT_NAME;
 document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
 document.getElementById('scoped-tenant-name').textContent = TENANT_NAME;
+document.getElementById('staff-login-link').href = `/${SLUG}/staff-login`;
 
 function togglePw(){
   var inp=document.getElementById('r-pw');
@@ -369,13 +370,17 @@ function doRegister() {
   })
     .then(data => {
       // Success
+      // Success handled by role
+      if (role === 'Document Controller') {
+        window.location.href = `/${SLUG}/dc-dashboard`;
+        return;
+      }
+
       document.getElementById('dl-name').textContent = fname;
       document.getElementById('ac-name').textContent = fname + ' ' + lname;
       document.getElementById('ac-email').textContent = email;
       document.getElementById('ac-role').textContent = role;
       document.getElementById('ac-company').textContent = TENANT_NAME;
-
-      // QR Code removed for staff as requested
 
       document.getElementById('reg-screen').style.display = 'none';
       document.getElementById('dl-screen').style.display = 'block';

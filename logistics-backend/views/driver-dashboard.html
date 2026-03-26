@@ -160,6 +160,19 @@ tr:hover td{background:#f8fafc;}
   </div>
 
   <div class="content">
+    <!-- APP DOWNLOAD BANNER -->
+    <div style="background: linear-gradient(135deg, #0f2235 0%, #1e293b 100%); color: white; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(15, 34, 53, 0.1);">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined" style="color: white; font-size: 24px;">phone_android</span>
+        </div>
+        <div>
+          <div style="font-weight: 800; font-size: 15px; letter-spacing: -0.01em;">Download the Mobile App</div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 2px;">Riders are recommended to use the app for real-time tracking and navigation.</div>
+        </div>
+      </div>
+      <a id="get-app-banner-link" style="background: white; color: #0f2235; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; transition: all 0.2s; white-space: nowrap;">Get App</a>
+    </div>
 
     <!-- DASHBOARD -->
     <div id="s-dashboard" class="screen active">
@@ -266,6 +279,7 @@ var DRIVER_NAME = '';
 
 document.getElementById('sb-company').textContent = TENANT_NAME;
 document.getElementById('prof-company').textContent = TENANT_NAME;
+document.getElementById('get-app-banner-link').href = `/${SLUG}/get-app`;
 
 var pageMeta = {
   dashboard: ['Dashboard','Welcome back'],

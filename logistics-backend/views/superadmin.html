@@ -719,6 +719,81 @@
       }
     }
   </script>
-  <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+  <!-- INVITE MODAL -->
+  <div id="invite-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="width:100%; max-width:450px; margin-bottom:0; box-shadow:var(--shadow-lg);">
+      <div class="card-header">
+        <div class="card-title"><span class="material-symbols-rounded">mail</span> Invite New Tenant</div>
+        <button class="icon-btn" onclick="closeInviteModal()"><span class="material-symbols-rounded">close</span></button>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Admin Email</label>
+          <input type="email" id="invite-email" class="form-control" placeholder="admin@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" id="invite-company" class="form-control" placeholder="e.g. Acme Logistics">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Internal Notes (Optional)</label>
+          <textarea id="invite-notes" class="form-control" style="height:80px;" placeholder="Plan details, contact person, etc."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+          <button class="btn btn-secondary" onclick="closeInviteModal()">Cancel</button>
+          <button class="btn btn-primary" id="invite-submit-btn" onclick="sendInvite()">Send Invitation</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ... previous script logic ...
+    
+    // Add Invite Modal triggers
+    document.querySelector('button.btn-primary[onclick="nav(\'tenants\', this)"]').parentElement.querySelector('button.btn-primary').onclick = openInviteModal;
+
+    function openInviteModal() {
+      document.getElementById('invite-modal').style.display = 'flex';
+      document.getElementById('invite-email').focus();
+    }
+
+    function closeInviteModal() {
+      document.getElementById('invite-modal').style.display = 'none';
+      document.getElementById('invite-email').value = '';
+      document.getElementById('invite-company').value = '';
+      document.getElementById('invite-notes').value = '';
+    }
+
+    async function sendInvite() {
+      const email   = document.getElementById('invite-email').value.trim();
+      const company = document.getElementById('invite-company').value.trim();
+      const notes   = document.getElementById('invite-notes').value.trim();
+      const btn     = document.getElementById('invite-submit-btn');
+
+      if (!email || !company) return showToast('Please fill Email and Company Name', 'error');
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const res = await SuperadminAPI.inviteTenant(email, company, notes);
+        showToast(`Invitation sent to ${email}`);
+        closeInviteModal();
+        loadSuperadminData(); // Refresh list if possible
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Invitation';
+      }
+    }
+
+    // Refresh once on load to ensure triggers are attached
+    window.addEventListener('load', () => {
+       const inviteBtn = document.querySelector('button.btn-primary[onclick="nav(\'tenants\', this)"]')?.parentElement?.querySelector('button.btn-primary');
+       if (inviteBtn) inviteBtn.onclick = openInviteModal;
+    });
+  </script>
 </body>
 </html>
