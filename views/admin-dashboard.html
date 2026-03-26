@@ -198,7 +198,7 @@ textarea{resize:vertical;}
   <div class="sidebar-bottom">
     <div class="user-row">
       <div class="uavatar"><span class="material-symbols-outlined">person</span></div>
-      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4d5d0d9dddaf4d7dbd9c4d5dacd9adddb">[email&#160;protected]</a></div></div>
+      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1273767f7b7c52717d7f62737c6b3c7b7d">[email&#160;protected]</a></div></div>
     </div>
   </div>
 </aside>
@@ -380,7 +380,7 @@ textarea{resize:vertical;}
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
           <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th><th></th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -509,74 +509,43 @@ function showSub(type){
 }
 
 function copyUrl(){
-  var url = document.getElementById('reg-page-url') ? document.getElementById('reg-page-url').textContent : '';
-  navigator.clipboard && url ? navigator.clipboard.writeText(url) : null;
+  var url=document.getElementById('dashboard-reg-url')?document.getElementById('dashboard-reg-url').textContent:'';
+  if(navigator.clipboard&&url){navigator.clipboard.writeText(url);}
 }
 
-// ── APP USERS ────────────────────────────────────────────────────
-var _allAppUsers = [];
-
-function loadAppUsers() {
-  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
-  if (!slug) return;
-  fetch('/' + slug + '/api/admin/app-users', { credentials: 'include' })
-    .then(function(r){ return r.json(); })
+var _allAppUsers=[];
+function loadAppUsers(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  fetch('/'+slug+'/api/admin/app-users',{credentials:'include'})
+    .then(function(r){return r.json();})
     .then(function(data){
-      _allAppUsers = Array.isArray(data.users) ? data.users : [];
+      _allAppUsers=Array.isArray(data.users)?data.users:[];
       renderAppUsers(_allAppUsers);
     })
     .catch(function(){
-      document.getElementById('app-users-tbody').innerHTML =
-        '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load users</p></div></td></tr>';
+      var tb=document.getElementById('app-users-tbody');
+      if(tb)tb.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load users</p></div></td></tr>';
     });
 }
-
-function renderAppUsers(users) {
-  var tbody = document.getElementById('app-users-tbody');
-  if (!tbody) return;
-  if (!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';
-    return;
-  }
-  var roleColors = { 'Driver': 'b-transit', 'Document Controller': 'b-delivered', 'Admin': 'b-awaiting' };
-  tbody.innerHTML = users.map(function(u){
-    var rClass = roleColors[u.role] || 'b-pending';
-    var date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
-    var status = u.is_active === false ? '<span class="badge b-declined">Inactive</span>' : '<span class="badge b-delivered">Active</span>';
-    return '<tr>' +
-      '<td><strong>' + esc(u.full_name || u.name || '—') + '</strong></td>' +
-      '<td>' + esc(u.email || '—') + '</td>' +
-      '<td><span class="badge ' + rClass + '">' + esc(u.role || '—') + '</span></td>' +
-      '<td>' + date + '</td>' +
-      '<td>' + status + '</td>' +
-      '<td></td>' +
-    '</tr>';
+function renderAppUsers(users){
+  var tbody=document.getElementById('app-users-tbody');
+  if(!tbody)return;
+  if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
+  var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaiting'};
+  tbody.innerHTML=users.map(function(u){
+    var date=u.created_at?new Date(u.created_at).toLocaleDateString():'—';
+    var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
+    return '<tr><td><strong>'+esc(u.full_name||u.name||'—')+'</strong></td><td>'+esc(u.email||'—')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'—')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
 }
-
-function filterAppUsers() {
-  var role = document.getElementById('app-users-role-filter').value;
-  var filtered = role ? _allAppUsers.filter(function(u){ return u.role === role; }) : _allAppUsers;
-  renderAppUsers(filtered);
+function filterAppUsers(){
+  var role=document.getElementById('app-users-role-filter').value;
+  renderAppUsers(role?_allAppUsers.filter(function(u){return u.role===role;}):_allAppUsers);
 }
-
-function esc(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
-
-// Hook into go() to auto-load when navigating to app-users
-var _origGo = go;
-go = function(id, navBtn){
-  _origGo(id, navBtn);
-  if (id === 'app-users') loadAppUsers();
-};
-
-// Init
-var __T = window.__TENANT__ || {};
-var slug = __T.slug || '';
-if(document.getElementById('sidebar-tenant-name')) document.getElementById('sidebar-tenant-name').textContent = __T.company_name || 'Your Company';
-if(document.getElementById('sidebar-admin-email')) document.getElementById('sidebar-admin-email').textContent = __T.admin_email || '';
-var regBase = 'logistihub.ddns.net/' + (slug||'your-workspace') + '/register';
-['reg-page-url','dashboard-reg-url'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=regBase; });
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+var _origGo=go;
+go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
 </script>
-<script src="/public/frontend-api.js"></script>
 </body>
 </html>
