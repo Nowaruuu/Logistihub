@@ -192,8 +192,13 @@ router.post('/register', async (req, res) => {
       .then(() => console.log(`[CUST REG] Email sent successfully to ${email}`))
       .catch(e => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
 
-    res.status(201).json({ ok: true, user_id: result.insertId, name: `${first_name} ${last_name}` });
-
+    res.status(201).json({ 
+      ok: true, 
+      token: token,  // <--- THIS IS THE MISSING PIECE!
+      user_id: result.insertId, 
+      name: `${first_name} ${last_name}` 
+    });
+    
   } catch (err) {
     console.error('[CUST REG] Critical Error:', err);
     // Returning 500 with message prevents 504 timeouts by closing the connection immediately
