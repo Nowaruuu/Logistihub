@@ -29,7 +29,7 @@ async function requireAdmin(req, res, next) {
   }
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.role.toLowerCase() !== 'admin') {
+    if (payload.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden.' });
     }
 

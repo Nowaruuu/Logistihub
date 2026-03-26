@@ -12,8 +12,6 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit:    10,
   queueLimit:         0,
-  connectTimeout:     10000, 
-  enableKeepAlive:    true,
   timezone:           '+00:00',
   charset:            'utf8mb4',
 });
@@ -29,38 +27,6 @@ pool.getConnection()
     process.exit(1);
   });
 
-pool.on('acquire', (connection) => {
-  // console.log('Connection %d acquired', connection.threadId);
-});
-
-pool.on('enqueue', () => {
-  console.warn('⚠️  Waiting for available connection slot');
-});
-
-pool.on('release', (connection) => {
-  // console.log('Connection %d released', connection.threadId);
-});
-
-// ─── Telemetry Wrapper ────────────────────────────────────────────────────────
-
-/**
- * Executes a SQL statement with telemetry (duration logging and error reporting).
- */
-async function executeWithTelemetry(sql, params = []) {
-  const start = Date.now();
-  try {
-    const res = await pool.execute(sql, params);
-    const duration = Date.now() - start;
-    if (duration > 1000) {
-      console.warn(`[SLOW QUERY] ${duration}ms: ${sql.substring(0, 500)}`);
-    }
-    return res;
-  } catch (err) {
-    console.error(`[DB ERROR] ${err.message} (SQL: ${sql.substring(0, 500)})`);
-    throw err;
-  }
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -68,15 +34,22 @@ async function executeWithTelemetry(sql, params = []) {
  * Always returns [rows, fields].
  */
 async function query(sql, params = []) {
-  return executeWithTelemetry(sql, params);
+  return pool.execute(sql, params);
 }
 
 /**
  * Tenant-scoped query helper.
+ * EVERY query that touches tenant data MUST use this so tenant_id
+ * is always appended — prevents accidental cross-tenant leakage.
+ *
+ * Usage:
+ *   const rows = await tenantQuery(tenantId, 'SELECT * FROM SHIPMENT WHERE status = ?', ['Pending']);
+ *   // Executes: SELECT * FROM SHIPMENT WHERE status = ? AND tenant_id = ?
  */
 async function tenantQuery(tenantId, sql, params = []) {
   if (!tenantId) throw new Error('tenantQuery called without tenantId — isolation breach prevented');
 
+  // Append AND tenant_id = ? to WHERE clause, or add WHERE if none exists
   let safeSql;
   const upperSql = sql.trim().toUpperCase();
 
@@ -91,10 +64,10 @@ async function tenantQuery(tenantId, sql, params = []) {
   } else {
     // INSERT — caller must include tenant_id in the values
     safeSql = sql;
-    return executeWithTelemetry(safeSql, [...params]);
+    return pool.execute(safeSql, [...params]);
   }
 
-  return executeWithTelemetry(safeSql, [...params, tenantId]);
+  return pool.execute(safeSql, [...params, tenantId]);
 }
 
 /**
@@ -104,7 +77,7 @@ async function findOne(table, conditions, tenantId) {
   const keys   = Object.keys(conditions);
   const values = Object.values(conditions);
   const where  = keys.map(k => `${k} = ?`).join(' AND ');
-  const [rows] = await executeWithTelemetry(
+  const [rows] = await pool.execute(
     `SELECT * FROM \`${table}\` WHERE ${where} AND tenant_id = ? LIMIT 1`,
     [...values, tenantId]
   );
@@ -112,10 +85,10 @@ async function findOne(table, conditions, tenantId) {
 }
 
 /**
- * Get tenant record by slug.
+ * Get tenant record by slug (used on every page load for isolation check).
  */
 async function getTenantBySlug(slug) {
-  const [rows] = await executeWithTelemetry(
+  const [rows] = await pool.execute(
     'SELECT * FROM TENANT WHERE slug = ? LIMIT 1',
     [slug]
   );
@@ -126,9 +99,9 @@ async function getTenantBySlug(slug) {
  * Get tenant record by id.
  */
 async function getTenantById(tenantId) {
-  const [rows] = await executeWithTelemetry(
+  const [rows] = await pool.execute(
     'SELECT * FROM TENANT WHERE tenant_id = ? LIMIT 1',
-    [parseInt(tenantId)]
+    [tenantId]
   );
   return rows[0] || null;
 }

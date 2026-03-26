@@ -9,11 +9,11 @@ const rateLimit    = require('express-rate-limit');
 const path         = require('path');
 
 // ─── Route modules ────────────────────────────────────────────────────────────
-const pagesRouter      = require('./routes/pages');
-const superadminRouter = require('./routes/superadmin');
-const onboardingRouter = require('./routes/onboarding');
-const adminRouter      = require('./routes/admin');
-const userRouter       = require('./routes/user');
+const pagesRouter      = require('../routes/pages');
+const superadminRouter = require('../routes/superadmin');
+const onboardingRouter = require('../routes/onboarding');
+const adminRouter      = require('../routes/admin');
+const userRouter       = require('../routes/user');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -25,19 +25,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Request Logger
-app.use((req, res, next) => {
-  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
-  next();
-});
-
-// Subdomain detection middleware
-app.use((req, res, next) => {
-  const host = req.headers.host || '';
-  req.isRegistrationSubdomain = host.startsWith('register.');
-  next();
-});
 
 // CORS — in production lock this down to your real domain
 app.use(cors({
@@ -101,39 +88,30 @@ app.use('/api/superadmin', superadminRouter);
 // Onboarding API  →  /api/onboarding/...
 app.use('/api/onboarding', onboardingRouter);
 
-// Tenant API Group – scoped by /:slug/api
-// Admin API  →  /:slug/api/admin/...
-app.use('/:slug/api/admin', adminRouter);
+// Tenant admin API  →  /:slug/api/admin/...
+app.use('/', adminRouter);
 
-// General Tenant API (Staff & User login/register) →  /:slug/api/...
-app.use('/:slug/api', userRouter);
+// User/app API  →  /:slug/api/...
+app.use('/', userRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE ROUTES (serve HTML files)
+// Must come AFTER API routes so /:slug doesn't swallow API calls
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('/', pagesRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROOT  →  explicit subdomain fallback or superadmin redirect
+// ROOT  →  redirect to superadmin
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-  // If the user managed to hit this via register.logistihub.ddns.net (unlikely due to DNS issue)
-  // we redirect them to a working path if we have a way to know their intent, 
-  // otherwise default to login.
-  res.redirect('/superadmin-login');
-});
+app.get('/', (req, res) => res.redirect('/superadmin'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 404
 // ─────────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  const isApi = req.originalUrl.includes('/api/');
-  if (isApi) {
-    console.warn(`[404 API] ${req.method} ${req.originalUrl}`);
-    return res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint not found.' });
   }
-
-  console.warn(`[404 PAGE] ${req.method} ${req.originalUrl}`);
   res.status(404).send(`
     <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
       <h2 style="color:#0f2235;">404 — Page not found</h2>
@@ -148,12 +126,12 @@ app.use((req, res) => {
 app.use((err, req, res, _next) => {
   console.error('Unhandled error:', err);
 
-  const isApi = req.originalUrl.includes('/api/');
+  // Don't leak stack traces in production
   const message = process.env.NODE_ENV === 'production'
     ? 'An unexpected error occurred.'
     : err.message;
 
-  if (isApi) {
+  if (req.path.startsWith('/api/')) {
     return res.status(500).json({ error: message });
   }
   res.status(500).send(`<p>Server error: ${message}</p>`);

@@ -130,7 +130,7 @@ router.post('/staff/register', async (req, res) => {
     console.error('[STAFF REG] Critical Error:', err);
     res.status(500).json({ 
       error: 'Internal server error.', 
-      details: err.message // Force details for immediate debugging
+      details: err.message
     });
   }
 });
@@ -143,12 +143,16 @@ router.post('/register', async (req, res) => {
   console.log(`[CUST REG] Starting for slug: ${slug}`, req.body);
   
   try {
-    const [tenants] = await query("SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+    const [tenants] = await query(
+      "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
+      [slug]
+    );
     if (!tenants.length || tenants[0].status !== 'active') {
       console.warn(`[CUST REG] Workspace not found or inactive: ${slug}`);
       return res.status(404).json({ error: 'Workspace not found.' });
     }
-    const tenantId = tenants[0].tenant_id;
+    const tenantId      = tenants[0].tenant_id;
+    const companyName   = tenants[0].company_name;
 
     const { first_name, last_name, email, phone, password } = req.body;
     if (!first_name || !last_name || !email || !password) {
@@ -157,7 +161,10 @@ router.post('/register', async (req, res) => {
     }
 
     console.log(`[CUST REG] Checking existing user for: ${email}`);
-    const [existing] = await query('SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1', [tenantId, email]);
+    const [existing] = await query(
+      'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
+      [tenantId, email]
+    );
     if (existing.length > 0) {
       console.warn(`[CUST REG] Conflict: Email already registered: ${email}`);
       return res.status(409).json({ error: 'Email already registered.' });
@@ -170,36 +177,55 @@ router.post('/register', async (req, res) => {
     const [result] = await query(
       `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'Other', ?, 'active', NOW())`,
-      [tenantId, first_name, last_name, email, phone||null, hash]
+      [tenantId, first_name, last_name, email, phone || null, hash]
     );
     console.log(`[CUST REG] Insert success, ID:`, result.insertId);
 
-    const token = jwt.sign(
-      { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
-      process.env.JWT_SECRET, { expiresIn: '8h' }
+    // ── Generate QR token (expires in 10 minutes) ──────────────────────────
+    const qrToken = jwt.sign(
+      { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
     );
 
-    res.cookie('user_token', token, { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict', 
-      maxAge: 8*3600*1000 
-    });
+    // ── Generate permanent email token (never expires) ─────────────────────
+    const emailToken = jwt.sign(
+      { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
+      process.env.JWT_SECRET
+      // No expiresIn → permanent
+    );
 
-    // Non-blocking email
+    // ── Build the two links ────────────────────────────────────────────────
+    const BASE_URL      = process.env.BASE_URL || 'https://logistihub.ddns.net';
+    const qrLink        = `${BASE_URL}/${slug}/get-app?token=${qrToken}`;      // 10-min QR
+    const permanentLink = `${BASE_URL}/${slug}/get-app?token=${emailToken}`;   // permanent email link
+
+    // ── Send welcome email (non-blocking) ─────────────────────────────────
     console.log(`[CUST REG] Sending welcome email...`);
-    sendRegistrationEmail(email, `${first_name} ${last_name}`, tenants[0].company_name, slug)
+    sendRegistrationEmail(
+      email,
+      `${first_name} ${last_name}`,
+      companyName,
+      slug,
+      permanentLink   // pass the permanent download link to the mailer
+    )
       .then(() => console.log(`[CUST REG] Email sent successfully to ${email}`))
-      .catch(e => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
+      .catch(e  => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
 
-    res.status(201).json({ ok: true, user_id: result.insertId, name: `${first_name} ${last_name}` });
+    // ── Return both tokens to the frontend ────────────────────────────────
+    res.status(201).json({
+      ok:           true,
+      user_id:      result.insertId,
+      name:         `${first_name} ${last_name}`,
+      qr_token:     qrToken,       // 10-min token for QR code on screen
+      email_token:  emailToken,    // permanent token (also in email)
+    });
 
   } catch (err) {
     console.error('[CUST REG] Critical Error:', err);
-    // Returning 500 with message prevents 504 timeouts by closing the connection immediately
     res.status(500).json({ 
       error: 'Internal server error during customer registration.',
-      details: err.message // Force details for immediate debugging
+      details: err.message
     });
   }
 });
@@ -292,6 +318,54 @@ router.get('/me', requireUser, async (req, res) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('user_token');
   res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /app-download
+// token required — either the 10-min QR token or the permanent email token
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/app-download', async (req, res) => {
+  const { slug } = req.params;
+  const { token } = req.query;
+
+  try {
+    // Require a token — no anonymous access
+    if (!token) {
+      return res.status(401).json({ error: 'Missing access token. Please use your QR code or email link.' });
+    }
+
+    // Verify JWT (handles both 10-min and permanent tokens)
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: 'QR code expired. Please check your email for the permanent download link.' });
+    }
+
+    if (payload.type !== 'app_download' || payload.slug !== slug) {
+      return res.status(401).json({ error: 'Invalid access link.' });
+    }
+
+    const [rows] = await query(
+      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
+      [slug]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
+
+    const tenant = rows[0];
+    if (!tenant.app_download_url) {
+      return res.status(404).json({ error: 'App not available yet. Contact your admin.' });
+    }
+
+    res.json({
+      download_url: tenant.app_download_url,
+      app_name:     tenant.app_name || tenant.company_name,
+    });
+
+  } catch (e) {
+    console.error('[APP-DOWNLOAD] Error:', e);
+    return res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 module.exports = router;

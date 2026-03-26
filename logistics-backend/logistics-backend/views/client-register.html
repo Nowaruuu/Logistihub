@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration — Logistics OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1">
+  <style>
+    :root { --primary: #0a1628; --bg: #f8fafc; --text: #0f172a; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh; padding: 20px; }
+    .card { background: #fff; padding: 32px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); width: 100%; max-width: 420px; text-align: center; }
+    .logo { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -0.02em; }
+    h1 { font-size: 22px; margin-bottom: 8px; font-weight: 800; color: #0a1628; }
+    p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .form-group { text-align: left; margin-bottom: 16px; }
+    .label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    input { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: inherit; outline: none; transition: all 0.2s; box-sizing: border-box; }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(10, 22, 40, 0.05); }
+    .btn { background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; display: block; width: 100%; font-size: 15px; margin-top: 8px; transition: opacity 0.2s; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .success-box { display: none; }
+    .err { color: #dc2626; font-size: 13px; margin-bottom: 16px; display: none; background:#fef2f2; padding:10px; border-radius:8px; }
+    #qr-container { padding: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; display: inline-block; margin-top: 10px; }
+    .dl-btn { display:inline-block; margin-top:14px; background:#0a1628; color:#fff; padding:12px 28px; border-radius:12px; font-weight:700; font-size:14px; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="card" id="reg-card">
+    <div class="logo">
+      <span class="material-symbols-outlined" style="font-size:28px;">package_2</span>
+      Logistics OS
+    </div>
+
+    <!-- FORM -->
+    <div id="reg-form-wrap">
+      <h1>Join the Network</h1>
+      <p>Register to track your shipments and manage orders seamlessly via our mobile app.</p>
+
+      <div id="error-msg" class="err"></div>
+
+      <div class="form-group">
+        <label class="label">First Name</label>
+        <input type="text" id="fname" placeholder="John" required>
+      </div>
+      <div class="form-group">
+        <label class="label">Last Name</label>
+        <input type="text" id="lname" placeholder="Doe" required>
+      </div>
+      <div class="form-group">
+        <label class="label">Email Address</label>
+        <input type="email" id="email" placeholder="john@example.com" required>
+      </div>
+      <div class="form-group">
+        <label class="label">Password</label>
+        <input type="password" id="pw" placeholder="At least 8 characters" required>
+      </div>
+
+      <button class="btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+      <div style="margin-top:20px; font-size:13px; color:#64748b;">
+        Already have an account? <a id="login-link" style="color:#0a1628; font-weight:700; text-decoration:none;">Sign in</a>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="success-state" class="success-box">
+      <div style="width:52px;height:52px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <span class="material-symbols-outlined" style="color:#16a34a;font-size:32px;">check_circle</span>
+      </div>
+      <h1 style="font-size:20px;">Registration Complete!</h1>
+      <p>Scan the QR code below to download your company's mobile app.</p>
+
+      <div id="qr-container">
+        <div id="qr-canvas"></div>
+      </div>
+
+      <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Scan to download the app</p>
+
+      <a id="get-app-link" href="#" class="dl-btn">📱 Tap here to download</a>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // SLUG is injected by server via window.__TENANT__
+    const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+    const GET_APP_URL = 'https://logistihub.ddns.net/' + SLUG + '/get-app';
+
+    async function doRegister() {
+      const btn   = document.getElementById('reg-btn');
+      const err   = document.getElementById('error-msg');
+      const fname = document.getElementById('fname').value.trim();
+      const lname = document.getElementById('lname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const pw    = document.getElementById('pw').value;
+
+      if (!fname || !lname || !email || !pw) return alert('Please fill all fields.');
+
+      btn.disabled    = true;
+      btn.textContent = 'Registering...';
+      err.style.display = 'none';
+
+      try {
+        const res = await fetch('/' + SLUG + '/api/register', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ first_name: fname, last_name: lname, email, password: pw, role: 'Other' })
+        });
+
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.details ? d.error + ' (' + d.details + ')' : (d.error || 'Registration failed'));
+        }
+
+        // Show success screen
+        document.getElementById('reg-form-wrap').style.display = 'none';
+        document.getElementById('success-state').style.display = 'block';
+
+        // Set direct download link
+        document.getElementById('get-app-link').href = GET_APP_URL;
+
+        // Generate QR pointing to /:slug/get-app
+        new QRCode(document.getElementById('qr-canvas'), {
+          text:         GET_APP_URL,
+          width:        180,
+          height:       180,
+          colorDark:    '#0a1628',
+          colorLight:   '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+      } catch (e) {
+        err.textContent   = e.message;
+        err.style.display = 'block';
+        btn.disabled      = false;
+        btn.textContent   = 'Create Account';
+      }
+    }
+
+    // Set login link
+    document.getElementById('login-link').href = '/' + SLUG + '/login';
+  </script>
+</body>
+</html>
