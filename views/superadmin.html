@@ -693,19 +693,24 @@
 
     async function loadAll() {
       try {
-        // 1. Force use of the GLOBAL route (no slug!)
-        const response = await fetch('/api/superadmin/tenants');
-        const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error || 'Unauthorized');
-
-        const tb = document.getElementById('tenants-tbody');
-        if (!data || data.length === 0) {
-          tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">No tenants found in DB.</td></tr>';
+        const response = await fetch('/api/superadmin/tenants', { credentials: 'include' });
+        
+        if (response.status === 401) {
+          console.warn("Unauthorized! Redirecting...");
+          window.location.href = '/superadmin-login'; // Force login if session is dead
           return;
         }
 
-        // 2. Map the data to the table
+        const data = await response.json();
+        const tb = document.getElementById('tenants-tbody');
+
+        if (!response.ok) throw new Error(data.error || 'Server Error');
+
+        if (!data || data.length === 0) {
+          tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">Authenticated, but no tenants exist in DB.</td></tr>';
+          return;
+        }
+
         tb.innerHTML = data.map(t => `
           <tr>
             <td><strong>${t.company_name}</strong></td>
@@ -713,17 +718,11 @@
             <td>${t.admin_email || 'N/A'}</td>
             <td><span class="badge bg-active">${t.status}</span></td>
             <td>${new Date(t.created_at).toLocaleDateString()}</td>
-            <td><button class="btn btn-secondary btn-sm" onclick="editTenant(${t.tenant_id})">Manage</button></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="alert('ID: ${t.tenant_id}')">Manage</button></td>
           </tr>
         `).join('');
-
-        // Update the counter
-        document.getElementById('stat-tenants').textContent = data.length;
-
       } catch (e) {
-        console.error("Data Retrieval Error:", e);
-        // Redirect to login if unauthorized
-        if (e.message.includes('Unauthorized')) window.location.href = '/superadmin-login';
+        console.error("Superadmin Load Error:", e);
       }
     }
 
