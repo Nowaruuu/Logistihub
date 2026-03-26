@@ -60,36 +60,36 @@ router.get('/onboarding', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
 
-// ─── STAFF REGISTRATION (The 404 & Position Fix) ───────────────────────────
-// This is for the STAFF to create an account
-router.get('/:slug/staff-registration', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  
-  // Pointing specifically to the STAFF register file
-  const html = readView('staff-register.html');
-  res.send(injectTenantData(html, tenant));
-});
+// ─── STAFF & ADMIN ROUTES ───────────────────────────────────────────────────
 
-// ─── USER / CUSTOMER REGISTRATION (The Position Fix) ───────────────────────
-// This is for the CUSTOMERS/USERS to create an account
-router.get('/:slug/register', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  
-  // Pointing specifically to the USER register file
-  const html = readView('user-register.html');
-  res.send(injectTenantData(html, tenant));
-});
-
-// ─── STAFF LOGIN (Per your request for staff-register URL) ────────────────
+// 1. STAFF LOGIN (Fixing your amogus/staff-register request)
 router.get('/:slug/staff-register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  
-  // This URL serves the LOGIN page for staff
+  // Based on your requirement, this URL serves the LOGIN file
   const html = readView('staff-login.html');
   res.send(injectTenantData(html, tenant));
+});
+
+// 2. STAFF REGISTRATION (Fixing the 404)
+router.get('/:slug/staff-registration', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('staff-register.html'); 
+  res.send(injectTenantData(html, tenant));
+});
+
+// 3. ADMIN ACCESS
+router.get('/:slug/admin-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('admin-login.html'), tenant));
+});
+
+router.get('/:slug/admin', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
 });
 
 // ─── USER / CUSTOMER ROUTES ──────────────────────────────────────────────────
