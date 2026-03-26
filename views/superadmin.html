@@ -189,203 +189,181 @@ textarea{resize:vertical;}
     </div>
   </div>
 
-<<<<<<< HEAD
-  <script>
-    // Navigation logic
-    const titles = {
-      dashboard: "Dashboard Overview",
-      reports: "Activity Reports",
-      sales: "Sales & Revenue Report",
-      tenants: "Tenant Management",
-      audit: "System Audit Logs",
-      backup: "System Backups",
-      settings: "Global Settings"
-    };
+  <script src="/public/frontend-api.js"></script>
+<script>
+  const titles = {
+    dashboard: 'Dashboard Overview',
+    reports:   'Activity Reports',
+    sales:     'Sales & Revenue Report',
+    tenants:   'Tenant Management',
+    audit:     'System Audit Logs',
+    backup:    'System Backups',
+    settings:  'Global Settings'
+  };
 
-    function nav(screenId, btnEl) {
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById('screen-' + screenId).classList.add('active');
-      btnEl.classList.add('active');
-      document.getElementById('topbar-title').innerText = titles[screenId];
-      
-      // Re-trigger chart render animation if going to dashboard
-      if(screenId === 'dashboard') renderCharts();
-    }
+  function nav(screenId, btnEl) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-' + screenId).classList.add('active');
+    btnEl.classList.add('active');
+    document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
+    if (screenId === 'dashboard') loadDashboard();
+    if (screenId === 'tenants')   loadTenants();
+    if (screenId === 'sales')     loadSales();
+    if (screenId === 'audit')     loadAuditLogs();
+  }
 
-    // Settings tabs logic
-    function setTab(tabId, btnEl) {
-      document.querySelectorAll('.set-pane').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.set-tab').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById('set-' + tabId).classList.add('active');
-      btnEl.classList.add('active');
-    }
+  function setTab(tabId, btnEl) {
+    document.querySelectorAll('.set-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.set-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('set-' + tabId).classList.add('active');
+    btnEl.classList.add('active');
+  }
 
-    function triggerBackup() {
-      const btn = event.currentTarget;
-      const orig = btn.innerHTML;
-      btn.innerHTML = `<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;">sync</span> Processing...`;
-      btn.disabled = true;
-      
-      setTimeout(() => {
-        btn.innerHTML = `<span class="material-symbols-rounded">check</span> Backup Complete!`;
-        btn.classList.replace('btn-primary', 'btn-success');
-        
-        // Add to history table randomly
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td><span style="font-family: monospace;">backup_manual_just_now.sql.gz</span></td><td>Just Now</td><td>1.3 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td>`;
-        
-        // Remove 'no data' row if present
-        const list = document.getElementById('backup-list');
-        if(list.innerText.includes('No backups found')){
-          list.innerHTML = '';
-        }
-        document.getElementById('backup-list').prepend(tr);
-        
-        setTimeout(() => {
-          btn.innerHTML = orig;
-          btn.classList.replace('btn-success', 'btn-primary');
-          btn.disabled = false;
-        }, 3000);
-      }, 2000);
-    }
+  let gChart, sChart;
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.color = '#64748b';
+  }
 
-    // Chart.js Implementations
-    let gChart, sChart;
-    if (typeof Chart !== 'undefined') {
-      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-      Chart.defaults.color = "#64748b";
-    }
+  function renderCharts(active, pending, suspended) {
+    if (gChart) gChart.destroy();
+    if (sChart) sChart.destroy();
+    const ctxG = document.getElementById('growthChart');
+    const ctxS = document.getElementById('statusChart');
+    if (!ctxG || !ctxS) return;
+    gChart = new Chart(ctxG.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets: [
+          { label: 'Total Tenants', data: [0,0,0,0,0,active+pending+suspended], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
+          { label: 'Active Tenants', data: [0,0,0,0,0,active], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0)', borderWidth:2, tension:0.4, borderDash:[5,5] }
+        ]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, grid:{ color:'#f1f5f9' } }, x:{ grid:{ display:false } } } }
+    });
+    sChart = new Chart(ctxS.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Active','Pending','Suspended'],
+        datasets: [{ data:[active,pending,suspended], backgroundColor:['#10b981','#f59e0b','#ef4444'], borderWidth:0, hoverOffset:4 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'75%', plugins:{ legend:{ position:'bottom' } } }
+    });
+  }
 
-    function renderCharts() {
-      if(gChart) gChart.destroy();
-      if(sChart) sChart.destroy();
+  async function loadDashboard() {
+    try {
+      const data = await SuperadminAPI.getOverview();
+      document.getElementById('val-total-tenants').textContent    = data.totalTenants   || 0;
+      document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
+      document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
+      document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
+      renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
+    } catch(e) { console.error('Dashboard error:', e); }
+  }
 
-      const ctxGrowth = document.getElementById('growthChart').getContext('2d');
-      gChart = new Chart(ctxGrowth, {
-        type: 'line',
-        data: {
-          labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
-          datasets: [
-            {
-              label: 'Total Users',
-              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
-              borderColor: '#2563eb',
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              borderWidth: 3,
-              tension: 0.4,
-              fill: true
-            },
-            {
-              label: 'Active Tenants',
-              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.0)',
-              borderWidth: 2,
-              tension: 0.4,
-              borderDash: [5, 5]
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' } },
-          scales: {
-            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
+  async function loadTenants() {
+    try {
+      const tenants = await SuperadminAPI.getTenants();
+      const tb = document.getElementById('tenants-tbody');
+      if (!tb) return;
+      if (!tenants.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No tenants yet</td></tr>'; return; }
+      tb.innerHTML = tenants.map(t => `
+        <tr>
+          <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;">${t.slug}</span></td>
+          <td>${t.plan || 'trial'}</td>
+          <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-danger':'bg-pending'}">${t.status}</span></td>
+          <td>${t.user_count || 0}</td>
+          <td>${t.shipment_count || 0}</td>
+          <td>
+            ${t.status==='active'
+              ? `<button class="btn btn-secondary btn-sm" onclick="setTenantStatus(${t.tenant_id},'suspended')">Suspend</button>`
+              : `<button class="btn btn-primary btn-sm" onclick="setTenantStatus(${t.tenant_id},'active')">Activate</button>`}
+          </td>
+        </tr>`).join('');
+    } catch(e) { console.error('Tenants error:', e); }
+  }
 
-      const ctxStatus = document.getElementById('statusChart').getContext('2d');
-      sChart = new Chart(ctxStatus, {
-        type: 'doughnut',
-        data: {
-          labels: ['Active', 'Pending Approval', 'Suspended'],
-          datasets: [{
-            data: [0, 0, 0],  // Blank slate initialized array
-            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '75%',
-          plugins: {
-            legend: { position: 'bottom' }
-          }
-        }
-      });
-    }
+  async function setTenantStatus(id, status) {
+    if (!confirm(`Set tenant to "${status}"?`)) return;
+    try { await SuperadminAPI.setTenantStatus(id, status); loadTenants(); }
+    catch(e) { alert('Failed: ' + e.message); }
+  }
 
-    // Init charts and data on load
-    window.onload = () => {
-      if (typeof Chart !== 'undefined') {
-        renderCharts();
-      }
-      if (typeof loadSuperadminData === 'function') {
-        loadSuperadminData();
-      }
-    };
+  async function inviteTenant() {
+    const email   = document.getElementById('invite-email')?.value?.trim();
+    const company = document.getElementById('invite-company')?.value?.trim();
+    const notes   = document.getElementById('invite-notes')?.value?.trim();
+    if (!email || !company) { alert('Email and company name required.'); return; }
+    try { await SuperadminAPI.inviteTenant(email, company, notes); alert('Invitation sent!'); loadTenants(); }
+    catch(e) { alert('Failed: ' + e.message); }
+  }
 
-    // --- RECONNECTED BACKEND LOGIC ---
-    async function loadSuperadminData() {
-      try {
-        if (typeof SuperadminAPI === 'undefined') return;
-        
-        const overview = await SuperadminAPI.getOverview().catch(() => ({}));
-        const tenantsRes = await SuperadminAPI.getTenants().catch(() => []);
-        
-        const stats = overview.stats || overview || {};
-        
-        // Map Stats
-        document.getElementById('val-total-tenants').textContent = stats.total_tenants || 0;
-        document.getElementById('val-platform-revenue').textContent = '$' + (stats.mrr || 0);
-        
-        // Map Tenants Table
-        const tbody = document.getElementById('tenants-tbody');
-        const tenantsArray = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes.tenants || []);
+  async function loadSales() {
+    try {
+      const data = await SuperadminAPI.getSubscriptions();
+      if (document.getElementById('val-rev-ytd'))
+        document.getElementById('val-rev-ytd').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
+      if (document.getElementById('val-pending-inv'))
+        document.getElementById('val-pending-inv').textContent = data.pendingCount || 0;
+      const tb = document.getElementById('sales-top-tenants-tbody');
+      if (tb && data.topTenants)
+        tb.innerHTML = data.topTenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>₱${Number(t.revenue||0).toLocaleString()}</td><td><span class="badge bg-active">${t.status}</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No data</td></tr>';
+    } catch(e) { console.error('Sales error:', e); }
+  }
 
-        if (!tenantsArray || tenantsArray.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tenants found</td></tr>`;
-          return;
-        }
+  async function loadAuditLogs() {
+    try {
+      const rows = await fetch('/api/superadmin/audit-logs', { credentials:'include' }).then(r => r.json());
+      const tb = document.getElementById('audit-logs-tbody');
+      if (!tb) return;
+      if (!Array.isArray(rows) || !rows.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;">No audit logs yet</td></tr>'; return; }
+      tb.innerHTML = rows.map(l => `
+        <tr>
+          <td style="font-size:11px;color:#94a3b8;">${new Date(l.created_at).toLocaleString()}</td>
+          <td><span class="badge bg-pending">${l.actor_type}</span></td>
+          <td>${l.action}</td>
+          <td>${l.target_table||'-'}</td>
+          <td>${l.target_id||'-'}</td>
+        </tr>`).join('');
+    } catch(e) { console.error('Audit error:', e); }
+  }
 
-        let html = '';
-        tenantsArray.forEach(t => {
-          const plan = t.plan || 'Startup';
-          const status = t.status || 'Pending';
-          
-          let statusBadgeClass = 'bg-neutral';
-          if (status.toUpperCase() === 'ACTIVE') statusBadgeClass = 'bg-active';
-          if (status.toUpperCase() === 'PENDING') statusBadgeClass = 'bg-pending';
-          if (status.toUpperCase() === 'SUSPENDED') statusBadgeClass = 'bg-suspended';
+  async function loadReports() {
+    try {
+      const tenants = await SuperadminAPI.getTenants();
+      const tb = document.getElementById('reports-tbody');
+      if (!tb) return;
+      tb.innerHTML = tenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>${t.user_count||0}</td><td>${t.shipment_count||0}</td><td>-</td><td>-</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No data</td></tr>';
+    } catch(e) { console.error('Reports error:', e); }
+  }
 
-          html += `<tr>
-            <td style="font-family: monospace; color:#64748b;">${t.tenant_id || '-'}</td>
-            <td><strong>${t.company_name || '-'}</strong></td>
-            <td>${t.admin_email || '-'}</td>
-            <td>${plan}</td>
-            <td><span class="badge ${statusBadgeClass}">${status}</span></td>
-            <td>
-              <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary btn-sm" onclick="alert('Manage Tenant: ${t.tenant_id}')">Manage</button>
-              </div>
-            </td>
-          </tr>`;
-        });
+  function triggerBackup() {
+    const btn = event.currentTarget;
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;">sync</span> Processing...`;
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = `<span class="material-symbols-rounded">check</span> Backup Complete!`;
+      btn.classList.replace('btn-primary','btn-success');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><span style="font-family:monospace;">backup_${Date.now()}.sql.gz</span></td><td>Just Now</td><td>~1 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td>`;
+      const list = document.getElementById('backup-list');
+      if (list && list.innerText.includes('No backups')) list.innerHTML = '';
+      if (list) list.prepend(tr);
+      setTimeout(() => { btn.innerHTML=orig; btn.classList.replace('btn-success','btn-primary'); btn.disabled=false; }, 3000);
+    }, 2000);
+  }
 
-        tbody.innerHTML = html;
-      } catch (e) {
-        console.error("Superadmin load failed", e);
-      }
-    }
-  </script>
+  window.onload = async () => {
+    await loadDashboard();
+    await loadReports();
+  };
+</script>
+<style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+
   <!-- INVITE MODAL -->
   <div id="invite-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
     <div class="card" style="width:100%; max-width:450px; margin-bottom:0; box-shadow:var(--shadow-lg);">
@@ -462,242 +440,5 @@ textarea{resize:vertical;}
        if (inviteBtn) inviteBtn.onclick = openInviteModal;
     });
   </script>
-=======
-  <div class="content">
-
-    <!-- ══ OVERVIEW ═══════════════════════════ -->
-    <div id="s-overview" class="screen active">
-      <div class="isolation-banner">
-        <span class="material-symbols-outlined">shield</span>
-        <div class="isolation-text">
-          <strong>Multi-Tenant Isolation Active.</strong> Each tenant is a separate, competing company. Their data, users, staff, shipments, and workspace are fully isolated. No tenant can access or see another tenant's data.
-        </div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value">0</div><div class="stat-note">No tenants yet</div></div>
-        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">$0</div><div class="stat-note">No data yet</div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title"><span class="material-symbols-outlined">corporate_fare</span>Registered Tenants</span>
-          <button class="btn btn-primary btn-sm" onclick="go('invite',null)"><span class="material-symbols-outlined">add</span>Invite Tenant</button>
-        </div>
-        <div class="empty-state">
-          <span class="material-symbols-outlined">domain_add</span>
-          <p>No tenants registered</p>
-          <p class="esub">Each invited tenant gets their own isolated workspace, admin dashboard, and user registration page.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ TENANTS ════════════════════════════ -->
-    <div id="s-tenants" class="screen">
-      <div class="ph-row">
-        <div><h2>Tenants</h2><p>Each tenant is an isolated, independent logistics company.</p></div>
-        <button class="btn btn-primary btn-sm" onclick="go('invite',null)"><span class="material-symbols-outlined">add</span>Invite Tenant</button>
-      </div>
-
-      <!-- What gets provisioned info -->
-      <div class="info-box">
-        <span class="material-symbols-outlined">info</span>
-        <div>
-          <div class="info-title">What happens when a tenant is activated?</div>
-          <div class="info-desc">
-            Once a tenant subscribes and creates their admin account, the system automatically provisions:
-            <strong> (1)</strong> an isolated admin dashboard scoped to their <code>tenant_id</code>,
-            <strong> (2)</strong> a private user registration page at their unique workspace URL,
-            <strong> (3)</strong> all data tables row-locked to their tenant — no cross-tenant access is possible.
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div class="tabs" style="border:none;margin:0;">
-            <button class="tab active" onclick="setTab(this)">All</button>
-            <button class="tab" onclick="setTab(this)">Active</button>
-            <button class="tab" onclick="setTab(this)">Pending Invite</button>
-            <button class="tab" onclick="setTab(this)">Suspended</button>
-          </div>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Tenant ID</th>
-                <th>Company</th>
-                <th>Plan</th>
-                <th>Admin Email</th>
-                <th>Workspace URL</th>
-                <th>User Reg. Page</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="9">
-                <div class="empty-state" style="padding:36px;">
-                  <span class="material-symbols-outlined">corporate_fare</span>
-                  <p>No tenants yet — send an invitation to get started</p>
-                </div>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ INVITE TENANT ══════════════════════ -->
-    <div id="s-invite" class="screen">
-      <div class="ph-row" style="align-items:flex-start;">
-        <div><h2>Invite New Tenant</h2><p>The invited company will subscribe and create their isolated workspace.</p></div>
-        <button class="btn btn-ghost" onclick="go('tenants',null)">&#8592; Back</button>
-      </div>
-
-      <div class="warn-box">
-        <span class="material-symbols-outlined">lock</span>
-        <div>
-          <div class="warn-title">Tenant Isolation Reminder</div>
-          <div class="warn-desc">Each company you invite is a <strong>separate, competing logistics business</strong>. Once provisioned, their workspace is 100% private. They will never see, know about, or access any other tenant on this platform.</div>
-        </div>
-      </div>
-
-      <div class="form-card">
-        <div class="form-body">
-          <div class="info-box" style="margin-bottom:16px;">
-            <span class="material-symbols-outlined">info</span>
-            <div>
-              <div class="info-title">Activation Flow</div>
-              <div class="info-desc">1. You send an invite → 2. Tenant selects a subscription plan → 3. Tenant creates their admin account → 4. System provisions their <strong>isolated admin dashboard</strong> + <strong>private user registration page</strong> automatically.</div>
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Company Email <span class="req">*</span></label>
-              <div class="field-wrap">
-                <span class="field-ico material-symbols-outlined">mail</span>
-                <input id="inv-email" type="email" placeholder=""/>
-              </div>
-              <span class="hint">Invitation link will be sent here.</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Company Name <span class="req">*</span></label>
-              <div class="field-wrap">
-                <span class="field-ico material-symbols-outlined">business</span>
-                <input id="inv-company" type="text" placeholder=""/>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Internal Notes <span style="color:#94a3b8;font-weight:400;">(optional — not visible to tenant)</span></label>
-            <textarea id="inv-notes" rows="2" placeholder=""></textarea>
-          </div>
-        </div>
-        <div class="form-footer">
-          <button class="btn btn-ghost" onclick="go('tenants',null)">Cancel</button>
-          <button class="btn btn-primary" onclick="sendInvite()">Send Invitation<span class="material-symbols-outlined">send</span></button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ INVITE SUCCESS ═════════════════════ -->
-    <div id="s-invite-success" class="screen">
-      <div class="success-box">
-        <div class="s-icon"><span class="material-symbols-outlined">mark_email_read</span></div>
-        <h2 style="font-size:18px;font-weight:800;color:#0f2235;margin-bottom:8px;">Invitation Sent!</h2>
-        <p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:12px;">
-          The tenant will receive an email to select a subscription and create their admin account. Their workspace and user registration page will be provisioned automatically upon activation.
-        </p>
-        <div id="sent-display" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:12px;font-family:'DM Mono',monospace;color:#475569;margin-bottom:16px;word-break:break-all;text-align:left;"></div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;margin-bottom:16px;text-align:left;line-height:1.7;">
-          <div style="font-weight:700;color:#0f2235;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Will be provisioned on activation:</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Isolated Admin Dashboard</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Private User Registration Page</div>
-          <div style="display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Tenant-scoped Database Workspace</div>
-        </div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="go('tenants',null)">Back to Tenants</button>
-      </div>
-    </div>
-
-    <!-- ══ SUBSCRIPTIONS ══════════════════════ -->
-    <div id="s-subscriptions" class="screen">
-      <div class="page-header"><h2>Subscriptions</h2><p>Platform-wide subscription overview.</p></div>
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Startup ($99/mo)<div class="stat-icon si-purple"><span class="material-symbols-outlined">rocket_launch</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
-        <div class="stat-card"><div class="stat-label">Enterprise ($499/mo)<div class="stat-icon si-blue"><span class="material-symbols-outlined">business</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
-        <div class="stat-card"><div class="stat-label">Global ($999/mo)<div class="stat-icon si-green"><span class="material-symbols-outlined">public</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Subscriptions</span></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Tenant ID</th><th>Company</th><th>Plan</th><th>Amount</th><th>Billing Date</th><th>Status</th></tr></thead>
-            <tbody><tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No subscriptions yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ SETTINGS ═══════════════════════════ -->
-    <div id="s-settings" class="screen">
-      <div class="page-header"><h2>Platform Settings</h2><p>Global platform configuration.</p></div>
-      <div class="form-card" style="max-width:520px;">
-        <div class="form-body">
-          <div class="form-group"><label class="form-label">Platform Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">dns</span><input type="text" placeholder=""/></div></div>
-          <div class="form-group"><label class="form-label">Support Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input type="email" placeholder=""/></div></div>
-          <div class="form-group"><label class="form-label">Base Domain</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input type="text" placeholder=""/></div><span class="hint">Tenant workspaces will be at yourdomain.io/{slug}</span></div>
-        </div>
-        <div class="form-footer"><div></div><button class="btn btn-primary">Save Changes</button></div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-var pageMeta = {
-  overview: ['Overview','Platform summary'],
-  tenants: ['Tenants','Isolated logistics companies'],
-  invite: ['Invite Tenant','Tenants / Invite'],
-  'invite-success': ['Invitation Sent','Tenants / Invite'],
-  subscriptions: ['Subscriptions','Platform-wide billing'],
-  settings: ['Platform Settings','Global configuration'],
-};
-
-function go(id, navBtn) {
-  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-  var el = document.getElementById('s-' + id);
-  if (el) el.classList.add('active');
-  if (navBtn) {
-    document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
-    navBtn.classList.add('active');
-  }
-  var meta = pageMeta[id] || [id, ''];
-  document.getElementById('page-title').textContent = meta[0];
-  document.getElementById('page-sub').textContent = meta[1];
-  window.scrollTo(0,0);
-}
-
-function setTab(el) {
-  var bar = el.closest('.tabs') || el.parentElement;
-  bar.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
-  el.classList.add('active');
-}
-
-function sendInvite() {
-  var email = document.getElementById('inv-email').value.trim();
-  var company = document.getElementById('inv-company').value.trim();
-  if (!email) { alert('Please enter the company email.'); return; }
-  if (!company) { alert('Please enter the company name.'); return; }
-  var html = '<strong>' + company + '</strong><br>' + email;
-  document.getElementById('sent-display').innerHTML = html;
-  go('invite-success', null);
-}
-</script>
->>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
 </body>
 </html>
