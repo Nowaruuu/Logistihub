@@ -9,7 +9,6 @@ const router = express.Router();
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-// Inject tenant data into the HTML so the frontend knows the Slug/Company Name
 function injectTenantData(html, tenantData) {
   const script = `<script>
 window.__TENANT__ = ${JSON.stringify({
@@ -35,7 +34,7 @@ async function resolveTenant(slug, res) {
     res.status(404).send(`
       <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
         <h2 style="color:#0f2235;">Workspace not found</h2>
-        <p style="color:#64748b;">The workspace you're looking for doesn't exist or has been deactivated.</p>
+        <p style="color:#64748b;">The workspace you're looking for doesn't exist.</p>
       </body></html>
     `);
     return null;
@@ -57,49 +56,45 @@ router.get('/superadmin-login', (req, res) => {
 
 router.get('/onboarding', (req, res) => {
   const { invite } = req.query;
-  if (!invite) {
-    return res.status(400).send('<h2>Invalid Link</h2><p>Invitation token missing.</p>');
-  }
+  if (!invite) return res.status(400).send('<h2>Invalid Link</h2>');
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
 
-// ─── TENANT PAGES (STAFF & ADMIN) ────────────────────────────────────────────
+// ─── STAFF & ADMIN ROUTES ───────────────────────────────────────────────────
 
-// Staff Registration (FIXED 404)
-router.get('/:slug/staff-registration', async (req, res) => {
+// 1. STAFF LOGIN (Fixing your amogus/staff-register request)
+router.get('/:slug/staff-register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('staff-register.html');
-  res.send(injectTenantData(html, tenant));
-});
-
-// Staff Login
-router.get('/:slug/staff-login', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
+  // Based on your requirement, this URL serves the LOGIN file
   const html = readView('staff-login.html');
   res.send(injectTenantData(html, tenant));
 });
 
-// Admin Dashboard
-router.get('/:slug/admin', async (req, res) => {
+// 2. STAFF REGISTRATION (Fixing the 404)
+router.get('/:slug/staff-registration', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('admin-dashboard.html');
+  const html = readView('staff-register.html'); 
   res.send(injectTenantData(html, tenant));
 });
 
-// Admin Login
+// 3. ADMIN ACCESS
 router.get('/:slug/admin-login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('admin-login.html');
-  res.send(injectTenantData(html, tenant));
+  res.send(injectTenantData(readView('admin-login.html'), tenant));
 });
 
-// ─── TENANT PAGES (USER / CUSTOMER) ──────────────────────────────────────────
+router.get('/:slug/admin', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
+});
 
-// User Registration (FIXED SWAP ISSUE)
+// ─── USER / CUSTOMER ROUTES ──────────────────────────────────────────────────
+
+// 4. USER REGISTRATION (Fixed: No longer shows staff page)
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -107,7 +102,7 @@ router.get('/:slug/register', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// User Login
+// 5. USER LOGIN
 router.get('/:slug/login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -115,27 +110,18 @@ router.get('/:slug/login', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// ─── ADDITIONAL DASHBOARDS ───────────────────────────────────────────────────
+// ─── DASHBOARDS ──────────────────────────────────────────────────────────────
 
 router.get('/:slug/driver-dashboard', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('driver-dashboard.html');
-  res.send(injectTenantData(html, tenant));
+  res.send(injectTenantData(readView('driver-dashboard.html'), tenant));
 });
 
 router.get('/:slug/dc-dashboard', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('dc-dashboard.html');
-  res.send(injectTenantData(html, tenant));
-});
-
-router.get('/:slug/get-app', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  const html = readView('get-app.html');
-  res.send(injectTenantData(html, tenant));
+  res.send(injectTenantData(readView('dc-dashboard.html'), tenant));
 });
 
 module.exports = router;
