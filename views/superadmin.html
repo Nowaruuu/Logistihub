@@ -189,7 +189,202 @@ textarea{resize:vertical;}
     </div>
   </div>
 
-  <script src="/public/frontend-api.js"></script>
+  <div class="content">
+
+    <!-- ══ OVERVIEW ═══════════════════════════ -->
+    <div id="s-overview" class="screen active">
+      <div class="isolation-banner">
+        <span class="material-symbols-outlined">shield</span>
+        <div class="isolation-text">
+          <strong>Multi-Tenant Isolation Active.</strong> Each tenant is a separate, competing company. Their data, users, staff, shipments, and workspace are fully isolated. No tenant can access or see another tenant's data.
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value">0</div><div class="stat-note">No tenants yet</div></div>
+        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">$0</div><div class="stat-note">No data yet</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">corporate_fare</span>Registered Tenants</span>
+          <button class="btn btn-primary btn-sm" onclick="go('invite',null)"><span class="material-symbols-outlined">add</span>Invite Tenant</button>
+        </div>
+        <div class="empty-state">
+          <span class="material-symbols-outlined">domain_add</span>
+          <p>No tenants registered</p>
+          <p class="esub">Each invited tenant gets their own isolated workspace, admin dashboard, and user registration page.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TENANTS ════════════════════════════ -->
+    <div id="s-tenants" class="screen">
+      <div class="ph-row">
+        <div><h2>Tenants</h2><p>Each tenant is an isolated, independent logistics company.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="go('invite',null)"><span class="material-symbols-outlined">add</span>Invite Tenant</button>
+      </div>
+
+      <!-- What gets provisioned info -->
+      <div class="info-box">
+        <span class="material-symbols-outlined">info</span>
+        <div>
+          <div class="info-title">What happens when a tenant is activated?</div>
+          <div class="info-desc">
+            Once a tenant subscribes and creates their admin account, the system automatically provisions:
+            <strong> (1)</strong> an isolated admin dashboard scoped to their <code>tenant_id</code>,
+            <strong> (2)</strong> a private user registration page at their unique workspace URL,
+            <strong> (3)</strong> all data tables row-locked to their tenant — no cross-tenant access is possible.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="tabs" style="border:none;margin:0;">
+            <button class="tab active" onclick="setTab(this)">All</button>
+            <button class="tab" onclick="setTab(this)">Active</button>
+            <button class="tab" onclick="setTab(this)">Pending Invite</button>
+            <button class="tab" onclick="setTab(this)">Suspended</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tenant ID</th>
+                <th>Company</th>
+                <th>Plan</th>
+                <th>Admin Email</th>
+                <th>Workspace URL</th>
+                <th>User Reg. Page</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="9">
+                <div class="empty-state" style="padding:36px;">
+                  <span class="material-symbols-outlined">corporate_fare</span>
+                  <p>No tenants yet — send an invitation to get started</p>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ INVITE TENANT ══════════════════════ -->
+    <div id="s-invite" class="screen">
+      <div class="ph-row" style="align-items:flex-start;">
+        <div><h2>Invite New Tenant</h2><p>The invited company will subscribe and create their isolated workspace.</p></div>
+        <button class="btn btn-ghost" onclick="go('tenants',null)">&#8592; Back</button>
+      </div>
+
+      <div class="warn-box">
+        <span class="material-symbols-outlined">lock</span>
+        <div>
+          <div class="warn-title">Tenant Isolation Reminder</div>
+          <div class="warn-desc">Each company you invite is a <strong>separate, competing logistics business</strong>. Once provisioned, their workspace is 100% private. They will never see, know about, or access any other tenant on this platform.</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-body">
+          <div class="info-box" style="margin-bottom:16px;">
+            <span class="material-symbols-outlined">info</span>
+            <div>
+              <div class="info-title">Activation Flow</div>
+              <div class="info-desc">1. You send an invite → 2. Tenant selects a subscription plan → 3. Tenant creates their admin account → 4. System provisions their <strong>isolated admin dashboard</strong> + <strong>private user registration page</strong> automatically.</div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Company Email <span class="req">*</span></label>
+              <div class="field-wrap">
+                <span class="field-ico material-symbols-outlined">mail</span>
+                <input id="inv-email" type="email" placeholder=""/>
+              </div>
+              <span class="hint">Invitation link will be sent here.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Company Name <span class="req">*</span></label>
+              <div class="field-wrap">
+                <span class="field-ico material-symbols-outlined">business</span>
+                <input id="inv-company" type="text" placeholder=""/>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Internal Notes <span style="color:#94a3b8;font-weight:400;">(optional — not visible to tenant)</span></label>
+            <textarea id="inv-notes" rows="2" placeholder=""></textarea>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-ghost" onclick="go('tenants',null)">Cancel</button>
+          <button class="btn btn-primary" onclick="sendInvite()">Send Invitation<span class="material-symbols-outlined">send</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ INVITE SUCCESS ═════════════════════ -->
+    <div id="s-invite-success" class="screen">
+      <div class="success-box">
+        <div class="s-icon"><span class="material-symbols-outlined">mark_email_read</span></div>
+        <h2 style="font-size:18px;font-weight:800;color:#0f2235;margin-bottom:8px;">Invitation Sent!</h2>
+        <p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:12px;">
+          The tenant will receive an email to select a subscription and create their admin account. Their workspace and user registration page will be provisioned automatically upon activation.
+        </p>
+        <div id="sent-display" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:12px;font-family:'DM Mono',monospace;color:#475569;margin-bottom:16px;word-break:break-all;text-align:left;"></div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;margin-bottom:16px;text-align:left;line-height:1.7;">
+          <div style="font-weight:700;color:#0f2235;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Will be provisioned on activation:</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Isolated Admin Dashboard</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Private User Registration Page</div>
+          <div style="display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:14px;color:#22c55e;">check</span>Tenant-scoped Database Workspace</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="go('tenants',null)">Back to Tenants</button>
+      </div>
+    </div>
+
+    <!-- ══ SUBSCRIPTIONS ══════════════════════ -->
+    <div id="s-subscriptions" class="screen">
+      <div class="page-header"><h2>Subscriptions</h2><p>Platform-wide subscription overview.</p></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Startup ($99/mo)<div class="stat-icon si-purple"><span class="material-symbols-outlined">rocket_launch</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
+        <div class="stat-card"><div class="stat-label">Enterprise ($499/mo)<div class="stat-icon si-blue"><span class="material-symbols-outlined">business</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
+        <div class="stat-card"><div class="stat-label">Global ($999/mo)<div class="stat-icon si-green"><span class="material-symbols-outlined">public</span></div></div><div class="stat-value">0</div><div class="stat-note">Active tenants</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Subscriptions</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Tenant ID</th><th>Company</th><th>Plan</th><th>Amount</th><th>Billing Date</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="6"><div class="empty-state" style="padding:36px;"><span class="material-symbols-outlined">receipt_long</span><p>No subscriptions yet</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ═══════════════════════════ -->
+    <div id="s-settings" class="screen">
+      <div class="page-header"><h2>Platform Settings</h2><p>Global platform configuration.</p></div>
+      <div class="form-card" style="max-width:520px;">
+        <div class="form-body">
+          <div class="form-group"><label class="form-label">Platform Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">dns</span><input type="text" placeholder=""/></div></div>
+          <div class="form-group"><label class="form-label">Support Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input type="email" placeholder=""/></div></div>
+          <div class="form-group"><label class="form-label">Base Domain</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input type="text" placeholder=""/></div><span class="hint">Tenant workspaces will be at yourdomain.io/{slug}</span></div>
+        </div>
+        <div class="form-footer"><div></div><button class="btn btn-primary">Save Changes</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/public/frontend-api.js"></script>
 <script>
   const titles = {
     dashboard: 'Dashboard Overview',
@@ -363,82 +558,5 @@ textarea{resize:vertical;}
   };
 </script>
 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
-
-  <!-- INVITE MODAL -->
-  <div id="invite-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div class="card" style="width:100%; max-width:450px; margin-bottom:0; box-shadow:var(--shadow-lg);">
-      <div class="card-header">
-        <div class="card-title"><span class="material-symbols-rounded">mail</span> Invite New Tenant</div>
-        <button class="icon-btn" onclick="closeInviteModal()"><span class="material-symbols-rounded">close</span></button>
-      </div>
-      <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">Admin Email</label>
-          <input type="email" id="invite-email" class="form-control" placeholder="admin@example.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Company Name</label>
-          <input type="text" id="invite-company" class="form-control" placeholder="e.g. Acme Logistics">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Internal Notes (Optional)</label>
-          <textarea id="invite-notes" class="form-control" style="height:80px;" placeholder="Plan details, contact person, etc."></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
-          <button class="btn btn-secondary" onclick="closeInviteModal()">Cancel</button>
-          <button class="btn btn-primary" id="invite-submit-btn" onclick="sendInvite()">Send Invitation</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ... previous script logic ...
-    
-    // Add Invite Modal triggers
-    document.querySelector('button.btn-primary[onclick="nav(\'tenants\', this)"]').parentElement.querySelector('button.btn-primary').onclick = openInviteModal;
-
-    function openInviteModal() {
-      document.getElementById('invite-modal').style.display = 'flex';
-      document.getElementById('invite-email').focus();
-    }
-
-    function closeInviteModal() {
-      document.getElementById('invite-modal').style.display = 'none';
-      document.getElementById('invite-email').value = '';
-      document.getElementById('invite-company').value = '';
-      document.getElementById('invite-notes').value = '';
-    }
-
-    async function sendInvite() {
-      const email   = document.getElementById('invite-email').value.trim();
-      const company = document.getElementById('invite-company').value.trim();
-      const notes   = document.getElementById('invite-notes').value.trim();
-      const btn     = document.getElementById('invite-submit-btn');
-
-      if (!email || !company) return showToast('Please fill Email and Company Name', 'error');
-
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-
-      try {
-        const res = await SuperadminAPI.inviteTenant(email, company, notes);
-        showToast(`Invitation sent to ${email}`);
-        closeInviteModal();
-        loadSuperadminData(); // Refresh list if possible
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Send Invitation';
-      }
-    }
-
-    // Refresh once on load to ensure triggers are attached
-    window.addEventListener('load', () => {
-       const inviteBtn = document.querySelector('button.btn-primary[onclick="nav(\'tenants\', this)"]')?.parentElement?.querySelector('button.btn-primary');
-       if (inviteBtn) inviteBtn.onclick = openInviteModal;
-    });
-  </script>
 </body>
 </html>
