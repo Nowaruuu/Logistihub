@@ -9,6 +9,7 @@ const router = express.Router();
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
+// Injects DB branding/data into HTML so the frontend can white-label automatically
 function injectTenantData(html, tenantData) {
   const script = `<script>
 window.__TENANT__ = ${JSON.stringify({
@@ -16,8 +17,14 @@ window.__TENANT__ = ${JSON.stringify({
     company_name: tenantData.company_name,
     slug:         tenantData.slug,
     plan:         tenantData.plan,
+    brand_color:  tenantData.brand_color || '#3b82f6',
+    logo_url:     tenantData.logo_url || ''
   })};
-</script>`;
+</script>
+<style>
+  :root { --primary: ${tenantData.brand_color || '#3b82f6'} !important; }
+</style>`;
+  
   return html.replace('</head>', script + '\n</head>');
 }
 
@@ -60,18 +67,9 @@ router.get('/onboarding', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
 
-// ─── STAFF & ADMIN ROUTES ───────────────────────────────────────────────────
+// ─── STAFF ROUTES ────────────────────────────────────────────────────────────
 
-// 1. STAFF LOGIN (Fixing your amogus/staff-register request)
-router.get('/:slug/staff-register', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  // Based on your requirement, this URL serves the LOGIN file
-  const html = readView('staff-login.html');
-  res.send(injectTenantData(html, tenant));
-});
-
-// 2. STAFF REGISTRATION (Fixing the 404)
+// STAFF REGISTRATION - This points to the STAFF registration file
 router.get('/:slug/staff-registration', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -79,7 +77,23 @@ router.get('/:slug/staff-registration', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// 3. ADMIN ACCESS
+// STAFF LOGIN - Per your requirement, /staff-register leads to LOGIN
+router.get('/:slug/staff-register', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('staff-login.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+router.get('/:slug/staff-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('staff-login.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+// ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
+
 router.get('/:slug/admin-login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -94,7 +108,7 @@ router.get('/:slug/admin', async (req, res) => {
 
 // ─── USER / CUSTOMER ROUTES ──────────────────────────────────────────────────
 
-// 4. USER REGISTRATION (Fixed: No longer shows staff page)
+// USER REGISTRATION - This points specifically to the USER registration file
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -102,7 +116,7 @@ router.get('/:slug/register', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// 5. USER LOGIN
+// USER LOGIN
 router.get('/:slug/login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -110,7 +124,7 @@ router.get('/:slug/login', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// ─── DASHBOARDS ──────────────────────────────────────────────────────────────
+// ─── ADDITIONAL DASHBOARDS ───────────────────────────────────────────────────
 
 router.get('/:slug/driver-dashboard', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
