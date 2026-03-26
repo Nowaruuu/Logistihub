@@ -186,7 +186,7 @@ textarea{resize:vertical;}
     <div class="nav-sec">Management</div>
     <button class="nav-link" onclick="go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
     <button class="nav-link" onclick="go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
-    <button class="nav-link" onclick="go('clients',this)"><span class="material-symbols-outlined">groups</span>Clients</button>
+    <button class="nav-link" onclick="go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
@@ -198,7 +198,7 @@ textarea{resize:vertical;}
   <div class="sidebar-bottom">
     <div class="user-row">
       <div class="uavatar"><span class="material-symbols-outlined">person</span></div>
-      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email">admin@company.io</div></div>
+      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4d5d0d9dddaf4d7dbd9c4d5dacd9adddb">[email&#160;protected]</a></div></div>
     </div>
   </div>
 </aside>
@@ -372,10 +372,16 @@ textarea{resize:vertical;}
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Route</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr></tbody></table></div></div>
     </div>
 
-    <!-- ══ CLIENTS ════════════════════════════ -->
-    <div id="s-clients" class="screen">
-      <div class="ph-row"><div><h2>Clients</h2><p>Companies that book shipments with you.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Client</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Username</th><th>Total Shipments</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">groups</span><p>No clients yet</p></div></td></tr></tbody></table></div></div>
+    <!-- ══ APP USERS ══════════════════════════ -->
+    <div id="s-app-users" class="screen">
+      <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
+          <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th><th></th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
+      </div>
     </div>
 
     <!-- ══ PAYMENTS ═══════════════════════════ -->
@@ -457,7 +463,7 @@ textarea{resize:vertical;}
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var pageMeta={
   'dashboard':['Dashboard','Welcome back'],
   'shipments':['Shipments','All deliveries in your workspace'],
@@ -465,7 +471,7 @@ var pageMeta={
   'routes':['Routes','Your delivery zones'],
   'staff':['Staff','Your team'],
   'vehicles':['Vehicles','Your fleet'],
-  'clients':['Clients','Your client accounts'],
+  'app-users':['App Users','Registered users for your company'],
   'payments':['Payments','Invoices and billing'],
   'pod':['Proof of Delivery','Capture records'],
   'user-reg':['User Registration','Your private registration page'],
@@ -503,10 +509,74 @@ function showSub(type){
 }
 
 function copyUrl(){
-  var url=document.getElementById('dashboard-reg-url').textContent;
-  if(navigator.clipboard){navigator.clipboard.writeText(url);}
-  alert('Registration URL copied to clipboard:\n'+url);
+  var url = document.getElementById('reg-page-url') ? document.getElementById('reg-page-url').textContent : '';
+  navigator.clipboard && url ? navigator.clipboard.writeText(url) : null;
 }
+
+// ── APP USERS ────────────────────────────────────────────────────
+var _allAppUsers = [];
+
+function loadAppUsers() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  fetch('/' + slug + '/api/admin/app-users', { credentials: 'include' })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _allAppUsers = Array.isArray(data.users) ? data.users : [];
+      renderAppUsers(_allAppUsers);
+    })
+    .catch(function(){
+      document.getElementById('app-users-tbody').innerHTML =
+        '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load users</p></div></td></tr>';
+    });
+}
+
+function renderAppUsers(users) {
+  var tbody = document.getElementById('app-users-tbody');
+  if (!tbody) return;
+  if (!users || users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';
+    return;
+  }
+  var roleColors = { 'Driver': 'b-transit', 'Document Controller': 'b-delivered', 'Admin': 'b-awaiting' };
+  tbody.innerHTML = users.map(function(u){
+    var rClass = roleColors[u.role] || 'b-pending';
+    var date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+    var status = u.is_active === false ? '<span class="badge b-declined">Inactive</span>' : '<span class="badge b-delivered">Active</span>';
+    return '<tr>' +
+      '<td><strong>' + esc(u.full_name || u.name || '—') + '</strong></td>' +
+      '<td>' + esc(u.email || '—') + '</td>' +
+      '<td><span class="badge ' + rClass + '">' + esc(u.role || '—') + '</span></td>' +
+      '<td>' + date + '</td>' +
+      '<td>' + status + '</td>' +
+      '<td></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filterAppUsers() {
+  var role = document.getElementById('app-users-role-filter').value;
+  var filtered = role ? _allAppUsers.filter(function(u){ return u.role === role; }) : _allAppUsers;
+  renderAppUsers(filtered);
+}
+
+function esc(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+// Hook into go() to auto-load when navigating to app-users
+var _origGo = go;
+go = function(id, navBtn){
+  _origGo(id, navBtn);
+  if (id === 'app-users') loadAppUsers();
+};
+
+// Init
+var __T = window.__TENANT__ || {};
+var slug = __T.slug || '';
+if(document.getElementById('sidebar-tenant-name')) document.getElementById('sidebar-tenant-name').textContent = __T.company_name || 'Your Company';
+if(document.getElementById('sidebar-admin-email')) document.getElementById('sidebar-admin-email').textContent = __T.admin_email || '';
+var regBase = 'logistihub.ddns.net/' + (slug||'your-workspace') + '/register';
+['reg-page-url','dashboard-reg-url'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=regBase; });
 </script>
+<script src="/public/frontend-api.js"></script>
 </body>
 </html>
