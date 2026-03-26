@@ -3,12 +3,12 @@
 const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
-const jwt     = require('jsonwebtoken');
-const bcrypt  = require('bcryptjs');
 const { query } = require('../config/db');
 
 const router = express.Router();
 
+// Helper to read an HTML file and inject tenant data as a window global
+// This replaces the placeholder 'Your Company' etc. with real values server-side
 function injectTenantData(html, tenantData) {
   const script = `<script>
 window.__TENANT__ = ${JSON.stringify({
@@ -18,6 +18,7 @@ window.__TENANT__ = ${JSON.stringify({
     plan:         tenantData.plan,
   })};
 </script>`;
+  // Inject just before </head>
   return html.replace('</head>', script + '\n</head>');
 }
 
@@ -25,71 +26,56 @@ function readView(filename) {
   return fs.readFileSync(path.join(__dirname, '../views', filename), 'utf-8');
 }
 
-function requireSuperadminPage(req, res, next) {
-  const token = req.cookies && req.cookies.sa_token;
-  if (!token) { return res.redirect('/superadmin-login'); }
-  try {
-    jwt.verify(token, process.env.SUPERADMIN_JWT_SECRET);
-    next();
-  } catch (e) {
-    return res.redirect('/superadmin-login');
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPERADMIN pages
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Root → superadmin login or registration landing
-router.get('/', (req, res) => {
-  if (req.isRegistrationSubdomain) {
-    return res.send(readView('client-register.html'));
-  }
-  res.redirect('/superadmin-login');
-});
-// Login page
-router.get('/superadmin-login', (req, res) => {
-  const token = req.cookies && req.cookies.sa_token;
-  try {
-    if (token) { jwt.verify(token, process.env.SUPERADMIN_JWT_SECRET); return res.redirect('/superadmin'); }
-  } catch (e) {}
-  res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
-});
-
-// Dashboard — protected
-router.get('/superadmin', requireSuperadminPage, (req, res) => {
+router.get('/superadmin', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/superadmin.html'));
 });
 
-// Onboarding
-router.get('/admin-onboarding', (req, res) => {
+router.get('/superadmin/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ONBOARDING (invite → subscribe → create account → customize)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/onboarding', (req, res) => {
+  // Must have a valid ?invite= token — server validates before serving page
   const { invite } = req.query;
   if (!invite) {
     return res.status(400).send(`
       <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
         <h2>Invalid Link</h2>
-        <p>This onboarding link is missing an invitation token.</p>
+        <p>This onboarding link is missing an invitation token. Please use the link from your invitation email.</p>
       </body></html>
     `);
   }
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT-SCOPED PAGES
+// These resolve the tenant from the slug, verify it exists and is active,
+// then serve the correct HTML with tenant data injected.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Tenant pages
+// GET /:slug/admin  — admin dashboard
 router.get('/:slug/admin', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
+
   const html = readView('admin-dashboard.html');
   res.send(injectTenantData(html, tenant));
 });
 
+// GET /:slug/register  — user registration page (ONLY exists if tenant is active)
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('client-register.html');
-  res.send(injectTenantData(html, tenant));
-});
 
-router.get('/:slug/staff-registration', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
   const html = readView('user-register.html');
   res.send(injectTenantData(html, tenant));
 });
@@ -99,6 +85,13 @@ router.get('/register', (req, res) => {
   // Serving client-registration only if on registration subdomain
   const html = readView('client-register.html');
   res.send(html);
+});
+
+router.get('/:slug/login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('login.html');
+  res.send(injectTenantData(html, tenant));
 });
 
 router.get('/:slug/staff-login', async (req, res) => {
