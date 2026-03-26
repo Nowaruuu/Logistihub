@@ -339,9 +339,21 @@ router.delete('/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, re
 // CLIENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Show APP_USER as clients (merged view)
 router.get('/clients', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
-    'SELECT client_id, tenant_id, company_name, contact_person, phone_number, username FROM CLIENT WHERE tenant_id = ? ORDER BY company_name ASC',
+    `SELECT
+       u.user_id   AS client_id,
+       u.tenant_id,
+       CONCAT(u.first_name, ' ', u.last_name) AS company_name,
+       CONCAT(u.first_name, ' ', u.last_name) AS contact_person,
+       u.phone     AS phone_number,
+       u.email     AS username,
+       u.status,
+       u.created_at
+     FROM APP_USER u
+     WHERE u.tenant_id = ?
+     ORDER BY u.created_at DESC`,
     [req.tenantId]
   );
   res.json(rows);

@@ -51,32 +51,53 @@ router.post('/logout', (req, res) => {
 // GET /api/superadmin/overview  — platform stats
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/overview', requireSuperadmin, async (req, res) => {
-  const [[tenants]]  = await query('SELECT COUNT(*) AS total FROM TENANT');
-  const [[active]]   = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'active'");
-  const [[pending]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'pending'");
-  const [[revenue]]  = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM PAYMENT WHERE status = 'Paid'");
+  try {
+    const [[tenants]]    = await query('SELECT COUNT(*) AS total FROM TENANT');
+    const [[active]]     = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'active'");
+    const [[pending]]    = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'pending'");
+    const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'suspended'");
+    const [[users]]      = await query('SELECT COUNT(*) AS total FROM APP_USER');
+    const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM SHIPMENT');
+    const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM PAYMENT WHERE status = 'Paid'");
 
-  res.json({
-    totalTenants:       tenants.total,
-    activeTenants:      active.total,
-    pendingInvites:     pending.total,
-    platformRevenue:    revenue.total,
-  });
+    res.json({
+      totalTenants:      tenants.total,
+      activeTenants:     active.total,
+      pendingTenants:    pending.total,
+      suspendedTenants:  suspended.total,
+      totalUsers:        users.total,
+      totalShipments:    shipments.total,
+      totalRevenue:      revenue.total,
+    });
+  } catch(e) {
+    console.error('Overview error:', e);
+    res.status(500).json({ error: 'Failed to load overview.' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/superadmin/tenants  — list all tenants
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/tenants', requireSuperadmin, async (req, res) => {
-  const [rows] = await query(`
-    SELECT
-      t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at,
-      s.username AS admin_email
-    FROM TENANT t
-    LEFT JOIN STAFF s ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
-    ORDER BY t.created_at DESC
-  `);
-  res.json(rows);
+  try {
+    const [rows] = await query(`
+      SELECT
+        t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at,
+        s.username AS admin_email,
+        COUNT(DISTINCT u.user_id)  AS user_count,
+        COUNT(DISTINCT sh.delivery_number) AS shipment_count
+      FROM TENANT t
+      LEFT JOIN STAFF s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
+      LEFT JOIN APP_USER u ON u.tenant_id = t.tenant_id
+      LEFT JOIN SHIPMENT sh ON sh.tenant_id = t.tenant_id
+      GROUP BY t.tenant_id
+      ORDER BY t.created_at DESC
+    `);
+    res.json(rows);
+  } catch(e) {
+    console.error('Tenants error:', e);
+    res.status(500).json({ error: 'Failed to load tenants.' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,20 +162,35 @@ router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
 // GET /api/superadmin/subscriptions  — all subscription/payment data
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/subscriptions', requireSuperadmin, async (req, res) => {
-  const [rows] = await query(`
-    SELECT
-      t.tenant_id, t.company_name, t.plan, t.status,
-      t.created_at,
-      CASE t.plan
-        WHEN 'startup'    THEN 99
-        WHEN 'enterprise' THEN 499
-        WHEN 'global'     THEN 999
-        ELSE 0
-      END AS monthly_fee
-    FROM TENANT t
-    ORDER BY t.created_at DESC
-  `);
-  res.json(rows);
+  try {
+    const [rows] = await query(`
+      SELECT
+        t.tenant_id, t.company_name, t.plan, t.status, t.created_at,
+        COALESCE(SUM(p.total_amount), 0) AS revenue,
+        CASE t.plan
+          WHEN 'startup'    THEN 99
+          WHEN 'enterprise' THEN 499
+          WHEN 'global'     THEN 999
+          ELSE 0
+        END AS monthly_fee
+      FROM TENANT t
+      LEFT JOIN PAYMENT p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
+      GROUP BY t.tenant_id
+      ORDER BY revenue DESC
+    `);
+
+    const totalRevenue = rows.reduce((sum, r) => sum + Number(r.revenue), 0);
+    const pendingCount = rows.filter(r => r.status === 'pending').length;
+
+    res.json({
+      totalRevenue,
+      pendingCount,
+      topTenants: rows,
+    });
+  } catch(e) {
+    console.error('Subscriptions error:', e);
+    res.status(500).json({ error: 'Failed to load subscriptions.' });
+  }
 });
 
 module.exports = router;

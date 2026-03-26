@@ -231,8 +231,26 @@ router.post('/login', async (req, res) => {
     { role: 'user', user_id: user.user_id, tenant_id: tenantId, slug, name: `${user.first_name} ${user.last_name}`, email },
     process.env.JWT_SECRET, { expiresIn: '8h' }
   );
-  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
-  res.json({ ok:true, name:user.first_name, slug });
+  res.cookie('user_token', token, {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge:   8 * 3600 * 1000
+});
+res.json({
+  ok:    true,
+  token,
+  user: {
+    user_id:    user.user_id,
+    first_name: user.first_name,
+    last_name:  user.last_name,
+    email:      user.email,
+    phone:      user.phone || null,
+    role:       user.role  || 'user',
+    status:     user.status,
+    tenant_id:  tenantId,
+  }
+});
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
