@@ -691,8 +691,50 @@
       }, 2000);
     }
 
+    async function loadAll() {
+      try {
+        // 1. Force use of the GLOBAL route (no slug!)
+        const response = await fetch('/api/superadmin/tenants');
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || 'Unauthorized');
+
+        const tb = document.getElementById('tenants-tbody');
+        if (!data || data.length === 0) {
+          tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">No tenants found in DB.</td></tr>';
+          return;
+        }
+
+        // 2. Map the data to the table
+        tb.innerHTML = data.map(t => `
+          <tr>
+            <td><strong>${t.company_name}</strong></td>
+            <td>/${t.slug}</td>
+            <td>${t.admin_email || 'N/A'}</td>
+            <td><span class="badge bg-active">${t.status}</span></td>
+            <td>${new Date(t.created_at).toLocaleDateString()}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="editTenant(${t.tenant_id})">Manage</button></td>
+          </tr>
+        `).join('');
+
+        // Update the counter
+        document.getElementById('stat-tenants').textContent = data.length;
+
+      } catch (e) {
+        console.error("Data Retrieval Error:", e);
+        // Redirect to login if unauthorized
+        if (e.message.includes('Unauthorized')) window.location.href = '/superadmin-login';
+      }
+    }
+
+    function editTenant(id) {
+      // Logic to open a modal or redirect to a tenant detail page
+      console.log("Managing tenant ID:", id);
+      // Example: window.location.href = `/superadmin/tenant/${id}`;
+    }
     window.onload = async () => {
       await loadDashboard();
+      await loadAll(); // This is the one that populates the main Tenant table!
       await loadReports();
     };
   </script>
