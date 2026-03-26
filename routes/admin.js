@@ -59,8 +59,14 @@ router.post('/logout', (req, res) => {
 });
 
 // GET /:slug/api/admin/me
-router.get('/me', requireAdmin, requireSlugMatch, (req, res) => {
-  res.json({ admin: req.admin, tenant: req.tenant });
+router.get('/me', requireAdmin, requireSlugMatch, async (req, res) => {
+  // Re-fetch tenant with all brand fields (req.tenant may only have basic fields from middleware)
+  const [rows] = await query(
+    'SELECT tenant_id, company_name, slug, logo_url, primary_color, sidebar_color, tagline FROM TENANT WHERE tenant_id = ? LIMIT 1',
+    [req.tenantId]
+  );
+  const tenant = rows[0] || req.tenant;
+  res.json({ admin: req.admin, tenant });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -502,12 +508,47 @@ router.patch('/users/:id/status', requireAdmin, requireSlugMatch, async (req, re
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.patch('/settings', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { company_name, new_password } = req.body;
+  const { company_name, new_password, logo_url, primary_color, sidebar_color, tagline } = req.body;
   const tid = req.tenantId;
 
-  if (company_name) {
-    await query('UPDATE TENANT SET company_name = ? WHERE tenant_id = ?', [company_name, tid]);
+  // Build dynamic SET clause for TENANT fields
+  const tenantFields = [];
+  const tenantValues = [];
+
+  if (company_name !== undefined) {
+    tenantFields.push('company_name = ?');
+    tenantValues.push(company_name);
   }
+  if (logo_url !== undefined) {
+    // logo_url can be a base64 data URL or a remote URL or null (to clear)
+    tenantFields.push('logo_url = ?');
+    tenantValues.push(logo_url || null);
+  }
+  if (primary_color !== undefined) {
+    // Validate hex color format
+    if (primary_color && !/^#[0-9a-fA-F]{6}$/.test(primary_color)) {
+      return res.status(400).json({ error: 'primary_color must be a valid hex color (e.g. #3b82f6).' });
+    }
+    tenantFields.push('primary_color = ?');
+    tenantValues.push(primary_color || null);
+  }
+  if (sidebar_color !== undefined) {
+    if (sidebar_color && !/^#[0-9a-fA-F]{6}$/.test(sidebar_color)) {
+      return res.status(400).json({ error: 'sidebar_color must be a valid hex color.' });
+    }
+    tenantFields.push('sidebar_color = ?');
+    tenantValues.push(sidebar_color || null);
+  }
+  if (tagline !== undefined) {
+    tenantFields.push('tagline = ?');
+    tenantValues.push(tagline || null);
+  }
+
+  if (tenantFields.length > 0) {
+    tenantValues.push(tid);
+    await query(`UPDATE TENANT SET ${tenantFields.join(', ')} WHERE tenant_id = ?`, tenantValues);
+  }
+
   if (new_password) {
     if (new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
     const hash = await bcrypt.hash(new_password, parseInt(process.env.BCRYPT_ROUNDS || '12'));
@@ -516,7 +557,13 @@ router.patch('/settings', requireAdmin, requireSlugMatch, async (req, res) => {
       [hash, tid, req.admin.email]
     );
   }
-  res.json({ ok: true });
+
+  // Return updated tenant data so frontend can refresh without a second /me call
+  const [rows] = await query(
+    'SELECT company_name, logo_url, primary_color, sidebar_color, tagline FROM TENANT WHERE tenant_id = ? LIMIT 1',
+    [tid]
+  );
+  res.json({ ok: true, tenant: rows[0] || {} });
 });
 
 module.exports = router;

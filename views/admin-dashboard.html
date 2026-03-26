@@ -214,7 +214,15 @@
     .close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; }
     .close-btn:hover { color: var(--text-main); }
 
-  </style>
+    /* COLOR SWATCHES */
+    .color-swatch {
+      width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+      border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .color-swatch:hover { transform: scale(1.15); }
+    .color-swatch.selected { border-color: var(--text-main); box-shadow: 0 0 0 2px #fff inset; }
+
   </style>
 </head>
 <body>
@@ -249,7 +257,7 @@
         <div class="avatar"><span class="material-symbols-rounded" style="color:#94a3b8;">person</span></div>
         <div class="usr-info">
           <div class="usr-name">Admin User</div>
-          <div class="usr-role" id="sidebar-admin-email">admin@workspace.io</div>
+          <div class="usr-role" id="sidebar-admin-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cdaca9a0a4a38dbaa2bfa6bebdacaea8e3a4a2">[email&#160;protected]</a></div>
         </div>
       </div>
     </div>
@@ -474,16 +482,132 @@
       <!-- SETTINGS -->
       <div id="s-settings" class="screen">
         <div class="flex-row">
-          <div><h2 style="font-size:20px; font-weight:800;">Workspace Settings</h2><p style="font-size:13px; color:var(--text-muted);">Configure your logistics profile</p></div>
+          <div><h2 style="font-size:20px; font-weight:800;">Workspace Settings</h2><p style="font-size:13px; color:var(--text-muted);">Customize your brand identity and appearance</p></div>
         </div>
-        <div class="card" style="max-width: 500px;">
+
+        <!-- BRANDING CARD -->
+        <div class="card" style="max-width:680px;">
+          <div class="card-header">
+            <div class="card-title"><span class="material-symbols-rounded">storefront</span>Brand Identity</div>
+          </div>
           <div class="card-body">
+            <!-- Logo Upload -->
             <div class="form-group">
-              <label class="form-label">Operating Company Name</label>
-              <input type="text" class="form-control" id="set-name" placeholder="Enter company name"/>
+              <label class="form-label">Company Logo</label>
+              <div style="display:flex; align-items:center; gap:16px; margin-bottom:8px;">
+                <div id="logo-preview-wrap" style="width:64px;height:64px;border-radius:14px;background:var(--primary);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                  <span class="material-symbols-rounded" id="logo-placeholder-icon" style="font-size:32px;color:#fff;">business</span>
+                  <img id="logo-preview-img" style="display:none;width:100%;height:100%;object-fit:cover;" alt="Logo"/>
+                </div>
+                <div style="flex:1;">
+                  <label for="logo-upload" class="btn btn-secondary" style="cursor:pointer; display:inline-flex;">
+                    <span class="material-symbols-rounded" style="font-size:16px;">upload</span>Upload Logo
+                  </label>
+                  <input type="file" id="logo-upload" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)"/>
+                  <button class="btn btn-ghost btn-sm" onclick="removeLogo()" style="margin-left:8px; color:var(--danger);">Remove</button>
+                  <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">PNG, JPG or SVG. Recommended 64×64px or larger.</p>
+                </div>
+              </div>
             </div>
-            <div class="form-group" style="padding-top:10px;">
-              <button class="btn btn-primary">Save Changes</button>
+
+            <!-- Company Name -->
+            <div class="form-group">
+              <label class="form-label">Company Name</label>
+              <input type="text" class="form-control" id="set-name" placeholder="Enter your company name"/>
+            </div>
+
+            <!-- Tagline/Slug Label -->
+            <div class="form-group">
+              <label class="form-label">Workspace Tagline <span style="font-weight:400;color:var(--text-muted);">(shown under logo)</span></label>
+              <input type="text" class="form-control" id="set-tagline" placeholder="e.g. Logistics Operations" maxlength="40"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPEARANCE CARD -->
+        <div class="card" style="max-width:680px;">
+          <div class="card-header">
+            <div class="card-title"><span class="material-symbols-rounded">palette</span>Appearance</div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+              <!-- Primary/Accent Color -->
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Accent Color</label>
+                <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Used for buttons, active states & highlights</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="color-presets">
+                  <div class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;" title="Blue" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#10b981" style="background:#10b981;" title="Emerald" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6;" title="Violet" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#f59e0b" style="background:#f59e0b;" title="Amber" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#ef4444" style="background:#ef4444;" title="Red" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#0ea5e9" style="background:#0ea5e9;" title="Sky" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#ec4899" style="background:#ec4899;" title="Pink" onclick="pickPresetColor(this)"></div>
+                  <div class="color-swatch" data-color="#14b8a6" style="background:#14b8a6;" title="Teal" onclick="pickPresetColor(this)"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <input type="color" id="set-accent" value="#3b82f6" style="width:40px;height:36px;border:1.5px solid var(--border);border-radius:8px;padding:2px;cursor:pointer;background:#fff;">
+                  <input type="text" class="form-control" id="set-accent-hex" placeholder="#3b82f6" style="flex:1;font-family:monospace;font-size:13px;" oninput="syncHexInput(this)" maxlength="7"/>
+                </div>
+              </div>
+
+              <!-- Sidebar Color -->
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Sidebar Color</label>
+                <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Background color of the navigation panel</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="sidebar-presets">
+                  <div class="color-swatch" data-color="#0f172a" style="background:#0f172a;" title="Dark Navy" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#1e293b" style="background:#1e293b;" title="Slate" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#111827" style="background:#111827;" title="Graphite" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#1e1b4b" style="background:#1e1b4b;" title="Deep Indigo" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#064e3b" style="background:#064e3b;" title="Forest" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#7c3aed" style="background:#7c3aed;" title="Purple" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#be123c" style="background:#be123c;" title="Crimson" onclick="pickSidebarColor(this)"></div>
+                  <div class="color-swatch" data-color="#ffffff" style="background:#ffffff;border:1.5px solid #e2e8f0;" title="White" onclick="pickSidebarColor(this)"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <input type="color" id="set-sidebar" value="#0f172a" style="width:40px;height:36px;border:1.5px solid var(--border);border-radius:8px;padding:2px;cursor:pointer;background:#fff;">
+                  <input type="text" class="form-control" id="set-sidebar-hex" placeholder="#0f172a" style="flex:1;font-family:monospace;font-size:13px;" oninput="syncSidebarHexInput(this)" maxlength="7"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div style="margin-top:24px;">
+              <label class="form-label">Live Preview</label>
+              <div id="brand-preview" style="border:1.5px solid var(--border);border-radius:14px;overflow:hidden;display:flex;height:80px;">
+                <div id="prev-sidebar" style="width:140px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#0f172a;flex-shrink:0;">
+                  <div id="prev-logo-wrap" style="width:30px;height:30px;border-radius:8px;background:#10b981;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                    <span class="material-symbols-rounded" id="prev-logo-icon" style="font-size:16px;color:#fff;">business</span>
+                    <img id="prev-logo-img" style="display:none;width:100%;height:100%;object-fit:cover;" alt=""/>
+                  </div>
+                  <div>
+                    <div id="prev-name" style="font-size:10px;font-weight:800;color:#fff;line-height:1.2;">Company</div>
+                    <div id="prev-tagline" style="font-size:8px;color:#94a3b8;margin-top:1px;">Admin Console</div>
+                  </div>
+                </div>
+                <div style="flex:1;background:#f8fafc;display:flex;align-items:center;padding:0 16px;gap:10px;">
+                  <div id="prev-btn" style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:5px 12px;border-radius:6px;">Save</div>
+                  <div id="prev-link" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;color:#3b82f6;">Active Nav</div>
+                  <div style="font-size:10px;color:#64748b;">Preview of your brand</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAVE BUTTON -->
+        <div style="max-width:680px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-primary" onclick="saveBrandSettings()" style="padding:12px 28px;font-size:14px;">
+              <span class="material-symbols-rounded" style="font-size:18px;">save</span>Save Changes
+            </button>
+            <button class="btn btn-secondary" onclick="resetBrandSettings()">
+              <span class="material-symbols-rounded" style="font-size:16px;">restart_alt</span>Reset to Default
+            </button>
+            <div id="settings-saved-msg" style="display:none;color:#10b981;font-size:13px;font-weight:600;display:none;align-items:center;gap:6px;">
+              <span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Saved & applied!
             </div>
           </div>
         </div>
@@ -543,7 +667,7 @@
     </div>
   </div>
   
-  <script src="/public/frontend-api.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="/public/frontend-api.js"></script>
 
   <script>
     const pgMeta = { 
@@ -560,20 +684,42 @@
 
     async function loadAll(){
       try {
+        // Apply saved brand from localStorage immediately (fast, before API responds)
+        applyBrand(getBrand());
+
         if (typeof AdminAPI === 'undefined') return;
         const me = await AdminAPI.me();
-        document.getElementById('sidebar-tenant-name').textContent = me.tenant.company_name;
-        document.getElementById('sidebar-admin-email').textContent = me.admin.username;
-        document.getElementById('set-name').value = me.tenant.company_name;
+
+        document.getElementById('sidebar-admin-email').textContent = me.admin.username || me.admin.email || '';
+
+        // Merge DB brand values into local brand — DB is source of truth
+        // Only override fields that are actually set in DB (non-null)
+        const localBrand = getBrand();
+        const dbBrand = {
+          name:    me.tenant.company_name  || localBrand.name,
+          tagline: me.tenant.tagline       || localBrand.tagline,
+          accent:  me.tenant.primary_color || localBrand.accent,
+          sidebar: me.tenant.sidebar_color || localBrand.sidebar,
+          logo:    me.tenant.logo_url      !== undefined ? (me.tenant.logo_url || null) : localBrand.logo,
+        };
+
+        // Persist merged brand to localStorage so it survives offline
+        localStorage.setItem(BRAND_KEY, JSON.stringify(dbBrand));
+        _pendingLogo = undefined;
+        applyBrand(dbBrand);
 
         // Set registration URLs
         const baseUrl = window.location.origin;
-        document.getElementById('reg-url-staff').textContent = `${baseUrl}/${SLUG}/staff-registration`;
+        document.getElementById('reg-url-staff').textContent    = `${baseUrl}/${SLUG}/staff-registration`;
         document.getElementById('reg-url-customer').textContent = `${baseUrl}/${SLUG}/register`;
 
         loadShipments(); loadStaff(); loadVehicles(); loadClients(); loadRoutes();
         renderCharts();
-      } catch(e){ console.error("LoadAll Error:", e); }
+      } catch(e){
+        // Still apply brand even if API fails (works offline from localStorage)
+        applyBrand(getBrand());
+        console.error('LoadAll Error:', e);
+      }
     }
 
     async function loadShipments(){
@@ -730,20 +876,394 @@
       alert('Link copied to clipboard!');
     }
 
-    async function doLogout() {
-      if(!confirm("Are you sure you want to logout?")) return;
-      await fetch(`/${SLUG}/api/logout`, { method: 'POST' }).catch(() => {});
-      window.location.href = `/${SLUG}/admin-login`;
+    // ─── BRAND SETTINGS SYSTEM ──────────────────────────────────────────────
+    // Storage key is per-tenant so multi-tenant isolation is maintained
+    const BRAND_KEY = 'brand_' + (SLUG || 'default');
+
+    const DEFAULT_BRAND = {
+      name: 'Logistics OS',
+      tagline: 'Admin Console',
+      accent: '#3b82f6',
+      sidebar: '#0f172a',
+      logo: null  // base64 data URL or null
+    };
+
+    function getBrand() {
+      try {
+        const raw = localStorage.getItem(BRAND_KEY);
+        return raw ? Object.assign({}, DEFAULT_BRAND, JSON.parse(raw)) : Object.assign({}, DEFAULT_BRAND);
+      } catch(e) { return Object.assign({}, DEFAULT_BRAND); }
     }
+
+    function applyBrand(b) {
+      // CSS variables
+      document.documentElement.style.setProperty('--primary', b.accent);
+      document.documentElement.style.setProperty('--primary-hover', adjustColor(b.accent, -20));
+      document.documentElement.style.setProperty('--bg-sidebar', b.sidebar);
+
+      // Sidebar text legibility based on sidebar lightness
+      const isLightSidebar = isLightColor(b.sidebar);
+      const navTextColor = isLightSidebar ? '#334155' : '#94a3b8';
+      const navActiveTextColor = isLightSidebar ? '#0f172a' : '#fff';
+      const navHoverBg = isLightSidebar ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+      const brandNameColor = isLightSidebar ? '#0f172a' : '#fff';
+      const borderColor = isLightSidebar ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)';
+
+      // Inject dynamic sidebar styles
+      let dyn = document.getElementById('dyn-brand-style');
+      if (!dyn) { dyn = document.createElement('style'); dyn.id = 'dyn-brand-style'; document.head.appendChild(dyn); }
+      dyn.textContent = `
+        .nav-item { color: ${navTextColor} !important; }
+        .nav-item:hover { background: ${navHoverBg} !important; color: ${navActiveTextColor} !important; }
+        .nav-item.active { background: var(--primary) !important; color: #fff !important; }
+        .brand-name { color: ${brandNameColor} !important; }
+        .brand { border-color: ${borderColor} !important; }
+        .sidebar-footer { border-color: ${borderColor} !important; }
+        .nav-section { color: ${isLightSidebar ? '#94a3b8' : '#64748b'} !important; }
+        .usr-name { color: ${brandNameColor} !important; }
+        .brand-icon { background: var(--primary) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
+      `;
+
+      // Company name everywhere
+      document.getElementById('sidebar-tenant-name').textContent = b.name;
+      document.title = b.name + ' — Admin';
+      document.getElementById('brand-sub-text') && (document.getElementById('brand-sub-text').textContent = b.tagline);
+      // Target the brand-sub span
+      const brandSub = document.querySelector('.brand-sub');
+      if (brandSub) brandSub.textContent = b.tagline || 'Admin Console';
+
+      // Logo in sidebar brand icon
+      const brandIcon = document.querySelector('.brand-icon');
+      if (brandIcon) {
+        if (b.logo) {
+          brandIcon.innerHTML = `<img src="${b.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="Logo"/>`;
+        } else {
+          brandIcon.innerHTML = `<span class="material-symbols-rounded">analytics</span>`;
+        }
+      }
+
+      // Update the settings form inputs to reflect current state
+      const nameEl = document.getElementById('set-name');
+      const taglineEl = document.getElementById('set-tagline');
+      if (nameEl && nameEl !== document.activeElement) nameEl.value = b.name;
+      if (taglineEl && taglineEl !== document.activeElement) taglineEl.value = b.tagline;
+
+      const accentPicker = document.getElementById('set-accent');
+      const accentHex = document.getElementById('set-accent-hex');
+      const sidebarPicker = document.getElementById('set-sidebar');
+      const sidebarHex = document.getElementById('set-sidebar-hex');
+      if (accentPicker) accentPicker.value = b.accent;
+      if (accentHex) accentHex.value = b.accent;
+      if (sidebarPicker) sidebarPicker.value = b.sidebar;
+      if (sidebarHex) sidebarHex.value = b.sidebar;
+
+      // Mark selected swatches
+      document.querySelectorAll('#color-presets .color-swatch').forEach(s => {
+        s.classList.toggle('selected', s.dataset.color.toLowerCase() === b.accent.toLowerCase());
+      });
+      document.querySelectorAll('#sidebar-presets .color-swatch').forEach(s => {
+        s.classList.toggle('selected', s.dataset.color.toLowerCase() === b.sidebar.toLowerCase());
+      });
+
+      // Logo preview in settings
+      updateLogoPreview(b.logo);
+      updateLivePreview();
+    }
+
+    function updateLogoPreview(dataUrl) {
+      const wrap = document.getElementById('logo-preview-wrap');
+      const icon = document.getElementById('logo-placeholder-icon');
+      const img = document.getElementById('logo-preview-img');
+      if (!wrap) return;
+      if (dataUrl) {
+        icon.style.display = 'none';
+        img.src = dataUrl;
+        img.style.display = 'block';
+        wrap.style.background = 'transparent';
+      } else {
+        icon.style.display = 'block';
+        img.style.display = 'none';
+        img.src = '';
+        wrap.style.background = 'var(--primary)';
+      }
+    }
+
+    function updateLivePreview() {
+      const name = document.getElementById('set-name')?.value || 'Company';
+      const tagline = document.getElementById('set-tagline')?.value || 'Admin Console';
+      const accent = document.getElementById('set-accent')?.value || '#3b82f6';
+      const sidebar = document.getElementById('set-sidebar')?.value || '#0f172a';
+      const logoSrc = _pendingLogo !== undefined ? _pendingLogo : getBrand().logo;
+
+      const prevSidebar = document.getElementById('prev-sidebar');
+      const prevBtn = document.getElementById('prev-btn');
+      const prevLink = document.getElementById('prev-link');
+      const prevName = document.getElementById('prev-name');
+      const prevTagline = document.getElementById('prev-tagline');
+      const prevLogoIcon = document.getElementById('prev-logo-icon');
+      const prevLogoImg = document.getElementById('prev-logo-img');
+      const prevLogoWrap = document.getElementById('prev-logo-wrap');
+
+      if(prevSidebar) prevSidebar.style.background = sidebar;
+      if(prevBtn) { prevBtn.style.background = accent; }
+      if(prevLink) { prevLink.style.color = accent; }
+      if(prevName) prevName.textContent = name || 'Company';
+      if(prevTagline) prevTagline.textContent = tagline || 'Admin Console';
+
+      const light = isLightColor(sidebar);
+      if(prevName) prevName.style.color = light ? '#0f172a' : '#fff';
+      if(prevTagline) prevTagline.style.color = light ? '#64748b' : '#94a3b8';
+
+      if(prevLogoWrap && prevLogoIcon && prevLogoImg) {
+        prevLogoWrap.style.background = logoSrc ? 'transparent' : accent;
+        if(logoSrc) {
+          prevLogoIcon.style.display = 'none';
+          prevLogoImg.src = logoSrc;
+          prevLogoImg.style.display = 'block';
+        } else {
+          prevLogoIcon.style.display = 'block';
+          prevLogoImg.style.display = 'none';
+        }
+      }
+    }
+
+    // Track pending logo (before save)
+    let _pendingLogo = undefined;
+
+    function handleLogoUpload(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      if (file.size > 2 * 1024 * 1024) { alert('Logo must be under 2MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        _pendingLogo = e.target.result;
+        updateLogoPreview(_pendingLogo);
+        updateLivePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+      _pendingLogo = null;
+      document.getElementById('logo-upload').value = '';
+      updateLogoPreview(null);
+      updateLivePreview();
+    }
+
+    function pickPresetColor(el) {
+      document.querySelectorAll('#color-presets .color-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+      const c = el.dataset.color;
+      document.getElementById('set-accent').value = c;
+      document.getElementById('set-accent-hex').value = c;
+      updateLivePreview();
+    }
+
+    function pickSidebarColor(el) {
+      document.querySelectorAll('#sidebar-presets .color-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+      const c = el.dataset.color;
+      document.getElementById('set-sidebar').value = c;
+      document.getElementById('set-sidebar-hex').value = c;
+      updateLivePreview();
+    }
+
+    function syncHexInput(input) {
+      const v = input.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        document.getElementById('set-accent').value = v;
+        document.querySelectorAll('#color-presets .color-swatch').forEach(s => s.classList.remove('selected'));
+        updateLivePreview();
+      }
+    }
+
+    function syncSidebarHexInput(input) {
+      const v = input.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        document.getElementById('set-sidebar').value = v;
+        document.querySelectorAll('#sidebar-presets .color-swatch').forEach(s => s.classList.remove('selected'));
+        updateLivePreview();
+      }
+    }
+
+    // Also wire up the native color pickers
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('set-accent')?.addEventListener('input', e => {
+        document.getElementById('set-accent-hex').value = e.target.value;
+        updateLivePreview();
+      });
+      document.getElementById('set-sidebar')?.addEventListener('input', e => {
+        document.getElementById('set-sidebar-hex').value = e.target.value;
+        updateLivePreview();
+      });
+      document.getElementById('set-name')?.addEventListener('input', updateLivePreview);
+      document.getElementById('set-tagline')?.addEventListener('input', updateLivePreview);
+    });
+
+    async function saveBrandSettings() {
+      const name    = document.getElementById('set-name').value.trim()    || DEFAULT_BRAND.name;
+      const tagline = document.getElementById('set-tagline').value.trim() || DEFAULT_BRAND.tagline;
+      const accent  = document.getElementById('set-accent').value;
+      const sidebar = document.getElementById('set-sidebar').value;
+      const logo    = _pendingLogo !== undefined ? _pendingLogo : getBrand().logo;
+
+      const brand = { name, tagline, accent, sidebar, logo };
+
+      // Save to localStorage first (instant UI feedback)
+      localStorage.setItem(BRAND_KEY, JSON.stringify(brand));
+      _pendingLogo = undefined;
+      applyBrand(brand);
+
+      // Persist to DB — logo_url stored as base64 data URL (or null to clear)
+      // Note: for production, consider uploading logo to S3/CloudFront and storing the URL instead
+      try {
+        if (typeof AdminAPI !== 'undefined') {
+          const res = await fetch(`/${SLUG}/api/admin/settings`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              company_name:  name,
+              tagline:       tagline,
+              primary_color: accent,
+              sidebar_color: sidebar,
+              logo_url:      logo || null,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.warn('Settings save warning:', err.error || res.status);
+          }
+        }
+      } catch(e) {
+        console.warn('Could not reach API, settings saved locally only.', e);
+      }
+
+      // Show saved toast
+      const msg = document.getElementById('settings-saved-msg');
+      if (msg) { msg.style.display = 'inline-flex'; setTimeout(() => msg.style.display = 'none', 3000); }
+    }
+
+    async function doLogout() {
+      if (!confirm('Are you sure you want to logout?')) return;
+      try {
+        await fetch(`/${SLUG}/api/admin/logout`, { method: 'POST' });
+      } catch(e) { /* ignore network errors */ }
+      // Redirect to staff login on the logistihub domain
+      window.location.href = `https://logistihub.ddns.net/${SLUG}/staff-login`;
+    }
+
+    function resetBrandSettings() {
+      if (!confirm('Reset all brand settings to default?')) return;
+      localStorage.removeItem(BRAND_KEY);
+      _pendingLogo = undefined;
+      document.getElementById('logo-upload').value = '';
+      applyBrand(Object.assign({}, DEFAULT_BRAND));
+    }
+
+    // Color utilities
+    function isLightColor(hex) {
+      const c = hex.replace('#','');
+      if (c.length !== 6) return false;
+      const r = parseInt(c.substr(0,2),16);
+      const g = parseInt(c.substr(2,2),16);
+      const b = parseInt(c.substr(4,2),16);
+      return (r * 0.299 + g * 0.587 + b * 0.114) > 140;
+    }
+
+    function adjustColor(hex, amount) {
+      const c = hex.replace('#','');
+      if (c.length !== 6) return hex;
+      const num = parseInt(c, 16);
+      const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+      const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+      const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+      return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Charts
     function renderCharts() {
-      const ctx = document.createElement('canvas'); // Dummy for now if not on dashboard
-      // Note: Chart.js is imported in head. This would be used in a real dashboard.
-      console.log("Charts would be rendered here with Chart.js");
+      try {
+        const canvas = document.getElementById('shipment-chart');
+        if (!canvas) return;
+        if (canvas._chartInstance) { canvas._chartInstance.destroy(); }
+        canvas._chartInstance = new Chart(canvas.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: ['In Transit', 'Delivered', 'Pending'],
+            datasets: [{
+              data: [
+                parseInt(document.getElementById('stat-transit')?.textContent   || 0),
+                parseInt(document.getElementById('stat-delivered')?.textContent || 0),
+                parseInt(document.getElementById('stat-pending')?.textContent   || 0),
+              ],
+              backgroundColor: [
+                getComputedStyle(document.documentElement).getPropertyValue('--warning').trim()  || '#f59e0b',
+                getComputedStyle(document.documentElement).getPropertyValue('--success').trim()  || '#10b981',
+                getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()  || '#3b82f6',
+              ],
+              borderWidth: 0,
+              hoverOffset: 6,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 12 }, padding: 16 } },
+            },
+          },
+        });
+      } catch(e) { /* Chart.js not loaded or canvas missing */ }
     }
 
-    window.onload = loadAll;
+    // Delete helpers
+    async function delStaff(id){
+      if(!confirm('Remove this staff member?')) return;
+      try { await AdminAPI.deleteStaff(id); loadStaff(); } catch(e){ alert('Error: ' + e.message); }
+    }
+    async function delVehicle(plate){
+      if(!confirm('Remove this vehicle?')) return;
+      try { await AdminAPI.deleteVehicle(plate); loadVehicles(); } catch(e){ alert('Error: ' + e.message); }
+    }
+    async function delClient(id){
+      if(!confirm('Remove this client?')) return;
+      try { await AdminAPI.deleteClient(id); loadClients(); } catch(e){ alert('Error: ' + e.message); }
+    }
+    async function delRoute(id){
+      if(!confirm('Remove this route?')) return;
+      try { await AdminAPI.deleteRoute(id); loadRoutes(); } catch(e){ alert('Error: ' + e.message); }
+    }
+
+    async function createShipment(){
+      const btn = document.getElementById('btn-create-shipment');
+      btn.disabled = true; btn.textContent = 'Creating...';
+      try {
+        const body = {
+          delivery_number:        document.getElementById('ns-dn').value.trim(),
+          airway_bill_number:     document.getElementById('ns-awb').value.trim() || null,
+          client_id:              document.getElementById('ns-client').value,
+          item_type_flag:         document.getElementById('ns-type').value,
+          pickup_location:        document.getElementById('ns-pickup').value.trim() || null,
+          dropoff_location:       document.getElementById('ns-dropoff').value.trim() || null,
+          assigned_driver_id:     document.getElementById('ns-driver').value || null,
+          assigned_vehicle_plate: document.getElementById('ns-vehicle').value || null,
+        };
+        if (!body.delivery_number) throw new Error('Delivery number is required.');
+        if (!body.client_id)       throw new Error('Please select a client.');
+        await AdminAPI.createShipment(body);
+        alert('Shipment created successfully!');
+        go('shipments', null);
+      } catch(e) {
+        alert('Error: ' + (e.message || 'Could not create shipment.'));
+      } finally {
+        btn.disabled = false; btn.textContent = 'Create Shipment Record';
+      }
+    }
+
+    // Init on page load
+    window.addEventListener('load', loadAll);
   </script>
 </body>
 </html>
