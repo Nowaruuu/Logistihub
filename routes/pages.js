@@ -136,4 +136,20 @@ router.get('/:slug/dc-dashboard', async (req, res) => {
   res.send(injectTenantData(readView('dc-dashboard.html'), tenant));
 });
 
+// GET /:slug/get-app — branded app download page
+router.get('/:slug/get-app', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) {
+    return res.status(404).send("App not available for this workspace.");
+  }
+  
+  try {
+    const html = readView('get-app.html');
+    // This injects the Amogus logo and title dynamically!
+    res.send(injectTenantData(html, tenant));
+  } catch (err) {
+    res.status(404).send("get-app.html file missing in views folder.");
+  }
+});
+
 module.exports = router;
