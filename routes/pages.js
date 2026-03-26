@@ -80,9 +80,63 @@ router.get('/:slug/register', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
+<<<<<<< HEAD
+// User/Client Registration (General)
+router.get('/register', (req, res) => {
+  // Serving client-registration only if on registration subdomain
+  const html = readView('client-register.html');
+  res.send(html);
+});
+
+router.get('/:slug/login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('login.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+router.get('/:slug/staff-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('staff-login.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+router.get('/:slug/driver-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('driver-dashboard.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+router.get('/:slug/dc-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('dc-dashboard.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+// GET /:slug/get-app — branded app download page
+router.get('/:slug/get-app', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('get-app.html');
+  res.send(injectTenantData(html, tenant));
+});
+
+// (Moved to user.js)
+
+router.get('/:slug/admin-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  const html = readView('admin-login.html');
+  res.send(injectTenantData(html, tenant));
+});
+=======
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: resolve tenant or 404
 // ─────────────────────────────────────────────────────────────────────────────
+>>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
 async function resolveTenant(slug, res) {
   const [rows] = await query(
     "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
