@@ -9,7 +9,6 @@ const router = express.Router();
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-// Injects DB branding/data into HTML so the frontend can white-label automatically
 function injectTenantData(html, tenantData) {
   const script = `<script>
 window.__TENANT__ = ${JSON.stringify({
@@ -69,7 +68,7 @@ router.get('/onboarding', (req, res) => {
 
 // ─── STAFF ROUTES ────────────────────────────────────────────────────────────
 
-// STAFF REGISTRATION - This points to the STAFF registration file
+// URL: /slug/staff-registration -> FILE: staff-register.html
 router.get('/:slug/staff-registration', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -77,7 +76,7 @@ router.get('/:slug/staff-registration', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// STAFF LOGIN - Per your requirement, /staff-register leads to LOGIN
+// URL: /slug/staff-register -> FILE: staff-login.html
 router.get('/:slug/staff-register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -106,17 +105,16 @@ router.get('/:slug/admin', async (req, res) => {
   res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
 });
 
-// ─── USER / CUSTOMER ROUTES ──────────────────────────────────────────────────
+// ─── USER / CLIENT ROUTES ────────────────────────────────────────────────────
 
-// USER REGISTRATION - This points specifically to the USER registration file
+// URL: /slug/register -> FILE: client-register.html (CORRECTED)
 router.get('/:slug/register', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
-  const html = readView('user-register.html');
+  const html = readView('client-register.html');
   res.send(injectTenantData(html, tenant));
 });
 
-// USER LOGIN
 router.get('/:slug/login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
@@ -124,7 +122,7 @@ router.get('/:slug/login', async (req, res) => {
   res.send(injectTenantData(html, tenant));
 });
 
-// ─── ADDITIONAL DASHBOARDS ───────────────────────────────────────────────────
+// ─── DASHBOARDS ──────────────────────────────────────────────────────────────
 
 router.get('/:slug/driver-dashboard', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
