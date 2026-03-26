@@ -50,11 +50,12 @@ async function sendInviteEmail(toEmail, company, token) {
 }
 
 async function sendRegistrationEmail(email, name, companyName, slug, downloadUrl, emailToken) {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   const appUrl = downloadUrl
     ? downloadUrl
-    : `https://logistihub.ddns.net/${slug}/get-app`;
+    : `${baseUrl}/${slug}/get-app`;
 
-  const emailLink = `https://logistihub.ddns.net/${slug}/get-app`;
+  const emailLink = `${baseUrl}/${slug}/get-app`;
 
   await transporter.sendMail({
     from:    `"${companyName}" <${process.env.MAIL_FROM}>`,
@@ -109,4 +110,4 @@ async function sendWelcomeEmail(toEmail, adminName, companyName, slug) {
   });
 }
 
-module.exports = { sendInviteEmail, sendWelcomeEmail };
+module.exports = { sendInviteEmail, sendWelcomeEmail, sendRegistrationEmail };

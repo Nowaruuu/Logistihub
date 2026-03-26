@@ -111,9 +111,9 @@
       const qrToken   = data.qr_token;
 
       // QR points to get-app page with 10-min token
-      const GET_APP_URL = 'https://logistihub.ddns.net/' + SLUG + '/get-app?token=' + qrToken;
+      const GET_APP_URL = window.location.origin + '/' + SLUG + '/get-app?token=' + qrToken;
       // Permanent link (no token — for direct tap)
-      const PERM_URL = 'https://logistihub.ddns.net/' + SLUG + '/get-app';
+      const PERM_URL = window.location.origin + '/' + SLUG + '/get-app';
 
       // Show success screen
       document.getElementById('reg-form-wrap').style.display = 'none';
