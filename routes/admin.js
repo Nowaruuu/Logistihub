@@ -84,39 +84,49 @@ router.get('/stats', requireAdmin, requireSlugMatch, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHIPMENTS
+// SHIPMENTS (FIXED VERSION)
 // ─────────────────────────────────────────────────────────────────────────────
-
-// GET /:slug/api/admin/shipments
 router.get('/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { status, item_type_flag } = req.query;
-  const limit = parseInt(req.query.limit) || 50;
-  const offset = parseInt(req.query.offset) || 0;
   const tid = req.tenantId;
+  
+  // ROBUST PARSING: Force to Integer, default to 0 or 50 if NaN
+  let limit  = parseInt(req.query.limit, 10);
+  if (isNaN(limit)) limit = 50;
+
+  let offset = parseInt(req.query.offset, 10);
+  if (isNaN(offset)) offset = 0;
+
+  const statusFilter = req.query.status || null;
+  const typeFilter   = req.query.item_type_flag || null;
 
   let sql = `
-    SELECT s.*,
-           c.company_name AS client_name,
-           d.name         AS driver_name,
-           h.name         AS helper_name,
-           r.route_name
+    SELECT s.*, c.company_name AS client_name, d.name AS driver_name,
+           h.name AS helper_name, r.route_name
     FROM SHIPMENT s
-    LEFT JOIN CLIENT c ON c.client_id    = s.client_id
-    LEFT JOIN STAFF  d ON d.staff_id     = s.assigned_driver_id
-    LEFT JOIN STAFF  h ON h.staff_id     = s.assigned_helper_id
-    LEFT JOIN ROUTE  r ON r.route_id     = s.route_id
+    LEFT JOIN CLIENT c ON c.client_id = s.client_id
+    LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
+    LEFT JOIN STAFF h ON h.staff_id = s.assigned_helper_id
+    LEFT JOIN ROUTE r ON r.route_id = s.route_id
     WHERE s.tenant_id = ?
   `;
+  
   const params = [tid];
 
-  if (status)         { sql += ' AND s.status = ?';         params.push(status); }
-  if (item_type_flag) { sql += ' AND s.item_type_flag = ?';  params.push(item_type_flag); }
+  if (statusFilter) { sql += ' AND s.status = ?'; params.push(statusFilter); }
+  if (typeFilter) { sql += ' AND s.item_type_flag = ?'; params.push(typeFilter); }
 
   sql += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?';
+  
+  // FINAL SAFETY CHECK: Ensure these are strictly numbers
   params.push(Number(limit), Number(offset));
 
-  const [rows] = await query(sql, params);
-  res.json(rows);
+  try {
+    const [rows] = await query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("DB Error with params:", params); // This will show you if it's still NaN
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /:slug/api/admin/shipments/:delivery_number
@@ -498,25 +508,47 @@ router.patch('/users/:id/status', requireAdmin, requireSlugMatch, async (req, re
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WORKSPACE SETTINGS
+// WORKSPACE SETTINGS (UNIFIED FIX)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.patch('/settings', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { company_name, new_password } = req.body;
+// This handles the PUT request from your saveSettings() function
+router.put('/settings', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { 
+    company_name, 
+    bg_app_color, 
+    bg_sidebar_color, 
+    logo_url, 
+    new_password 
+  } = req.body;
+  
   const tid = req.tenantId;
 
-  if (company_name) {
-    await query('UPDATE TENANT SET company_name = ? WHERE tenant_id = ?', [company_name, tid]);
-  }
-  if (new_password) {
-    if (new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-    const hash = await bcrypt.hash(new_password, parseInt(process.env.BCRYPT_ROUNDS || '12'));
-    await query(
-      "UPDATE STAFF SET password_hash = ? WHERE tenant_id = ? AND role = 'Admin' AND username = ?",
-      [hash, tid, req.admin.email]
+  try {
+    // 1. Update Tenant Branding
+    await query(`
+      UPDATE TENANT 
+      SET company_name = COALESCE(?, company_name),
+          bg_app_color = COALESCE(?, bg_app_color),
+          bg_sidebar_color = COALESCE(?, bg_sidebar_color),
+          logo_url = COALESCE(?, logo_url)
+      WHERE tenant_id = ?`, 
+      [company_name, bg_app_color, bg_sidebar_color, logo_url, tid]
     );
+
+    // 2. Handle Password Change (if provided)
+    if (new_password && new_password.length >= 8) {
+      const hash = await bcrypt.hash(new_password, 12);
+      await query(
+        "UPDATE STAFF SET password_hash = ? WHERE tenant_id = ? AND role = 'Admin' AND username = ?",
+        [hash, tid, req.admin.email]
+      );
+    }
+
+    res.json({ success: true, message: 'Settings saved successfully!' });
+  } catch (err) {
+    console.error("Settings Update Error:", err);
+    res.status(500).json({ error: 'Failed to update settings.', detail: err.message });
   }
-  res.json({ ok: true });
 });
 
 module.exports = router;
