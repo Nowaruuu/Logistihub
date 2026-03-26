@@ -320,34 +320,20 @@ router.post('/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-<<<<<<< HEAD
-
-=======
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /app-download
 // token required — either the 10-min QR token or the permanent email token
 // ─────────────────────────────────────────────────────────────────────────────
->>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
 router.get('/app-download', async (req, res) => {
   const { slug } = req.params;
   const { token } = req.query;
 
   try {
-<<<<<<< HEAD
-    // ENFORCE THE TOKEN: Reject if there is no token at all
-=======
     // Require a token — no anonymous access
->>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
     if (!token) {
       return res.status(401).json({ error: 'Missing access token. Please use your QR code or email link.' });
     }
 
-<<<<<<< HEAD
-    // Verify the token (works for both the 10-min qrToken and permanent emailToken)
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.type !== 'app_download' || payload.slug !== slug) {
-      return res.status(401).json({ error: 'Invalid or expired access link.' });
-=======
     // Verify JWT (handles both 10-min and permanent tokens)
     let payload;
     try {
@@ -358,7 +344,6 @@ router.get('/app-download', async (req, res) => {
 
     if (payload.type !== 'app_download' || payload.slug !== slug) {
       return res.status(401).json({ error: 'Invalid access link.' });
->>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
     }
 
     const [rows] = await query(
@@ -374,15 +359,6 @@ router.get('/app-download', async (req, res) => {
 
     res.json({
       download_url: tenant.app_download_url,
-<<<<<<< HEAD
-      app_name:     tenant.app_name || tenant.company_name, // This handles Amogus vs Geloop automatically!
-    });
-
-  } catch (e) {
-    return res.status(401).json({ error: 'QR code expired. Please re-register or check your email for the permanent link.' });
-  }
-});
-=======
       app_name:     tenant.app_name || tenant.company_name,
     });
 
@@ -392,5 +368,4 @@ router.get('/app-download', async (req, res) => {
   }
 });
 
->>>>>>> a0a1165b (fix: generate qr_token and email_token on register)
 module.exports = router;
