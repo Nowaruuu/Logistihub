@@ -6,7 +6,7 @@ const jwt     = require('jsonwebtoken');
 const { query, tenantQuery, findOne } = require('../config/db');
 const { requireAdmin, requireSlugMatch } = require('../middleware/auth');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // All routes in this file are scoped to /:slug
 // requireAdmin validates the JWT, requireSlugMatch ensures the JWT slug matches the URL slug
@@ -16,7 +16,7 @@ const router = express.Router();
 // ─────────────────────────────────────────────────────────────────────────────
 
 // POST /:slug/api/admin/login
-router.post('/:slug/api/admin/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const { slug } = req.params;
 
@@ -53,20 +53,20 @@ router.post('/:slug/api/admin/login', async (req, res) => {
 });
 
 // POST /:slug/api/admin/logout
-router.post('/:slug/api/admin/logout', (req, res) => {
+router.post('/logout', (req, res) => {
   res.clearCookie('admin_token');
   res.json({ ok: true });
 });
 
 // GET /:slug/api/admin/me
-router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, (req, res) => {
+router.get('/me', requireAdmin, requireSlugMatch, (req, res) => {
   res.json({ admin: req.admin, tenant: req.tenant });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD STATS
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/stats', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const [[total]]     = await tenantQuery(tid, 'SELECT COUNT(*) AS n FROM SHIPMENT');
   const [[transit]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM SHIPMENT WHERE status = 'In-Transit'");
@@ -88,8 +88,10 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 // ─────────────────────────────────────────────────────────────────────────────
 
 // GET /:slug/api/admin/shipments
-router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { status, item_type_flag, limit = 50, offset = 0 } = req.query;
+router.get('/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { status, item_type_flag } = req.query;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = parseInt(req.query.offset) || 0;
   const tid = req.tenantId;
 
   let sql = `
@@ -118,7 +120,7 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
 });
 
 // GET /:slug/api/admin/shipments/:delivery_number
-router.get('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/shipments/:delivery_number', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const dn  = req.params.delivery_number;
 
@@ -150,7 +152,7 @@ router.get('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireS
 });
 
 // POST /:slug/api/admin/shipments
-router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const {
     delivery_number, airway_bill_number, client_id, route_id,
@@ -227,7 +229,7 @@ router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async 
 });
 
 // PATCH /:slug/api/admin/shipments/:delivery_number/status
-router.patch('/:slug/api/admin/shipments/:delivery_number/status', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/shipments/:delivery_number/status', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status, reason } = req.body;
   const tid = req.tenantId;
   const dn  = req.params.delivery_number;
@@ -257,7 +259,7 @@ router.patch('/:slug/api/admin/shipments/:delivery_number/status', requireAdmin,
 // STAFF
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/staff', requireAdmin, requireSlugMatch, async (req, res) => {
   const { role, status } = req.query;
   const tid = req.tenantId;
   let sql    = 'SELECT staff_id, tenant_id, name, role, username, license_expiration_date, status FROM STAFF WHERE tenant_id = ?';
@@ -269,7 +271,7 @@ router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req,
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/staff', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const { name, role, username, password, license_expiration_date } = req.body;
   if (!name || !role || !username || !password) {
@@ -283,7 +285,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
   res.status(201).json({ ok: true, staff_id: result.insertId });
 });
 
-router.patch('/:slug/api/admin/staff/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/staff/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status } = req.body;
   const valid = ['Available','On-Duty','Sick'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
@@ -291,7 +293,7 @@ router.patch('/:slug/api/admin/staff/:id/status', requireAdmin, requireSlugMatch
   res.json({ ok: true });
 });
 
-router.delete('/:slug/api/admin/staff/:id', requireAdmin, requireSlugMatch, async (req, res) => {
+router.delete('/staff/:id', requireAdmin, requireSlugMatch, async (req, res) => {
   await query('DELETE FROM STAFF WHERE staff_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
   res.json({ ok: true });
 });
@@ -300,7 +302,7 @@ router.delete('/:slug/api/admin/staff/:id', requireAdmin, requireSlugMatch, asyn
 // VEHICLES
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
     'SELECT * FROM VEHICLE WHERE tenant_id = ? ORDER BY plate_number ASC',
     [req.tenantId]
@@ -308,7 +310,7 @@ router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (r
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
   const { plate_number, vehicle_type, capacity_tons } = req.body;
   if (!plate_number || !vehicle_type) {
     return res.status(400).json({ error: 'plate_number and vehicle_type are required.' });
@@ -320,7 +322,7 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
   res.status(201).json({ ok: true, plate_number });
 });
 
-router.patch('/:slug/api/admin/vehicles/:plate/status', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/vehicles/:plate/status', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status } = req.body;
   const valid = ['Available','Maintenance','In-Transit'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
@@ -328,7 +330,7 @@ router.patch('/:slug/api/admin/vehicles/:plate/status', requireAdmin, requireSlu
   res.json({ ok: true });
 });
 
-router.delete('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, res) => {
+router.delete('/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, res) => {
   await query('DELETE FROM VEHICLE WHERE plate_number = ? AND tenant_id = ?', [req.params.plate, req.tenantId]);
   res.json({ ok: true });
 });
@@ -337,7 +339,7 @@ router.delete('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch
 // CLIENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/clients', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
     'SELECT client_id, tenant_id, company_name, contact_person, phone_number, username FROM CLIENT WHERE tenant_id = ? ORDER BY company_name ASC',
     [req.tenantId]
@@ -345,7 +347,7 @@ router.get('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (re
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/clients', requireAdmin, requireSlugMatch, async (req, res) => {
   const { company_name, contact_person, phone_number, username, password } = req.body;
   if (!company_name || !username || !password) {
     return res.status(400).json({ error: 'company_name, username, and password are required.' });
@@ -358,7 +360,7 @@ router.post('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (r
   res.status(201).json({ ok: true, client_id: result.insertId });
 });
 
-router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, async (req, res) => {
+router.delete('/clients/:id', requireAdmin, requireSlugMatch, async (req, res) => {
   await query('DELETE FROM CLIENT WHERE client_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
   res.json({ ok: true });
 });
@@ -367,7 +369,7 @@ router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, as
 // ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/routes', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/routes', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
     `SELECT r.*, s.name AS driver_name
      FROM ROUTE r
@@ -378,7 +380,7 @@ router.get('/:slug/api/admin/routes', requireAdmin, requireSlugMatch, async (req
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/routes', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/routes', requireAdmin, requireSlugMatch, async (req, res) => {
   const { route_name, assigned_vehicle_plate, primary_driver_id } = req.body;
   if (!route_name) return res.status(400).json({ error: 'route_name is required.' });
   const [result] = await query(
@@ -388,7 +390,7 @@ router.post('/:slug/api/admin/routes', requireAdmin, requireSlugMatch, async (re
   res.status(201).json({ ok: true, route_id: result.insertId });
 });
 
-router.delete('/:slug/api/admin/routes/:id', requireAdmin, requireSlugMatch, async (req, res) => {
+router.delete('/routes/:id', requireAdmin, requireSlugMatch, async (req, res) => {
   await query('DELETE FROM ROUTE WHERE route_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
   res.json({ ok: true });
 });
@@ -397,7 +399,7 @@ router.delete('/:slug/api/admin/routes/:id', requireAdmin, requireSlugMatch, asy
 // PAYMENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status, payment_method } = req.query;
   const tid = req.tenantId;
   let sql = 'SELECT p.*, s.pickup_location, s.dropoff_location FROM PAYMENT p LEFT JOIN SHIPMENT s ON s.delivery_number = p.delivery_number WHERE p.tenant_id = ?';
@@ -409,7 +411,7 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const { delivery_number, billing_date, total_amount, payment_method, reference_code } = req.body;
   if (!delivery_number || !total_amount) {
     return res.status(400).json({ error: 'delivery_number and total_amount are required.' });
@@ -423,7 +425,7 @@ router.post('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (
 });
 
 // Admin confirms GCash / COD payment
-router.patch('/:slug/api/admin/payments/:id/confirm', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/payments/:id/confirm', requireAdmin, requireSlugMatch, async (req, res) => {
   await query(
     "UPDATE PAYMENT SET admin_confirmed = 1, status = 'Paid' WHERE invoice_id = ? AND tenant_id = ?",
     [req.params.id, req.tenantId]
@@ -431,7 +433,7 @@ router.patch('/:slug/api/admin/payments/:id/confirm', requireAdmin, requireSlugM
   res.json({ ok: true });
 });
 
-router.patch('/:slug/api/admin/payments/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/payments/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status } = req.body;
   const valid = ['Paid','Pending','Overdue','AwaitingAdmin'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
@@ -443,7 +445,7 @@ router.patch('/:slug/api/admin/payments/:id/status', requireAdmin, requireSlugMa
 // PROOF OF DELIVERY
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/pod', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/pod', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
     'SELECT * FROM PROOF_OF_DELIVERY WHERE tenant_id = ? ORDER BY delivery_timestamp DESC',
     [req.tenantId]
@@ -451,7 +453,7 @@ router.get('/:slug/api/admin/pod', requireAdmin, requireSlugMatch, async (req, r
   res.json(rows);
 });
 
-router.post('/:slug/api/admin/pod', requireAdmin, requireSlugMatch, async (req, res) => {
+router.post('/pod', requireAdmin, requireSlugMatch, async (req, res) => {
   const { delivery_number, capture_type, media_url, geolocation } = req.body;
   if (!delivery_number || !capture_type) {
     return res.status(400).json({ error: 'delivery_number and capture_type are required.' });
@@ -467,7 +469,7 @@ router.post('/:slug/api/admin/pod', requireAdmin, requireSlugMatch, async (req, 
 // REGISTERED USERS (users who came through /:slug/register)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:slug/api/admin/users', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/users', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
     'SELECT user_id, first_name, last_name, email, phone, role, status, created_at FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC',
     [req.tenantId]
@@ -475,7 +477,7 @@ router.get('/:slug/api/admin/users', requireAdmin, requireSlugMatch, async (req,
   res.json(rows);
 });
 
-router.patch('/:slug/api/admin/users/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/users/:id/status', requireAdmin, requireSlugMatch, async (req, res) => {
   const { status } = req.body;
   const valid = ['active','suspended'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
@@ -487,7 +489,7 @@ router.patch('/:slug/api/admin/users/:id/status', requireAdmin, requireSlugMatch
 // WORKSPACE SETTINGS
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.patch('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
+router.patch('/settings', requireAdmin, requireSlugMatch, async (req, res) => {
   const { company_name, new_password } = req.body;
   const tid = req.tenantId;
 

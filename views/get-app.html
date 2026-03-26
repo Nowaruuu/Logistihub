@@ -110,14 +110,7 @@ document.getElementById('company-name').textContent   = NAME;
 document.title = NAME + ' — Download App';
 
 // Fetch APK URL from backend
-// Read token from URL if present
-const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
-const apiUrl = token
-  ? '/' + SLUG + '/api/app-download?token=' + token
-  : '/' + SLUG + '/api/app-download';
-
-fetch(apiUrl)
+fetch('/' + SLUG + '/api/app-download')
   .then(r => r.json())
   .then(data => {
     if (!data.download_url) throw new Error('No URL');

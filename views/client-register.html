@@ -23,7 +23,6 @@
     .err { color: #dc2626; font-size: 13px; margin-bottom: 16px; display: none; background:#fef2f2; padding:10px; border-radius:8px; }
     #qr-container { padding: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; display: inline-block; margin-top: 10px; }
     .dl-btn { display:inline-block; margin-top:14px; background:#0a1628; color:#fff; padding:12px 28px; border-radius:12px; font-weight:700; font-size:14px; text-decoration:none; }
-    .email-note { font-size: 12px; color: #16a34a; background: #dcfce7; padding: 8px 12px; border-radius: 8px; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -74,20 +73,18 @@
       <div id="qr-container">
         <div id="qr-canvas"></div>
       </div>
-      <p id="qr-timer" style="font-size:12px;color:#f59e0b;margin-top:8px;font-weight:600;"></p>
-      <p style="font-size:12px;color:#94a3b8;margin-top:4px;">Scan to download the app</p>
+
+      <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Scan to download the app</p>
 
       <a id="get-app-link" href="#" class="dl-btn">📱 Tap here to download</a>
-
-      <div class="email-note">
-        📧 A permanent download link has also been sent to your email.
-      </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
+    // SLUG is injected by server via window.__TENANT__
     const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+    const GET_APP_URL = 'https://logistihub.ddns.net/' + SLUG + '/get-app';
 
     async function doRegister() {
       const btn   = document.getElementById('reg-btn');
@@ -107,7 +104,7 @@
         const res = await fetch('/' + SLUG + '/api/register', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ first_name: fname, last_name: lname, email, password: pw })
+          body:    JSON.stringify({ first_name: fname, last_name: lname, email, password: pw, role: 'Other' })
         });
 
         if (!res.ok) {
@@ -115,40 +112,14 @@
           throw new Error(d.details ? d.error + ' (' + d.details + ')' : (d.error || 'Registration failed'));
         }
 
-        const data = await res.json();
-
-        // qr_token is the 10-min token returned by the server
-        const qrToken = data.qr_token;
-        if (!qrToken) throw new Error('Server did not return a QR token. Please contact support.');
-
-        // QR code URL — uses 10-min token
-        const GET_APP_URL = window.location.origin + '/' + SLUG + '/get-app?token=' + qrToken;
-
         // Show success screen
         document.getElementById('reg-form-wrap').style.display = 'none';
         document.getElementById('success-state').style.display = 'block';
 
-        // Tap-to-download button also uses the QR link (same 10-min token)
+        // Set direct download link
         document.getElementById('get-app-link').href = GET_APP_URL;
 
-        // Start 10-minute countdown
-        let seconds = 600;
-        const timer = document.getElementById('qr-timer');
-        const interval = setInterval(() => {
-          seconds--;
-          const m = Math.floor(seconds / 60);
-          const s = seconds % 60;
-          if (timer) timer.textContent = `QR expires in ${m}:${s.toString().padStart(2, '0')}`;
-          if (seconds <= 0) {
-            clearInterval(interval);
-            if (timer) timer.textContent = 'QR code expired. Check your email for a permanent download link.';
-            document.getElementById('qr-container').style.opacity = '0.3';
-            document.getElementById('get-app-link').style.opacity = '0.3';
-            document.getElementById('get-app-link').style.pointerEvents = 'none';
-          }
-        }, 1000);
-
-        // Generate QR code pointing to get-app with the 10-min token
+        // Generate QR pointing to /:slug/get-app
         new QRCode(document.getElementById('qr-canvas'), {
           text:         GET_APP_URL,
           width:        180,
