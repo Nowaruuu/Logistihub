@@ -294,41 +294,4 @@ router.post('/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-
-router.get('/app-download', async (req, res) => {
-  const { slug } = req.params;
-  const { token } = req.query;
-
-  try {
-    // ENFORCE THE TOKEN: Reject if there is no token at all
-    if (!token) {
-      return res.status(401).json({ error: 'Missing access token. Please use your QR code or email link.' });
-    }
-
-    // Verify the token (works for both the 10-min qrToken and permanent emailToken)
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.type !== 'app_download' || payload.slug !== slug) {
-      return res.status(401).json({ error: 'Invalid or expired access link.' });
-    }
-
-    const [rows] = await query(
-      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
-      [slug]
-    );
-    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
-
-    const tenant = rows[0];
-    if (!tenant.app_download_url) {
-      return res.status(404).json({ error: 'App not available yet. Contact your admin.' });
-    }
-
-    res.json({
-      download_url: tenant.app_download_url,
-      app_name:     tenant.app_name || tenant.company_name, // This handles Amogus vs Geloop automatically!
-    });
-
-  } catch (e) {
-    return res.status(401).json({ error: 'QR code expired. Please re-register or check your email for the permanent link.' });
-  }
-});
 module.exports = router;

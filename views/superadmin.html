@@ -523,179 +523,202 @@
     </main>
   </div>
 
-  <script src="/public/frontend-api.js"></script>
-<script>
-  const titles = {
-    dashboard: 'Dashboard Overview',
-    reports:   'Activity Reports',
-    sales:     'Sales & Revenue Report',
-    tenants:   'Tenant Management',
-    audit:     'System Audit Logs',
-    backup:    'System Backups',
-    settings:  'Global Settings'
-  };
+  <script>
+    // Navigation logic
+    const titles = {
+      dashboard: "Dashboard Overview",
+      reports: "Activity Reports",
+      sales: "Sales & Revenue Report",
+      tenants: "Tenant Management",
+      audit: "System Audit Logs",
+      backup: "System Backups",
+      settings: "Global Settings"
+    };
 
-  function nav(screenId, btnEl) {
-    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('screen-' + screenId).classList.add('active');
-    btnEl.classList.add('active');
-    document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
-    if (screenId === 'dashboard') loadDashboard();
-    if (screenId === 'tenants')   loadTenants();
-    if (screenId === 'sales')     loadSales();
-    if (screenId === 'audit')     loadAuditLogs();
-  }
+    function nav(screenId, btnEl) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('screen-' + screenId).classList.add('active');
+      btnEl.classList.add('active');
+      document.getElementById('topbar-title').innerText = titles[screenId];
+      
+      // Re-trigger chart render animation if going to dashboard
+      if(screenId === 'dashboard') renderCharts();
+    }
 
-  function setTab(tabId, btnEl) {
-    document.querySelectorAll('.set-pane').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.set-tab').forEach(el => el.classList.remove('active'));
-    document.getElementById('set-' + tabId).classList.add('active');
-    btnEl.classList.add('active');
-  }
+    // Settings tabs logic
+    function setTab(tabId, btnEl) {
+      document.querySelectorAll('.set-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.set-tab').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('set-' + tabId).classList.add('active');
+      btnEl.classList.add('active');
+    }
 
-  let gChart, sChart;
-  if (typeof Chart !== 'undefined') {
-    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-    Chart.defaults.color = '#64748b';
-  }
+    function triggerBackup() {
+      const btn = event.currentTarget;
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;">sync</span> Processing...`;
+      btn.disabled = true;
+      
+      setTimeout(() => {
+        btn.innerHTML = `<span class="material-symbols-rounded">check</span> Backup Complete!`;
+        btn.classList.replace('btn-primary', 'btn-success');
+        
+        // Add to history table randomly
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><span style="font-family: monospace;">backup_manual_just_now.sql.gz</span></td><td>Just Now</td><td>1.3 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td>`;
+        
+        // Remove 'no data' row if present
+        const list = document.getElementById('backup-list');
+        if(list.innerText.includes('No backups found')){
+          list.innerHTML = '';
+        }
+        document.getElementById('backup-list').prepend(tr);
+        
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.classList.replace('btn-success', 'btn-primary');
+          btn.disabled = false;
+        }, 3000);
+      }, 2000);
+    }
 
-  function renderCharts(active, pending, suspended) {
-    if (gChart) gChart.destroy();
-    if (sChart) sChart.destroy();
-    const ctxG = document.getElementById('growthChart');
-    const ctxS = document.getElementById('statusChart');
-    if (!ctxG || !ctxS) return;
-    gChart = new Chart(ctxG.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
-        datasets: [
-          { label: 'Total Tenants', data: [0,0,0,0,0,active+pending+suspended], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
-          { label: 'Active Tenants', data: [0,0,0,0,0,active], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0)', borderWidth:2, tension:0.4, borderDash:[5,5] }
-        ]
-      },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, grid:{ color:'#f1f5f9' } }, x:{ grid:{ display:false } } } }
-    });
-    sChart = new Chart(ctxS.getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Active','Pending','Suspended'],
-        datasets: [{ data:[active,pending,suspended], backgroundColor:['#10b981','#f59e0b','#ef4444'], borderWidth:0, hoverOffset:4 }]
-      },
-      options: { responsive:true, maintainAspectRatio:false, cutout:'75%', plugins:{ legend:{ position:'bottom' } } }
-    });
-  }
+    // Chart.js Implementations
+    let gChart, sChart;
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+      Chart.defaults.color = "#64748b";
+    }
 
-  async function loadDashboard() {
-    try {
-      const data = await SuperadminAPI.getOverview();
-      document.getElementById('val-total-tenants').textContent    = data.totalTenants   || 0;
-      document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
-      document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
-      document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-      renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
-    } catch(e) { console.error('Dashboard error:', e); }
-  }
+    function renderCharts() {
+      if(gChart) gChart.destroy();
+      if(sChart) sChart.destroy();
 
-  async function loadTenants() {
-    try {
-      const tenants = await SuperadminAPI.getTenants();
-      const tb = document.getElementById('tenants-tbody');
-      if (!tb) return;
-      if (!tenants.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No tenants yet</td></tr>'; return; }
-      tb.innerHTML = tenants.map(t => `
-        <tr>
-          <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;">${t.slug}</span></td>
-          <td>${t.plan || 'trial'}</td>
-          <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-danger':'bg-pending'}">${t.status}</span></td>
-          <td>${t.user_count || 0}</td>
-          <td>${t.shipment_count || 0}</td>
-          <td>
-            ${t.status==='active'
-              ? `<button class="btn btn-secondary btn-sm" onclick="setTenantStatus(${t.tenant_id},'suspended')">Suspend</button>`
-              : `<button class="btn btn-primary btn-sm" onclick="setTenantStatus(${t.tenant_id},'active')">Activate</button>`}
-          </td>
-        </tr>`).join('');
-    } catch(e) { console.error('Tenants error:', e); }
-  }
+      const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+      gChart = new Chart(ctxGrowth, {
+        type: 'line',
+        data: {
+          labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+          datasets: [
+            {
+              label: 'Total Users',
+              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Active Tenants',
+              data: [0, 0, 0, 0, 0, 0],   // Blank slate initialized array
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.0)',
+              borderWidth: 2,
+              tension: 0.4,
+              borderDash: [5, 5]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
 
-  async function setTenantStatus(id, status) {
-    if (!confirm(`Set tenant to "${status}"?`)) return;
-    try { await SuperadminAPI.setTenantStatus(id, status); loadTenants(); }
-    catch(e) { alert('Failed: ' + e.message); }
-  }
+      const ctxStatus = document.getElementById('statusChart').getContext('2d');
+      sChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['Active', 'Pending Approval', 'Suspended'],
+          datasets: [{
+            data: [0, 0, 0],  // Blank slate initialized array
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
 
-  async function inviteTenant() {
-    const email   = document.getElementById('invite-email')?.value?.trim();
-    const company = document.getElementById('invite-company')?.value?.trim();
-    const notes   = document.getElementById('invite-notes')?.value?.trim();
-    if (!email || !company) { alert('Email and company name required.'); return; }
-    try { await SuperadminAPI.inviteTenant(email, company, notes); alert('Invitation sent!'); loadTenants(); }
-    catch(e) { alert('Failed: ' + e.message); }
-  }
+    // Init charts and data on load
+    window.onload = () => {
+      if (typeof Chart !== 'undefined') {
+        renderCharts();
+      }
+      if (typeof loadSuperadminData === 'function') {
+        loadSuperadminData();
+      }
+    };
 
-  async function loadSales() {
-    try {
-      const data = await SuperadminAPI.getSubscriptions();
-      if (document.getElementById('val-rev-ytd'))
-        document.getElementById('val-rev-ytd').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-      if (document.getElementById('val-pending-inv'))
-        document.getElementById('val-pending-inv').textContent = data.pendingCount || 0;
-      const tb = document.getElementById('sales-top-tenants-tbody');
-      if (tb && data.topTenants)
-        tb.innerHTML = data.topTenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>₱${Number(t.revenue||0).toLocaleString()}</td><td><span class="badge bg-active">${t.status}</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No data</td></tr>';
-    } catch(e) { console.error('Sales error:', e); }
-  }
+    // --- RECONNECTED BACKEND LOGIC ---
+    async function loadSuperadminData() {
+      try {
+        if (typeof SuperadminAPI === 'undefined') return;
+        
+        const overview = await SuperadminAPI.getOverview().catch(() => ({}));
+        const tenantsRes = await SuperadminAPI.getTenants().catch(() => []);
+        
+        const stats = overview.stats || overview || {};
+        
+        // Map Stats
+        document.getElementById('val-total-tenants').textContent = stats.total_tenants || 0;
+        document.getElementById('val-platform-revenue').textContent = '$' + (stats.mrr || 0);
+        
+        // Map Tenants Table
+        const tbody = document.getElementById('tenants-tbody');
+        const tenantsArray = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes.tenants || []);
 
-  async function loadAuditLogs() {
-    try {
-      const rows = await fetch('/api/superadmin/audit-logs', { credentials:'include' }).then(r => r.json());
-      const tb = document.getElementById('audit-logs-tbody');
-      if (!tb) return;
-      if (!Array.isArray(rows) || !rows.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;">No audit logs yet</td></tr>'; return; }
-      tb.innerHTML = rows.map(l => `
-        <tr>
-          <td style="font-size:11px;color:#94a3b8;">${new Date(l.created_at).toLocaleString()}</td>
-          <td><span class="badge bg-pending">${l.actor_type}</span></td>
-          <td>${l.action}</td>
-          <td>${l.target_table||'-'}</td>
-          <td>${l.target_id||'-'}</td>
-        </tr>`).join('');
-    } catch(e) { console.error('Audit error:', e); }
-  }
+        if (!tenantsArray || tenantsArray.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tenants found</td></tr>`;
+          return;
+        }
 
-  async function loadReports() {
-    try {
-      const tenants = await SuperadminAPI.getTenants();
-      const tb = document.getElementById('reports-tbody');
-      if (!tb) return;
-      tb.innerHTML = tenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>${t.user_count||0}</td><td>${t.shipment_count||0}</td><td>-</td><td>-</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No data</td></tr>';
-    } catch(e) { console.error('Reports error:', e); }
-  }
+        let html = '';
+        tenantsArray.forEach(t => {
+          const plan = t.plan || 'Startup';
+          const status = t.status || 'Pending';
+          
+          let statusBadgeClass = 'bg-neutral';
+          if (status.toUpperCase() === 'ACTIVE') statusBadgeClass = 'bg-active';
+          if (status.toUpperCase() === 'PENDING') statusBadgeClass = 'bg-pending';
+          if (status.toUpperCase() === 'SUSPENDED') statusBadgeClass = 'bg-suspended';
 
-  function triggerBackup() {
-    const btn = event.currentTarget;
-    const orig = btn.innerHTML;
-    btn.innerHTML = `<span class="material-symbols-rounded" style="animation:spin 1s linear infinite;">sync</span> Processing...`;
-    btn.disabled = true;
-    setTimeout(() => {
-      btn.innerHTML = `<span class="material-symbols-rounded">check</span> Backup Complete!`;
-      btn.classList.replace('btn-primary','btn-success');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td><span style="font-family:monospace;">backup_${Date.now()}.sql.gz</span></td><td>Just Now</td><td>~1 GB</td><td><span class="badge bg-active">Success</span></td><td><button class="btn btn-secondary btn-sm">Download</button></td>`;
-      const list = document.getElementById('backup-list');
-      if (list && list.innerText.includes('No backups')) list.innerHTML = '';
-      if (list) list.prepend(tr);
-      setTimeout(() => { btn.innerHTML=orig; btn.classList.replace('btn-success','btn-primary'); btn.disabled=false; }, 3000);
-    }, 2000);
-  }
+          html += `<tr>
+            <td style="font-family: monospace; color:#64748b;">${t.tenant_id || '-'}</td>
+            <td><strong>${t.company_name || '-'}</strong></td>
+            <td>${t.admin_email || '-'}</td>
+            <td>${plan}</td>
+            <td><span class="badge ${statusBadgeClass}">${status}</span></td>
+            <td>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="alert('Manage Tenant: ${t.tenant_id}')">Manage</button>
+              </div>
+            </td>
+          </tr>`;
+        });
 
-  window.onload = async () => {
-    await loadDashboard();
-    await loadReports();
-  };
-</script>
-<style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+        tbody.innerHTML = html;
+      } catch (e) {
+        console.error("Superadmin load failed", e);
+      }
+    }
+  </script>
+  <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </body>
 </html>

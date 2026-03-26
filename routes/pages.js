@@ -101,13 +101,6 @@ router.get('/register', (req, res) => {
   res.send(html);
 });
 
-router.get('/:slug/login', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  const html = readView('login.html');
-  res.send(injectTenantData(html, tenant));
-});
-
 router.get('/:slug/staff-login', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
