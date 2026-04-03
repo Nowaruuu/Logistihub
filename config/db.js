@@ -26,7 +26,7 @@ pool.getConnection()
   })
   .catch(err => {
     console.error('❌  MySQL connection failed:', err.message);
-    process.exit(1);
+    // process.exit(1); // Commented out so frontend devs can run server without DB
   });
 
 pool.on('acquire', (connection) => {

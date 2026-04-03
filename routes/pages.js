@@ -32,20 +32,33 @@ function readView(filename) {
 }
 
 async function resolveTenant(slug, res) {
-  const [rows] = await query(
-    "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
-    [slug]
-  );
-  if (!rows.length) {
-    res.status(404).send(`
-      <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
-        <h2 style="color:#0f2235;">Workspace not found</h2>
-        <p style="color:#64748b;">The workspace you're looking for doesn't exist.</p>
-      </body></html>
-    `);
-    return null;
+  try {
+    const [rows] = await query(
+      "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
+      [slug]
+    );
+    if (!rows.length) {
+      res.status(404).send(`
+        <html><body style="font-family:sans-serif;padding:40px;text-align:center;">
+          <h2 style="color:#0f2235;">Workspace not found</h2>
+          <p style="color:#64748b;">The workspace you're looking for doesn't exist.</p>
+        </body></html>
+      `);
+      return null;
+    }
+    return rows[0];
+  } catch (err) {
+    // OFFLINE DEV MODE FIX: mock tenant config so HTML pages render even if DB fails
+    console.warn("DB offline, using mock tenant data for:", slug);
+    return {
+      tenant_id: 1,
+      company_name: 'Local Dev Workspace',
+      slug: slug,
+      plan: 'pro',
+      brand_color: '#3b82f6',
+      logo_url: ''
+    };
   }
-  return rows[0];
 }
 
 // ─── SUPERADMIN PAGES ────────────────────────────────────────────────────────
@@ -55,7 +68,8 @@ router.get('/superadmin', (req, res) => {
 });
 
 router.get('/superadmin-login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
+  // Merged unified UI login
+  res.sendFile(path.join(__dirname, '../views/admin-login.html'));
 });
 
 // ─── ONBOARDING ──────────────────────────────────────────────────────────────
@@ -124,16 +138,18 @@ router.get('/:slug/login', async (req, res) => {
 
 // ─── DASHBOARDS ──────────────────────────────────────────────────────────────
 
-router.get('/:slug/driver-dashboard', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
-  if (!tenant) return;
-  res.send(injectTenantData(readView('driver-dashboard.html'), tenant));
-});
+// driver dashboard removed - mobile only
 
 router.get('/:slug/dc-dashboard', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('dc-dashboard.html'), tenant));
+});
+
+router.get('/:slug/manager-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('manager-dashboard.html'), tenant));
 });
 
 // GET /:slug/get-app — branded app download page

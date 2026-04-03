@@ -238,9 +238,13 @@ async function doLogin() {
     // Redirect based on role
     const role = data.role || '';
     if (role === 'Driver') {
-        window.location.href = '/' + SLUG + '/driver-dashboard';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+        return showErr('Drivers must use the Mobile App to log in.');
         } else if (role === 'Document Controller') {
         window.location.href = '/' + SLUG + '/dc-dashboard';
+        } else if (role === 'Manager') {
+        window.location.href = '/' + SLUG + '/manager-dashboard';
         } else if (role === 'Admin') {
         window.location.href = '/' + SLUG + '/admin';
         } else {
