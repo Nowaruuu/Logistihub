@@ -130,32 +130,6 @@ window.doLogin = async function() {
             })
         });
 
-<<<<<<< HEAD
-  try {
-    var res = await fetch('/api/superadmin/login', {
-      method:      'POST',
-      headers:     { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body:        JSON.stringify({ email, password }),
-    });
-    var data = await res.json();
-
-    if (!res.ok) {
-      showErr(data.error || 'Login failed.');
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
-      return;
-    }
-
-    // Success — redirect to superadmin panel
-    window.location.href = '/superadmin';
-  } catch (e) {
-    showErr('Network error. Please try again.');
-    btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
-  }
-}
-=======
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
         
@@ -180,7 +154,6 @@ window.togglePw = function() {
         if(icon) icon.textContent = 'visibility';
     }
 };
->>>>>>> 842f27829da5844d33abee832e312b317fd6773a
 </script>
 </body>
 </html>
