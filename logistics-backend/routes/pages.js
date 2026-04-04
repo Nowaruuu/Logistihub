@@ -34,8 +34,8 @@ window.__TENANT__ = ${JSON.stringify({
  * Reads HTML files from the root directory (based on your EC2 file structure)
  */
 function readView(filename) {
-  // Add 'views/' here!
-  return fs.readFileSync(path.join(__dirname, '../views/', filename), 'utf-8');
+    // If your logs show views/views/, it means __dirname is already inside a views context or your join is redundant.
+    return fs.readFileSync(path.join(__dirname, '../', filename), 'utf-8');
 }
 
 /**
@@ -66,14 +66,13 @@ async function resolveTenant(slug, res) {
 
 // ─── SUPERADMIN PAGES ────────────────────────────────────────────────────────
 
-router.get('/superadmin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../views/superadmin.html'));
-});
-
 router.get('/superadmin-login', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
 });
 
+router.get('/superadmin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/superadmin.html'));
+});
 // ─── ONBOARDING ──────────────────────────────────────────────────────────────
 
 router.get('/onboarding', (req, res) => {
