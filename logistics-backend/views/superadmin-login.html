@@ -119,7 +119,7 @@ window.doLogin = async function() {
         // If SLUG is empty string, it uses the superadmin endpoint
         const endpoint = (typeof SLUG !== 'undefined' && SLUG) 
             ? `/${SLUG}/api/admin/login` 
-            : '/api/superadmin-login';
+            : '/api/superadmin/login';
         
         const res = await fetch(endpoint, {
             method: 'POST',
