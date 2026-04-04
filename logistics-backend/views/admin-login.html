@@ -48,48 +48,54 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 4px rgba(15,34,53,0.05);}
 </div>
 
 <script>
-// Use 'var' instead of 'const' to prevent the "Already Declared" crash if the script runs twice
-var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
-var T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+(function() {
+  // Use window scope to ensure these are available even if the script is re-run
+  window.SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  const T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
 
-if (document.getElementById('t-name')) {
-    document.getElementById('t-name').textContent = T_NAME;
-}
+  const tNameElem = document.getElementById('t-name');
+  if (tNameElem) tNameElem.textContent = T_NAME;
 
-async function doLogin() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('pw').value;
-  const btn = document.getElementById('btn');
-  const err = document.getElementById('err');
+  // We attach it to window so the HTML 'onclick' can physically see it
+  window.doLogin = async function() {
+    const emailElem = document.getElementById('email');
+    const pwElem = document.getElementById('pw');
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
 
-  if(!email || !password) return;
+    if (!emailElem || !pwElem) return;
+    const email = emailElem.value;
+    const password = pwElem.value;
 
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
-  err.style.display = 'none';
+    if (!email || !password) return;
 
-  try {
-    // Determine the login endpoint based on whether we are superadmin or tenant admin
-    const endpoint = SLUG ? `/${SLUG}/api/staff-login` : '/api/superadmin-login';
-    
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    err.style.display = 'none';
 
-    const data = await res.json();
-    if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
-    
-    // Redirect logic
-    window.location.href = SLUG ? `/${SLUG}/admin` : '/superadmin';
-  } catch(e) {
-    err.textContent = e.message;
-    err.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-  }
-}
+    try {
+      // Determine endpoint: if no SLUG, it's a superadmin login
+      const endpoint = window.SLUG ? `/${window.SLUG}/api/staff-login` : '/api/superadmin-login';
+      
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+      
+      // Redirect: if no SLUG, go to superadmin dashboard
+      window.location.href = window.SLUG ? `/${window.SLUG}/admin` : '/superadmin';
+    } catch (e) {
+      err.textContent = e.message;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  };
+})();
 </script>
 </body>
 </html>
