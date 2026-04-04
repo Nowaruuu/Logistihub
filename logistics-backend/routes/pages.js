@@ -34,8 +34,8 @@ window.__TENANT__ = ${JSON.stringify({
  * Reads HTML files from the root directory (based on your EC2 file structure)
  */
 function readView(filename) {
-  // Changed from '../views' to '../' because files are in the root
-  return fs.readFileSync(path.join(__dirname, '../', filename), 'utf-8');
+  // Use 'views/' because that's where we moved them!
+  return fs.readFileSync(path.join(__dirname, '../views/', filename), 'utf-8');
 }
 
 /**
@@ -67,12 +67,11 @@ async function resolveTenant(slug, res) {
 // ─── SUPERADMIN PAGES ────────────────────────────────────────────────────────
 
 router.get('/superadmin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../superadmin.html'));
+  res.sendFile(path.join(__dirname, '../views/superadmin.html'));
 });
 
 router.get('/superadmin-login', (req, res) => {
-  // If pages.js is in /routes, we go up one, then into logistics-backend
-  res.sendFile(path.join(__dirname, '../logistics-backend/superadmin-login.html'));
+  res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
 });
 
 // ─── ONBOARDING ──────────────────────────────────────────────────────────────
