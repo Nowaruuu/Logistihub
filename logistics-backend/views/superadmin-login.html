@@ -98,48 +98,57 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 </div>
 
 <script>
-// Using 'var' allows the script to be re-run or overwritten without crashing
-var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
-var T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+// Do NOT redeclare SLUG or T_NAME here. 
+// They should be handled by frontend-api.js or window scope.
 
-if (document.getElementById('t-name')) {
-    document.getElementById('t-name').textContent = T_NAME;
-}
-
-// Attach directly to window so the button 'onclick' can always find it
 window.doLogin = async function() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('pw').value;
-  const btn = document.getElementById('btn');
-  const err = document.getElementById('err');
+    // FIXED: Your IDs in HTML are "password" and "login-btn", 
+    // but your script was looking for "pw" and "btn".
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value; // Match the ID in your HTML
+    const btn = document.getElementById('login-btn');           // Match the ID in your HTML
+    const errBox = document.getElementById('err-box');
+    const errMsg = document.getElementById('err-msg');
 
-  if(!email || !password) return;
+    if(!email || !password) return;
 
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
-  err.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
+    errBox.style.display = 'none';
 
-  try {
-    // If SLUG exists, it's a tenant admin. If not, it's the superadmin.
-    const endpoint = SLUG ? `/${SLUG}/api/staff-login` : '/api/superadmin-login';
-    
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+        // Use window.SLUG if it's defined in frontend-api.js
+        const slugValue = window.SLUG || '';
+        const endpoint = slugValue ? `/${slugValue}/api/staff-login` : '/api/superadmin-login';
+        
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-    const data = await res.json();
-    if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
-    
-    // Redirect based on account type
-    window.location.href = SLUG ? `/${SLUG}/admin` : '/superadmin';
-  } catch(e) {
-    err.textContent = e.message;
-    err.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-  }
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        
+        window.location.href = slugValue ? `/${slugValue}/admin` : '/superadmin';
+    } catch(e) {
+        errMsg.textContent = e.message;
+        errBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+    }
+};
+
+function togglePw() {
+    const p = document.getElementById('password');
+    const icon = document.querySelector('.pw-toggle .material-symbols-outlined');
+    if(p.type === 'password') {
+        p.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        p.type = 'password';
+        icon.textContent = 'visibility';
+    }
 }
 </script>
 </body>
