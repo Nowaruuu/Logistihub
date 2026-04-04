@@ -212,7 +212,7 @@ router.post('/register', async (req, res) => {
       .then(() => console.log(`[CUST REG] Email sent successfully to ${email}`))
       .catch(e  => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
 
-<<<<<<< HEAD
+
     // ── Return both tokens to the frontend ────────────────────────────────
     res.status(201).json({
       ok:           true,
@@ -222,7 +222,6 @@ router.post('/register', async (req, res) => {
       email_token:  emailToken,    // permanent token (also in email)
     });
 
-=======
     res.status(201).json({ 
       ok: true, 
       token: token,  // <--- THIS IS THE MISSING PIECE!
@@ -230,7 +229,6 @@ router.post('/register', async (req, res) => {
       name: `${first_name} ${last_name}` 
     });
     
->>>>>>> 842f27829da5844d33abee832e312b317fd6773a
   } catch (err) {
     console.error('[CUST REG] Critical Error:', err);
     res.status(500).json({ 
