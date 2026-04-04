@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Client Login — Logistics OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+/* Left panel */
+.left{width:480px;flex-shrink:0;background:#0f2235;display:flex;flex-direction:column;justify-content:space-between;padding:40px;position:relative;overflow:hidden;}
+@media(max-width:800px){.left{display:none;}}
+.left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(16,185,129,.15) 0%,transparent 60%);}
+.hex{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpolygon points='28,2 54,16 54,44 28,48 2,44 2,16' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E");background-size:56px 48px; opacity:0.6;}
+.left-content{position:relative;z-index:1;}
+
+.tenant-brand{display:flex;align-items:center;gap:12px;margin-bottom:60px;}
+.tenant-logo-box{width:44px;height:44px;background:rgba(255,255,255,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.tenant-logo-box .material-symbols-outlined{color:#10b981;font-size:24px;}
+.tenant-name-display{font-family:'Fraunces',serif;font-weight:900;font-size:20px;color:#fff;line-height:1;}
+.tenant-powered{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;}
+
+.left h2{font-family:'Fraunces',serif;font-size:40px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:20px;}
+.left h2 span{color:#10b981;}
+.left p{font-size:15px;color:rgba(255,255,255,.6);line-height:1.7;max-width:320px;}
+
+.feature-cards{margin-top:40px;display:flex;flex-direction:column;gap:16px;}
+.feature-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:20px;}
+.feature-card-title{font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.feature-card-sub{font-size:13px;color:rgba(255,255,255,.4);line-height:1.5;}
+.fc-1 .material-symbols-outlined{color:#10b981;}
+.fc-2 .material-symbols-outlined{color:#3b82f6;}
+
+/* Right panel */
+.right{flex:1;background:#f8fafc;display:flex;flex-direction:column;overflow-y:auto;}
+.right-inner{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px;max-width:480px;margin:0 auto;width:100%;}
+@media(max-width:540px){.right-inner{padding:28px 20px;}}
+
+.mobile-header{display:none;align-items:center;gap:10px;margin-bottom:32px;}
+@media(max-width:800px){.mobile-header{display:flex;}}
+.mobile-logo-box{width:36px;height:36px;border-radius:10px;background:#0f2235;display:flex;align-items:center;justify-content:center;}
+.mobile-logo-box .material-symbols-outlined{color:#10b981;font-size:20px;}
+.mobile-tenant-name{font-family:'Fraunces',serif;font-weight:900;font-size:18px;color:#0f2235;}
+
+.auth-card{background:#fff;border-radius:24px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.04);border:1px solid #e2e8f0;}
+
+.form-title{font-family:'Fraunces',serif;font-size:28px;font-weight:900;color:#0f2235;margin-bottom:8px;text-align:center;}
+.form-sub{font-size:14px;color:#64748b;margin-bottom:32px;line-height:1.55;text-align:center;}
+
+.form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.form-label{font-size:13px;font-weight:700;color:#334155;}
+.field-wrap{position:relative;}
+.field-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:18px;pointer-events:none;}
+.field-wrap input{padding-left:42px!important;}
+input{width:100%;padding:14px 16px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:all .2s;background:#fff;color:#0f172a;}
+input:focus{border-color:#10b981;box-shadow:0 0 0 4px rgba(16,185,129,.1);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:42px;}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#cbd5e1;display:flex;align-items:center;padding:0;}
+.pw-toggle:hover{color:#64748b;}
+
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;font-size:13px;color:#dc2626;display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+.err-box .material-symbols-outlined{font-size:18px;flex-shrink:0;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;background:#0f2235;color:#fff;transition:all .2s;margin-top:8px;}
+.btn:hover{background:#1e3a5f;transform:translateY(-1px);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+.register-link{text-align:center;font-size:13px;color:#64748b;margin-top:24px;}
+.register-link a{color:#10b981;font-weight:700;text-decoration:none;cursor:pointer;transition:color .2s;}
+.register-link a:hover{color:#059669;}
+
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left">
+  <div class="hex"></div>
+  <div class="left-content">
+    <div class="tenant-brand">
+      <div class="tenant-logo-box"><span class="material-symbols-outlined">package_2</span></div>
+      <div>
+        <div class="tenant-name-display" id="left-tenant-name">Your Company</div>
+        <div class="tenant-powered">Powered by Logistics OS</div>
+      </div>
+    </div>
+
+    <h2>Client<br/><span>Portal</span></h2>
+    <p>Sign in with your unique username to track shipments, view invoices, and manage your account.</p>
+
+    <div class="feature-cards">
+      <div class="feature-card fc-1">
+        <div class="feature-card-title"><span class="material-symbols-outlined">speed</span> Real-time Tracking</div>
+        <div class="feature-card-sub">Monitor your package status and driver location seamlessly.</div>
+      </div>
+      <div class="feature-card fc-2">
+        <div class="feature-card-title"><span class="material-symbols-outlined">receipt_long</span> Digital Waybills</div>
+        <div class="feature-card-sub">Access PODs and delivery receipts instantly upon completion.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right">
+  <div class="right-inner">
+
+    <div class="mobile-header">
+      <div class="mobile-logo-box"><span class="material-symbols-outlined">package_2</span></div>
+      <div class="mobile-tenant-name" id="mobile-tenant-name">Your Company</div>
+    </div>
+
+    <div class="auth-card">
+      <div class="form-title">Welcome back</div>
+      <div class="form-sub">Sign in to your client account</div>
+
+      <div id="err-box" class="err-box" style="display:none;">
+        <span class="material-symbols-outlined">error</span>
+        <span id="err-msg">Invalid credentials.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="field-wrap">
+          <span class="field-ico material-symbols-outlined">person</span>
+          <input id="username" type="text" placeholder="Enter your username" autocomplete="username" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Password</label>
+          <a href="#" style="font-size:12px;color:#94a3b8;text-decoration:none;">Forgot password?</a>
+        </div>
+        <div class="field-wrap pw-wrap">
+          <span class="field-ico material-symbols-outlined">lock</span>
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required onkeydown="if(event.key==='Enter')doLogin()"/>
+          <button class="pw-toggle" type="button" onclick="togglePw(this)"><span class="material-symbols-outlined">visibility</span></button>
+        </div>
+      </div>
+
+      <button class="btn" id="login-btn" onclick="doLogin()">
+        Sign In
+      </button>
+
+      <div class="register-link">
+        Don't have an account? <a id="register-href" href="#">Create one now</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var TENANT_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : 'demo';
+
+document.getElementById('left-tenant-name').textContent = TENANT_NAME;
+document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
+document.getElementById('register-href').href = '/' + SLUG + '/register';
+
+function togglePw(btn) {
+  var inp = document.getElementById('password');
+  var ico = btn.querySelector('.material-symbols-outlined');
+  if (inp.type === 'password') { inp.type = 'text'; ico.textContent = 'visibility_off'; }
+  else { inp.type = 'password'; ico.textContent = 'visibility'; }
+}
+
+function showErr(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  document.getElementById('err-box').style.display = 'flex';
+}
+
+async function doLogin() {
+  var username = document.getElementById('username').value.trim();
+  var password = document.getElementById('password').value;
+  var btn      = document.getElementById('login-btn');
+
+  if (!username || !password) { showErr('Please enter your username and password.'); return; }
+
+  document.getElementById('err-box').style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
+
+  try {
+    const data = await fetch(`/${SLUG}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        // Send username correctly to backend
+        body: JSON.stringify({ username, password })
+    }).then(r => r.json());
+    
+    if (!data.ok) throw new Error(data.error || 'Login failed.');
+
+    // Customer goes to their specific web app dashboard (if one exists)
+    // NOTE: Replace '/dashboard' with the actual client portal destination if needed.
+    window.location.href = '/' + SLUG + '/dashboard';
+  } catch (e) {
+    showErr(e.message || 'Login failed. Please check your credentials.');
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+</script>
+</body>
+</html>

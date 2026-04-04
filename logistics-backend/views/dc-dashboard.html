@@ -39,25 +39,25 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; min-height: 100vh; overflow: hidden; }
 
     /* SIDEBAR */
-    .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; z-index: 100; transition: all 0.3s ease; }
-    .brand { padding: 32px 24px; display: flex; align-items: center; gap: 12px; }
-    .brand-icon { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
-    .brand-name { font-weight: 800; font-size: 18px; color: var(--primary); letter-spacing: -0.5px; }
-    .brand-sub { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar { width: 260px; background: #0f172a; color: #fff; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100vh; z-index: 100; transition: all 0.3s ease; }
+    .brand { padding: 32px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+    .brand-name { font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
-    .nav-menu { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
-    .nav-section { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 24px 12px 8px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-muted); text-decoration: none; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 0.2s; }
-    .nav-item:hover { background: #f1f5f9; color: var(--primary); }
-    .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
+    .nav-menu { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .nav-section { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; padding: 24px 12px 8px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #94a3b8; text-decoration: none; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 0.2s; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
     .nav-item .material-symbols-rounded { font-size: 20px; }
 
-    .sidebar-footer { padding: 24px; border-top: 1px solid var(--border); }
-    .user-profile { display: flex; align-items: center; gap: 12px; }
-    .avatar { width: 40px; height: 40px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+    .sidebar-footer { padding: 24px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .user-profile { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.03); }
+    .avatar { width: 40px; height: 40px; border-radius: 12px; background: #334155; display: flex; align-items: center; justify-content: center; }
     .usr-info { flex: 1; min-width: 0; }
-    .usr-name { font-size: 14px; font-weight: 700; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .usr-role { font-size: 12px; color: var(--text-muted); }
+    .usr-name { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .usr-role { font-size: 12px; color: #64748b; }
 
     /* MAIN AREA */
     .main-wrapper { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -188,37 +188,37 @@
       <!-- DASHBOARD -->
       <div id="s-dashboard" class="screen active">
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-label">Total Shipments</div>
-              <div class="stat-icon primary"><span class="material-symbols-rounded">inventory_2</span></div>
-            </div>
-            <div class="stat-value" id="stat-total">0</div>
-            <div class="stat-note">Managed records</div>
-          </div>
-          <div class="stat-card orange">
-            <div class="stat-header">
-              <div class="stat-label">Pending Process</div>
-              <div class="stat-icon warning"><span class="material-symbols-rounded">pending</span></div>
-            </div>
-            <div class="stat-value" id="stat-pending">0</div>
-            <div class="stat-note">Awaiting action</div>
-          </div>
           <div class="stat-card green">
             <div class="stat-header">
-              <div class="stat-label">Completed</div>
-              <div class="stat-icon success"><span class="material-symbols-rounded">check_circle</span></div>
+              <div class="stat-label">Today's Sales</div>
+              <div class="stat-icon success"><span class="material-symbols-rounded">payments</span></div>
             </div>
-            <div class="stat-value" id="stat-completed">0</div>
-            <div class="stat-note">Successfully processed</div>
+            <div class="stat-value" id="stat-sales">$0</div>
+            <div class="stat-note">New revenue today</div>
           </div>
           <div class="stat-card purple">
             <div class="stat-header">
-              <div class="stat-label">Issues</div>
-              <div class="stat-icon purple"><span class="material-symbols-rounded">error</span></div>
+              <div class="stat-label">Active Clients</div>
+              <div class="stat-icon purple"><span class="material-symbols-rounded">groups</span></div>
             </div>
-            <div class="stat-value" id="stat-issues">0</div>
-            <div class="stat-note">Action required</div>
+            <div class="stat-value" id="stat-clients">0</div>
+            <div class="stat-note">Shippers on platform</div>
+          </div>
+          <div class="stat-card primary">
+            <div class="stat-header">
+              <div class="stat-label">Active Staff</div>
+              <div class="stat-icon primary"><span class="material-symbols-rounded">badge</span></div>
+            </div>
+            <div class="stat-value" id="stat-staff">0</div>
+            <div class="stat-note">Employees logged in</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header">
+              <div class="stat-label">Activity Log</div>
+              <div class="stat-icon warning"><span class="material-symbols-rounded">list_alt</span></div>
+            </div>
+            <div class="stat-value" id="stat-activity">0</div>
+            <div class="stat-note">System actions today</div>
           </div>
         </div>
 
@@ -356,10 +356,11 @@
         const shipments = Array.isArray(data) ? data : (data.shipments || []);
 
         // Stats
-        document.getElementById('stat-total').textContent = shipments.length;
-        document.getElementById('stat-pending').textContent = shipments.filter(s => s.status === 'Pending').length;
-        document.getElementById('stat-completed').textContent = shipments.filter(s => s.status === 'Delivered').length;
-        document.getElementById('stat-issues').textContent = shipments.filter(s => s.status === 'Failed' || s.status === 'Cancelled').length;
+        // Set stats for design mockup
+        document.getElementById('stat-sales').textContent = "$12,450";
+        document.getElementById('stat-clients').textContent = "24";
+        document.getElementById('stat-staff').textContent = "12";
+        document.getElementById('stat-activity').textContent = "145";
 
         // Render Shipments
         const tb = document.getElementById('shipments-tbody');

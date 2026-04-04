@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Developer Platform — Logistics OS</title>
+<title>Superadmin Dashboard — Logistics OS</title>
 
 <!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -457,19 +457,13 @@
       <!-- ==================== SETTINGS ==================== -->
       <div id="screen-settings" class="screen">
         <div class="settings-grid">
+          <!-- Settings Navigation -->
           <div class="settings-nav">
             <div class="set-tab active" onclick="setTab('general', this)">General Settings</div>
             <div class="set-tab" onclick="setTab('limits', this)">Tenant Limits & Rules</div>
             <div class="set-tab" onclick="setTab('roles', this)">Developer Roles</div>
-            
-            <div style="margin-top: 24px;">
-              <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="window.location.href='https://logistihub.ddns.net/superadmin-login'">
-                <span class="material-symbols-rounded">logout</span> Secure Logout
-              </button>
-            </div>
           </div>
-
-        
+          
           <!-- Settings Content -->
           <div class="card">
             <div class="card-body">
@@ -630,15 +624,6 @@
       if (!confirm(`Set tenant to "${status}"?`)) return;
       try { await SuperadminAPI.setTenantStatus(id, status); loadTenants(); }
       catch(e) { alert('Failed: ' + e.message); }
-    }
-
-    function superadminLogout() {
-      // Clear any tokens or session data if you use them
-      // localStorage.removeItem('superadmin_token'); 
-      // sessionStorage.clear();
-      
-      // Redirect to the login page
-      window.location.href = 'https://logistihub.ddns.net/superadmin-login';
     }
 
     async function inviteTenant() {

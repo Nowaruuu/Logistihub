@@ -1,25 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-  // This data comes from the injectTenantData function in pages.js
-  const tenant = window.__TENANT__ || { company_name: 'Logistics App', brand_color: '#3b82f6' };
-  
-  window.onload = () => {
-    // Set the Company Name
-    document.getElementById('app-title').textContent = 'Download ' + tenant.company_name;
-    // Set the Brand Color on the Download Button
-    const dlBtn = document.getElementById('download-btn');
-    if(dlBtn) dlBtn.style.backgroundColor = tenant.brand_color;
-    // Set the Logo
-    if(tenant.logo_url) {
-        document.getElementById('tenant-logo').src = tenant.logo_url;
-    }
-  };
-</script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Download App</title>
+<title>Download App — Logistics OS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
