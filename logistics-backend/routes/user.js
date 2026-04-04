@@ -268,7 +268,7 @@ router.post('/login', async (req, res) => {
   res.cookie('user_token', token, {
   httpOnly: true,
   secure:   process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  sameSite: 'lax',
   maxAge:   8 * 3600 * 1000
 });
 res.json({
@@ -313,7 +313,7 @@ router.post('/staff-login', async (req, res) => {
   res.cookie(cookieName, token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge:   8 * 60 * 60 * 1000,
   });
 

@@ -94,7 +94,7 @@ app.use('/api/onboarding', onboardingRouter);
 app.use('/', adminRouter);
 
 // User/app API  →  /:slug/api/...
-app.use('/', userRouter);
+app.use('/:slug/api', userRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE ROUTES (serve HTML files)

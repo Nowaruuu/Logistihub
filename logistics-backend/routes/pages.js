@@ -83,4 +83,34 @@ router.get('/:slug/login', async (req, res) => {
   res.send(injectTenantData(readView('login.html'), tenant));
 });
 
+router.get('/:slug/admin-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('admin-login.html'), tenant));
+});
+router.get('/:slug/staff-login', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('staff-login.html'), tenant));
+});
+router.get('/:slug/dc-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('dc-dashboard.html'), tenant));
+});
+router.get('/:slug/manager-dashboard', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('manager-dashboard.html'), tenant));
+});
+router.get('/:slug/register', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('client-register.html'), tenant));
+});
+router.get('/:slug/get-app', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('get-app.html'), tenant));
+});
 module.exports = router;

@@ -21,7 +21,7 @@ router.post('/:slug/api/admin/login', async (req, res) => {
   const tenant = tenants[0];
 
   const [rows] = await query(
-    "SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND role = 'Admin' LIMIT 1",
+    "SELECT *, staff_id AS id FROM STAFF WHERE tenant_id = ? AND username = ? AND role = 'Admin' LIMIT 1",
     [tenant.tenant_id, email]
   );
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
@@ -39,7 +39,7 @@ router.post('/:slug/api/admin/login', async (req, res) => {
   res.cookie('admin_token', token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge:   8 * 60 * 60 * 1000,
   });
 
@@ -163,7 +163,7 @@ router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async 
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
-  const [rows] = await query('SELECT * FROM STAFF WHERE tenant_id = ? ORDER BY name ASC', [req.tenantId]);
+  const [rows] = await query('SELECT *, staff_id AS id FROM STAFF WHERE tenant_id = ? ORDER BY name ASC', [req.tenantId]);
   res.json(rows);
 });
 
@@ -218,3 +218,11 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 });
 
 module.exports = router;
+router.get('/app-users', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const [users] = await query('SELECT user_id, first_name, last_name, email, role, status, created_at FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC', [req.tenant.tenant_id]);
+    res.json({ users });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});

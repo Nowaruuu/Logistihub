@@ -160,7 +160,7 @@ textarea{resize:vertical;}
 .tab.active{color:#0f2235;font-weight:700;border-bottom-color:#0f2235;}
 </style>
 </head>
-<script src="/public/frontend-api.js"></script>
+
 <body>
 
 <!-- SIDEBAR -->
@@ -212,10 +212,10 @@ textarea{resize:vertical;}
         </div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value">0</div><div class="stat-note">No tenants yet</div></div>
-        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">$0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Total Tenants<div class="stat-icon si-blue"><span class="material-symbols-outlined">corporate_fare</span></div></div><div class="stat-value" id="val-total-tenants">0</div><div class="stat-note">No tenants yet</div></div>
+        <div class="stat-card"><div class="stat-label">Active Subscriptions<div class="stat-icon si-green"><span class="material-symbols-outlined">credit_card</span></div></div><div class="stat-value" id="val-active-users">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Invites<div class="stat-icon si-amber"><span class="material-symbols-outlined">mail</span></div></div><div class="stat-value" id="val-monthly-activity">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Platform Revenue<div class="stat-icon si-purple"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="val-platform-revenue">$0</div><div class="stat-note">No data yet</div></div>
       </div>
 
       <div class="card">
@@ -276,7 +276,7 @@ textarea{resize:vertical;}
                 <th></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tenants-tbody">
               <tr><td colspan="9">
                 <div class="empty-state" style="padding:36px;">
                   <span class="material-symbols-outlined">corporate_fare</span>
@@ -437,7 +437,7 @@ function sendInvite() {
 }
 </script>
 </body>
-  <script src="/public/frontend-api.js"></script>
+  
   <script>
     const titles = {
       dashboard: 'Dashboard Overview',

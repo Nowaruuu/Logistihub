@@ -123,7 +123,7 @@ router.post('/create', async (req, res) => {
   res.cookie('admin_token', adminToken, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge:   8 * 60 * 60 * 1000,
   });
 
