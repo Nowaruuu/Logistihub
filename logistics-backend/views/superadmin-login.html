@@ -98,60 +98,59 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 </div>
 
 <script>
-// Use a block scope to prevent 'SLUG' redeclaration crashes
-{
-    // Check if SLUG exists, if not, define it locally for this page
-    if (typeof SLUG === 'undefined') {
-        var SLUG = window.SLUG || '';
+/**
+ * FIX: We do not declare SLUG here because it's already defined 
+ * globally by /public/frontend-api.js. 
+ */
+window.doLogin = async function() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btn = document.getElementById('login-btn');
+    const errBox = document.getElementById('err-box');
+    const errMsg = document.getElementById('err-msg');
+
+    if(!emailInput.value || !passwordInput.value) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
+    errBox.style.display = 'none';
+
+    try {
+        // We use the existing SLUG from frontend-api.js
+        const endpoint = SLUG ? `/${SLUG}/api/admin/login` : '/api/superadmin-login';
+        
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: emailInput.value, 
+                password: passwordInput.value 
+            })
+        });
+
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        
+        window.location.href = SLUG ? `/${SLUG}/admin` : '/superadmin';
+    } catch(e) {
+        errMsg.textContent = e.message;
+        errBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
     }
+};
 
-    window.doLogin = async function() {
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const btn = document.getElementById('login-btn');
-        const errBox = document.getElementById('err-box');
-        const errMsg = document.getElementById('err-msg');
-
-        if(!emailInput.value || !passwordInput.value) return;
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
-        errBox.style.display = 'none';
-
-        try {
-            const res = await fetch('/api/superadmin-login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    email: emailInput.value, 
-                    password: passwordInput.value 
-                })
-            });
-
-            const data = await res.json();
-            if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
-            
-            window.location.href = '/superadmin';
-        } catch(e) {
-            errMsg.textContent = e.message;
-            errBox.style.display = 'flex';
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
-        }
-    };
-
-    window.togglePw = function() {
-        const p = document.getElementById('password');
-        const icon = document.querySelector('.pw-toggle .material-symbols-outlined');
-        if(p.type === 'password') {
-            p.type = 'text';
-            if(icon) icon.textContent = 'visibility_off';
-        } else {
-            p.type = 'password';
-            if(icon) icon.textContent = 'visibility';
-        }
-    };
-}
+window.togglePw = function() {
+    const p = document.getElementById('password');
+    const icon = document.querySelector('.pw-toggle .material-symbols-outlined');
+    if(p.type === 'password') {
+        p.type = 'text';
+        if(icon) icon.textContent = 'visibility_off';
+    } else {
+        p.type = 'password';
+        if(icon) icon.textContent = 'visibility';
+    }
+};
 </script>
 </body>
 </html>
