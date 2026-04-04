@@ -195,17 +195,26 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
   </div>
 </div>
 <script src="/public/frontend-api.js"></script>
-<script>
 
-document.getElementById('left-tenant-name').textContent = TENANT_NAME;
-document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
-document.getElementById('info-tenant-name').textContent = TENANT_NAME;
+<script>
+// We use 'TENANT' and 'SLUG' which are already defined inside frontend-api.js
+// We use TENANT.company_name for the display labels
+const companyDisplayName = TENANT.company_name || 'Your Company';
+
+document.getElementById('left-tenant-name').textContent = companyDisplayName;
+document.getElementById('mobile-tenant-name').textContent = companyDisplayName;
+document.getElementById('info-tenant-name').textContent = companyDisplayName;
 
 function togglePw(btn) {
   var inp = document.getElementById('password');
   var ico = btn.querySelector('.material-symbols-outlined');
-  if (inp.type === 'password') { inp.type = 'text'; ico.textContent = 'visibility_off'; }
-  else { inp.type = 'password'; ico.textContent = 'visibility'; }
+  if (inp.type === 'password') { 
+    inp.type = 'text'; 
+    ico.textContent = 'visibility_off'; 
+  } else { 
+    inp.type = 'password'; 
+    ico.textContent = 'visibility'; 
+  }
 }
 
 function showErr(msg) {
@@ -228,8 +237,8 @@ async function doLogin() {
   btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
 
   try {
-    // Calling the helper from frontend-api.js
-    // Ensure SLUG is defined in your helper as 'const SLUG = window.__TENANT__?.slug || "";'
+    // We use the 'api' function from frontend-api.js
+    // This will correctly hit /slug/api/staff-login
     const data = await api('POST', `/${SLUG}/api/staff-login`, { email, password });
 
     const role = data.role || '';
@@ -240,7 +249,7 @@ async function doLogin() {
       return showErr('Drivers must use the Mobile App to log in.');
     }
 
-    // Dynamic routing
+    // Dynamic routing using the SLUG from the helper
     const routes = {
       'Document Controller': `/${SLUG}/dc-dashboard`,
       'Manager': `/${SLUG}/manager-dashboard`,
