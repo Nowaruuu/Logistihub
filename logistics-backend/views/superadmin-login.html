@@ -4,6 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Logistics OS — Superadmin Login</title>
+<script>window.__TENANT__ = { slug: '' };</script>
+<script src="/public/frontend-api.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
@@ -49,7 +51,6 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 </style>
 </head>
-<script src="/public/frontend-api.js"></script>
 <body>
 
 <div class="card">
@@ -97,29 +98,39 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 </div>
 
 <script>
-function togglePw() {
-  var inp = document.getElementById('password');
-  var ico = document.querySelector('.pw-toggle .material-symbols-outlined');
-  if (inp.type === 'password') { inp.type = 'text';     ico.textContent = 'visibility_off'; }
-  else                         { inp.type = 'password'; ico.textContent = 'visibility'; }
-}
+// DO NOT declare SLUG or TENANT here. 
+// They are already global from /public/frontend-api.js
 
-function showErr(msg) {
-  document.getElementById('err-msg').textContent = msg;
-  document.getElementById('err-box').style.display = 'flex';
-}
+window.doLogin = async function() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btn = document.getElementById('login-btn');
+    const errBox = document.getElementById('err-box');
+    const errMsg = document.getElementById('err-msg');
 
-async function doLogin() {
-  var email    = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-  var btn      = document.getElementById('login-btn');
+    if(!emailInput?.value || !passwordInput?.value) return;
 
-  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
+    errBox.style.display = 'none';
 
-  document.getElementById('err-box').style.display = 'none';
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
+    try {
+        // Use the SLUG variable already provided by frontend-api.js
+        // If SLUG is empty string, it uses the superadmin endpoint
+        const endpoint = (typeof SLUG !== 'undefined' && SLUG) 
+            ? `/${SLUG}/api/admin/login` 
+            : '/api/superadmin/login';
+        
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: emailInput.value, 
+                password: passwordInput.value 
+            })
+        });
 
+<<<<<<< HEAD
   try {
     var res = await fetch('/api/superadmin/login', {
       method:      'POST',
@@ -144,6 +155,32 @@ async function doLogin() {
     btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
   }
 }
+=======
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        
+        window.location.href = (typeof SLUG !== 'undefined' && SLUG) ? `/${SLUG}/admin` : '/superadmin';
+    } catch(e) {
+        errMsg.textContent = e.message;
+        errBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+    }
+};
+
+window.togglePw = function() {
+    const p = document.getElementById('password');
+    const icon = document.querySelector('.pw-toggle .material-symbols-outlined');
+    if(!p) return;
+    if(p.type === 'password') {
+        p.type = 'text';
+        if(icon) icon.textContent = 'visibility_off';
+    } else {
+        p.type = 'password';
+        if(icon) icon.textContent = 'visibility';
+    }
+};
+>>>>>>> 842f27829da5844d33abee832e312b317fd6773a
 </script>
 </body>
 </html>

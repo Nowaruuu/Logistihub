@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Logistics OS — Superadmin Login</title>
+<script>window.__TENANT__ = { slug: '' };</script>
+<script src="/public/frontend-api.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;background:#f1f5f9;display:flex;align-items:center;justify-content:center;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(15,34,53,.06);}
+
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.logo-box{width:36px;height:36px;background:#0a1628;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.logo-box .material-symbols-outlined{color:#fff;font-size:18px;}
+.logo-name{font-weight:800;font-size:15px;color:#0a1628;}
+.logo-role{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:1px;}
+
+h1{font-size:22px;font-weight:800;color:#0a1628;margin-bottom:5px;}
+.sub{font-size:13px;color:#94a3b8;margin-bottom:24px;}
+
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;color:#475569;}
+.field-wrap{position:relative;}
+.field-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:17px;pointer-events:none;}
+.field-wrap input{padding-left:36px!important;}
+input{width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
+input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:38px;}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#cbd5e1;display:flex;align-items:center;padding:0;}
+.pw-toggle:hover{color:#64748b;}
+
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 13px;font-size:12px;color:#dc2626;display:flex;align-items:center;gap:7px;margin-bottom:14px;}
+.err-box .material-symbols-outlined{font-size:15px;flex-shrink:0;}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;background:#0a1628;color:#fff;transition:opacity .15s;margin-top:6px;}
+.btn:hover{opacity:.87;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn .material-symbols-outlined{font-size:15px;}
+
+.security-note{display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-top:20px;}
+.security-note .material-symbols-outlined{font-size:15px;color:#94a3b8;margin-top:1px;flex-shrink:0;}
+.security-note p{font-size:11px;color:#94a3b8;line-height:1.5;}
+
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
+    <div>
+      <div class="logo-name">Logistics OS</div>
+      <div class="logo-role">SUPERADMIN ACCESS</div>
+    </div>
+  </div>
+
+  <h1>Platform Login</h1>
+  <p class="sub">This panel is restricted to platform administrators only.</p>
+
+  <div id="err-box" class="err-box" style="display:none;">
+    <span class="material-symbols-outlined">error</span>
+    <span id="err-msg">Invalid credentials.</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Email</label>
+    <div class="field-wrap">
+      <span class="field-ico material-symbols-outlined">mail</span>
+      <input id="email" type="email" placeholder="" autocomplete="username"/>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Password</label>
+    <div class="field-wrap pw-wrap">
+      <span class="field-ico material-symbols-outlined">lock</span>
+      <input id="password" type="password" placeholder="" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="pw-toggle" type="button" onclick="togglePw()"><span class="material-symbols-outlined">visibility</span></button>
+    </div>
+  </div>
+
+  <button class="btn" id="login-btn" onclick="doLogin()">
+    <span class="material-symbols-outlined">login</span>Sign In
+  </button>
+
+  <div class="security-note">
+    <span class="material-symbols-outlined">shield</span>
+    <p>All login attempts are rate-limited and logged. Unauthorized access is prohibited.</p>
+  </div>
+</div>
+
+<script>
+// DO NOT declare SLUG or TENANT here. 
+// They are already global from /public/frontend-api.js
+
+window.doLogin = async function() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btn = document.getElementById('login-btn');
+    const errBox = document.getElementById('err-box');
+    const errMsg = document.getElementById('err-msg');
+
+    if(!emailInput?.value || !passwordInput?.value) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
+    errBox.style.display = 'none';
+
+    try {
+        // Use the SLUG variable already provided by frontend-api.js
+        // If SLUG is empty string, it uses the superadmin endpoint
+        const endpoint = (typeof SLUG !== 'undefined' && SLUG) 
+            ? `/${SLUG}/api/admin/login` 
+            : '/api/superadmin/login';
+        
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: emailInput.value, 
+                password: passwordInput.value 
+            })
+        });
+
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        
+        window.location.href = (typeof SLUG !== 'undefined' && SLUG) ? `/${SLUG}/admin` : '/superadmin';
+    } catch(e) {
+        errMsg.textContent = e.message;
+        errBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+    }
+};
+
+window.togglePw = function() {
+    const p = document.getElementById('password');
+    const icon = document.querySelector('.pw-toggle .material-symbols-outlined');
+    if(!p) return;
+    if(p.type === 'password') {
+        p.type = 'text';
+        if(icon) icon.textContent = 'visibility_off';
+    } else {
+        p.type = 'password';
+        if(icon) icon.textContent = 'visibility';
+    }
+};
+</script>
+</body>
+</html>

@@ -212,6 +212,7 @@ router.post('/register', async (req, res) => {
       .then(() => console.log(`[CUST REG] Email sent successfully to ${email}`))
       .catch(e  => console.error(`[CUST REG] Async email error for ${email}: ${e.message}`));
 
+<<<<<<< HEAD
     // ── Return both tokens to the frontend ────────────────────────────────
     res.status(201).json({
       ok:           true,
@@ -221,6 +222,15 @@ router.post('/register', async (req, res) => {
       email_token:  emailToken,    // permanent token (also in email)
     });
 
+=======
+    res.status(201).json({ 
+      ok: true, 
+      token: token,  // <--- THIS IS THE MISSING PIECE!
+      user_id: result.insertId, 
+      name: `${first_name} ${last_name}` 
+    });
+    
+>>>>>>> 842f27829da5844d33abee832e312b317fd6773a
   } catch (err) {
     console.error('[CUST REG] Critical Error:', err);
     res.status(500).json({ 
@@ -257,8 +267,26 @@ router.post('/login', async (req, res) => {
     { role: 'user', user_id: user.user_id, tenant_id: tenantId, slug, name: `${user.first_name} ${user.last_name}`, email },
     process.env.JWT_SECRET, { expiresIn: '8h' }
   );
-  res.cookie('user_token', token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'strict', maxAge:8*3600*1000 });
-  res.json({ ok:true, name:user.first_name, slug });
+  res.cookie('user_token', token, {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge:   8 * 3600 * 1000
+});
+res.json({
+  ok:    true,
+  token,
+  user: {
+    user_id:    user.user_id,
+    first_name: user.first_name,
+    last_name:  user.last_name,
+    email:      user.email,
+    phone:      user.phone || null,
+    role:       user.role  || 'user',
+    status:     user.status,
+    tenant_id:  tenantId,
+  }
+});
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,7 +319,7 @@ router.post('/staff-login', async (req, res) => {
     maxAge:   8 * 60 * 60 * 1000,
   });
 
-  res.json({ ok: true, name: staff.name, role: staff.role, slug });
+  res.json({ ok: true, name: staff.name, role: staff.role, slug, token });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

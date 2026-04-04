@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< HEAD
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Admin Dashboard — Logistics OS</title>
@@ -10,6 +11,18 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:#f1f5f9;color:#0f172a;min-height:100vh;display:flex;}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+=======
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Logistics OS</title>
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+>>>>>>> 842f27829da5844d33abee832e312b317fd6773a
 
 /* ── SIDEBAR ─────────────────────────────────── */
 .sidebar{width:224px;background:#0f2235;display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
@@ -228,12 +241,52 @@ textarea{resize:vertical;}
         <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
 
+<<<<<<< HEAD
       <!-- User registration link box — TENANT SCOPED -->
       <div class="reg-link-box" style="margin-bottom:14px;">
         <div class="reg-link-text">
           <strong>Your Private User Registration Page</strong>
           <span class="reg-link-url" id="dashboard-reg-url">logisticsos.io/your-workspace/register</span>
           <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link only with your own staff and drivers. It is scoped exclusively to your company.</span>
+=======
+    <main class="content-area">
+      
+      <!-- DASHBOARD -->
+      <div id="s-dashboard" class="screen active">
+        <div class="stat-grid">
+          <div class="stat-card green">
+            <div class="stat-header">
+              <div class="stat-label">Today's Sales</div>
+              <div class="stat-icon success"><span class="material-symbols-rounded">payments</span></div>
+            </div>
+            <div class="stat-value" id="stat-sales">$0</div>
+            <div class="stat-note">New revenue today</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-header">
+              <div class="stat-label">Active Clients</div>
+              <div class="stat-icon purple"><span class="material-symbols-rounded">groups</span></div>
+            </div>
+            <div class="stat-value" id="stat-clients">0</div>
+            <div class="stat-note">Shippers on platform</div>
+          </div>
+          <div class="stat-card primary">
+            <div class="stat-header">
+              <div class="stat-label">Active Staff</div>
+              <div class="stat-icon primary"><span class="material-symbols-rounded">badge</span></div>
+            </div>
+            <div class="stat-value" id="stat-staff">0</div>
+            <div class="stat-note">Employees logged in</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header">
+              <div class="stat-label">Activity Log</div>
+              <div class="stat-icon warning"><span class="material-symbols-rounded">list_alt</span></div>
+            </div>
+            <div class="stat-value" id="stat-activity">0</div>
+            <div class="stat-note">System actions today</div>
+          </div>
+>>>>>>> 842f27829da5844d33abee832e312b317fd6773a
         </div>
         <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
       </div>
@@ -513,6 +566,7 @@ function copyUrl(){
   if(navigator.clipboard&&url){navigator.clipboard.writeText(url);}
 }
 
+<<<<<<< HEAD
 var _allAppUsers=[];
 function loadAppUsers(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -547,5 +601,169 @@ function esc(s){var d=document.createElement('div');d.textContent=s;return d.inn
 var _origGo=go;
 go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
 </script>
+=======
+        // Update Stats (MOCKED for offline dashboard design mode)
+        document.getElementById('stat-sales').textContent = "$12,450";
+        document.getElementById('stat-clients').textContent = "24";
+        document.getElementById('stat-staff').textContent = "12";
+        document.getElementById('stat-activity').textContent = "145";
+
+        if(!data || data.length === 0){ 
+          tb.innerHTML='<tr><td colspan="9" style="text-align:center;">No shipments found</td></tr>'; 
+          dbtb.innerHTML='<tr><td colspan="5" style="text-align:center;">No recent activity</td></tr>'; 
+          return; 
+        }
+
+        let h='', dh='';
+        data.forEach((s,i)=>{
+          const statusClass = `b-${(s.status || '').toLowerCase()}`;
+          const row = `<tr>
+            <td style="font-family:monospace; font-weight:700;">${s.delivery_number}</td>
+            <td>${s.airway_bill_number || '-'}</td>
+            <td><strong>${s.client_name || '-'}</strong></td>
+            <td><span class="badge bg-neutral">${s.item_type_flag}</span></td>
+            <td>${s.driver_name || '-'}</td>
+            <td>${s.assigned_vehicle_plate || '-'}</td>
+            <td><span class="badge ${statusClass}">${s.status}</span></td>
+            <td>${new Date(s.created_at).toLocaleDateString()}</td>
+            <td><button class="btn btn-ghost btn-sm" onclick="alert('View details for ${s.delivery_number}')"><span class="material-symbols-rounded">visibility</span></button></td>
+          </tr>`;
+          h += row; 
+          if(i<5) dh += `<tr>
+            <td style="font-family:monospace; font-weight:700;">${s.delivery_number}</td>
+            <td><strong>${s.client_name || '-'}</strong></td>
+            <td>${s.item_type_flag}</td>
+            <td>${s.driver_name || '-'}</td>
+            <td><span class="badge ${statusClass}">${s.status}</span></td>
+          </tr>`;
+        });
+        tb.innerHTML=h; dbtb.innerHTML=dh;
+      } catch(e){ console.error(e); }
+    }
+
+    async function loadStaff(){
+      try {
+        const data = await AdminAPI.getStaff();
+        const tb = document.getElementById('staff-tbody');
+        let h = '', opts = '<option value="">Select Driver</option>';
+        data.forEach(s => {
+          h += `<tr>
+            <td><strong>${s.name}</strong></td>
+            <td>${s.role}</td>
+            <td style="color:var(--text-muted);">${s.username}</td>
+            <td><span class="badge bg-active">${s.status || 'Active'}</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="delStaff(${s.staff_id})"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button></td>
+          </tr>`;
+          if(s.role === 'Driver') opts += `<option value="${s.staff_id}">${s.name}</option>`;
+        });
+        tb.innerHTML = h; 
+        document.getElementById('ar-driver').innerHTML = opts; 
+        document.getElementById('ns-driver').innerHTML = opts;
+      } catch(e) {}
+    }
+
+    async function loadVehicles(){
+      try {
+        const data = await AdminAPI.getVehicles();
+        const tb = document.getElementById('vehicles-tbody');
+        let h = '', opts = '<option value="">Select Vehicle</option>';
+        data.forEach(v => {
+          h += `<tr>
+            <td><strong>${v.plate_number}</strong></td>
+            <td>${v.vehicle_type}</td>
+            <td>${v.capacity_tons} Tons</td>
+            <td><span class="badge bg-active">${v.status || 'Active'}</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="delVehicle('${v.plate_number}')"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button></td>
+          </tr>`;
+          opts += `<option value="${v.plate_number}">${v.plate_number}</option>`;
+        });
+        tb.innerHTML = h; 
+        document.getElementById('ar-vehicle').innerHTML = opts; 
+        document.getElementById('ns-vehicle').innerHTML = opts;
+      } catch(e) {}
+    }
+
+    async function loadClients(){
+      try {
+        const data = await AdminAPI.getClients();
+        const tb = document.getElementById('clients-tbody');
+        let h = '', opts = '<option value="">Select Client</option>';
+        data.forEach(c => {
+          h += `<tr>
+            <td><strong>${c.company_name}</strong></td>
+            <td>${c.contact_person}</td>
+            <td>${c.phone_number || '-'}</td>
+            <td><span class="badge bg-active">Active</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="delClient(${c.client_id})"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button></td>
+          </tr>`;
+          opts += `<option value="${c.client_id}">${c.company_name}</option>`;
+        });
+        tb.innerHTML = h; 
+        document.getElementById('ns-client').innerHTML = opts;
+      } catch(e) {}
+    }
+
+    async function loadRoutes(){
+      try {
+        const data = await AdminAPI.getRoutes();
+        const tb = document.getElementById('routes-tbody');
+        let h = '';
+        data.forEach(r => h += `<tr>
+          <td>#${r.route_id}</td>
+          <td><strong>${r.route_name}</strong></td>
+          <td>${r.assigned_vehicle_plate || '-'}</td>
+          <td>${r.driver_name || '-'}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="delRoute(${r.route_id})"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button></td>
+        </tr>`);
+        tb.innerHTML = h || '<tr><td colspan="5" style="text-align:center;">No routes assigned</td></tr>';
+      } catch(e) {}
+    }
+
+    function showModal(id){ document.getElementById(id).classList.add('active'); }
+    function hideModal(){ document.querySelectorAll('.modal-ovl').forEach(m=>m.classList.remove('active')); }
+    
+    async function submitStaff(){ const b={name:document.getElementById('as-name').value,role:document.getElementById('as-role').value,username:document.getElementById('as-user').value,password:document.getElementById('as-pass').value}; await AdminAPI.addStaff(b); hideModal(); loadStaff(); }
+    async function submitVehicle(){ const b={plate_number:document.getElementById('av-plate').value,vehicle_type:document.getElementById('av-type').value,capacity_tons:document.getElementById('av-cap').value}; await AdminAPI.addVehicle(b); hideModal(); loadVehicles(); }
+    async function submitClient(){ const b={company_name:document.getElementById('ac-name').value,contact_person:document.getElementById('ac-contact').value,username:document.getElementById('ac-user').value,password:document.getElementById('ac-pass').value}; await AdminAPI.addClient(b); hideModal(); loadClients(); }
+    async function submitRoute(){ const b={route_name:document.getElementById('ar-name').value,primary_driver_id:document.getElementById('ar-driver').value,assigned_vehicle_plate:document.getElementById('ar-vehicle').value}; await AdminAPI.addRoute(b); hideModal(); loadRoutes(); }
+    
+    function go(id, btn){
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const sc = document.getElementById('s-' + id); 
+      if(sc) sc.classList.add('active');
+      
+      if(id === 'dashboard') loadShipments();
+      
+      if(btn){ 
+        document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active')); 
+        btn.classList.add('active'); 
+      }
+      const m = pgMeta[id] || [id, ''];
+      document.getElementById('page-title').textContent = m[0];
+    }
+
+    function copyRegLink(type) {
+      const id = type === 'staff' ? 'reg-url-staff' : 'reg-url-customer';
+      const url = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+
+    async function doLogout() {
+      if(!confirm("Are you sure you want to logout?")) return;
+      await fetch(`/${SLUG}/api/logout`, { method: 'POST' }).catch(() => {});
+      window.location.href = `/${SLUG}/admin-login`;
+    }
+
+    // Charts
+    function renderCharts() {
+      const ctx = document.createElement('canvas'); // Dummy for now if not on dashboard
+      // Note: Chart.js is imported in head. This would be used in a real dashboard.
+      console.log("Charts would be rendered here with Chart.js");
+    }
+
+    window.onload = loadAll;
+  </script>
+>>>>>>> 842f27829da5844d33abee832e312b317fd6773a
 </body>
 </html>
