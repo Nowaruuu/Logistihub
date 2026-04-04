@@ -34,7 +34,7 @@ window.__TENANT__ = ${JSON.stringify({
  * Reads HTML files from the root directory (based on your EC2 file structure)
  */
 function readView(filename) {
-  // Use 'views/' because that's where we moved them!
+  // Add 'views/' here!
   return fs.readFileSync(path.join(__dirname, '../views/', filename), 'utf-8');
 }
 
