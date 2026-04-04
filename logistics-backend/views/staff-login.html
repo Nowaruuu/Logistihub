@@ -194,10 +194,8 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
 
   </div>
 </div>
-
+<script src="/public/frontend-api.js"></script>
 <script>
-var TENANT_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
-var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
 document.getElementById('left-tenant-name').textContent = TENANT_NAME;
 document.getElementById('mobile-tenant-name').textContent = TENANT_NAME;
@@ -216,40 +214,41 @@ function showErr(msg) {
 }
 
 async function doLogin() {
-  var email    = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-  var btn      = document.getElementById('login-btn');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
 
-  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+  if (!email || !password) {
+    showErr('Please enter your email and password.');
+    return;
+  }
 
   document.getElementById('err-box').style.display = 'none';
   btn.disabled = true;
   btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
 
   try {
-    const data = await fetch(`/${SLUG}/api/staff-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-    }).then(r => r.json());
-    if (!data.ok) throw new Error(data.error || 'Login failed.');
+    // Calling the helper from frontend-api.js
+    // Ensure SLUG is defined in your helper as 'const SLUG = window.__TENANT__?.slug || "";'
+    const data = await api('POST', `/${SLUG}/api/staff-login`, { email, password });
 
-    // Redirect based on role
     const role = data.role || '';
+    
     if (role === 'Driver') {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
-        return showErr('Drivers must use the Mobile App to log in.');
-        } else if (role === 'Document Controller') {
-        window.location.href = '/' + SLUG + '/dc-dashboard';
-        } else if (role === 'Manager') {
-        window.location.href = '/' + SLUG + '/manager-dashboard';
-        } else if (role === 'Admin') {
-        window.location.href = '/' + SLUG + '/admin';
-        } else {
-        window.location.href = '/' + SLUG + '/admin';
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+      return showErr('Drivers must use the Mobile App to log in.');
     }
+
+    // Dynamic routing
+    const routes = {
+      'Document Controller': `/${SLUG}/dc-dashboard`,
+      'Manager': `/${SLUG}/manager-dashboard`,
+      'Admin': `/${SLUG}/admin`
+    };
+
+    window.location.href = routes[role] || `/${SLUG}/admin`;
+
   } catch (e) {
     showErr(e.message || 'Login failed. Please check your credentials.');
     btn.disabled = false;
@@ -257,6 +256,6 @@ async function doLogin() {
   }
 }
 </script>
-<script src="/public/frontend-api.js"></script>
+
 </body>
 </html>
