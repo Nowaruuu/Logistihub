@@ -71,7 +71,8 @@ router.get('/superadmin', (req, res) => {
 });
 
 router.get('/superadmin-login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../superadmin-login.html'));
+  // If pages.js is in /routes, we go up one, then into logistics-backend
+  res.sendFile(path.join(__dirname, '../logistics-backend/superadmin-login.html'));
 });
 
 // ─── ONBOARDING ──────────────────────────────────────────────────────────────
