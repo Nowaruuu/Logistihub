@@ -98,37 +98,47 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 </div>
 
 <script>
-function togglePw() {
-  var inp = document.getElementById('password');
-  var ico = document.querySelector('.pw-toggle .material-symbols-outlined');
-  if (inp.type === 'password') { inp.type = 'text';     ico.textContent = 'visibility_off'; }
-  else                         { inp.type = 'password'; ico.textContent = 'visibility'; }
+// Using 'var' allows the script to be re-run or overwritten without crashing
+var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+var T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+
+if (document.getElementById('t-name')) {
+    document.getElementById('t-name').textContent = T_NAME;
 }
 
-function showErr(msg) {
-  document.getElementById('err-msg').textContent = msg;
-  document.getElementById('err-box').style.display = 'flex';
-}
+// Attach directly to window so the button 'onclick' can always find it
+window.doLogin = async function() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('pw').value;
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
 
-async function doLogin() {
-  var email    = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-  var btn      = document.getElementById('login-btn');
+  if(!email || !password) return;
 
-  if (!email || !password) { showErr('Please enter your email and password.'); return; }
-
-  document.getElementById('err-box').style.display = 'none';
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
+  btn.textContent = 'Signing in...';
+  err.style.display = 'none';
 
   try {
-    await SuperadminAPI.login(email, password);
-    // Success — redirect to superadmin panel
-    window.location.href = '/superadmin';
-  } catch (e) {
-    showErr(e.message || 'Login failed or network error.');
+    // If SLUG exists, it's a tenant admin. If not, it's the superadmin.
+    const endpoint = SLUG ? `/${SLUG}/api/staff-login` : '/api/superadmin-login';
+    
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+    
+    // Redirect based on account type
+    window.location.href = SLUG ? `/${SLUG}/admin` : '/superadmin';
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+    btn.textContent = 'Sign In';
   }
 }
 </script>
