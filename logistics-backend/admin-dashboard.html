@@ -558,24 +558,49 @@
       'settings':['Workspace Settings','Configure your profile'] 
     };
 
-    async function loadAll(){
+    // FIX: Define the 'go' function properly so buttons work
+    function go(id, navBtn) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const el = document.getElementById('s-' + id);
+        if (el) el.classList.add('active');
+        
+        if (navBtn) {
+            document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+            navBtn.classList.add('active');
+        }
+
+        const m = pgMeta[id] || [id, ''];
+        document.getElementById('page-title').textContent = m[0];
+        window.scrollTo(0,0);
+
+        // Trigger data loads when switching screens
+        if (id === 'staff') loadStaff();
+        if (id === 'shipments') loadShipments();
+    }
+
+    async function loadAll() {
       try {
         if (typeof AdminAPI === 'undefined') return;
         const me = await AdminAPI.me();
         document.getElementById('sidebar-tenant-name').textContent = me.tenant.company_name;
         document.getElementById('sidebar-admin-email').textContent = me.admin.username;
-        document.getElementById('set-name').value = me.tenant.company_name;
 
-        // Set registration URLs
         const baseUrl = window.location.origin;
+        // Use SLUG from frontend-api.js
         document.getElementById('reg-url-staff').textContent = `${baseUrl}/${SLUG}/staff-registration`;
         document.getElementById('reg-url-customer').textContent = `${baseUrl}/${SLUG}/register`;
 
-        loadShipments(); loadStaff(); loadVehicles(); loadClients(); loadRoutes();
-        renderCharts();
-      } catch(e){ console.error("LoadAll Error:", e); }
+        // Load initial data
+        loadShipments(); 
+        loadStaff();
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      }
     }
 
+    // Call the loader
+    loadAll();
+    
     async function loadShipments(){
       try {
         const data = await AdminAPI.getShipments();
