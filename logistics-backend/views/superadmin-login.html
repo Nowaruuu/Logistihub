@@ -98,8 +98,8 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 </div>
 
 <script>
-// We do not declare SLUG or TENANT here. 
-// They are already global because of /public/frontend-api.js
+// DO NOT declare SLUG or TENANT here. 
+// They are already global from /public/frontend-api.js
 
 window.doLogin = async function() {
     const emailInput = document.getElementById('email');
@@ -108,14 +108,15 @@ window.doLogin = async function() {
     const errBox = document.getElementById('err-box');
     const errMsg = document.getElementById('err-msg');
 
-    if(!emailInput || !passwordInput || !emailInput.value || !passwordInput.value) return;
+    if(!emailInput?.value || !passwordInput?.value) return;
 
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
     errBox.style.display = 'none';
 
     try {
-        // Use the SLUG variable that frontend-api.js already created
+        // Use the SLUG variable already provided by frontend-api.js
+        // If SLUG is empty string, it uses the superadmin endpoint
         const endpoint = (typeof SLUG !== 'undefined' && SLUG) 
             ? `/${SLUG}/api/admin/login` 
             : '/api/superadmin-login';
