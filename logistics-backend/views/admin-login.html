@@ -48,9 +48,13 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 4px rgba(15,34,53,0.05);}
 </div>
 
 <script>
-const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
-const T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
-document.getElementById('t-name').textContent = T_NAME;
+// Use 'var' instead of 'const' to prevent the "Already Declared" crash if the script runs twice
+var SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+var T_NAME = (window.__TENANT__ && window.__TENANT__.company_name) ? window.__TENANT__.company_name : 'Your Company';
+
+if (document.getElementById('t-name')) {
+    document.getElementById('t-name').textContent = T_NAME;
+}
 
 async function doLogin() {
   const email = document.getElementById('email').value;
@@ -65,16 +69,20 @@ async function doLogin() {
   err.style.display = 'none';
 
   try {
-    const res = await fetch('/' + SLUG + '/api/staff-login', {
+    // Determine the login endpoint based on whether we are superadmin or tenant admin
+    const endpoint = SLUG ? `/${SLUG}/api/staff-login` : '/api/superadmin-login';
+    
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+
     const data = await res.json();
     if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
     
-    // Admins always go to /admin
-    window.location.href = '/' + SLUG + '/admin';
+    // Redirect logic
+    window.location.href = SLUG ? `/${SLUG}/admin` : '/superadmin';
   } catch(e) {
     err.textContent = e.message;
     err.style.display = 'block';
