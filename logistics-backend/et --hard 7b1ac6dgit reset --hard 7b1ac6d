@@ -1,0 +1,67 @@
+[33mf70c6a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m update superadmin
+[33m7b1ac6d[m wire superadmin to database
+[33m5c7329f[m wire superadmin to database
+[33md61f2ba[m wire superadmin to database
+[33m7128d70[m wire superadmin to database
+[33m05c7341[m wire superadmin to database
+[33mab7d2f7[m wire superadmin to database
+[33m5f373b3[m add all missing files
+[33md7130a7[m backend
+[33m31355d6[m Redesign Admin and Document Controller dashboards with premium UI and role-based access
+[33mf9cdc71[m Clear mock data from admin developer UI for DB integration
+[33md51fa80[m Implement Developer Admin UI module (Frontend Only)
+[33m1aeee73[m fix register page duplicate script
+[33m64836df[m add get-app page and QR flow
+[33mae54e1a[m Fix: Staff login, missing admin login view, registration UI refinements, and fake QR code
+[33me8f3486[m Fix: Add created_at to STAFF migration
+[33m73e4ced[m Fix: Align migration logic with official production schema
+[33m8d02d87[m Fix: Add temporary debug migration route
+[33m202f5a0[m Fix: Add try/catch to registration and force verbose error details
+[33mb2d163e[m Fix: Hardened registration logic with schema alignment, telemetry, and detailed error reporting
+[33m7f3aa41[m Fix: Hardened registration logic, fixed superadmin links, and added verbose telemetry
+[33mee0e901[m Fix: Applied database migration and resolved all API routing conflicts
+[33m719930a[m Fix: Critical missing secret in staff-login jwt.sign and enable mergeParams
+[33m87b3ef0[m Fix: Enabled mergeParams in routers and updated dashboard registration links
+[33m923d31f[m Repair: Complete routing overhaul and API isolation to fix registration and login errors
+[33m727f564[m Implement registration routing fixes and email notifications for QR codes
+[33m5427025[m Fix API error detection in server handlers and cleanup user registration routes
+[33m7d79ce1[m fix: user.js routes and mobile API response format
+[33me10dbe9[m fix: user.js routes and mobile API response format
+[33m7268512[m Refine registration flow: restrict staff roles, remove dashboard QR codes, and enhance client subdomain registration
+[33me9a46fe[m Update superadmin links and improve registration error reporting
+[33m33c5176[m Fix staff registration separation, 504 logging, and dashboard links
+[33m7ecc4e6[m Final repair of registration script and walkthrough update
+[33mee4c235[m Re-apply registration fixes and autofill prevention
+[33m57d8ab4[m Update package-lock.json
+[33m81c54ba[m fix admin role case sensitivity
+[33mf711b21[m fix staff login cookie name based on role
+[33m94d6c50[m fix 401 redirect to staff-login
+[33m1a0d061[m fix script load order admin dashboard
+[33m4813209[m fix frontend-api script load order in admin dashboard
+[33m406d50a[m fix tenant id type
+[33m41111b9[m fix shipments LIMIT OFFSET integer casting
+[33m0a23529[m add driver and dc dashboards
+[33m8636311[m add staff login route
+[33mffbd9bc[m fix frontend-api script order
+[33m6c11918[m fix staff login password toggle
+[33m098db9a[m add staff login endpoint
+[33m0269b94[m add staff login page
+[33m0a0e9e6[m update mailer
+[33mb2e900d[m remove staff registration page
+[33m4b4ac23[m add staff registration page
+[33md7ae564[m fix user register for clients not staff
+[33m66dea38[m fix onboarding payload field names
+[33m18d6ee9[m fix superadmin tenant data mapping
+[33m48c6197[m fix superadmin login redirect
+[33mb5b8793[m fix invite link display
+[33m6c8e25d[m fix invite URL
+[33m2bfeea8[m fix onboarding route
+[33m890d4f6[m fix onboarding route
+[33mfea524b[m add admin-onboarding route
+[33m913cdd9[m fix routes path in server.js
+[33m00c1206[m fix routes path in server.js
+[33mf3e1ed2[m fix pages.js auth
+[33m097f3a6[m fix pages.js auth
+[33md67ad59[m describe what you changed
+[33m1883031[m add missing folders
+[33m672bda9[m initial commit
