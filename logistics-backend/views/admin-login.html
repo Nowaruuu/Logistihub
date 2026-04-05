@@ -98,9 +98,9 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 
 <script>
 // Determine if we are Superadmin or Tenant Admin
-const isSuperAdmin = !(window.__TENANT__ && window.__TENANT__.slug);
-const SLUG = isSuperAdmin ? '' : window.__TENANT__.slug;
-const T_NAME = isSuperAdmin ? 'Logistics OS' : window.__TENANT__.company_name;
+var isSuperAdmin = !(window.__TENANT__ && window.__TENANT__.slug);
+var SLUG = isSuperAdmin ? '' : window.__TENANT__.slug;
+var T_NAME = isSuperAdmin ? 'Logistics OS' : window.__TENANT__.company_name;
 
 if (isSuperAdmin) {
     document.getElementById('logo-name').textContent = 'Logistics OS';

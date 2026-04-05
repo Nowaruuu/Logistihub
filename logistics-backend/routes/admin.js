@@ -38,8 +38,8 @@ router.post('/:slug/api/admin/login', async (req, res) => {
 
   res.cookie('admin_token', token, {
     httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge:   8 * 60 * 60 * 1000,
   });
 
@@ -60,9 +60,9 @@ router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, (req, res) => 
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
-  const [[total]]     = await tenantQuery(tid, 'SELECT COUNT(*) AS n FROM SHIPMENT');
-  const [[transit]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM SHIPMENT WHERE status = 'In-Transit'");
-  const [[delivered]] = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM SHIPMENT WHERE status = 'Delivered'");
+  const [[total]]     = await tenantQuery(tid, 'SELECT COUNT(*) AS n FROM shipment');
+  const [[transit]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM shipment WHERE status = 'In-Transit'");
+  const [[delivered]] = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM shipment WHERE status = 'Delivered'");
   const [[pending]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM PAYMENT WHERE status IN ('Pending','AwaitingAdmin')");
   const [[revenue]]   = await tenantQuery(tid, "SELECT COALESCE(SUM(total_amount),0) AS n FROM PAYMENT WHERE status = 'Paid'");
 
@@ -88,7 +88,7 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
   let sql = `
     SELECT s.*, c.company_name AS client_name, d.name AS driver_name,
            h.name AS helper_name, r.route_name
-    FROM SHIPMENT s
+    FROM shipment s
     LEFT JOIN CLIENT c ON c.client_id = s.client_id
     LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
     LEFT JOIN STAFF h ON h.staff_id = s.assigned_helper_id
@@ -115,7 +115,7 @@ router.get('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireS
   const tid = req.tenantId;
   const dn  = req.params.delivery_number;
 
-  const [rows] = await query('SELECT * FROM SHIPMENT WHERE delivery_number = ? AND tenant_id = ? LIMIT 1', [dn, tid]);
+  const [rows] = await query('SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1', [dn, tid]);
   if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
 
   const shipment = rows[0];
@@ -150,7 +150,7 @@ router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async 
   }
 
   await query(
-    `INSERT INTO SHIPMENT (delivery_number, tenant_id, airway_bill_number, client_id, route_id, pickup_location, dropoff_location, status, item_type_flag, created_at)
+    `INSERT INTO shipment (delivery_number, tenant_id, airway_bill_number, client_id, route_id, pickup_location, dropoff_location, status, item_type_flag, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?, NOW())`,
     [delivery_number, tid, airway_bill_number, client_id, route_id, pickup_location, dropoff_location, item_type_flag]
   );
@@ -190,6 +190,20 @@ router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, as
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS
+
+// GET /:slug/api/admin/settings
+router.get('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    const [tenants] = await query('SELECT company_name, slug, bg_app_color, bg_sidebar_color, logo_url FROM TENANT WHERE tenant_id = ?', [tid]);
+    const [staff] = await query("SELECT name, username AS email FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1", [tid]);
+    res.json({ ...tenants[0], ...staff[0] });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
   const { company_name, bg_app_color, bg_sidebar_color, logo_url, new_password } = req.body;
@@ -213,7 +227,7 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 
     res.json({ success: true, message: 'Settings saved successfully!' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update settings.' });
+    console.error('Settings error:', err); res.status(500).json({ error: 'Failed to update settings.', detail: err.message });
   }
 });
 

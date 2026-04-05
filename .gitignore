@@ -1,0 +1,4 @@
+node_modules/
+.env
+logistics-backend-broken/
+logistics-backend/logistics-os/

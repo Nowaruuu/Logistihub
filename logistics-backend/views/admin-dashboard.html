@@ -447,16 +447,67 @@ textarea{resize:vertical;}
     <div id="s-settings" class="screen">
       <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
       <div class="form-card" style="max-width:520px;">
+
         <div class="form-sec">Workspace</div>
-        <div class="form-group"><label class="form-label">Company Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">business</span><input type="text"/></div></div>
-        <div class="form-group"><label class="form-label">Workspace Slug</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input type="text" style="font-family:'DM Mono',monospace;"/></div><span class="hint">Changing this updates your admin and user registration URLs.</span></div>
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">business</span><input id="set-company" type="text"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Workspace Slug</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input id="set-slug" type="text" style="font-family:'DM Mono',monospace;"/></div>
+          <span class="hint">Changing this updates your admin and user registration URLs.</span>
+        </div>
+
+        <div class="form-sec" style="margin-top:6px;">Branding</div>
+        <div class="form-group">
+          <label class="form-label">Company Logo</label>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div id="logo-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>
+            </div>
+            <div>
+              <input id="set-logo-file" type="file" accept="image/*" style="display:none;" onchange="previewLogo(this)"/>
+              <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-logo-file').click()">
+                <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload Logo
+              </button>
+              <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PNG, JPG up to 2MB</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">App Background Color</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input id="set-bg-app" type="color" value="#f1f5f9" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;"/>
+              <input id="set-bg-app-hex" type="text" value="#f1f5f9" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-bg-app').value=this.value"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sidebar Color</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input id="set-bg-sidebar" type="color" value="#0f2235" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;"/>
+              <input id="set-bg-sidebar-hex" type="text" value="#0f2235" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-bg-sidebar').value=this.value"/>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div id="color-preview-bar" style="flex:1;height:32px;border-radius:8px;border:1.5px solid #e2e8f0;transition:background 0.3s;"></div>
+          <span style="font-size:11px;color:#94a3b8;">Preview</span>
+        </div>
+
         <div class="form-sec" style="margin-top:6px;">Admin Account</div>
         <div class="form-grid">
-          <div class="form-group"><label class="form-label">Full Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input type="email"/></div></div>
+          <div class="form-group"><label class="form-label">Full Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="set-name" type="text"/></div></div>
+          <div class="form-group"><label class="form-label">Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input id="set-email" type="email"/></div></div>
         </div>
-        <div class="form-group"><label class="form-label">New Password <span style="color:#94a3b8;font-weight:400;">(leave blank to keep)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input type="password"/></div></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;"><button class="btn btn-primary">Save Changes</button></div>
+        <div class="form-group">
+          <label class="form-label">New Password <span style="color:#94a3b8;font-weight:400;">(leave blank to keep)</span></label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input id="set-password" type="password"/></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
       </div>
     </div>
 
@@ -488,8 +539,9 @@ function go(id,navBtn){
   }
   var m=pageMeta[id]||[id,''];
   document.getElementById('page-title').textContent=m[0];
-  document.getElementById('page-sub').textContent=m[1]; 
+  document.getElementById('page-sub').textContent=m[1];
   window.scrollTo(0,0);
+  if(id==='settings') loadSettings();
 }
 
 function setTab(el){
@@ -510,7 +562,23 @@ function showSub(type){
 
 function copyUrl(){
   var url=document.getElementById('dashboard-reg-url')?document.getElementById('dashboard-reg-url').textContent:'';
-  if(navigator.clipboard&&url){navigator.clipboard.writeText(url);}
+  if(!navigator.clipboard||!url) return;
+  navigator.clipboard.writeText(url).then(function(){
+    document.querySelectorAll('.copy-btn').forEach(function(btn){
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined">check</span>Copied!';
+      btn.style.background = '#16a34a';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#16a34a';
+      btn.style.transition = 'all 0.5s ease';
+      setTimeout(function(){
+        btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy';
+        btn.style.background = '#dcfce7';
+        btn.style.color = '#15803d';
+        btn.style.borderColor = '#bbf7d0';
+      }, 2000);
+    });
+  });
 }
 
 var _allAppUsers=[];
@@ -547,5 +615,130 @@ function esc(s){var d=document.createElement('div');d.textContent=s;return d.inn
 var _origGo=go;
 go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
 </script>
-</body>
+
+<script>
+(function() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var baseUrl = window.location.origin;
+  var regUrl = baseUrl + '/' + t.slug + '/register';
+
+  // Company name
+  var nameEl = document.getElementById('sidebar-tenant-name');
+  if (nameEl) nameEl.textContent = t.company_name || 'Your Company';
+
+  // Registration URLs
+  var dashReg = document.getElementById('dashboard-reg-url');
+  if (dashReg) dashReg.textContent = regUrl;
+
+  var regPage = document.getElementById('reg-page-url');
+  if (regPage) regPage.textContent = regUrl;
+
+  // Fix copy buttons if any
+  document.querySelectorAll('[onclick*="your-workspace"], [data-copy]').forEach(function(el) {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes('your-workspace')) {
+      el.setAttribute('onclick', 'navigator.clipboard.writeText("' + regUrl + '")');
+    }
+  });
+})();
+</script>
+<script>
+function previewLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('logo-preview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+document.getElementById('set-bg-app') && document.getElementById('set-bg-app').addEventListener('input', function() {
+  document.getElementById('set-bg-app-hex').value = this.value;
+  updateColorPreview();
+});
+document.getElementById('set-bg-sidebar') && document.getElementById('set-bg-sidebar').addEventListener('input', function() {
+  document.getElementById('set-bg-sidebar-hex').value = this.value;
+  updateColorPreview();
+});
+function updateColorPreview() {
+  var bar = document.getElementById('color-preview-bar');
+  var app = document.getElementById('set-bg-app').value;
+  var side = document.getElementById('set-bg-sidebar').value;
+  if (bar) bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
+}
+updateColorPreview();
+
+function loadSettings() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var slug = t.slug;
+  fetch('/' + slug + '/api/admin/settings', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.company_name) document.getElementById('set-company').value = d.company_name;
+      if (d.slug) document.getElementById('set-slug').value = d.slug;
+      if (d.name) document.getElementById('set-name').value = d.name;
+      if (d.email) document.getElementById('set-email').value = d.email;
+      if (d.bg_app_color) {
+        document.getElementById('set-bg-app').value = d.bg_app_color;
+        document.getElementById('set-bg-app-hex').value = d.bg_app_color;
+      }
+      if (d.bg_sidebar_color) {
+        document.getElementById('set-bg-sidebar').value = d.bg_sidebar_color;
+        document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
+      }
+      if (d.logo_url) {
+        document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+      }
+      updateColorPreview();
+      applyBranding(d);
+    }).catch(function(){});
+}
+
+function applyBranding(d) {
+  if (d.bg_app_color) document.body.style.background = d.bg_app_color;
+  if (d.bg_sidebar_color) {
+    var sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.style.background = d.bg_sidebar_color;
+  }
+}
+
+async function saveSettings() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var slug = t.slug;
+  var logoBase64 = document.getElementById('logo-preview').dataset.base64 || null;
+  var payload = {
+    company_name: document.getElementById('set-company').value.trim() || null,
+    bg_app_color: document.getElementById('set-bg-app-hex').value.trim() || null,
+    bg_sidebar_color: document.getElementById('set-bg-sidebar-hex').value.trim() || null,
+    logo_url: logoBase64,
+    new_password: document.getElementById('set-password').value || null
+  };
+  var btn = event.target;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    var r = await fetch('/' + slug + '/api/admin/settings', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+    var d = await r.json();
+    if (d.success) {
+      btn.textContent = '✓ Saved!';
+      btn.style.background = '#16a34a';
+      applyBranding(payload);
+      setTimeout(function(){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; }, 2000);
+    } else {
+      alert(d.error || 'Failed to save');
+      btn.disabled=false; btn.textContent='Save Changes';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+    btn.disabled=false; btn.textContent='Save Changes';
+  }
+}</script></body>
 </html>

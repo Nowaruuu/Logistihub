@@ -57,8 +57,8 @@ router.get('/overview', requireSuperadmin, async (req, res) => {
     const [[pending]]    = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'pending'");
     const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'suspended'");
     const [[users]]      = await query('SELECT COUNT(*) AS total FROM APP_USER');
-    const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM SHIPMENT');
-    const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM PAYMENT WHERE status = 'Paid'");
+    const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM shipment');
+    const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM payment WHERE status = 'Paid'");
 
     res.json({
       totalTenants:      tenants.total,
@@ -89,7 +89,7 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
       FROM TENANT t
       LEFT JOIN STAFF s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
       LEFT JOIN APP_USER u ON u.tenant_id = t.tenant_id
-      LEFT JOIN SHIPMENT sh ON sh.tenant_id = t.tenant_id
+      LEFT JOIN shipment sh ON sh.tenant_id = t.tenant_id
       GROUP BY t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at
       ORDER BY t.created_at DESC
     `);
@@ -146,7 +146,7 @@ router.post('/tenants/invite', requireSuperadmin, async (req, res) => {
 
   // Check if a tenant with this email already exists (pending or active)
   const [existing] = await query(
-    "SELECT tenant_id FROM TENANT WHERE company_name = ? AND status != 'suspended' LIMIT 1",
+    "SELECT tenant_id FROM TENANT WHERE company_name = ? AND status = 'active' LIMIT 1",
     [company_name]
   );
   if (existing.length > 0) {

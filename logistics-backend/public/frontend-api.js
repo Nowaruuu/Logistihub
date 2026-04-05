@@ -5,9 +5,9 @@
  * wrappers around every backend API endpoint.
  */
 
-const TENANT   = window.__TENANT__ || {};
-const SLUG     = TENANT.slug || '';
-const BASE     = '';   // same origin — no need for absolute URL
+var TENANT   = window.__TENANT__ || {};
+var SLUG     = TENANT.slug || '';
+var BASE     = '';   // same origin — no need for absolute URL
 
 // ─── Low-level fetch wrapper ──────────────────────────────────────────────────
 async function api(method, path, body) {
