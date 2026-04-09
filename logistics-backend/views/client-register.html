@@ -109,11 +109,7 @@
         const res = await fetch('/' + SLUG + '/api/register', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-<<<<<<< HEAD
-          body:    JSON.stringify({ first_name: fname, last_name: lname, email, password: pw })
-=======
           body:    JSON.stringify({ first_name: fname, last_name: lname, email, username: user, password: pw, role: 'Other' })
->>>>>>> 842f27829da5844d33abee832e312b317fd6773a
         });
 
         if (!res.ok) {

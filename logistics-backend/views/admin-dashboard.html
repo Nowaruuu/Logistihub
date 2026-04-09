@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -8,11 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:#f1f5f9;color:#0f172a;min-height:100vh;display:flex;}
+body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
 
 /* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.sidebar{width:224px;background:#0f2235;display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
+.sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
 .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
 .tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
 .tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
@@ -174,6 +174,9 @@ textarea{resize:vertical;}
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
+    <div id="sidebar-logo-container" style="display:none;margin-bottom:10px;">
+      <img id="sidebar-logo-img" src="" style="max-width:140px;max-height:40px;object-fit:contain;"/>
+    </div>
     <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
     <div class="tenant-sub">ADMIN DASHBOARD</div>
     <div class="tenant-badge"><span class="material-symbols-outlined">shield</span>Isolated Workspace</div>
@@ -622,6 +625,16 @@ go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
   if (!t) return;
   var baseUrl = window.location.origin;
   var regUrl = baseUrl + '/' + t.slug + '/register';
+
+  // Company logo
+  if (t.logo_url) {
+    var logoCont = document.getElementById('sidebar-logo-container');
+    var logoImg = document.getElementById('sidebar-logo-img');
+    if (logoCont && logoImg) {
+      logoImg.src = t.logo_url;
+      logoCont.style.display = 'block';
+    }
+  }
 
   // Company name
   var nameEl = document.getElementById('sidebar-tenant-name');

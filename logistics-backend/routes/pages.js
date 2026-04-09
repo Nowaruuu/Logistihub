@@ -12,16 +12,23 @@ const router = express.Router();
 function injectTenantData(html, tenantData) {
   const script = `<script>
 window.__TENANT__ = ${JSON.stringify({
-    tenant_id:    tenantData.tenant_id,
-    company_name: tenantData.company_name,
-    slug:         tenantData.slug,
-    plan:         tenantData.plan,
-    brand_color:  tenantData.brand_color || '#3b82f6',
-    logo_url:     tenantData.logo_url || ''
+    tenant_id:        tenantData.tenant_id,
+    company_name:     tenantData.company_name,
+    slug:             tenantData.slug,
+    plan:             tenantData.plan,
+    brand_color:      tenantData.brand_color || '#3b82f6',
+    logo_url:         tenantData.logo_url || '',
+    bg_app_color:     tenantData.bg_app_color || '#f1f5f9',
+    bg_sidebar_color: tenantData.bg_sidebar_color || '#0f2235',
+    background_url:   tenantData.background_url || ''
   })};
 </script>
 <style>
-  :root { --primary: ${tenantData.brand_color || '#3b82f6'} !important; }
+  :root { 
+    --primary: ${tenantData.brand_color || '#3b82f6'} !important;
+    --sidebar-bg: ${tenantData.bg_sidebar_color || '#0f2235'} !important;
+    --app-bg: ${tenantData.bg_app_color || '#f1f5f9'} !important;
+  }
 </style>`;
   
   return html.replace('</head>', script + '\n</head>');
