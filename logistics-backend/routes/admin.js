@@ -195,7 +195,7 @@ router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, as
 router.get('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
-    const [tenants] = await query('SELECT company_name, slug, bg_app_color, bg_sidebar_color, logo_url FROM TENANT WHERE tenant_id = ?', [tid]);
+    const [tenants] = await query('SELECT company_name, slug, bg_app_color, bg_sidebar_color, logo_url, background_url FROM TENANT WHERE tenant_id = ?', [tid]);
     const [staff] = await query("SELECT name, username AS email FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1", [tid]);
     res.json({ ...tenants[0], ...staff[0] });
   } catch(err) {
@@ -215,9 +215,10 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
       SET company_name = COALESCE(?, company_name),
           bg_app_color = COALESCE(?, bg_app_color),
           bg_sidebar_color = COALESCE(?, bg_sidebar_color),
-          logo_url = COALESCE(?, logo_url)
+          logo_url = COALESCE(?, logo_url),
+          background_url = COALESCE(?, background_url)
       WHERE tenant_id = ?`, 
-      [company_name, bg_app_color, bg_sidebar_color, logo_url, tid]
+      [company_name, bg_app_color, bg_sidebar_color, logo_url, req.body.background_url || null, tid]
     );
 
     if (new_password && new_password.length >= 8) {

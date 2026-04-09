@@ -463,18 +463,35 @@ textarea{resize:vertical;}
         </div>
 
         <div class="form-sec" style="margin-top:6px;">Branding</div>
-        <div class="form-group">
-          <label class="form-label">Company Logo</label>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <div id="logo-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-              <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Company Logo</label>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div id="logo-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>
+              </div>
+              <div>
+                <input id="set-logo-file" type="file" accept="image/*" style="display:none;" onchange="previewLogo(this)"/>
+                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-logo-file').click()">
+                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload Logo
+                </button>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PNG, JPG up to 2MB</div>
+              </div>
             </div>
-            <div>
-              <input id="set-logo-file" type="file" accept="image/*" style="display:none;" onchange="previewLogo(this)"/>
-              <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-logo-file').click()">
-                <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload Logo
-              </button>
-              <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PNG, JPG up to 2MB</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Background Image</label>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div id="bg-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>
+              </div>
+              <div>
+                <input id="set-bg-file" type="file" accept="image/*" style="display:none;" onchange="previewBackground(this)"/>
+                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-bg-file').click()">
+                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
+                </button>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
+              </div>
             </div>
           </div>
         </div>
@@ -666,6 +683,16 @@ function previewLogo(input) {
   };
   reader.readAsDataURL(input.files[0]);
 }
+function previewBackground(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('bg-preview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
 
 document.getElementById('set-bg-app') && document.getElementById('set-bg-app').addEventListener('input', function() {
   document.getElementById('set-bg-app-hex').value = this.value;
@@ -705,6 +732,9 @@ function loadSettings() {
       if (d.logo_url) {
         document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
       }
+      if (d.background_url) {
+        document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+      }
       updateColorPreview();
       applyBranding(d);
     }).catch(function(){});
@@ -723,11 +753,13 @@ async function saveSettings() {
   if (!t) return;
   var slug = t.slug;
   var logoBase64 = document.getElementById('logo-preview').dataset.base64 || null;
+  var bgBase64   = document.getElementById('bg-preview').dataset.base64 || null;
   var payload = {
     company_name: document.getElementById('set-company').value.trim() || null,
     bg_app_color: document.getElementById('set-bg-app-hex').value.trim() || null,
     bg_sidebar_color: document.getElementById('set-bg-sidebar-hex').value.trim() || null,
     logo_url: logoBase64,
+    background_url: bgBase64,
     new_password: document.getElementById('set-password').value || null
   };
   var btn = event.target;
