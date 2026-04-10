@@ -341,11 +341,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
 
         <div class="provisioned-list">
           <div class="pl-title">&#x2728; Workspace URLs</div>
+          <div class="pl-item"><span class="material-symbols-outlined">home</span><div>Public Landing Page: <strong id="sum-landing-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
           <div class="pl-item"><span class="material-symbols-outlined">dashboard</span><div>Admin Dashboard: <strong id="sum-admin-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
           <div class="pl-item"><span class="material-symbols-outlined">person_add</span><div>User Registration: <strong id="sum-reg-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
         </div>
 
-      <button class="btn btn-primary btn-full" id="goto-dashboard-btn" onclick="window.location.href='/'">Go to Log In →</button>
+      <button class="btn btn-primary btn-full" id="goto-dashboard-btn" onclick="window.location.href='/'">Go to My Site →</button>
       <p style="font-size:11px;color:#94a3b8;margin-top:10px;">A confirmation has been sent to your email.</p>
     </div>
   </div>
@@ -495,10 +496,11 @@ async function finishSetup(){
     document.getElementById('sum-plan').textContent=selectedPlan.name+' ('+selectedPlan.price+'/mo)';
     document.getElementById('sum-admin-url').textContent='logistihub.ddns.net/'+slug+'/admin';
     document.getElementById('sum-reg-url').textContent='logistihub.ddns.net/'+slug+'/register';
+    document.getElementById('sum-landing-url').textContent='logistihub.ddns.net/'+slug;
     
-    // Configure the redirect button with the new slug context
+    // Configure the redirect button to jump to the Landing Page
     document.querySelector('.success-center .btn').onclick = () => {
-      window.location.href = `/${slug}/admin`;
+      window.location.href = `/${slug}`;
     };
 
     goStep(4);
