@@ -90,7 +90,7 @@ router.get('/overview', requireSuperadmin, async (req, res) => {
     const [[active]]     = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'active'");
     const [[pending]]    = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'pending'");
     const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'suspended'");
-    const [[users]]      = await query('SELECT COUNT(*) AS total FROM APP_USER');
+    const [[users]]      = await query('SELECT (SELECT COUNT(*) FROM APP_USER) + (SELECT COUNT(*) FROM STAFF) AS total');
     const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM shipment');
     const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM payment WHERE status = 'Paid'");
 
