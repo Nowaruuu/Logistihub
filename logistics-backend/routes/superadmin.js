@@ -11,32 +11,66 @@ const { sendInviteEmail }   = require('../config/mailer');
 const router = express.Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/superadmin/login
+// POST /api/superadmin/login (UNIFIED)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
+  // 1. Check Superadmin
   if (
-    email    !== process.env.SUPERADMIN_EMAIL ||
-    password !== process.env.SUPERADMIN_PASSWORD
+    email    === process.env.SUPERADMIN_EMAIL &&
+    password === process.env.SUPERADMIN_PASSWORD
   ) {
-    return res.status(401).json({ error: 'Invalid credentials.' });
+    const token = jwt.sign(
+      { role: 'superadmin', email },
+      process.env.SUPERADMIN_JWT_SECRET,
+      { expiresIn: process.env.SUPERADMIN_JWT_EXPIRES_IN || '4h' }
+    );
+
+    res.cookie('sa_token', token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:   4 * 60 * 60 * 1000,
+    });
+
+    return res.json({ ok: true, role: 'superadmin', message: 'Logged in as superadmin.' });
   }
 
-  const token = jwt.sign(
-    { role: 'superadmin', email },
-    process.env.SUPERADMIN_JWT_SECRET,
-    { expiresIn: process.env.SUPERADMIN_JWT_EXPIRES_IN || '4h' }
-  );
+  // 2. Check Tenant Admin
+  try {
+    const [rows] = await query(`
+      SELECT s.*, t.slug 
+      FROM STAFF s 
+      JOIN TENANT t ON t.tenant_id = s.tenant_id 
+      WHERE s.username = ? AND s.role = 'Admin' AND t.status = 'active'
+      LIMIT 1
+    `, [email]);
 
-  res.cookie('sa_token', token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge:   4 * 60 * 60 * 1000,  // 4 hours
-  });
+    if (rows.length > 0) {
+      const staff = rows[0];
+      if (await bcrypt.compare(password, staff.password_hash)) {
+        const token = jwt.sign(
+          { role: 'admin', staff_id: staff.staff_id, tenant_id: staff.tenant_id, slug: staff.slug, name: staff.name, email },
+          process.env.JWT_SECRET,
+          { expiresIn: '8h' }
+        );
 
-  res.json({ ok: true, message: 'Logged in as superadmin.' });
+        res.cookie('admin_token', token, {
+          httpOnly: true,
+          secure:   process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge:   8 * 60 * 60 * 1000,
+        });
+
+        return res.json({ ok: true, role: 'admin', slug: staff.slug, message: 'Logged in as admin.' });
+      }
+    }
+  } catch (err) {
+    console.error('Unified login error:', err);
+  }
+
+  return res.status(401).json({ error: 'Invalid credentials.' });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -64,6 +64,10 @@ async function resolveTenant(slug, res) {
 
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 
+router.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/index.html'));
+});
+
 router.get('/superadmin-login', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/superadmin-login.html'));
 });
@@ -119,5 +123,11 @@ router.get('/:slug/get-app', async (req, res) => {
   const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('get-app.html'), tenant));
+});
+
+router.get('/:slug', async (req, res) => {
+  const tenant = await resolveTenant(req.params.slug, res);
+  if (!tenant) return;
+  res.send(injectTenantData(readView('tenant-landing.html'), tenant));
 });
 module.exports = router;

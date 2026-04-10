@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogistiHub — The Smart Logistics OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --card-bg: #111827;
+            --primary: #3b82f6;
+            --text-heading: #ffffff;
+            --text-body: #9ca3af;
+            --accent: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- Navbar --- */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 8%;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--text-heading);
+            text-decoration: none;
+        }
+        .logo-box {
+            background: var(--primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-box .material-symbols-outlined { color: #white; font-size: 20px; }
+        
+        .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+        .nav-links a { 
+            text-decoration: none; 
+            color: var(--text-body); 
+            font-size: 14px; 
+            font-weight: 500; 
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-heading); }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-primary:hover { 
+            filter: brightness(1.1); 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); 
+        }
+        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.1); }
+        .btn-outline:hover { 
+            background: rgba(255,255,255,0.05); 
+            border-color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* --- Hero --- */
+        header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 8% 80px;
+            position: relative;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        .hero-pill {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 8px 16px;
+            border-radius: 99px;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hero-pill span { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; }
+
+        h1 {
+            font-size: 72px;
+            font-weight: 800;
+            color: var(--text-heading);
+            line-height: 1.1;
+            margin-bottom: 24px;
+            max-width: 900px;
+            background: linear-gradient(to bottom right, #fff 50%, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-sub {
+            font-size: 20px;
+            max-width: 650px;
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+        .hero-actions { display: flex; gap: 16px; }
+
+        /* --- Features Section --- */
+        .features { padding: 100px 8%; text-align: center; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 64px;
+        }
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: left;
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: var(--primary); }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        /* --- Pricing Section --- */
+        .pricing { padding: 100px 8%; background: rgba(255,255,255,0.02); text-align: center; }
+        .pricing h2 { font-size: 48px; color: #fff; margin-bottom: 16px; }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 64px;
+        }
+        .pricing-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 48px;
+            border-radius: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .price { font-size: 48px; font-weight: 800; color: #fff; }
+        .price span { font-size: 16px; color: var(--text-body); }
+
+        /* --- Footer --- */
+        footer {
+            padding: 80px 8% 40px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .footer-logo { margin-bottom: 48px; }
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            margin-bottom: 64px;
+        }
+        .footer-links a { color: var(--text-body); text-decoration: none; font-size: 14px; }
+        .footer-bottom {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        .go-to-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-heading);
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            h1 { font-size: 56px; }
+            .feature-grid, .pricing-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="top">
+        <a href="/" class="logo">
+            <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
+            LogistiHub
+        </a>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="/superadmin-login" style="color:white; font-weight:700;">Log in</a></li>
+            <li><a href="/onboarding" class="btn btn-primary">Get Started</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <div class="hero-pill"><span></span> Now with real-time driver tracking & mobile app</div>
+        <h1>The Logistics OS for Modern Businesses</h1>
+        <p class="hero-sub">One platform to manage your entire logistics operation — from shipment creation to last-mile delivery. Built for multi-tenant businesses with drivers, managers, and customers in mind.</p>
+        <div class="hero-actions">
+            <a href="/onboarding" class="btn btn-primary" style="padding: 16px 32px; font-size: 16px;">
+                <span class="material-symbols-outlined">rocket_launch</span> Get Started
+            </a>
+            <button class="btn btn-outline" style="padding: 16px 32px; font-size: 16px;">
+                <span class="material-symbols-outlined">play_circle</span> See How It Works
+            </button>
+        </div>
+    </header>
+
+    <section class="features" id="features">
+        <h2>Built for every level of your operation</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><span class="material-symbols-outlined">dashboard</span></div>
+                <h3>Intelligent Admin</h3>
+                <p>Manage multiple branches, tenants, and staff from a centralized premium dashboard.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><span class="material-symbols-outlined">local_shipping</span></div>
+                <h3>Driver App</h3>
+                <p>Branded mobile experience for your fleet with optimized route delivery and updates.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><span class="material-symbols-outlined">monitoring</span></div>
+                <h3>Real-time Analytics</h3>
+                <p>Detailed reports and real-time visualization of your entire logistics network.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <h2>Ready to modernize your logistics?</h2>
+        <p>Set up your workspace in under 3 minutes.</p>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Startup</h3>
+                <div class="price">$99<span>/month</span></div>
+                <p>Perfect for growing local logistics businesses.</p>
+                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+            </div>
+            <div class="pricing-card" style="border-color: var(--primary);">
+                <div style="color: var(--primary); font-size: 11px; font-weight: 700; text-transform: uppercase;">Most Popular</div>
+                <h3>Enterprise</h3>
+                <div class="price">$499<span>/month</span></div>
+                <p>Comprehensive tools for professional logistics.</p>
+                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+            </div>
+            <div class="pricing-card">
+                <h3>Global</h3>
+                <div class="price">$999<span>/month</span></div>
+                <p>Multi-regional support for global networks.</p>
+                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo logo" style="margin-bottom: 32px;">
+            <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
+            LogistiHub
+        </div>
+        <div class="footer-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+        </div>
+        <div class="footer-bottom">
+            <div>&copy; 2026 LogistiHub. All rights reserved.</div>
+            <div class="go-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                Go to Top <span class="material-symbols-outlined">arrow_upward</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

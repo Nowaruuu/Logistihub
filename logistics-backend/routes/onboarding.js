@@ -106,27 +106,6 @@ router.post('/create', async (req, res) => {
     [tenantId, name, email, passwordHash]
   );
 
-  // ── Build JWT for immediate login ──────────────────
-  const adminToken = jwt.sign(
-    {
-      role:      'admin',
-      tenant_id: tenantId,
-      slug:      safeSlug,
-      name,
-      email,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
-  );
-
-  // ── Set auth cookie ────────────────────────────────
-  res.cookie('admin_token', adminToken, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge:   8 * 60 * 60 * 1000,
-  });
-
   // ── Send welcome email (non-blocking) ─────────────
   sendWelcomeEmail(email, name, org_name || company_name, safeSlug).catch(e =>
     console.error('Welcome mail failed:', e.message)
@@ -139,7 +118,7 @@ router.post('/create', async (req, res) => {
     admin_url:    `${process.env.BASE_URL}/${safeSlug}/admin`,
     register_url: `${process.env.BASE_URL}/${safeSlug}/register`,
     plan,
-    message: 'Workspace created successfully.',
+    message: 'Workspace created successfully. Please log in to your new dashboard.',
   });
 });
 

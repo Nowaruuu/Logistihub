@@ -57,13 +57,13 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
   <div class="logo-row">
     <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
     <div>
-      <div class="logo-name">Logistics OS</div>
-      <div class="logo-role">SUPERADMIN ACCESS</div>
+      <div class="logo-name">LogistiHub</div>
+      <div class="logo-role">PLATFORM ACCESS</div>
     </div>
   </div>
 
-  <h1>Platform Login</h1>
-  <p class="sub">This panel is restricted to platform administrators only.</p>
+  <h1>Log in to your workspace</h1>
+  <p class="sub">Enter your credentials to access your administrative dashboard.</p>
 
   <div id="err-box" class="err-box" style="display:none;">
     <span class="material-symbols-outlined">error</span>
@@ -71,10 +71,10 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
   </div>
 
   <div class="form-group">
-    <label class="form-label">Email</label>
+    <label class="form-label">Email Address</label>
     <div class="field-wrap">
       <span class="field-ico material-symbols-outlined">mail</span>
-      <input id="email" type="email" placeholder="" autocomplete="username"/>
+      <input id="email" type="email" placeholder="name@company.com" autocomplete="username"/>
     </div>
   </div>
 
@@ -82,7 +82,7 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
     <label class="form-label">Password</label>
     <div class="field-wrap pw-wrap">
       <span class="field-ico material-symbols-outlined">lock</span>
-      <input id="password" type="password" placeholder="" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
       <button class="pw-toggle" type="button" onclick="togglePw()"><span class="material-symbols-outlined">visibility</span></button>
     </div>
   </div>
@@ -93,14 +93,11 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
 
   <div class="security-note">
     <span class="material-symbols-outlined">shield</span>
-    <p>All login attempts are rate-limited and logged. Unauthorized access is prohibited.</p>
+    <p>This is a secure platform access point. All sessions are encrypted and monitored for security.</p>
   </div>
 </div>
 
 <script>
-// DO NOT declare SLUG or TENANT here. 
-// They are already global from /public/frontend-api.js
-
 window.doLogin = async function() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -111,17 +108,12 @@ window.doLogin = async function() {
     if(!emailInput?.value || !passwordInput?.value) return;
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Signing in...';
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">sync</span> Authenticating...';
     errBox.style.display = 'none';
 
     try {
-        // Use the SLUG variable already provided by frontend-api.js
-        // If SLUG is empty string, it uses the superadmin endpoint
-        const endpoint = (typeof SLUG !== 'undefined' && SLUG) 
-            ? `/${SLUG}/api/admin/login` 
-            : '/api/superadmin/login';
-        
-        const res = await fetch(endpoint, {
+        // Unified endpoint: POST /api/superadmin/login
+        const res = await fetch('/api/superadmin/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -133,7 +125,14 @@ window.doLogin = async function() {
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
         
-        window.location.href = (typeof SLUG !== 'undefined' && SLUG) ? `/${SLUG}/admin` : '/superadmin';
+        // Handle redirection based on role
+        if (data.role === 'superadmin') {
+            window.location.href = '/superadmin';
+        } else if (data.role === 'admin' && data.slug) {
+            window.location.href = `/${data.slug}/admin`;
+        } else {
+            throw new Error('Authenticated but no access destination found.');
+        }
     } catch(e) {
         errMsg.textContent = e.message;
         errBox.style.display = 'flex';

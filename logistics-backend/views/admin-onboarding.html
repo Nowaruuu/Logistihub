@@ -329,8 +329,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
   <div id="step4" class="screen">
     <div class="success-center">
       <div class="s-icon-big"><span class="material-symbols-outlined">rocket_launch</span></div>
-      <h1 style="font-size:24px;color:#0a1628;margin-bottom:7px;">Workspace Launched!</h1>
-      <p style="font-size:13px;color:#64748b;line-height:1.6;">Your isolated workspace is live. Below are your provisioned URLs — keep them private to your company.</p>
+      <h1 style="font-size:24px;color:#0a1628;margin-bottom:7px;">Workspace Created!</h1>
+      <p style="font-size:13px;color:#64748b;line-height:1.6;">Your isolated workspace is live. Please log in with your credentials for the first time.</p>
 
       <div class="summary-card">
         <div class="sum-row"><span class="sum-key">Admin</span><span class="sum-val" id="sum-name">—</span></div>
@@ -340,13 +340,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
       </div>
 
         <div class="provisioned-list">
-          <div class="pl-title">&#x2728; Provisioned for your company</div>
+          <div class="pl-title">&#x2728; Workspace URLs</div>
           <div class="pl-item"><span class="material-symbols-outlined">dashboard</span><div>Admin Dashboard: <strong id="sum-admin-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
           <div class="pl-item"><span class="material-symbols-outlined">person_add</span><div>User Registration: <strong id="sum-reg-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
-          <div class="pl-item"><span class="material-symbols-outlined">lock</span><div>Fully isolated — other companies cannot access these URLs.</div></div>
         </div>
 
-      <button class="btn btn-primary btn-full" id="goto-dashboard-btn">Go to Admin Dashboard →</button>
+      <button class="btn btn-primary btn-full" id="goto-dashboard-btn" onclick="window.location.href='/'">Go to Log In →</button>
       <p style="font-size:11px;color:#94a3b8;margin-top:10px;">A confirmation has been sent to your email.</p>
     </div>
   </div>
