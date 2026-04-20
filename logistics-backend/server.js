@@ -82,7 +82,6 @@ app.use((req, res, next) => {
 // API ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.post('/api/superadmin-login', superadminRouter);
 
 // Superadmin API  →  /api/superadmin/...
 app.use('/api/superadmin', superadminRouter);

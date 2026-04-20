@@ -35,7 +35,7 @@ router.get('/verify-invite', (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/onboarding/create
-// Step 2+3 combined: create the TENANT row, the admin STAFF row, and the
+// Step 2+3 combined: create the tenant row, the admin staff row, and the
 // workspace. Called after plan selection + account form + customize form.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/create', async (req, res) => {
@@ -83,7 +83,7 @@ router.post('/create', async (req, res) => {
   if (!safeSlug) return res.status(400).json({ error: 'Invalid slug.' });
 
   // ── Check slug uniqueness ──
-  const [slugCheck] = await query('SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [safeSlug]);
+  const [slugCheck] = await query('SELECT tenant_id FROM tenant WHERE slug = ? LIMIT 1', [safeSlug]);
   if (slugCheck.length > 0) {
     return res.status(409).json({ error: 'That workspace URL is already taken. Choose a different one.' });
   }
@@ -91,17 +91,17 @@ router.post('/create', async (req, res) => {
   const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
   const passwordHash = await bcrypt.hash(password, saltRounds);
 
-  // ── Insert TENANT ──────────────────────────────────
+  // ── Insert tenant ──────────────────────────────────
   const [tenantResult] = await query(
-    `INSERT INTO TENANT (company_name, slug, plan, status, created_at)
+    `INSERT INTO tenant (company_name, slug, plan, status, created_at)
      VALUES (?, ?, ?, 'active', NOW())`,
     [org_name || company_name, safeSlug, plan]
   );
   const tenantId = tenantResult.insertId;
 
-  // ── Insert admin STAFF row ─────────────────────────
+  // ── Insert admin staff row ─────────────────────────
   await query(
-    `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status)
+    `INSERT INTO staff (tenant_id, name, role, username, password_hash, status)
      VALUES (?, ?, 'Admin', ?, ?, 'Available')`,
     [tenantId, name, email, passwordHash]
   );

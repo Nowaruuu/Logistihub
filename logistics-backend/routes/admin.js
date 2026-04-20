@@ -16,12 +16,12 @@ router.post('/:slug/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
   const { slug } = req.params;
 
-  const [tenants] = await query("SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1", [slug]);
+  const [tenants] = await query("SELECT * FROM tenant WHERE slug = ? AND status = 'active' LIMIT 1", [slug]);
   if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
   const tenant = tenants[0];
 
   const [rows] = await query(
-    "SELECT *, staff_id AS id FROM STAFF WHERE tenant_id = ? AND username = ? AND role = 'Admin' LIMIT 1",
+    "SELECT *, staff_id AS id FROM staff WHERE tenant_id = ? AND username = ? AND role = 'Admin' LIMIT 1",
     [tenant.tenant_id, email]
   );
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
@@ -63,8 +63,8 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
   const [[total]]     = await tenantQuery(tid, 'SELECT COUNT(*) AS n FROM shipment');
   const [[transit]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM shipment WHERE status = 'In-Transit'");
   const [[delivered]] = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM shipment WHERE status = 'Delivered'");
-  const [[pending]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM PAYMENT WHERE status IN ('Pending','AwaitingAdmin')");
-  const [[revenue]]   = await tenantQuery(tid, "SELECT COALESCE(SUM(total_amount),0) AS n FROM PAYMENT WHERE status = 'Paid'");
+  const [[pending]]   = await tenantQuery(tid, "SELECT COUNT(*) AS n FROM payment WHERE status IN ('Pending','AwaitingAdmin')");
+  const [[revenue]]   = await tenantQuery(tid, "SELECT COALESCE(SUM(total_amount),0) AS n FROM payment WHERE status = 'Paid'");
 
   res.json({
     total_shipments:  total.n,
@@ -89,10 +89,10 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
     SELECT s.*, c.company_name AS client_name, d.name AS driver_name,
            h.name AS helper_name, r.route_name
     FROM shipment s
-    LEFT JOIN CLIENT c ON c.client_id = s.client_id
-    LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
-    LEFT JOIN STAFF h ON h.staff_id = s.assigned_helper_id
-    LEFT JOIN ROUTE r ON r.route_id = s.route_id
+    LEFT JOIN client c ON c.client_id = s.client_id
+    LEFT JOIN staff d ON d.staff_id = s.assigned_driver_id
+    LEFT JOIN staff h ON h.staff_id = s.assigned_helper_id
+    LEFT JOIN route r ON r.route_id = s.route_id
     WHERE s.tenant_id = ?
   `;
   
@@ -128,9 +128,9 @@ router.get('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireS
     subData = sub[0] || null;
   }
 
-  const [pod] = await query('SELECT * FROM PROOF_OF_DELIVERY WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
-  const [payments] = await query('SELECT * FROM PAYMENT WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
-  const [declines] = await query('SELECT * FROM DECLINE_REASONS WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
+  const [pod] = await query('SELECT * FROM proof_of_delivery WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
+  const [payments] = await query('SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
+  const [declines] = await query('SELECT * FROM decline_reasons WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
 
   res.json({ shipment, sub_data: subData, pod, payments, declines });
 });
@@ -163,12 +163,12 @@ router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async 
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
-  const [rows] = await query('SELECT *, staff_id AS id FROM STAFF WHERE tenant_id = ? ORDER BY name ASC', [req.tenantId]);
+  const [rows] = await query('SELECT *, staff_id AS id FROM staff WHERE tenant_id = ? ORDER BY name ASC', [req.tenantId]);
   res.json(rows);
 });
 
 router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-  const [rows] = await query('SELECT * FROM VEHICLE WHERE tenant_id = ? ORDER BY plate_number ASC', [req.tenantId]);
+  const [rows] = await query('SELECT * FROM vehicle WHERE tenant_id = ? ORDER BY plate_number ASC', [req.tenantId]);
   res.json(rows);
 });
 
@@ -177,14 +177,14 @@ router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (r
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
-    `SELECT user_id AS client_id, first_name, last_name, email, phone, status FROM APP_USER WHERE tenant_id = ?`,
+    `SELECT user_id AS client_id, first_name, last_name, email, phone, status FROM app_user WHERE tenant_id = ?`,
     [req.tenantId]
   );
   res.json(rows);
 });
 
 router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, async (req, res) => {
-  await query('DELETE FROM APP_USER WHERE user_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
+  await query('DELETE FROM app_user WHERE user_id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
   res.json({ ok: true });
 });
 
@@ -195,8 +195,8 @@ router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, as
 router.get('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
-    const [tenants] = await query('SELECT company_name, slug, bg_app_color, bg_sidebar_color, logo_url, background_url FROM TENANT WHERE tenant_id = ?', [tid]);
-    const [staff] = await query("SELECT name, username AS email FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1", [tid]);
+    const [tenants] = await query('SELECT company_name, slug, bg_app_color, bg_sidebar_color, logo_url, background_url FROM tenant WHERE tenant_id = ?', [tid]);
+    const [staff] = await query("SELECT name, username AS email FROM staff WHERE tenant_id = ? AND role = 'Admin' LIMIT 1", [tid]);
     res.json({ ...tenants[0], ...staff[0] });
   } catch(err) {
     res.status(500).json({ error: err.message });
@@ -211,7 +211,7 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 
   try {
     await query(`
-      UPDATE TENANT 
+      UPDATE tenant 
       SET company_name = COALESCE(?, company_name),
           bg_app_color = COALESCE(?, bg_app_color),
           bg_sidebar_color = COALESCE(?, bg_sidebar_color),
@@ -223,7 +223,7 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 
     if (new_password && new_password.length >= 8) {
       const hash = await bcrypt.hash(new_password, 12);
-      await query("UPDATE STAFF SET password_hash = ? WHERE tenant_id = ? AND role = 'Admin' AND username = ?", [hash, tid, req.admin.email]);
+      await query("UPDATE staff SET password_hash = ? WHERE tenant_id = ? AND role = 'Admin' AND username = ?", [hash, tid, req.admin.email]);
     }
 
     res.json({ success: true, message: 'Settings saved successfully!' });
@@ -232,12 +232,13 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
   }
 });
 
-module.exports = router;
-router.get('/app-users', requireAdmin, requireSlugMatch, async (req, res) => {
+router.get('/:slug/api/admin/app-users', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
-    const [users] = await query('SELECT user_id, first_name, last_name, email, role, status, created_at FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC', [req.tenant.tenant_id]);
+    const [users] = await query('SELECT user_id, first_name, last_name, email, role, status, created_at FROM app_user WHERE tenant_id = ? ORDER BY created_at DESC', [req.tenant.tenant_id]);
     res.json({ users });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
 });
+
+module.exports = router;

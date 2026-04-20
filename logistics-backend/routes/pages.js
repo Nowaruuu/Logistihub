@@ -42,7 +42,7 @@ function readView(filename) {
 async function resolveTenant(slug, res) {
   try {
     const [rows] = await query(
-      "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
+      "SELECT * FROM tenant WHERE slug = ? AND status = 'active' LIMIT 1",
       [slug]
     );
     if (!rows || !rows.length) {

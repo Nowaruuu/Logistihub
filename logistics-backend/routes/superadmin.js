@@ -41,8 +41,8 @@ router.post('/login', async (req, res) => {
   try {
     const [rows] = await query(`
       SELECT s.*, t.slug 
-      FROM STAFF s 
-      JOIN TENANT t ON t.tenant_id = s.tenant_id 
+      FROM staff s 
+      JOIN tenant t ON t.tenant_id = s.tenant_id 
       WHERE s.username = ? AND s.role = 'Admin' AND t.status = 'active'
       LIMIT 1
     `, [email]);
@@ -86,11 +86,11 @@ router.post('/logout', (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/overview', requireSuperadmin, async (req, res) => {
   try {
-    const [[tenants]]    = await query('SELECT COUNT(*) AS total FROM TENANT');
-    const [[active]]     = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'active'");
-    const [[pending]]    = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'pending'");
-    const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'suspended'");
-    const [[users]]      = await query('SELECT (SELECT COUNT(*) FROM APP_USER) + (SELECT COUNT(*) FROM STAFF) AS total');
+    const [[tenants]]    = await query('SELECT COUNT(*) AS total FROM tenant');
+    const [[active]]     = await query("SELECT COUNT(*) AS total FROM tenant WHERE status = 'active'");
+    const [[pending]]    = await query("SELECT COUNT(*) AS total FROM tenant WHERE status = 'pending'");
+    const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM tenant WHERE status = 'suspended'");
+    const [[users]]      = await query('SELECT (SELECT COUNT(*) FROM app_user) + (SELECT COUNT(*) FROM staff) AS total');
     const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM shipment');
     const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM payment WHERE status = 'Paid'");
 
@@ -120,9 +120,9 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
         ANY_VALUE(s.username) AS admin_email,
         COUNT(DISTINCT u.user_id)  AS user_count,
         COUNT(DISTINCT sh.delivery_number) AS shipment_count
-      FROM TENANT t
-      LEFT JOIN STAFF s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
-      LEFT JOIN APP_USER u ON u.tenant_id = t.tenant_id
+      FROM tenant t
+      LEFT JOIN staff s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
+      LEFT JOIN app_user u ON u.tenant_id = t.tenant_id
       LEFT JOIN shipment sh ON sh.tenant_id = t.tenant_id
       GROUP BY t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at
       ORDER BY t.created_at DESC
@@ -149,8 +149,8 @@ router.get('/subscriptions', requireSuperadmin, async (req, res) => {
           WHEN 'global'     THEN 999
           ELSE 0
         END AS monthly_fee
-      FROM TENANT t
-      LEFT JOIN PAYMENT p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
+      FROM tenant t
+      LEFT JOIN payment p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
       GROUP BY t.tenant_id, t.company_name, t.plan, t.status, t.created_at
       ORDER BY revenue DESC
     `);
@@ -180,7 +180,7 @@ router.post('/tenants/invite', requireSuperadmin, async (req, res) => {
 
   // Check if a tenant with this email already exists (pending or active)
   const [existing] = await query(
-    "SELECT tenant_id FROM TENANT WHERE company_name = ? AND status = 'active' LIMIT 1",
+    "SELECT tenant_id FROM tenant WHERE company_name = ? AND status = 'active' LIMIT 1",
     [company_name]
   );
   if (existing.length > 0) {
@@ -222,43 +222,8 @@ router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
   if (!allowed.includes(status)) {
     return res.status(400).json({ error: `status must be one of: ${allowed.join(', ')}` });
   }
-  await query('UPDATE TENANT SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
+  await query('UPDATE tenant SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
   res.json({ ok: true, status });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/superadmin/subscriptions  — all subscription/payment data
-// ─────────────────────────────────────────────────────────────────────────────
-router.get('/subscriptions', requireSuperadmin, async (req, res) => {
-  try {
-    const [rows] = await query(`
-      SELECT
-        t.tenant_id, t.company_name, t.plan, t.status, t.created_at,
-        COALESCE(SUM(p.total_amount), 0) AS revenue,
-        CASE t.plan
-          WHEN 'startup'    THEN 99
-          WHEN 'enterprise' THEN 499
-          WHEN 'global'     THEN 999
-          ELSE 0
-        END AS monthly_fee
-      FROM TENANT t
-      LEFT JOIN PAYMENT p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
-      GROUP BY t.tenant_id
-      ORDER BY revenue DESC
-    `);
-
-    const totalRevenue = rows.reduce((sum, r) => sum + Number(r.revenue), 0);
-    const pendingCount = rows.filter(r => r.status === 'pending').length;
-
-    res.json({
-      totalRevenue,
-      pendingCount,
-      topTenants: rows,
-    });
-  } catch(e) {
-    console.error('Subscriptions error:', e);
-    res.status(500).json({ error: 'Failed to load subscriptions.' });
-  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
