@@ -77,8 +77,6 @@ router.get('/superadmin', (req, res) => {
 });
 
 router.get('/onboarding', (req, res) => {
-  const { invite } = req.query;
-  if (!invite) return res.status(400).send('<h2>Invalid Link</h2>');
   res.sendFile(path.join(__dirname, '../views/admin-onboarding.html'));
 });
 
