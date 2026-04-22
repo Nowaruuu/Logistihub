@@ -227,6 +227,41 @@ router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/superadmin/tenants/:id  — permanently delete a tenant & all data
+// ─────────────────────────────────────────────────────────────────────────────
+router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
+  const tenantId = req.params.id;
+  try {
+    // Verify tenant exists first
+    const [[tenant]] = await query('SELECT tenant_id, company_name FROM TENANT WHERE tenant_id = ?', [tenantId]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Delete all related data in correct order (child → parent)
+    await query('DELETE FROM proof_of_delivery WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_bulk     WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_document WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_food     WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_package  WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM shipment     WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM route        WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM sub_vehicle  WHERE vehicle_id IN (SELECT vehicle_id FROM vehicle WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM vehicle      WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM payment      WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM client       WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM APP_USER     WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM STAFF        WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM AUDIT_LOG    WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM TENANT       WHERE tenant_id = ?', [tenantId]);
+
+    console.log(`[SUPERADMIN] Tenant ${tenant.company_name} (ID: ${tenantId}) permanently deleted.`);
+    res.json({ ok: true, message: `Tenant "${tenant.company_name}" and all associated data have been permanently deleted.` });
+  } catch (e) {
+    console.error('Delete tenant error:', e);
+    res.status(500).json({ error: 'Failed to delete tenant. ' + e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/superadmin/audit-logs
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/audit-logs', requireSuperadmin, async (req, res) => {

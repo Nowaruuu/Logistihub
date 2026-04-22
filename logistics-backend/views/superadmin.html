@@ -622,7 +622,7 @@
 
     async function setTenantStatus(id, status) {
       if (!confirm(`Set tenant to "${status}"?`)) return;
-      try { await SuperadminAPI.setTenantStatus(id, status); loadTenants(); }
+      try { await SuperadminAPI.setTenantStatus(id, status); loadAll(); }
       catch(e) { alert('Failed: ' + e.message); }
     }
 
@@ -713,16 +713,37 @@
 
         tb.innerHTML = data.map(t => `
           <tr>
-            <td><strong>${t.company_name}</strong></td>
-            <td>/${t.slug}</td>
+            <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
             <td>${t.admin_email || 'N/A'}</td>
-            <td><span class="badge bg-active">${t.status}</span></td>
+            <td>${t.plan || 'trial'}</td>
+            <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span></td>
             <td>${new Date(t.created_at).toLocaleDateString()}</td>
-            <td><button class="btn btn-secondary btn-sm" onclick="alert('ID: ${t.tenant_id}')">Manage</button></td>
+            <td style="display:flex;gap:6px;">
+              ${t.status==='active'
+                ? `<button class="btn btn-secondary btn-sm" onclick="setTenantStatus(${t.tenant_id},'suspended')">Suspend</button>`
+                : `<button class="btn btn-primary btn-sm" onclick="setTenantStatus(${t.tenant_id},'active')">Activate</button>`}
+              <button class="btn btn-danger btn-sm" onclick="deleteTenantById(${t.tenant_id},'${t.company_name.replace(/'/g,"\\'")}')"
+                style="background:#ef4444;color:#fff;border:none;">
+                <span class="material-symbols-rounded" style="font-size:14px;">delete</span> Delete
+              </button>
+            </td>
           </tr>
         `).join('');
       } catch (e) {
         console.error("Superadmin Load Error:", e);
+      }
+    }
+
+    async function deleteTenantById(id, name) {
+      if (!confirm(`⚠️ WARNING: This will PERMANENTLY delete "${name}" and ALL its data (users, staff, shipments, vehicles, etc.)\n\nThis action CANNOT be undone.\n\nType OK to confirm.`)) return;
+      if (!confirm(`Final confirmation: Delete "${name}" forever?`)) return;
+      try {
+        await SuperadminAPI.deleteTenant(id);
+        showToast(`"${name}" has been permanently deleted.`, 'success');
+        await loadAll();
+        await loadDashboard();
+      } catch(e) {
+        showToast('Delete failed: ' + e.message, 'error');
       }
     }
 
