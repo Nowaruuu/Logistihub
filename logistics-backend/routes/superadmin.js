@@ -4,7 +4,7 @@ const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { query, logAudit } = require('../config/db');
 const { requireSuperadmin } = require('../middleware/auth');
 const { sendInviteEmail }   = require('../config/mailer');
 
@@ -34,6 +34,7 @@ router.post('/login', async (req, res) => {
       maxAge:   4 * 60 * 60 * 1000,
     });
 
+    logAudit({ actor: email, actor_type: 'superadmin', action: 'LOGIN', target: 'Superadmin Panel', ip_address: req.ip });
     return res.json({ ok: true, role: 'superadmin', message: 'Logged in as superadmin.' });
   }
 
@@ -197,6 +198,7 @@ router.post('/tenants/invite', requireSuperadmin, async (req, res) => {
   // Send the email
   try {
     await sendInviteEmail(email, company_name, inviteToken);
+    logAudit({ actor: req.superadmin?.email || 'superadmin', actor_type: 'superadmin', action: 'INVITE_TENANT', target: company_name, ip_address: req.ip, metadata: { email } });
   } catch (mailErr) {
     console.error('Mail error:', mailErr.message);
     // Don't block on mail failure in dev — still return the token for testing
@@ -223,6 +225,8 @@ router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
     return res.status(400).json({ error: `status must be one of: ${allowed.join(', ')}` });
   }
   await query('UPDATE TENANT SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
+  const [[t]] = await query('SELECT company_name, slug FROM TENANT WHERE tenant_id = ?', [req.params.id]);
+  logAudit({ actor: req.superadmin?.email || 'superadmin', actor_type: 'superadmin', action: `TENANT_${status.toUpperCase()}`, target: t?.company_name || req.params.id, tenant_slug: t?.slug, ip_address: req.ip });
   res.json({ ok: true, status });
 });
 
@@ -253,6 +257,7 @@ router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
     await query('DELETE FROM AUDIT_LOG    WHERE tenant_id = ?', [tenantId]);
     await query('DELETE FROM TENANT       WHERE tenant_id = ?', [tenantId]);
 
+    logAudit({ actor: req.superadmin?.email || 'superadmin', actor_type: 'superadmin', action: 'DELETE_TENANT', target: tenant.company_name, tenant_slug: tenant.slug, ip_address: req.ip, metadata: { tenant_id: tenantId, plan: tenant.plan } });
     console.log(`[SUPERADMIN] Tenant ${tenant.company_name} (ID: ${tenantId}) permanently deleted.`);
     res.json({ ok: true, message: `Tenant "${tenant.company_name}" and all associated data have been permanently deleted.` });
   } catch (e) {
@@ -266,8 +271,10 @@ router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/audit-logs', requireSuperadmin, async (req, res) => {
   try {
-    // For now, return an empty array or a simple message so the frontend doesn't crash
-    res.json([]); 
+    const [rows] = await query(
+      'SELECT * FROM AUDIT_LOG ORDER BY created_at DESC LIMIT 200'
+    );
+    res.json(rows);
   } catch(e) {
     console.error('Audit logs error:', e);
     res.status(500).json({ error: 'Failed to load audit logs.' });

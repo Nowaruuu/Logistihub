@@ -412,7 +412,7 @@
           </div>
           <div class="table-responsive">
             <table>
-              <thead><tr><th>Timestamp</th><th>Actor (Admin)</th><th>Action</th><th>Target Entity</th><th>Details</th></tr></thead>
+              <thead><tr><th>Timestamp</th><th>Actor</th><th>Type</th><th>Action</th><th>Target</th><th>Workspace</th></tr></thead>
               <tbody id="audit-logs-tbody">
                 <tr><td colspan="5" style="text-align:center;">No audit logs found</td></tr>
               </tbody>
@@ -656,11 +656,12 @@
         if (!Array.isArray(rows) || !rows.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;">No audit logs yet</td></tr>'; return; }
         tb.innerHTML = rows.map(l => `
           <tr>
-            <td style="font-size:11px;color:#94a3b8;">${new Date(l.created_at).toLocaleString()}</td>
-            <td><span class="badge bg-pending">${l.actor_type}</span></td>
-            <td>${l.action}</td>
-            <td>${l.target_table||'-'}</td>
-            <td>${l.target_id||'-'}</td>
+            <td style="font-size:11px;color:#94a3b8;white-space:nowrap;">${new Date(l.created_at).toLocaleString()}</td>
+            <td style="font-size:12px;font-family:monospace;">${l.actor || '-'}</td>
+            <td><span class="badge ${l.actor_type==='superadmin'?'bg-pending':'bg-neutral'}">${l.actor_type || '-'}</span></td>
+            <td><strong>${l.action || '-'}</strong></td>
+            <td>${l.target || '-'}</td>
+            <td style="font-size:11px;color:#94a3b8;">${l.tenant_slug || '-'}</td>
           </tr>`).join('');
       } catch(e) { console.error('Audit error:', e); }
     }

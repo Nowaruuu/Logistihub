@@ -106,4 +106,35 @@ async function getTenantById(tenantId) {
   return rows[0] || null;
 }
 
-module.exports = { pool, query, tenantQuery, findOne, getTenantBySlug, getTenantById };
+/**
+ * Write an audit log entry. Fire-and-forget — never throws.
+ * @param {object} opts
+ * @param {string} opts.actor        - email or identifier of who did it
+ * @param {string} [opts.actor_type] - 'superadmin' | 'admin' | 'system'
+ * @param {string} opts.action       - short description e.g. 'DELETE_TENANT'
+ * @param {string} [opts.target]     - what was affected e.g. tenant name
+ * @param {string} [opts.tenant_slug]- slug of the workspace
+ * @param {string} [opts.ip_address] - request IP
+ * @param {object} [opts.metadata]   - any extra JSON data
+ */
+async function logAudit({ actor, actor_type = 'superadmin', action, target, tenant_slug, ip_address, metadata } = {}) {
+  try {
+    await pool.execute(
+      'INSERT INTO AUDIT_LOG (actor, actor_type, action, target, tenant_slug, ip_address, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        actor       || 'system',
+        actor_type  || 'superadmin',
+        action      || 'UNKNOWN',
+        target      || null,
+        tenant_slug || null,
+        ip_address  || null,
+        metadata    ? JSON.stringify(metadata) : null,
+      ]
+    );
+  } catch (e) {
+    console.error('[audit] Failed to write log:', e.message);
+  }
+}
+
+module.exports = { pool, query, tenantQuery, findOne, getTenantBySlug, getTenantById, logAudit };
+
