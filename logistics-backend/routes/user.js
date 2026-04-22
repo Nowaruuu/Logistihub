@@ -23,7 +23,7 @@ router.get('/tenant-info', async (req, res) => {
   try {
     const { slug } = req.params;
     const [rows] = await query(
-      'SELECT tenant_id, company_name, business_type, slug, plan, status FROM tenant WHERE slug = ? AND status = "active" LIMIT 1',
+      'SELECT tenant_id, company_name, business_type, slug, plan, status FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
       [slug]
     );
     if (!rows.length) return res.status(404).json({ message: 'Workspace not found.' });
@@ -42,14 +42,14 @@ router.post('/staff/register', async (req, res) => {
   console.log(`[STAFF REG] Starting for slug: ${slug}`, req.body);
 
   try {
-    const [tenants] = await query("SELECT tenant_id, status FROM tenant WHERE slug = ? LIMIT 1", [slug]);
+    const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
     if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
     const tenantId = tenants[0].tenant_id;
 
     const { first_name, last_name, email, phone, employee_id, role, password } = req.body;
     if (!first_name || !last_name || !email || !role || !password) return res.status(400).json({ error: 'Missing required fields.' });
 
-    const [existing] = await query('SELECT staff_id FROM staff WHERE tenant_id = ? AND username = ? LIMIT 1', [tenantId, email]);
+    const [existing] = await query('SELECT staff_id FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1', [tenantId, email]);
     if (existing.length > 0) return res.status(409).json({ error: 'This email is already registered as staff.' });
 
     const hash = await bcrypt.hash(password, 12);
@@ -61,7 +61,7 @@ router.post('/staff/register', async (req, res) => {
     }
 
     const [result] = await query(
-      `INSERT INTO staff (tenant_id, name, first_name, last_name, role, username, password_hash, status, phone, employee_id, created_at)
+      `INSERT INTO STAFF (tenant_id, name, first_name, last_name, role, username, password_hash, status, phone, employee_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'Available', ?, ?, NOW())`,
       [tenantId, fullName, first_name, last_name, role, email, hash, phone || null, employee_id || null]
     );
@@ -89,7 +89,7 @@ router.post('/register', async (req, res) => {
   
   try {
     const [tenants] = await query(
-      "SELECT tenant_id, company_name, status FROM tenant WHERE slug = ? LIMIT 1",
+      "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
       [slug]
     );
     if (!tenants.length || tenants[0].status !== 'active') {
@@ -104,7 +104,7 @@ router.post('/register', async (req, res) => {
     }
 
     const [existing] = await query(
-      'SELECT user_id FROM app_user WHERE tenant_id = ? AND email = ? LIMIT 1',
+      'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
       [tenantId, email]
     );
     if (existing.length > 0) {
@@ -113,7 +113,7 @@ router.post('/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 12);
     const [result] = await query(
-      `INSERT INTO app_user (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
+      `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'user', ?, 'active', NOW())`,
       [tenantId, first_name, last_name, email, phone || null, hash]
     );
@@ -172,11 +172,11 @@ router.post('/login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
 
-  const [tenants] = await query("SELECT tenant_id, status FROM tenant WHERE slug = ? LIMIT 1", [slug]);
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query("SELECT * FROM app_user WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1", [tenantId, email]);
+  const [rows] = await query("SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
   const user = rows[0];
 
@@ -215,11 +215,11 @@ router.post('/staff-login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
 
-  const [tenants] = await query("SELECT tenant_id, status FROM tenant WHERE slug = ? LIMIT 1", [slug]);
+  const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query("SELECT * FROM staff WHERE tenant_id = ? AND username = ? AND (status = 'Available' OR status IS NULL) LIMIT 1", [tenantId, email]);
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? AND (status = 'Available' OR status IS NULL) LIMIT 1", [tenantId, email]);
   if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
   
   const staff = rows[0];
@@ -248,7 +248,7 @@ router.get('/me', requireUser, async (req, res) => {
   try {
     const [rows] = await query(
       `SELECT user_id, tenant_id, first_name, last_name, email, phone, address, status, created_at
-       FROM app_user WHERE user_id = ? AND tenant_id = ? LIMIT 1`,
+       FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1`,
       [req.user.user_id, req.user.tenant_id]
     );
     if (!rows.length) return res.status(404).json({ error: 'User not found.' });
@@ -294,7 +294,7 @@ router.get('/app-download', async (req, res) => {
     }
 
     const [rows] = await query(
-      'SELECT app_download_url, app_name, company_name FROM tenant WHERE slug = ? AND status = "active" LIMIT 1',
+      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
       [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });

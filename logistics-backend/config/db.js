@@ -89,7 +89,7 @@ async function findOne(table, conditions, tenantId) {
  */
 async function getTenantBySlug(slug) {
   const [rows] = await pool.execute(
-    'SELECT * FROM tenant WHERE slug = ? LIMIT 1',
+    'SELECT * FROM TENANT WHERE slug = ? LIMIT 1',
     [slug]
   );
   return rows[0] || null;
@@ -100,7 +100,7 @@ async function getTenantBySlug(slug) {
  */
 async function getTenantById(tenantId) {
   const [rows] = await pool.execute(
-    'SELECT * FROM tenant WHERE tenant_id = ? LIMIT 1',
+    'SELECT * FROM TENANT WHERE tenant_id = ? LIMIT 1',
     [tenantId]
   );
   return rows[0] || null;

@@ -83,7 +83,7 @@ router.post('/create', async (req, res) => {
   if (!safeSlug) return res.status(400).json({ error: 'Invalid slug.' });
 
   // ── Check slug uniqueness ──
-  const [slugCheck] = await query('SELECT tenant_id FROM tenant WHERE slug = ? LIMIT 1', [safeSlug]);
+  const [slugCheck] = await query('SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [safeSlug]);
   if (slugCheck.length > 0) {
     return res.status(409).json({ error: 'That workspace URL is already taken. Choose a different one.' });
   }
@@ -93,7 +93,7 @@ router.post('/create', async (req, res) => {
 
   // ── Insert tenant ──────────────────────────────────
   const [tenantResult] = await query(
-    `INSERT INTO tenant (company_name, slug, plan, status, created_at)
+    `INSERT INTO TENANT (company_name, slug, plan, status, created_at)
      VALUES (?, ?, ?, 'active', NOW())`,
     [org_name || company_name, safeSlug, plan]
   );
@@ -101,7 +101,7 @@ router.post('/create', async (req, res) => {
 
   // ── Insert admin staff row ─────────────────────────
   await query(
-    `INSERT INTO staff (tenant_id, name, role, username, password_hash, status)
+    `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status)
      VALUES (?, ?, 'Admin', ?, ?, 'Available')`,
     [tenantId, name, email, passwordHash]
   );
