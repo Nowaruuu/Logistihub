@@ -316,12 +316,11 @@ router.get('/app-download', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /forgot-credentials  — looks up admin by email, sends username/reset email
+// POST /forgot-credentials  — finds the single admin for this workspace, sends email
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/forgot-credentials', async (req, res) => {
   const { slug } = req.params;
-  const { email, type } = req.body; // type = 'username' | 'password'
-  if (!email) return res.status(400).json({ error: 'Email is required.' });
+  const { type } = req.body; // type = 'username' | 'password'
   try {
     // Find the tenant
     const [tenants] = await query(
@@ -331,20 +330,20 @@ router.post('/forgot-credentials', async (req, res) => {
     if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
     const { tenant_id, company_name } = tenants[0];
 
-    // Find the admin staff by email (username field stores the email)
+    // Find the single Admin for this workspace (there is only 1)
     const [rows] = await query(
-      "SELECT username, name FROM STAFF WHERE tenant_id = ? AND (username = ? OR username LIKE ?) AND role = 'Admin' LIMIT 1",
-      [tenant_id, email, `%${email}%`]
+      "SELECT username, name FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
+      [tenant_id]
     );
 
-    // Always respond OK to prevent email enumeration
     if (rows.length) {
       const { username, name } = rows[0];
-      sendForgotCredentialsEmail(email, username, company_name, type || 'username')
+      // username IS the email in this system
+      sendForgotCredentialsEmail(username, username, company_name, type || 'username')
         .catch(e => console.error('[FORGOT] Email error:', e.message));
     }
 
-    res.json({ ok: true, message: 'If this email is registered, your credentials have been sent.' });
+    res.json({ ok: true, message: 'Your credentials have been sent to your registered admin email.' });
   } catch (e) {
     console.error('[FORGOT] Error:', e);
     res.status(500).json({ error: 'Server error.' });

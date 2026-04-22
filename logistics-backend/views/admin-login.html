@@ -87,20 +87,10 @@ input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
-    <a href="#" onclick="showForgot('username');return false;" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Username?</a>
-    <a href="#" onclick="showForgot('password');return false;" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Password?</a>
+    <a href="#" onclick="sendForgot('username');return false;" id="link-forgot-user" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Username?</a>
+    <a href="#" onclick="sendForgot('password');return false;" id="link-forgot-pw" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Password?</a>
   </div>
-
-  <div id="forgot-box" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:14px;">
-    <div style="font-size:13px;font-weight:700;color:#0a1628;margin-bottom:8px;" id="forgot-title">Forgot Password</div>
-    <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Enter your registered email. Your credentials will be sent or reset.</p>
-    <input id="forgot-email" type="email" placeholder="admin@company.com" style="margin-bottom:10px;">
-    <button class="btn" style="background:#6366f1;" onclick="submitForgot()">
-      <span class="material-symbols-outlined">send</span>Submit Request
-    </button>
-    <div id="forgot-result" style="display:none;font-size:12px;color:#16a34a;margin-top:8px;text-align:center;"></div>
-    <a href="#" onclick="document.getElementById('forgot-box').style.display='none';return false;" style="display:block;text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Cancel</a>
-  </div>
+  <div id="forgot-result" style="display:none;font-size:12px;border-radius:8px;padding:10px 13px;margin-bottom:12px;text-align:center;"></div>
 
   <button class="btn" id="login-btn" onclick="doLogin()">
     <span class="material-symbols-outlined">login</span>Sign In
@@ -173,38 +163,30 @@ async function doLogin() {
   }
 }
 
-var _forgotType = 'password';
-function showForgot(type) {
-  _forgotType = type;
-  document.getElementById('forgot-title').textContent = type === 'username' ? 'Forgot Username' : 'Forgot Password';
-  document.getElementById('forgot-box').style.display = 'block';
-  document.getElementById('forgot-result').style.display = 'none';
-  document.getElementById('forgot-email').value = '';
-  document.getElementById('forgot-email').focus();
-}
-
-async function submitForgot() {
-  var email = document.getElementById('forgot-email').value.trim();
-  if (!email) return;
-  var btn = document.querySelector('#forgot-box button');
+async function sendForgot(type) {
+  var lnk = type === 'username' ? document.getElementById('link-forgot-user') : document.getElementById('link-forgot-pw');
   var result = document.getElementById('forgot-result');
-  btn.disabled = true;
+  lnk.textContent = 'Sending…';
   try {
     var r = await fetch('/' + SLUG + '/api/forgot-credentials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, type: _forgotType })
+      body: JSON.stringify({ type: type })
     });
     var d = await r.json();
     result.style.display = 'block';
+    result.style.background = '#f0fdf4';
     result.style.color = '#16a34a';
-    result.textContent = d.message || 'Sent! Check your email.';
+    result.style.border = '1px solid #bbf7d0';
+    result.textContent = d.message || 'Sent! Check your admin email.';
   } catch(e) {
     result.style.display = 'block';
+    result.style.background = '#fef2f2';
     result.style.color = '#dc2626';
+    result.style.border = '1px solid #fecaca';
     result.textContent = 'Error sending. Please try again.';
   }
-  btn.disabled = false;
+  lnk.textContent = type === 'username' ? 'Forgot Username?' : 'Forgot Password?';
 }
 </script>
 </body>
