@@ -180,6 +180,23 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
       </div>
     </div>
 
+    <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+      <a href="#" onclick="showForgot('username');return false;" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Username?</a>
+      <a href="#" onclick="showForgot('password');return false;" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Password?</a>
+    </div>
+
+    <!-- Forgot Modal -->
+    <div id="forgot-box" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:#0f2235;margin-bottom:8px;" id="forgot-title">Forgot Password</div>
+      <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Enter your registered email. Your admin will assist in resetting your credentials.</p>
+      <input id="forgot-email" type="email" placeholder="your.email@company.com" style="margin-bottom:10px;">
+      <button class="btn" style="background:#6366f1;" onclick="submitForgot()">
+        <span class="material-symbols-outlined">send</span>Submit Request
+      </button>
+      <div id="forgot-result" style="display:none;font-size:12px;color:#16a34a;margin-top:8px;text-align:center;"></div>
+      <a href="#" onclick="document.getElementById('forgot-box').style.display='none';return false;" style="display:block;text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Cancel</a>
+    </div>
+
     <button class="btn" id="login-btn" onclick="doLogin()">
       <span class="material-symbols-outlined">login</span>Sign In
     </button>
@@ -262,6 +279,28 @@ async function doLogin() {
     showErr(e.message || 'Login failed. Please check your credentials.');
     btn.disabled = false;
     btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+  }
+}
+
+let _forgotType = 'password';
+function showForgot(type) {
+  _forgotType = type;
+  document.getElementById('forgot-title').textContent = type === 'username' ? 'Forgot Username' : 'Forgot Password';
+  document.getElementById('forgot-box').style.display = 'block';
+  document.getElementById('forgot-result').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-email').focus();
+}
+
+function submitForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return;
+  const result = document.getElementById('forgot-result');
+  result.style.display = 'block';
+  if (_forgotType === 'username') {
+    result.textContent = 'If this email exists, your username has been sent to your inbox.';
+  } else {
+    result.textContent = 'Password reset request submitted. Please contact your admin or check your email.';
   }
 }
 </script>
