@@ -83,6 +83,14 @@ app.use((req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+// Public platform settings (no auth — used by landing page)
+const fs = require('fs');
+const platformFile = require('path').join(__dirname, 'config/platform.json');
+app.get('/api/platform', (req, res) => {
+  try { res.json(JSON.parse(fs.readFileSync(platformFile, 'utf8'))); }
+  catch { res.json({ platform_name: 'LogistiHub', primary_color: '#3b82f6' }); }
+});
+
 // Superadmin API  →  /api/superadmin/...
 app.use('/api/superadmin', superadminRouter);
 

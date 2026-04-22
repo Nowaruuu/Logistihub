@@ -3,10 +3,21 @@
 const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
+const fs        = require('fs');
+const path      = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { query, logAudit } = require('../config/db');
 const { requireSuperadmin } = require('../middleware/auth');
 const { sendInviteEmail }   = require('../config/mailer');
+
+const PLATFORM_FILE = path.join(__dirname, '../config/platform.json');
+function readPlatform() {
+  try { return JSON.parse(fs.readFileSync(PLATFORM_FILE, 'utf8')); }
+  catch { return {}; }
+}
+function savePlatform(data) {
+  fs.writeFileSync(PLATFORM_FILE, JSON.stringify(data, null, 2));
+}
 
 const router = express.Router();
 
@@ -371,6 +382,28 @@ router.get('/audit-logs', requireSuperadmin, async (req, res) => {
     console.error('Audit logs error:', e);
     res.status(500).json({ error: 'Failed to load audit logs.' });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/platform-settings  — read platform customization
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/platform-settings', requireSuperadmin, (req, res) => {
+  res.json(readPlatform());
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/superadmin/platform-settings  — save platform customization
+// ─────────────────────────────────────────────────────────────────────────────
+router.patch('/platform-settings', requireSuperadmin, (req, res) => {
+  if (!req.superadmin.is_primary) {
+    return res.status(403).json({ error: 'Only the root superadmin can change platform settings.' });
+  }
+  const allowed = ['platform_name','primary_color','hero_title','hero_subtitle','hero_cta_text','support_email','base_domain'];
+  const current = readPlatform();
+  allowed.forEach(k => { if (req.body[k] !== undefined) current[k] = req.body[k]; });
+  savePlatform(current);
+  logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'UPDATE_PLATFORM_SETTINGS', ip_address: req.ip });
+  res.json({ ok: true, settings: current });
 });
 
 module.exports = router;

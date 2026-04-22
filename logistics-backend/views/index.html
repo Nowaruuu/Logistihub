@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogistiHub — The Smart Logistics OS</title>
+    <meta name="description" content="One platform to manage your entire logistics operation — shipments, drivers, routes, and analytics.">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
@@ -14,6 +15,7 @@
             --text-heading: #ffffff;
             --text-body: #9ca3af;
             --accent: #10b981;
+            --nav-blur-bg: rgba(3,7,18,0.85);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,11 +32,18 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 24px 8%;
-            position: absolute;
+            padding: 20px 8%;
+            position: fixed;
             width: 100%;
             top: 0;
             z-index: 100;
+            transition: background 0.3s, backdrop-filter 0.3s, box-shadow 0.3s;
+        }
+        nav.scrolled {
+            background: var(--nav-blur-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.06);
         }
         .logo {
             display: flex;
@@ -47,27 +56,24 @@
         }
         .logo-box {
             background: var(--primary);
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .logo-box .material-symbols-outlined { color: #white; font-size: 20px; }
-        
+        .logo-box .material-symbols-outlined { color: #fff; font-size: 20px; }
+
         .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-        .nav-links a { 
-            text-decoration: none; 
-            color: var(--text-body); 
-            font-size: 14px; 
-            font-weight: 500; 
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-body);
+            font-size: 14px;
+            font-weight: 500;
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--text-heading); }
 
         .btn {
-            padding: 12px 24px;
+            padding: 11px 22px;
             border-radius: 10px;
             font-weight: 700;
             font-size: 14px;
@@ -78,17 +84,26 @@
             gap: 8px;
             border: none;
             cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
         }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-        .btn-primary:hover { 
-            filter: brightness(1.1); 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); 
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
         }
-        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.1); }
-        .btn-outline:hover { 
-            background: rgba(255,255,255,0.05); 
-            border-color: #fff;
+        .btn-primary:hover {
+            filter: brightness(1.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
+        }
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1.5px solid rgba(255,255,255,0.12);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.3);
             transform: translateY(-2px);
         }
 
@@ -100,31 +115,30 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 120px 8% 80px;
+            padding: 140px 8% 80px;
             position: relative;
         }
         header::before {
             content: '';
             position: absolute;
-            top: 20%;
-            left: 50%;
+            top: 20%; left: 50%;
             transform: translateX(-50%);
-            width: 600px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            width: 700px; height: 500px;
+            background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
             z-index: -1;
             filter: blur(80px);
+            pointer-events: none;
         }
 
         .hero-pill {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            padding: 8px 16px;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.25);
+            padding: 8px 18px;
             border-radius: 99px;
             color: var(--primary);
             font-size: 12px;
             font-weight: 700;
-            margin-bottom: 32px;
+            margin-bottom: 36px;
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -135,107 +149,151 @@
             font-size: 72px;
             font-weight: 800;
             color: var(--text-heading);
-            line-height: 1.1;
+            line-height: 1.08;
             margin-bottom: 24px;
             max-width: 900px;
-            background: linear-gradient(to bottom right, #fff 50%, #9ca3af);
+            background: linear-gradient(to bottom right, #fff 50%, #6b7280);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .hero-sub {
-            font-size: 20px;
-            max-width: 650px;
-            margin-bottom: 48px;
-            line-height: 1.6;
+            font-size: 19px;
+            max-width: 640px;
+            margin-bottom: 52px;
+            line-height: 1.7;
+            color: #9ca3af;
         }
-        .hero-actions { display: flex; gap: 16px; }
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+        .hero-actions .btn { padding: 16px 32px; font-size: 16px; }
 
-        /* --- Features Section --- */
+        /* --- Features --- */
         .features { padding: 100px 8%; text-align: center; }
+        .features h2 { font-size: 44px; font-weight: 800; color: #fff; margin-bottom: 16px; }
+        .features p { max-width: 560px; margin: 0 auto 64px; }
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            margin-top: 64px;
+            gap: 28px;
         }
         .feature-card {
             background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
             padding: 40px;
             border-radius: 20px;
             text-align: left;
-            transition: border-color 0.2s;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+            cursor: default;
         }
-        .feature-card:hover { border-color: var(--primary); }
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(59,130,246,0.12);
+        }
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(59, 130, 246, 0.1);
+            width: 48px; height: 48px;
+            background: rgba(59,130,246,0.12);
             color: var(--primary);
             border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             margin-bottom: 24px;
         }
+        .feature-card h3 { color: #fff; font-size: 18px; margin-bottom: 10px; }
 
-        /* --- Pricing Section --- */
-        .pricing { padding: 100px 8%; background: rgba(255,255,255,0.02); text-align: center; }
-        .pricing h2 { font-size: 48px; color: #fff; margin-bottom: 16px; }
+        /* --- Pricing --- */
+        .pricing { padding: 100px 8%; text-align: center; }
+        .pricing h2 { font-size: 44px; font-weight: 800; color: #fff; margin-bottom: 16px; }
+        .pricing > p { margin-bottom: 64px; }
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            margin-top: 64px;
+            gap: 28px;
         }
         .pricing-card {
             background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 48px;
+            border: 1.5px solid rgba(255,255,255,0.07);
+            padding: 48px 40px;
             border-radius: 24px;
             text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
+            transition: border-color 0.25s, transform 0.25s, background 0.25s, box-shadow 0.25s;
+            cursor: default;
         }
-        .price { font-size: 48px; font-weight: 800; color: #fff; }
-        .price span { font-size: 16px; color: var(--text-body); }
+        .pricing-card:hover {
+            border-color: var(--primary);
+            background: rgba(59,130,246,0.05);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px rgba(59,130,246,0.15);
+        }
+        .pricing-card.featured {
+            border-color: var(--primary);
+            background: rgba(59,130,246,0.06);
+        }
+        .pricing-card.featured:hover {
+            background: rgba(59,130,246,0.1);
+            box-shadow: 0 20px 50px rgba(59,130,246,0.25);
+        }
+        .plan-badge {
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .pricing-card h3 { color: #fff; font-size: 22px; font-weight: 700; }
+        .price { font-size: 52px; font-weight: 800; color: #fff; line-height: 1; }
+        .price span { font-size: 16px; color: var(--text-body); font-weight: 400; }
+        .pricing-card > p { font-size: 14px; color: #9ca3af; line-height: 1.6; }
+        .pricing-card .btn { margin-top: auto; }
+
+        /* --- CTA Banner --- */
+        .cta-banner {
+            margin: 0 8% 80px;
+            padding: 64px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(16,185,129,0.08) 100%);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 28px;
+            text-align: center;
+        }
+        .cta-banner h2 { font-size: 38px; font-weight: 800; color: #fff; margin-bottom: 16px; }
+        .cta-banner p { margin-bottom: 36px; font-size: 16px; }
 
         /* --- Footer --- */
         footer {
-            padding: 80px 8% 40px;
+            padding: 60px 8% 32px;
             border-top: 1px solid rgba(255,255,255,0.05);
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
-        .footer-logo { margin-bottom: 48px; }
-        .footer-links {
-            display: flex;
-            gap: 48px;
-            margin-bottom: 64px;
-        }
-        .footer-links a { color: var(--text-body); text-decoration: none; font-size: 14px; }
+        .footer-links { display: flex; gap: 40px; margin: 32px 0 48px; flex-wrap: wrap; justify-content: center; }
+        .footer-links a { color: var(--text-body); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .footer-links a:hover { color: #fff; }
         .footer-bottom {
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 13px;
+            color: #4b5563;
         }
         .go-to-top {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            color: var(--text-heading);
-            font-weight: 700;
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; color: #6b7280; font-size: 13px;
+            transition: color 0.2s;
         }
+        .go-to-top:hover { color: #fff; }
 
         @media (max-width: 1024px) {
-            h1 { font-size: 56px; }
-            .feature-grid, .pricing-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 52px; }
+            .feature-grid, .pricing-grid { grid-template-columns: 1fr; max-width: 520px; margin: 0 auto; }
+        }
+        @media (max-width: 640px) {
+            h1 { font-size: 38px; }
+            nav { padding: 16px 5%; }
+            .nav-links { gap: 16px; }
         }
     </style>
 </head>
@@ -244,25 +302,26 @@
     <nav id="top">
         <a href="/" class="logo">
             <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
-            LogistiHub
+            <span id="nav-brand">LogistiHub</span>
         </a>
         <ul class="nav-links">
             <li><a href="#features">Features</a></li>
             <li><a href="#pricing">Pricing</a></li>
-            <li><a href="/superadmin-login" style="color:white; font-weight:700;">Log in</a></li>
-            <li><a href="/onboarding" class="btn btn-primary">Get Started</a></li>
+            <li><a href="/superadmin-login" style="color:white;font-weight:600;">Log in</a></li>
+            <li><a href="/onboarding" class="btn btn-primary" id="nav-cta">Get Started</a></li>
         </ul>
     </nav>
 
     <header>
-        <div class="hero-pill"><span></span> Now with real-time driver tracking & mobile app</div>
-        <h1>The Logistics OS for Modern Businesses</h1>
-        <p class="hero-sub">One platform to manage your entire logistics operation — from shipment creation to last-mile delivery. Built for multi-tenant businesses with drivers, managers, and customers in mind.</p>
+        <div class="hero-pill"><span></span> Now with real-time driver tracking &amp; mobile app</div>
+        <h1 id="hero-title">The Logistics OS for Modern Businesses</h1>
+        <p class="hero-sub" id="hero-subtitle">One platform to manage your entire logistics operation — from shipment creation to last-mile delivery. Built for multi-tenant businesses with drivers, managers, and customers in mind.</p>
         <div class="hero-actions">
-            <a href="/onboarding" class="btn btn-primary" style="padding: 16px 32px; font-size: 16px;">
-                <span class="material-symbols-outlined">rocket_launch</span> Get Started
+            <a href="/onboarding" class="btn btn-primary" id="hero-cta">
+                <span class="material-symbols-outlined">rocket_launch</span>
+                <span id="hero-cta-text">Get Started</span>
             </a>
-            <button class="btn btn-outline" style="padding: 16px 32px; font-size: 16px;">
+            <button class="btn btn-outline" style="padding:16px 32px;font-size:16px;" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
                 <span class="material-symbols-outlined">play_circle</span> See How It Works
             </button>
         </div>
@@ -270,6 +329,7 @@
 
     <section class="features" id="features">
         <h2>Built for every level of your operation</h2>
+        <p>Everything your logistics business needs, in one beautifully designed platform.</p>
         <div class="feature-grid">
             <div class="feature-card">
                 <div class="feature-icon"><span class="material-symbols-outlined">dashboard</span></div>
@@ -279,47 +339,55 @@
             <div class="feature-card">
                 <div class="feature-icon"><span class="material-symbols-outlined">local_shipping</span></div>
                 <h3>Driver App</h3>
-                <p>Branded mobile experience for your fleet with optimized route delivery and updates.</p>
+                <p>Branded mobile experience for your fleet with optimized route delivery and real-time updates.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon"><span class="material-symbols-outlined">monitoring</span></div>
                 <h3>Real-time Analytics</h3>
-                <p>Detailed reports and real-time visualization of your entire logistics network.</p>
+                <p>Detailed reports and live visualization of your entire logistics network performance.</p>
             </div>
         </div>
     </section>
 
     <section class="pricing" id="pricing">
         <h2>Ready to modernize your logistics?</h2>
-        <p>Set up your workspace in under 3 minutes.</p>
+        <p>Set up your workspace in under 3 minutes. No credit card required.</p>
         <div class="pricing-grid">
             <div class="pricing-card">
                 <h3>Startup</h3>
                 <div class="price">$99<span>/month</span></div>
                 <p>Perfect for growing local logistics businesses.</p>
-                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+                <a href="/onboarding?plan=startup" class="btn btn-primary">Create Your Workspace</a>
             </div>
-            <div class="pricing-card" style="border-color: var(--primary);">
-                <div style="color: var(--primary); font-size: 11px; font-weight: 700; text-transform: uppercase;">Most Popular</div>
+            <div class="pricing-card featured">
+                <div class="plan-badge">Most Popular</div>
                 <h3>Enterprise</h3>
                 <div class="price">$499<span>/month</span></div>
-                <p>Comprehensive tools for professional logistics.</p>
-                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+                <p>Comprehensive tools for professional logistics operations.</p>
+                <a href="/onboarding?plan=enterprise" class="btn btn-primary">Create Your Workspace</a>
             </div>
             <div class="pricing-card">
                 <h3>Global</h3>
                 <div class="price">$999<span>/month</span></div>
-                <p>Multi-regional support for global networks.</p>
-                <a href="/onboarding" class="btn btn-primary">Create Your Workspace</a>
+                <p>Multi-regional support for global logistics networks.</p>
+                <a href="/onboarding?plan=global" class="btn btn-primary">Create Your Workspace</a>
             </div>
         </div>
     </section>
 
+    <div class="cta-banner">
+        <h2>Start your free workspace today</h2>
+        <p>Join hundreds of logistics businesses already running on LogistiHub.</p>
+        <a href="/onboarding" class="btn btn-primary" style="padding:16px 36px;font-size:16px;">
+            <span class="material-symbols-outlined">rocket_launch</span> Get Started Free
+        </a>
+    </div>
+
     <footer>
-        <div class="footer-logo logo" style="margin-bottom: 32px;">
+        <a href="/" class="logo" style="margin-bottom:8px;">
             <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
-            LogistiHub
-        </div>
+            <span id="footer-brand">LogistiHub</span>
+        </a>
         <div class="footer-links">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
@@ -328,11 +396,43 @@
         </div>
         <div class="footer-bottom">
             <div>&copy; 2026 LogistiHub. All rights reserved.</div>
-            <div class="go-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-                Go to Top <span class="material-symbols-outlined">arrow_upward</span>
+            <div class="go-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+                Go to Top <span class="material-symbols-outlined" style="font-size:16px;">arrow_upward</span>
             </div>
         </div>
     </footer>
 
+    <script>
+        // Sticky nav on scroll
+        const nav = document.getElementById('top');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 40);
+        });
+
+        // Load platform settings dynamically
+        fetch('/api/platform').then(r => r.json()).then(s => {
+            if (!s) return;
+            // Apply primary color
+            if (s.primary_color) {
+                document.documentElement.style.setProperty('--primary', s.primary_color);
+                // Recompute box shadows based on new color
+                const hex = s.primary_color.replace('#','');
+                const r = parseInt(hex.substring(0,2),16);
+                const g = parseInt(hex.substring(2,4),16);
+                const b = parseInt(hex.substring(4,6),16);
+                document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+            }
+            // Apply text settings
+            if (s.hero_title)     document.getElementById('hero-title').textContent      = s.hero_title;
+            if (s.hero_subtitle)  document.getElementById('hero-subtitle').textContent   = s.hero_subtitle;
+            if (s.hero_cta_text)  document.getElementById('hero-cta-text').textContent  = s.hero_cta_text;
+            if (s.hero_cta_text)  document.getElementById('nav-cta').childNodes[s.hero_cta_text ? 0 : 0]; // nav cta text
+            if (s.platform_name) {
+                document.getElementById('nav-brand').textContent   = s.platform_name;
+                document.getElementById('footer-brand').textContent = s.platform_name;
+                document.title = `${s.platform_name} — The Smart Logistics OS`;
+            }
+        }).catch(() => {});
+    </script>
 </body>
 </html>

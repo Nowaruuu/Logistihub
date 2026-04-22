@@ -469,24 +469,41 @@
           
           <!-- Settings Content -->
           <div class="card">
-            <div class="card-body">
-              <div id="set-general" class="set-pane active">
-                <h3 style="margin-bottom:20px; font-size:16px;">System Branding & Config</h3>
+            <div class="card-body">              <div id="set-general" class="set-pane active">
+                <h3 style="margin-bottom:20px; font-size:16px;">Platform Branding &amp; Customization</h3>
                 <div class="form-group">
                   <label class="form-label">Platform Name</label>
-                  <input type="text" class="form-control" id="form-platform-name" value="">
+                  <input type="text" class="form-control" id="form-platform-name" placeholder="e.g. LogistiHub">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Support Email Contact</label>
-                  <input type="email" class="form-control" id="form-support-email" value="">
+                  <label class="form-label">Primary Color</label>
+                  <div style="display:flex;gap:12px;align-items:center;">
+                    <input type="color" id="form-primary-color" value="#3b82f6" style="width:48px;height:40px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('form-primary-color-hex').value=this.value">
+                    <input type="text" class="form-control" id="form-primary-color-hex" placeholder="#3b82f6" style="flex:1;" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('form-primary-color').value=this.value">
+                  </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Base Domain</label>
-                  <input type="text" class="form-control" id="form-base-domain" value="">
-                  <span style="font-size:12px; color:var(--text-muted); display:block; margin-top:6px;">All tenant workspaces will be subdomains of this root.</span>
+                  <label class="form-label">Hero Title</label>
+                  <input type="text" class="form-control" id="form-hero-title" placeholder="The Logistics OS for Modern Businesses">
                 </div>
-                <button class="btn btn-primary" style="margin-top:10px;">Save General Settings</button>
+                <div class="form-group">
+                  <label class="form-label">Hero Subtitle</label>
+                  <textarea class="form-control" id="form-hero-subtitle" rows="3" style="resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CTA Button Text</label>
+                  <input type="text" class="form-control" id="form-hero-cta" placeholder="Get Started">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Support Email</label>
+                  <input type="email" class="form-control" id="form-support-email" placeholder="support@logistihub.com">
+                </div>
+                <div style="display:flex;gap:12px;margin-top:10px;">
+                  <button class="btn btn-primary" onclick="savePlatformSettings()">Save Changes</button>
+                  <a href="/" target="_blank" class="btn btn-secondary"><span class="material-symbols-rounded">open_in_new</span> Preview Landing Page</a>
+                </div>
               </div>
+
 
               <div id="set-limits" class="set-pane">
                 <h3 style="margin-bottom:20px; font-size:16px;">Default Tenant Limits</h3>
@@ -844,15 +861,52 @@
     }
 
     function editTenant(id) {
-      // Logic to open a modal or redirect to a tenant detail page
       console.log("Managing tenant ID:", id);
-      // Example: window.location.href = `/superadmin/tenant/${id}`;
     }
+
+    async function loadPlatformSettings() {
+      try {
+        const s = await fetch('/api/superadmin/platform-settings', { credentials: 'include' }).then(r => r.json());
+        if (!s) return;
+        if (s.platform_name)  document.getElementById('form-platform-name').value  = s.platform_name;
+        if (s.primary_color) {
+          document.getElementById('form-primary-color').value     = s.primary_color;
+          document.getElementById('form-primary-color-hex').value = s.primary_color;
+        }
+        if (s.hero_title)    document.getElementById('form-hero-title').value    = s.hero_title;
+        if (s.hero_subtitle) document.getElementById('form-hero-subtitle').value = s.hero_subtitle;
+        if (s.hero_cta_text) document.getElementById('form-hero-cta').value      = s.hero_cta_text;
+        if (s.support_email) document.getElementById('form-support-email').value = s.support_email;
+      } catch(e) { console.error('Platform settings load error:', e); }
+    }
+
+    async function savePlatformSettings() {
+      const payload = {
+        platform_name:  document.getElementById('form-platform-name').value.trim(),
+        primary_color:  document.getElementById('form-primary-color').value,
+        hero_title:     document.getElementById('form-hero-title').value.trim(),
+        hero_subtitle:  document.getElementById('form-hero-subtitle').value.trim(),
+        hero_cta_text:  document.getElementById('form-hero-cta').value.trim(),
+        support_email:  document.getElementById('form-support-email').value.trim(),
+      };
+      try {
+        const r = await fetch('/api/superadmin/platform-settings', {
+          method: 'PATCH', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error);
+        showToast('Platform settings saved! Changes will appear on the landing page.');
+      } catch(e) { showToast('Save failed: ' + e.message, 'error'); }
+    }
+
     window.onload = async () => {
       await loadMe();
       await loadDashboard();
       await loadAll();
       await loadReports();
+      await loadPlatformSettings();
     };
   </script>
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
