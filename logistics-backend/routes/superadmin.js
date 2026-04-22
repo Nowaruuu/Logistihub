@@ -16,26 +16,52 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // 1. Check Superadmin
+  // 1. Check Root Superadmin (from .env)
   if (
     email    === process.env.SUPERADMIN_EMAIL &&
     password === process.env.SUPERADMIN_PASSWORD
   ) {
     const token = jwt.sign(
-      { role: 'superadmin', email },
+      { role: 'superadmin', email, name: 'Super Admin', is_primary: true },
       process.env.SUPERADMIN_JWT_SECRET,
       { expiresIn: process.env.SUPERADMIN_JWT_EXPIRES_IN || '4h' }
     );
-
     res.cookie('sa_token', token, {
       httpOnly: true,
       secure:   process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge:   4 * 60 * 60 * 1000,
     });
-
     logAudit({ actor: email, actor_type: 'superadmin', action: 'LOGIN', target: 'Superadmin Panel', ip_address: req.ip });
-    return res.json({ ok: true, role: 'superadmin', message: 'Logged in as superadmin.' });
+    return res.json({ ok: true, role: 'superadmin', is_primary: true, message: 'Logged in as superadmin.' });
+  }
+
+  // 2. Check Sub-Superadmin (from SUPERADMIN table)
+  try {
+    const [saRows] = await query(
+      "SELECT * FROM SUPERADMIN WHERE email = ? AND status = 'active' LIMIT 1",
+      [email]
+    );
+    if (saRows.length > 0) {
+      const sa = saRows[0];
+      if (await bcrypt.compare(password, sa.password_hash)) {
+        const token = jwt.sign(
+          { role: 'superadmin', email, name: sa.name, is_primary: false, superadmin_id: sa.superadmin_id },
+          process.env.SUPERADMIN_JWT_SECRET,
+          { expiresIn: process.env.SUPERADMIN_JWT_EXPIRES_IN || '4h' }
+        );
+        res.cookie('sa_token', token, {
+          httpOnly: true,
+          secure:   process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge:   4 * 60 * 60 * 1000,
+        });
+        logAudit({ actor: email, actor_type: 'superadmin', action: 'LOGIN', target: 'Superadmin Panel', ip_address: req.ip });
+        return res.json({ ok: true, role: 'superadmin', is_primary: false, message: 'Logged in as superadmin.' });
+      }
+    }
+  } catch (saErr) {
+    console.error('Sub-superadmin login error:', saErr);
   }
 
   // 2. Check Tenant Admin
@@ -80,6 +106,72 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('sa_token');
   res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/me  — current session info
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/me', requireSuperadmin, (req, res) => {
+  res.json({
+    email:      req.superadmin.email,
+    name:       req.superadmin.name  || 'Super Admin',
+    is_primary: req.superadmin.is_primary !== false, // treat undefined as true (legacy tokens)
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/developers  — list all sub-superadmins (root only)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/developers', requireSuperadmin, async (req, res) => {
+  if (!req.superadmin.is_primary) return res.status(403).json({ error: 'Only the root superadmin can manage developers.' });
+  try {
+    const [rows] = await query(
+      'SELECT superadmin_id, name, email, is_primary, status, created_at FROM SUPERADMIN ORDER BY is_primary DESC, created_at ASC'
+    );
+    res.json(rows);
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to load developers.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/superadmin/developers  — add sub-superadmin (root only)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/developers', requireSuperadmin, async (req, res) => {
+  if (!req.superadmin.is_primary) return res.status(403).json({ error: 'Only the root superadmin can add developers.' });
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required.' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  try {
+    const [existing] = await query('SELECT superadmin_id FROM SUPERADMIN WHERE email = ?', [email]);
+    if (existing.length > 0) return res.status(409).json({ error: 'A developer with this email already exists.' });
+    const hash = await bcrypt.hash(password, 10);
+    await query(
+      'INSERT INTO SUPERADMIN (name, email, password_hash, is_primary, created_by) VALUES (?, ?, ?, 0, ?)',
+      [name, email, hash, req.superadmin.superadmin_id || null]
+    );
+    logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'ADD_DEVELOPER', target: `${name} <${email}>`, ip_address: req.ip });
+    res.json({ ok: true, message: `Developer "${name}" added successfully.` });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to add developer. ' + e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/superadmin/developers/:id  — remove sub-superadmin (root only)
+// ─────────────────────────────────────────────────────────────────────────────
+router.delete('/developers/:id', requireSuperadmin, async (req, res) => {
+  if (!req.superadmin.is_primary) return res.status(403).json({ error: 'Only the root superadmin can remove developers.' });
+  try {
+    const [[dev]] = await query('SELECT name, email, is_primary FROM SUPERADMIN WHERE superadmin_id = ?', [req.params.id]);
+    if (!dev) return res.status(404).json({ error: 'Developer not found.' });
+    if (dev.is_primary) return res.status(403).json({ error: 'Cannot remove the root superadmin.' });
+    await query('UPDATE SUPERADMIN SET status = ? WHERE superadmin_id = ?', ['inactive', req.params.id]);
+    logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'REMOVE_DEVELOPER', target: `${dev.name} <${dev.email}>`, ip_address: req.ip });
+    res.json({ ok: true, message: `Developer "${dev.name}" removed.` });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to remove developer.' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

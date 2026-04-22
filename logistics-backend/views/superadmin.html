@@ -249,6 +249,9 @@
           <div class="dev-name" id="val-dev-name">Super Admin</div>
           <div class="dev-role">System Developer</div>
         </div>
+        <button onclick="doLogout()" title="Logout" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;border-radius:6px;display:flex;align-items:center;transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+          <span class="material-symbols-rounded" style="font-size:20px;">logout</span>
+        </button>
       </div>
     </div>
   </aside>
@@ -503,16 +506,39 @@
               </div>
 
               <div id="set-roles" class="set-pane">
-                <h3 style="margin-bottom:20px; font-size:16px;">System Developer Roles</h3>
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:24px;">Manage who has access to this Superadmin panel.</p>
-                
+                <h3 style="margin-bottom:8px; font-size:16px;">System Developer Roles</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Manage who has access to this Superadmin panel. Only the root superadmin can add or remove developers.</p>
+
                 <table style="margin-bottom:24px;">
-                  <thead><tr><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+                  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
                   <tbody id="roles-tbody">
-                    <tr><td colspan="3" style="text-align:center;">No developer roles found</td></tr>
+                    <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
                   </tbody>
                 </table>
-                <button class="btn btn-secondary"><span class="material-symbols-rounded">add</span> Add New Developer</button>
+
+                <div id="add-dev-section">
+                  <h4 style="margin-bottom:16px;font-size:14px;">Add New Developer</h4>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;">
+                    <div>
+                      <label class="form-label">Full Name</label>
+                      <input type="text" id="dev-name" class="form-control" placeholder="e.g. Jane Doe">
+                    </div>
+                    <div>
+                      <label class="form-label">Email</label>
+                      <input type="email" id="dev-email" class="form-control" placeholder="developer@example.com">
+                    </div>
+                    <div>
+                      <label class="form-label">Password</label>
+                      <input type="password" id="dev-password" class="form-control" placeholder="Min. 8 characters">
+                    </div>
+                    <button class="btn btn-primary" onclick="addDeveloper()" id="add-dev-btn">
+                      <span class="material-symbols-rounded">person_add</span> Add
+                    </button>
+                  </div>
+                </div>
+                <div id="no-add-dev-notice" style="display:none;padding:12px 16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:13px;color:#c2410c;margin-top:8px;">
+                  ⚠️ Only the root superadmin can add or remove developer accounts.
+                </div>
               </div>
 
             </div>
@@ -545,6 +571,7 @@
       if (screenId === 'tenants')   loadAll();
       if (screenId === 'sales')     loadSales();
       if (screenId === 'audit')     loadAuditLogs();
+      if (screenId === 'settings')  loadDevelopers();
     }
 
     function setTab(tabId, btnEl) {
@@ -596,6 +623,74 @@
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
         renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
       } catch(e) { console.error('Dashboard error:', e); }
+    }
+
+    async function doLogout() {
+      await fetch('/api/superadmin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+      window.location.href = '/superadmin-login';
+    }
+
+    let _isRoot = false;
+    async function loadMe() {
+      try {
+        const me = await fetch('/api/superadmin/me', { credentials: 'include' }).then(r => r.json());
+        _isRoot = !!me.is_primary;
+        document.getElementById('val-dev-name').textContent = me.name || 'Super Admin';
+      } catch(e) { _isRoot = false; }
+    }
+
+    async function loadDevelopers() {
+      if (!_isRoot) {
+        document.getElementById('add-dev-section').style.display = 'none';
+        document.getElementById('no-add-dev-notice').style.display = 'block';
+        document.getElementById('roles-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">Only the root superadmin can view this section.</td></tr>';
+        return;
+      }
+      try {
+        const devs = await fetch('/api/superadmin/developers', { credentials: 'include' }).then(r => r.json());
+        const tb = document.getElementById('roles-tbody');
+        if (!devs.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No developers yet</td></tr>'; return; }
+        tb.innerHTML = devs.map(d => `
+          <tr>
+            <td><strong>${d.name}</strong></td>
+            <td style="font-size:12px;color:#64748b;">${d.email}</td>
+            <td><span class="badge ${d.is_primary ? 'bg-active' : 'bg-neutral'}">${d.is_primary ? 'Root' : 'Developer'}</span></td>
+            <td><span class="badge ${d.status === 'active' ? 'bg-active' : 'bg-suspended'}">${d.status}</span></td>
+            <td>${d.is_primary ? '<span style="color:#94a3b8;font-size:12px;">Cannot remove</span>' : `<button class="btn btn-danger btn-sm" onclick="removeDeveloper(${d.superadmin_id},'${d.name.replace(/'/g,"\\'")}')">Remove</button>`}</td>
+          </tr>`).join('');
+      } catch(e) { console.error('Developers error:', e); }
+    }
+
+    async function addDeveloper() {
+      const name  = document.getElementById('dev-name').value.trim();
+      const email = document.getElementById('dev-email').value.trim();
+      const pass  = document.getElementById('dev-password').value;
+      if (!name || !email || !pass) { showToast('All fields are required.', 'error'); return; }
+      const btn = document.getElementById('add-dev-btn');
+      btn.disabled = true;
+      try {
+        await fetch('/api/superadmin/developers', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password: pass })
+        }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; });
+        showToast(`Developer "${name}" added!`);
+        document.getElementById('dev-name').value = '';
+        document.getElementById('dev-email').value = '';
+        document.getElementById('dev-password').value = '';
+        loadDevelopers();
+      } catch(e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; }
+    }
+
+    async function removeDeveloper(id, name) {
+      if (!confirm(`Remove developer "${name}"? They will lose access immediately.`)) return;
+      try {
+        await fetch(`/api/superadmin/developers/${id}`, { method: 'DELETE', credentials: 'include' })
+          .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; });
+        showToast(`"${name}" removed.`);
+        loadDevelopers();
+      } catch(e) { showToast(e.message, 'error'); }
     }
 
     async function loadTenants() {
@@ -754,8 +849,9 @@
       // Example: window.location.href = `/superadmin/tenant/${id}`;
     }
     window.onload = async () => {
+      await loadMe();
       await loadDashboard();
-      await loadAll(); // This is the one that populates the main Tenant table!
+      await loadAll();
       await loadReports();
     };
   </script>
