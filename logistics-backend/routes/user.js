@@ -322,7 +322,6 @@ router.post('/forgot-credentials', async (req, res) => {
   const { slug } = req.params;
   const { type } = req.body; // type = 'username' | 'password'
   try {
-    // Find the tenant
     const [tenants] = await query(
       "SELECT tenant_id, company_name FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
       [slug]
@@ -330,23 +329,28 @@ router.post('/forgot-credentials', async (req, res) => {
     if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
     const { tenant_id, company_name } = tenants[0];
 
-    // Find the single Admin for this workspace (there is only 1)
+    // Find the single Admin for this workspace
     const [rows] = await query(
       "SELECT username, name FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
       [tenant_id]
     );
 
-    if (rows.length) {
-      const { username, name } = rows[0];
-      // username IS the email in this system
-      sendForgotCredentialsEmail(username, username, company_name, type || 'username')
-        .catch(e => console.error('[FORGOT] Email error:', e.message));
+    if (!rows.length) {
+      console.warn(`[FORGOT] No admin found for tenant ${slug} (id=${tenant_id})`);
+      return res.json({ ok: true, message: 'If an admin account exists, credentials have been sent.' });
     }
 
-    res.json({ ok: true, message: 'Your credentials have been sent to your registered admin email.' });
+    const { username } = rows[0];
+    console.log(`[FORGOT] Sending ${type} to ${username} for tenant ${slug}`);
+
+    // Await so we can catch and report real mail errors
+    await sendForgotCredentialsEmail(username, username, company_name, type || 'username');
+
+    console.log(`[FORGOT] Email sent OK to ${username}`);
+    res.json({ ok: true, message: `Your ${type === 'password' ? 'password reset info' : 'username'} has been sent to your registered admin email.` });
   } catch (e) {
-    console.error('[FORGOT] Error:', e);
-    res.status(500).json({ error: 'Server error.' });
+    console.error('[FORGOT] Error:', e.message);
+    res.status(500).json({ error: 'Failed to send email: ' + e.message });
   }
 });
 
