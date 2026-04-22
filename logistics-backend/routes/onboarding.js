@@ -101,9 +101,9 @@ router.post('/create', async (req, res) => {
 
   // ── Insert admin staff row ─────────────────────────
   await query(
-    `INSERT INTO STAFF (tenant_id, name, role, username, password_hash, status)
-     VALUES (?, ?, 'Admin', ?, ?, 'Available')`,
-    [tenantId, name, email, passwordHash]
+    `INSERT INTO STAFF (tenant_id, name, role, username, contact_email, password_hash, status)
+     VALUES (?, ?, 'Admin', ?, ?, ?, 'Available')`,
+    [tenantId, name, email, invitePayload.email, passwordHash]
   );
 
   // ── Send welcome email (non-blocking) ─────────────

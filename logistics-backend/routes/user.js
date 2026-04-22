@@ -331,7 +331,7 @@ router.post('/forgot-credentials', async (req, res) => {
 
     // Find the single Admin for this workspace
     const [rows] = await query(
-      "SELECT username, name FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
+      "SELECT username, contact_email, name FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
       [tenant_id]
     );
 
@@ -340,14 +340,14 @@ router.post('/forgot-credentials', async (req, res) => {
       return res.json({ ok: true, message: 'If an admin account exists, credentials have been sent.' });
     }
 
-    const { username } = rows[0];
-    console.log(`[FORGOT] Sending ${type} to ${username} for tenant ${slug}`);
+    const { username, contact_email } = rows[0];
+    const sendTo = contact_email || username; // fallback to username if contact_email not set
+    console.log(`[FORGOT] Sending ${type} to real email: ${sendTo} (username: ${username}) for tenant ${slug}`);
 
-    // Await so we can catch and report real mail errors
-    await sendForgotCredentialsEmail(username, username, company_name, type || 'username');
+    await sendForgotCredentialsEmail(sendTo, username, company_name, type || 'username');
 
-    console.log(`[FORGOT] Email sent OK to ${username}`);
-    res.json({ ok: true, message: `Your ${type === 'password' ? 'password reset info' : 'username'} has been sent to your registered admin email.` });
+    console.log(`[FORGOT] Email sent OK to ${sendTo}`);
+    res.json({ ok: true, message: `Your ${type === 'password' ? 'password reset info' : 'username'} has been sent to your registered email.` });
   } catch (e) {
     console.error('[FORGOT] Error:', e.message);
     res.status(500).json({ error: 'Failed to send email: ' + e.message });
