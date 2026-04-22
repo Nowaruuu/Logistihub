@@ -126,4 +126,43 @@ async function sendWelcomeEmail(email, fullName, companyName, slug) {
   });
 }
 
-module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail };
+async function sendForgotCredentialsEmail(email, username, companyName, type) {
+  const isUsername = type === 'username';
+  const subject = isUsername
+    ? `Your ${companyName} username`
+    : `Password reset request — ${companyName}`;
+  const bodyHtml = isUsername
+    ? `<p style="color:#334155;font-size:15px;line-height:1.6;">Your username for <strong>${companyName}</strong> is:</p>
+       <div style="text-align:center;margin:24px 0;font-size:22px;font-weight:800;color:#0a1628;background:#f1f5f9;padding:16px;border-radius:10px;letter-spacing:0.04em;">${username}</div>
+       <p style="color:#64748b;font-size:13px;">Use this to log in at your workspace portal.</p>`
+    : `<p style="color:#334155;font-size:15px;line-height:1.6;">We received a password reset request for your <strong>${companyName}</strong> admin account.</p>
+       <p style="color:#64748b;font-size:13px;">Your username is: <strong>${username}</strong>. Please contact your platform administrator to reset your password, or use the admin panel if you have access.</p>`;
+
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#0a1628;padding:32px;text-align:center;">
+        <div style="color:#fff;font-size:22px;font-weight:800;">${companyName}</div>
+        <div style="color:#94a3b8;font-size:12px;">Powered by Logistics OS</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 16px;">${isUsername ? 'Your Username' : 'Password Reset'}</h2>
+        ${bodyHtml}
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+        <p style="font-size:12px;color:#94a3b8;">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} ${companyName} · Powered by Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email,
+    subject,
+    html
+  });
+}
+
+module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail };

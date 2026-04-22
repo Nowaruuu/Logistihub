@@ -220,22 +220,26 @@
     <script>
         const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
         const name = (window.__TENANT__ && window.__TENANT__.company_name) || 'LogistiHub';
-        const logo = (window.__TENANT__ && window.__TENANT__.logo_base64) || null;
+        const logoUrl = (window.__TENANT__ && window.__TENANT__.logo_url) || null;
 
         window.onload = function() {
             document.getElementById('nav-brand').textContent = name;
             document.getElementById('hero-title').textContent = `${name}.`;
 
             // Show tenant logo if available
-            if (logo) {
+            if (logoUrl) {
                 const logoBox = document.querySelector('.logo-box');
-                logoBox.innerHTML = `<img src="${logo}" alt="${name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;
+                logoBox.innerHTML = `<img src="${logoUrl}" alt="${name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;
             }
 
-            // Routing — staff login, NOT superadmin
-            const loginUrl = `/${SLUG}/staff-login`;
-            document.getElementById('staff-login-top').href = loginUrl;
-            document.getElementById('staff-login').href = loginUrl;
+            // "Login" top nav → CLIENT login (login.html), not staff
+            const clientLoginUrl = `/${SLUG}/login`;
+            document.getElementById('staff-login-top').textContent = 'Client Login →';
+            document.getElementById('staff-login-top').href = clientLoginUrl;
+
+            // Staff section buttons
+            document.getElementById('staff-login').href = `/${SLUG}/staff-login`;
+            document.getElementById('staff-login').textContent = 'Staff Login';
             document.getElementById('staff-join').href = `/${SLUG}/register`;
             document.getElementById('app-dl-link').href = `/${SLUG}/get-app`;
 

@@ -292,16 +292,28 @@ function showForgot(type) {
   document.getElementById('forgot-email').focus();
 }
 
-function submitForgot() {
+async function submitForgot() {
   const email = document.getElementById('forgot-email').value.trim();
   if (!email) return;
+  const btn = document.querySelector('#forgot-box button');
   const result = document.getElementById('forgot-result');
-  result.style.display = 'block';
-  if (_forgotType === 'username') {
-    result.textContent = 'If this email exists, your username has been sent to your inbox.';
-  } else {
-    result.textContent = 'Password reset request submitted. Please contact your admin or check your email.';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/${SLUG}/api/forgot-credentials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, type: _forgotType })
+    });
+    const d = await r.json();
+    result.style.display = 'block';
+    result.style.color = '#16a34a';
+    result.textContent = d.message || 'Sent! Check your email.';
+  } catch(e) {
+    result.style.display = 'block';
+    result.style.color = '#dc2626';
+    result.textContent = 'Error sending. Please try again.';
   }
+  btn.disabled = false;
 }
 </script>
 
