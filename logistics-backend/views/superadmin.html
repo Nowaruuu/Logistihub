@@ -542,7 +542,7 @@
       btnEl.classList.add('active');
       document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
       if (screenId === 'dashboard') loadDashboard();
-      if (screenId === 'tenants')   loadTenants();
+      if (screenId === 'tenants')   loadAll();
       if (screenId === 'sales')     loadSales();
       if (screenId === 'audit')     loadAuditLogs();
     }
