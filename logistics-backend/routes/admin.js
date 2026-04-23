@@ -209,26 +209,23 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
   const { company_name, bg_app_color, bg_sidebar_color, logo_url, background_url, bg_hero_color, bg_page_color, new_password } = req.body;
   const tid = req.tenantId;
 
-  try {
-    // Core columns — always exist
-    await query(`
-      UPDATE TENANT
-      SET company_name     = COALESCE(?, company_name),
-          bg_app_color     = COALESCE(?, bg_app_color),
-          bg_sidebar_color = COALESCE(?, bg_sidebar_color),
-          logo_url         = COALESCE(?, logo_url),
-          background_url   = ?
-      WHERE tenant_id = ?`,
-      [company_name || null, bg_app_color || null, bg_sidebar_color || null, logo_url || null, background_url || null, tid]
-    );
-
-    // Optional new columns — added via migration; skip gracefully if missing
+  const safeSet = async (col, val) => {
+    if (val === undefined) return;
     try {
-      await query(`UPDATE TENANT SET bg_hero_color = ?, bg_page_color = ? WHERE tenant_id = ?`,
-        [bg_hero_color || null, bg_page_color || null, tid]);
-    } catch(colErr) {
-      console.warn('[settings] bg_hero_color/bg_page_color columns missing — run migrations:', colErr.message);
+      await query(`UPDATE TENANT SET ${col} = ? WHERE tenant_id = ?`, [val || null, tid]);
+    } catch(e) {
+      console.warn(`[settings] Could not update ${col}:`, e.message);
     }
+  };
+
+  try {
+    if (company_name)    await safeSet('company_name', company_name);
+    if (bg_app_color !== undefined)     await safeSet('bg_app_color', bg_app_color);
+    if (bg_sidebar_color !== undefined) await safeSet('bg_sidebar_color', bg_sidebar_color);
+    if (logo_url !== undefined)         await safeSet('logo_url', logo_url);
+    if (background_url !== undefined)   await safeSet('background_url', background_url);
+    await safeSet('bg_hero_color', bg_hero_color);
+    await safeSet('bg_page_color', bg_page_color);
 
     if (new_password && new_password.length >= 8) {
       const hash = await bcrypt.hash(new_password, 12);
