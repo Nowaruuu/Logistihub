@@ -232,9 +232,7 @@
             // Apply page body background — supports solid color or gradient
             if (bgPageColor) {
                 document.body.style.background = bgPageColor;
-                // Keep navbar background consistent
-                const navEl = document.querySelector('header') || document.querySelector('.container > nav');
-                if (navEl) navEl.style.background = bgPageColor;
+                // Do NOT set nav background separately — gradient re-renders at wrong scale
             }
 
             // Apply hero background — image > gradient/color > default

@@ -174,11 +174,15 @@ textarea{resize:vertical;}
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div id="sidebar-logo-container" style="display:none;margin-bottom:10px;">
-      <img id="sidebar-logo-img" src="" style="max-width:140px;max-height:40px;object-fit:contain;"/>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+      <div id="sidebar-logo-container" style="display:none;flex-shrink:0;">
+        <img id="sidebar-logo-img" src="" style="width:36px;height:36px;object-fit:contain;border-radius:8px;"/>
+      </div>
+      <div>
+        <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
+        <div class="tenant-sub">ADMIN DASHBOARD</div>
+      </div>
     </div>
-    <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
-    <div class="tenant-sub">ADMIN DASHBOARD</div>
     <div class="tenant-badge"><span class="material-symbols-outlined">shield</span>Isolated Workspace</div>
   </div>
   <nav>
