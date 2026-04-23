@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -480,19 +480,36 @@ textarea{resize:vertical;}
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Background Image</label>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <div id="bg-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>
-              </div>
-              <div>
-                <input id="set-bg-file" type="file" accept="image/*" style="display:none;" onchange="previewBackground(this)"/>
-                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-bg-file').click()">
-                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
-                </button>
-                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
+            <label class="form-label">Landing Page Background</label>
+            <div style="display:inline-flex;gap:0;margin-bottom:10px;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+              <button id="bg-type-btn-image" onclick="setBgType('image')" style="padding:6px 16px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#0f2235;color:#fff;font-family:inherit;">Image</button>
+              <button id="bg-type-btn-color" onclick="setBgType('color')" style="padding:6px 16px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Color</button>
+            </div>
+            <div id="bg-image-section">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div id="bg-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                  <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>
+                </div>
+                <div>
+                  <input id="set-bg-file" type="file" accept="image/*" style="display:none;" onchange="previewBackground(this)"/>
+                  <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;" onclick="document.getElementById('set-bg-file').click()">
+                    <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
+                  </button>
+                  <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
+                  <button type="button" onclick="clearBgImage()" style="display:block;margin-top:4px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">x Remove image</button>
+                </div>
               </div>
             </div>
+            <div id="bg-color-section" style="display:none;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <input id="set-hero-color" type="color" value="#0f172a" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('set-hero-color-hex').value=this.value;updateHeroPreview()"/>
+                <input id="set-hero-color-hex" type="text" value="#0f172a" placeholder="#0f172a" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-hero-color').value=this.value;updateHeroPreview()"/>
+              </div>
+              <div id="hero-color-preview" style="width:100%;height:48px;border-radius:8px;border:1.5px solid #e2e8f0;background:#0f172a;display:flex;align-items:center;justify-content:center;">
+                <span style="color:rgba(255,255,255,0.5);font-size:11px;font-style:italic;">Hero background preview</span>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
         <div class="form-grid">
@@ -673,7 +690,31 @@ go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
 })();
 </script>
 <script>
-function previewLogo(input) {
+function setBgType(type) {
+  var imgSec = document.getElementById('bg-image-section');
+  var colSec = document.getElementById('bg-color-section');
+  var btnImg = document.getElementById('bg-type-btn-image');
+  var btnCol = document.getElementById('bg-type-btn-color');
+  if (type === 'color') {
+    imgSec.style.display = 'none'; colSec.style.display = 'block';
+    btnImg.style.background = '#fff'; btnImg.style.color = '#64748b';
+    btnCol.style.background = '#0f2235'; btnCol.style.color = '#fff';
+  } else {
+    imgSec.style.display = 'block'; colSec.style.display = 'none';
+    btnImg.style.background = '#0f2235'; btnImg.style.color = '#fff';
+    btnCol.style.background = '#fff'; btnCol.style.color = '#64748b';
+  }
+}
+function clearBgImage() {
+  var prev = document.getElementById('bg-preview');
+  prev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>';
+  delete prev.dataset.base64;
+  document.getElementById('set-bg-file').value = '';
+}
+function updateHeroPreview() {
+  var val = document.getElementById('set-hero-color-hex').value;
+  document.getElementById('hero-color-preview').style.background = val;
+}function previewLogo(input) {
   if (!input.files || !input.files[0]) return;
   var reader = new FileReader();
   reader.onload = function(e) {
@@ -734,6 +775,13 @@ function loadSettings() {
       }
       if (d.background_url) {
         document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+        document.getElementById('bg-preview').dataset.base64 = d.background_url;
+        setBgType('image');
+      } else if (d.bg_hero_color) {
+        document.getElementById('set-hero-color').value = d.bg_hero_color;
+        document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
+        updateHeroPreview();
+        setBgType('color');
       }
       updateColorPreview();
       applyBranding(d);
@@ -754,12 +802,14 @@ async function saveSettings() {
   var slug = t.slug;
   var logoBase64 = document.getElementById('logo-preview').dataset.base64 || null;
   var bgBase64   = document.getElementById('bg-preview').dataset.base64 || null;
+  var isColorMode = document.getElementById('bg-color-section').style.display !== 'none';
   var payload = {
     company_name: document.getElementById('set-company').value.trim() || null,
     bg_app_color: document.getElementById('set-bg-app-hex').value.trim() || null,
     bg_sidebar_color: document.getElementById('set-bg-sidebar-hex').value.trim() || null,
     logo_url: logoBase64,
-    background_url: bgBase64,
+    background_url: isColorMode ? null : bgBase64,
+    bg_hero_color: isColorMode ? (document.getElementById('set-hero-color-hex').value.trim() || null) : null,
     new_password: document.getElementById('set-password').value || null
   };
   var btn = event.target;

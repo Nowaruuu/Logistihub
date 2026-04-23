@@ -20,7 +20,8 @@ window.__TENANT__ = ${JSON.stringify({
     logo_url:         tenantData.logo_url || '',
     bg_app_color:     tenantData.bg_app_color || '#f1f5f9',
     bg_sidebar_color: tenantData.bg_sidebar_color || '#0f2235',
-    background_url:   tenantData.background_url || ''
+    background_url:   tenantData.background_url || '',
+    bg_hero_color:    tenantData.bg_hero_color || ''
   })};
 </script>
 <style>
