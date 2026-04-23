@@ -58,7 +58,7 @@
         .hero {
             position: relative;
             background-color: #0f172a;
-            /* Fallback to high-quality Unsplash image to avoid broken assets */
+            /* Default: high-quality warehouse image — overridden by JS if tenant has custom BG */
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
@@ -221,10 +221,19 @@
         const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
         const name = (window.__TENANT__ && window.__TENANT__.company_name) || 'LogistiHub';
         const logoUrl = (window.__TENANT__ && window.__TENANT__.logo_url) || null;
+        const bgUrl = (window.__TENANT__ && window.__TENANT__.background_url) || null;
 
         window.onload = function() {
             document.getElementById('nav-brand').textContent = name;
             document.getElementById('hero-title').textContent = `${name}.`;
+
+            // Apply custom background if tenant has one set, else keep default
+            if (bgUrl) {
+                const hero = document.querySelector('.hero');
+                hero.style.backgroundImage = `linear-gradient(rgba(15,23,42,0.65), rgba(15,23,42,0.65)), url('${bgUrl}')`;
+                hero.style.backgroundSize = 'cover';
+                hero.style.backgroundPosition = 'center';
+            }
 
             // Show tenant logo if available
             if (logoUrl) {
