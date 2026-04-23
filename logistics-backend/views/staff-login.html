@@ -187,18 +187,7 @@ input:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
     <div id="forgot-result" style="display:none;font-size:12px;border-radius:8px;padding:10px 13px;margin-bottom:12px;text-align:center;"></div>
 
     <!-- OTP reset panel (shown after Forgot Password is clicked) -->
-    <div id="reset-panel" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:700;color:#0f2235;margin-bottom:4px;">Enter Reset Code</div>
-      <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Check your email for the 6-digit code.</p>
-      <input id="reset-code" type="text" maxlength="6" placeholder="6-digit code" style="margin-bottom:10px;letter-spacing:6px;text-align:center;font-size:18px;font-weight:700;">
-      <input id="reset-new-pw" type="password" placeholder="New password (min 8 chars)" style="margin-bottom:10px;">
-      <input id="reset-confirm-pw" type="password" placeholder="Confirm new password" style="margin-bottom:10px;">
-      <div id="reset-err" style="display:none;font-size:12px;color:#dc2626;margin-bottom:8px;"></div>
-      <button class="btn" style="background:#0f2235;" onclick="submitReset()">
-        <span class="material-symbols-outlined">lock_reset</span>Reset Password
-      </button>
-      <a href="#" onclick="document.getElementById('reset-panel').style.display='none';return false;" style="display:block;text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Cancel</a>
-    </div>
+    
 
     <button class="btn" id="login-btn" onclick="doLogin()">
       <span class="material-symbols-outlined">login</span>Sign In
@@ -299,7 +288,7 @@ async function sendForgot(type) {
     if (r.ok && d.ok) {
       result.style.background = '#f0fdf4'; result.style.color = '#16a34a'; result.style.border = '1px solid #bbf7d0';
       result.textContent = d.message;
-      if (type === 'password') document.getElementById('reset-panel').style.display = 'block';
+      if (type === 'password') { document.getElementById('reset-modal').classList.add('open'); document.getElementById('reset-code').focus(); }
     } else {
       result.style.background = '#fef2f2'; result.style.color = '#dc2626'; result.style.border = '1px solid #fecaca';
       result.textContent = d.error || 'Error. Please try again.';
@@ -327,7 +316,7 @@ async function submitReset() {
     });
     const d = await r.json();
     if (r.ok && d.ok) {
-      document.getElementById('reset-panel').style.display = 'none';
+      document.getElementById('reset-modal').classList.remove('open');
       const res = document.getElementById('forgot-result');
       res.style.display = 'block'; res.style.background = '#f0fdf4'; res.style.color = '#16a34a'; res.style.border = '1px solid #bbf7d0';
       res.textContent = 'Password reset! You can now sign in.';
@@ -336,5 +325,27 @@ async function submitReset() {
 }
 </script>
 
-</body>
+
+<!-- Password Reset Modal Overlay -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:slideUp 0.25s ease;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-size:16px;font-weight:800;color:#0f2235;">Reset Password</div>
+      <button onclick="document.getElementById('reset-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;line-height:1;">&#x2715;</button>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin:0 0 18px;">Enter the 6-digit code sent to your email, then set a new password.</p>
+    <input id="reset-code" type="text" maxlength="6" placeholder="6-digit code" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;font-size:22px;font-weight:800;letter-spacing:10px;text-align:center;outline:none;">
+    <input id="reset-new-pw" type="password" placeholder="New password (min 8 chars)" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px;outline:none;">
+    <input id="reset-confirm-pw" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;outline:none;">
+    <div id="reset-err" style="display:none;font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;margin-bottom:12px;"></div>
+    <button onclick="submitReset()" style="width:100%;background:#0f2235;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:18px;">lock_reset</span>Reset Password
+    </button>
+  </div>
+</div>
+<style>
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+#reset-modal { display:none; }
+#reset-modal.open { display:flex; }
+</style></body>
 </html>
