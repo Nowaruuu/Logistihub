@@ -25,6 +25,30 @@
     .dl-btn { display:inline-block; margin-top:14px; background:#0a1628; color:#fff; padding:12px 28px; border-radius:12px; font-weight:700; font-size:14px; text-decoration:none; }
     .email-note { font-size: 12px; color: #16a34a; background: #dcfce7; padding: 8px 12px; border-radius: 8px; margin-top: 12px; }
   </style>
+
+  <script>
+    // Apply tenant branding from server-injected window.__TENANT__
+    window.addEventListener('DOMContentLoaded', function() {
+      var t = window.__TENANT__;
+      if (!t) return;
+      // Logo / company name
+      var logoEl = document.querySelector('.logo');
+      if (logoEl) {
+        if (t.logo_url) {
+          logoEl.innerHTML = '<img src="' + t.logo_url + '" style="height:38px;object-fit:contain;max-width:160px;" alt="' + (t.company_name||'') + '">';
+        } else if (t.company_name) {
+          logoEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:28px;">package_2</span>' + t.company_name;
+        }
+      }
+      // Primary color → buttons, focus ring, input border
+      var primary = t.brand_color || '#0a1628';
+      document.documentElement.style.setProperty('--primary', primary);
+      // Page background
+      if (t.bg_app_color) document.body.style.background = t.bg_app_color;
+      // Page title
+      if (t.company_name) document.title = 'Register — ' + t.company_name;
+    });
+  </script>
 </head>
 <body>
   <div class="card" id="reg-card">

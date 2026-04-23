@@ -655,9 +655,9 @@ function renderAppUsers(users){
   if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
   var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaiting'};
   tbody.innerHTML=users.map(function(u){
-    var date=u.created_at?new Date(u.created_at).toLocaleDateString():'â€”';
+    var date=u.created_at?new Date(u.created_at).toLocaleDateString():'N/A';
     var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
-    return '<tr><td><strong>'+esc(u.full_name||u.name||'â€”')+'</strong></td><td>'+esc(u.email||'â€”')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'â€”')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
+    return '<tr><td><strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
 }
 function filterAppUsers(){
@@ -945,12 +945,18 @@ window.addEventListener('load', function() {
       <div style="font-size:9px;color:rgba(255,255,255,.55);margin-bottom:9px;">The central portal for logistics</div>
       <div style="font-size:9px;padding:4px 13px;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;color:#fff;">Get Started</div>
     </div>
-    <div id="lpv-body" style="padding:12px 16px;background:#f8fafc;transition:background .25s;min-height:70px;display:flex;gap:10px;align-items:flex-start;">
-      <div style="width:64px;height:44px;background:rgba(255,255,255,.35);border-radius:8px;flex-shrink:0;border:1px solid rgba(0,0,0,.06);"></div>
-      <div style="flex:1;padding-top:4px;">
-        <div style="height:7px;background:rgba(0,0,0,.13);border-radius:4px;width:78%;margin-bottom:5px;"></div>
-        <div style="height:7px;background:rgba(0,0,0,.08);border-radius:4px;width:52%;"></div>
+    <div id="lpv-body" style="padding:10px 12px 14px;background:#f8fafc;transition:background .25s;background-size:cover;background-position:center;">
+      <!-- Workspace Operations card mockup -->
+      <div style="background:rgba(15,23,42,.82);border-radius:10px;padding:12px 14px;text-align:center;">
+        <div style="height:7px;background:rgba(255,255,255,.5);border-radius:3px;width:55%;margin:0 auto 6px;"></div>
+        <div style="height:5px;background:rgba(255,255,255,.2);border-radius:3px;width:75%;margin:0 auto 3px;"></div>
+        <div style="height:5px;background:rgba(255,255,255,.15);border-radius:3px;width:60%;margin:0 auto 8px;"></div>
+        <div style="display:flex;gap:6px;justify-content:center;">
+          <div style="background:#3b82f6;border-radius:5px;padding:4px 10px;font-size:8px;color:#fff;font-weight:700;">Join Team</div>
+          <div style="border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 10px;font-size:8px;color:#fff;">Staff Login</div>
+        </div>
       </div>
+      <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px;width:40%;margin:8px auto 0;"></div>
     </div>
   </div>
 </div>
@@ -984,8 +990,16 @@ function updateLandingPreview() {
   var titleEl = document.getElementById('lpv-title');
   var logoBox = document.getElementById('lpv-logo');
 
-  if (nav)  nav.style.background  = pageCol;
-  if (body) body.style.background = pageCol;
+  if (nav) {
+    nav.style.background = pageCol;
+    nav.style.backgroundSize = 'cover';
+    nav.style.backgroundPosition = 'center';
+  }
+  if (body) {
+    body.style.background = pageCol;
+    body.style.backgroundSize = 'cover';
+    body.style.backgroundPosition = 'center';
+  }
   if (nameEl)  nameEl.textContent  = cname;
   if (titleEl) titleEl.textContent = cname + '.';
 
