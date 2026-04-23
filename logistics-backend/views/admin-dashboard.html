@@ -516,7 +516,17 @@ textarea{resize:vertical;}
           </div>
         </div>
 
-        <div class="form-sec" style="margin-top:6px;">Dashboard Colors</div>
+        <div class="form-sec" style="margin-top:6px;"><div class="form-sec" style="margin-top:6px;">Landing Page Body</div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Page Background Color <span style="color:#94a3b8;font-weight:400;">(nav + content area)</span></label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="set-page-bg-color" type="color" value="#ffffff" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('set-page-bg-hex').value=this.value;updatePageBgPreview()"/>
+            <input id="set-page-bg-hex" type="text" value="#ffffff" placeholder="#ffffff" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-page-bg-color').value=this.value;updatePageBgPreview()"/>
+            <div id="page-bg-preview-box" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#ffffff;transition:background 0.2s;"></div>
+          </div>
+        </div>
+
+        Dashboard Colors</div>
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">App Background Color</label>
@@ -716,6 +726,10 @@ function clearBgImage() {
   delete prev.dataset.base64;
   document.getElementById('set-bg-file').value = '';
 }
+function updatePageBgPreview() {
+  var val = document.getElementById("set-page-bg-hex").value;
+  document.getElementById("page-bg-preview-box").style.background = val;
+}
 function updateHeroPreview() {
   var val = document.getElementById('set-hero-color-hex').value;
   document.getElementById('hero-color-preview').style.background = val;
@@ -788,6 +802,11 @@ function loadSettings() {
         updateHeroPreview();
         setBgType('color');
       }
+      if (d.bg_page_color) {
+        document.getElementById('set-page-bg-color').value = d.bg_page_color;
+        document.getElementById('set-page-bg-hex').value = d.bg_page_color;
+        updatePageBgPreview();
+      }
       updateColorPreview();
       applyBranding(d);
     }).catch(function(){});
@@ -815,6 +834,7 @@ async function saveSettings() {
     logo_url: logoBase64,
     background_url: isColorMode ? null : bgBase64,
     bg_hero_color: isColorMode ? (document.getElementById('set-hero-color-hex').value.trim() || null) : null,
+    bg_page_color: document.getElementById('set-page-bg-hex').value.trim() || null,
     new_password: document.getElementById('set-password').value || null
   };
   var btn = event.target;

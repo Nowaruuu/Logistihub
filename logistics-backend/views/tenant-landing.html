@@ -223,10 +223,18 @@
         const logoUrl = (window.__TENANT__ && window.__TENANT__.logo_url) || null;
         const bgUrl = (window.__TENANT__ && window.__TENANT__.background_url) || null;
         const bgHeroColor = (window.__TENANT__ && window.__TENANT__.bg_hero_color) || null;
+        const bgPageColor = (window.__TENANT__ && window.__TENANT__.bg_page_color) || null;
 
         window.onload = function() {
             document.getElementById('nav-brand').textContent = name;
             document.getElementById('hero-title').textContent = `${name}.`;
+
+            // Apply page body background (nav + content area)
+            if (bgPageColor) {
+                document.body.style.background = bgPageColor;
+                const nav = document.querySelector('.container > nav');
+                if (nav) nav.style.background = bgPageColor;
+            }
 
             // Apply custom background — image takes priority over solid color, then default
             if (bgUrl) {
