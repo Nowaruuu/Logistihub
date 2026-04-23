@@ -288,7 +288,7 @@ async function sendForgot(type) {
     if (r.ok && d.ok) {
       result.style.background = '#f0fdf4'; result.style.color = '#16a34a'; result.style.border = '1px solid #bbf7d0';
       result.textContent = d.message;
-      if (type === 'password') { document.getElementById('reset-modal').classList.add('open'); document.getElementById('reset-code').focus(); }
+      if (type === 'password') { var m=document.getElementById('reset-modal'); m.style.display='flex'; document.getElementById('reset-code').value=''; document.getElementById('reset-new-pw').value=''; document.getElementById('reset-confirm-pw').value=''; document.getElementById('reset-err').style.display='none'; document.getElementById('reset-code').focus(); }
     } else {
       result.style.background = '#fef2f2'; result.style.color = '#dc2626'; result.style.border = '1px solid #fecaca';
       result.textContent = d.error || 'Error. Please try again.';
@@ -316,7 +316,7 @@ async function submitReset() {
     });
     const d = await r.json();
     if (r.ok && d.ok) {
-      document.getElementById('reset-modal').classList.remove('open');
+      document.getElementById('reset-modal').style.display='none';
       const res = document.getElementById('forgot-result');
       res.style.display = 'block'; res.style.background = '#f0fdf4'; res.style.color = '#16a34a'; res.style.border = '1px solid #bbf7d0';
       res.textContent = 'Password reset! You can now sign in.';
@@ -331,7 +331,7 @@ async function submitReset() {
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:slideUp 0.25s ease;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
       <div style="font-size:16px;font-weight:800;color:#0f2235;">Reset Password</div>
-      <button onclick="document.getElementById('reset-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;line-height:1;">&#x2715;</button>
+      <button onclick="document.getElementById('reset-modal').style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;line-height:1;">&#x2715;</button>
     </div>
     <p style="font-size:12px;color:#64748b;margin:0 0 18px;">Enter the 6-digit code sent to your email, then set a new password.</p>
     <input id="reset-code" type="text" maxlength="6" placeholder="6-digit code" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;font-size:22px;font-weight:800;letter-spacing:10px;text-align:center;outline:none;">

@@ -179,7 +179,7 @@ async function sendForgot(type) {
     if (r.ok && d.ok) {
       result.style.background = '#f0fdf4'; result.style.color = '#16a34a'; result.style.border = '1px solid #bbf7d0';
       result.textContent = d.message;
-      if (type === 'password') { document.getElementById('reset-modal').classList.add('open'); document.getElementById('reset-code').focus(); }
+      if (type === 'password') { var m=document.getElementById('reset-modal'); m.style.display='flex'; document.getElementById('reset-code').value=''; document.getElementById('reset-new-pw').value=''; document.getElementById('reset-confirm-pw').value=''; document.getElementById('reset-err').style.display='none'; document.getElementById('reset-code').focus(); }
     } else {
       result.style.background = '#fef2f2'; result.style.color = '#dc2626'; result.style.border = '1px solid #fecaca';
       result.textContent = d.error || 'Error. Please try again.';
@@ -207,7 +207,7 @@ async function submitReset() {
     });
     var d = await r.json();
     if (r.ok && d.ok) {
-      document.getElementById('reset-modal').classList.remove('open');
+      document.getElementById('reset-modal').style.display='none';
       var res = document.getElementById('forgot-result');
       res.style.display = 'block'; res.style.background = '#f0fdf4'; res.style.color = '#16a34a'; res.style.border = '1px solid #bbf7d0';
       res.textContent = 'Password reset! You can now sign in.';
