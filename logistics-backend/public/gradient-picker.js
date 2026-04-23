@@ -31,6 +31,9 @@ function injectCSS(){
 .fl-vis:hover,.fl-vis.on{color:#475569;}
 .fl-del{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:18px;line-height:1;padding:0;}
 .fl-del:hover{color:#ef4444;}
+.fl-pos{width:30px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:5px;color:#334155;font-size:11px;font-family:'DM Mono',monospace;outline:none;text-align:center;padding:2px 4px;}
+.fl-type-wrap{display:flex;align-items:center;}
+.fl-type-sel{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;color:#334155;font-size:11px;padding:3px 6px;outline:none;cursor:pointer;font-family:inherit;}
 /* Tiny color picker popup */
 .fl-picker{position:fixed;z-index:99999;width:220px;background:#1e1e1e;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.7);padding:10px;font-family:'DM Sans',sans-serif;user-select:none;display:none;}
 .fl-cv-wrap{position:relative;border-radius:6px;overflow:hidden;margin-bottom:8px;}
@@ -113,6 +116,7 @@ class FillList {
     this.onChange=opts.onChange||function(){};
     this.angle=opts.angle||135;
     // Parse initial value
+    this.gradType='linear';
     this.fills=[];
     this._parse(opts.value||'#ffffff');
     injectCSS();
@@ -120,21 +124,26 @@ class FillList {
   }
 
   _parse(css){
-    if(!css){this.fills=[{hex:'#ffffff',op:100,vis:true}];return;}
+    if(!css){this.fills=[{hex:'#ffffff',op:100,pos:0,vis:true}];return;}
     if(css.includes('gradient')){
-      const m=[...css.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/g)];
       const am=css.match(/(\d+)deg/);if(am)this.angle=parseInt(am[1]);
-      if(m.length>=2){this.fills=m.map(x=>({hex:rgbToHex(+x[1],+x[2],+x[3]),op:x[4]!=null?Math.round(parseFloat(x[4])*100):100,vis:true}));return;}
+      if(css.includes('radial'))this.gradType='radial';
+      else if(css.includes('conic'))this.gradType='angular';
+      else this.gradType='linear';
+      const m=[...css.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)\s*([\d.]+)?%?/g)];
+      if(m.length>=2){this.fills=m.map((x,i)=>({hex:rgbToHex(+x[1],+x[2],+x[3]),op:x[4]!=null?Math.round(parseFloat(x[4])*100):100,pos:x[5]!=null?Math.round(parseFloat(x[5])):Math.round(i/(m.length-1)*100),vis:true}));return;}
     }
-    // solid
+    this.gradType='linear';
     const hex=css.replace(/[^#0-9a-fA-F]/g,'').substring(0,7)||'#ffffff';
-    this.fills=[{hex:hex.startsWith('#')?hex:'#'+hex,op:100,vis:true}];
+    this.fills=[{hex:hex.startsWith('#')?hex:'#'+hex,op:100,pos:0,vis:true}];
   }
 
   _css(){
     const vis=this.fills.filter(f=>f.vis);
     if(vis.length===1){const f=vis[0];const[r,g,b]=hexToRgb(f.hex);return f.op===100?f.hex:`rgba(${r},${g},${b},${f.op/100})`;}
-    const stops=vis.map((f,i)=>{const[r,g,b]=hexToRgb(f.hex);return`rgba(${r},${g},${b},${f.op/100}) ${Math.round(i/(vis.length-1)*100)}%`;}).join(', ');
+    const stops=vis.map(f=>{const[r,g,b]=hexToRgb(f.hex);return`rgba(${r},${g},${b},${f.op/100}) ${f.pos}%`;}).join(', ');
+    if(this.gradType==='radial')return`radial-gradient(circle, ${stops})`;
+    if(this.gradType==='angular')return`conic-gradient(from ${this.angle}deg, ${stops})`;
     return`linear-gradient(${this.angle}deg, ${stops})`;
   }
 
@@ -142,27 +151,43 @@ class FillList {
     this.container.innerHTML='';
     const root=document.createElement('div');root.className='fl-root';
 
-    // Header
+    // Header with type selector + add button
     const hdr=document.createElement('div');hdr.className='fl-header';
     const titleSpan=document.createElement('span');titleSpan.className='fl-title';titleSpan.textContent='Fill';
     const right=document.createElement('div');right.className='fl-head-right';
 
-    // Angle input (show when 2+ fills)
+    // Gradient type selector
+    const typeWrap=document.createElement('div');typeWrap.className='fl-type-wrap';
+    typeWrap.style.display=this.fills.length>1?'flex':'none';
+    const typeSelect=document.createElement('select');typeSelect.className='fl-type-sel';
+    ['linear','radial','angular'].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t.charAt(0).toUpperCase()+t.slice(1);if(t===this.gradType)o.selected=true;typeSelect.appendChild(o);});
+    typeSelect.onchange=e=>{this.gradType=e.target.value;angleWrap.style.display=(e.target.value!=='radial')?'flex':'none';this.onChange(this._css());};
+    typeWrap.appendChild(typeSelect);
+
+    // Angle input
     const angleWrap=document.createElement('div');angleWrap.className='fl-angle-wrap';
-    angleWrap.innerHTML=`<span>Angle</span><input type="number" min="0" max="360" value="${this.angle}"><span>°</span>`;
-    angleWrap.style.display=this.fills.length>1?'flex':'none';
+    angleWrap.style.display=(this.fills.length>1&&this.gradType!=='radial')?'flex':'none';
+    angleWrap.innerHTML=`<input type="number" min="0" max="360" value="${this.angle}"><span>°</span>`;
     angleWrap.querySelector('input').oninput=e=>{this.angle=parseInt(e.target.value)||0;this.onChange(this._css());};
 
-    const addBtn=document.createElement('button');addBtn.className='fl-add';addBtn.textContent='+';addBtn.title='Add fill';
-    addBtn.onclick=()=>{this.fills.push({hex:'#ffffff',op:100,vis:true});this._render();this.onChange(this._css());};
+    const addBtn=document.createElement('button');addBtn.className='fl-add';addBtn.textContent='+';addBtn.title='Add color stop';
+    addBtn.onclick=()=>{const last=this.fills[this.fills.length-1];const pos=Math.min(100,last?last.pos+Math.round((100-last.pos)/2):50);this.fills.push({hex:'#ffffff',op:100,pos:pos,vis:true});this._render();this.onChange(this._css());};
 
-    right.appendChild(angleWrap);right.appendChild(addBtn);
+    right.appendChild(typeWrap);right.appendChild(angleWrap);right.appendChild(addBtn);
     hdr.appendChild(titleSpan);hdr.appendChild(right);
     root.appendChild(hdr);
 
-    // Fill rows
+    // Fill rows — each shows: [pos%] [swatch] [HEX] [op] [%] [eye] [—]
     this.fills.forEach((f,i)=>{
       const row=document.createElement('div');row.className='fl-item';
+
+      // Position %
+      const posInput=document.createElement('input');posInput.className='fl-pos';posInput.type='number';posInput.min=0;posInput.max=100;posInput.value=f.pos;posInput.title='Stop position %';
+      posInput.style.display=this.fills.length>1?'block':'none';
+      posInput.oninput=e=>{f.pos=Math.max(0,Math.min(100,parseInt(e.target.value)||0));this.onChange(this._css());};
+
+      const posLabel=document.createElement('span');posLabel.className='fl-pct';posLabel.textContent='%';
+      posLabel.style.display=this.fills.length>1?'inline':'none';
 
       const sw=document.createElement('div');sw.className='fl-swatch';
       sw.style.background=f.hex;
@@ -176,18 +201,18 @@ class FillList {
 
       const pct=document.createElement('span');pct.className='fl-pct';pct.textContent='%';
 
-      const vis=document.createElement('button');vis.className='fl-vis'+(f.vis?' on':'');vis.textContent='👁';vis.title='Toggle visibility';
+      const vis=document.createElement('button');vis.className='fl-vis'+(f.vis?' on':'');vis.textContent='👁';vis.title='Toggle';
       vis.onclick=()=>{f.vis=!f.vis;vis.className='fl-vis'+(f.vis?' on':'');this.onChange(this._css());};
 
-      const del=document.createElement('button');del.className='fl-del';del.textContent='—';del.title='Remove fill';
+      const del=document.createElement('button');del.className='fl-del';del.textContent='—';del.title='Remove';
       del.onclick=()=>{if(this.fills.length<=1)return;this.fills.splice(i,1);this._render();this.onChange(this._css());};
 
-      row.appendChild(sw);row.appendChild(hexInput);row.appendChild(opInput);row.appendChild(pct);row.appendChild(vis);row.appendChild(del);
+      row.appendChild(posInput);row.appendChild(posLabel);row.appendChild(sw);row.appendChild(hexInput);row.appendChild(opInput);row.appendChild(pct);row.appendChild(vis);row.appendChild(del);
       root.appendChild(row);
     });
 
-    // Update angle visibility
-    angleWrap.style.display=this.fills.length>1?'flex':'none';
+    typeWrap.style.display=this.fills.length>1?'flex':'none';
+    angleWrap.style.display=(this.fills.length>1&&this.gradType!=='radial')?'flex':'none';
     this.container.appendChild(root);
   }
 
