@@ -1,347 +1,199 @@
-/* Gradient Picker — fixed UX */
+/* fill-list.js — Figma-style multi-fill / gradient builder */
 (function(){
 'use strict';
 
+/* ── Color utils ── */
 function hsvToRgb(h,s,v){let r,g,b,i=Math.floor(h/60)%6,f=h/60-Math.floor(h/60),p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);switch(i){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
-function hexToRgb(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16)||0;return[(n>>16)&255,(n>>8)&255,n&255];}
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16)||0;return[(n>>16)&255,(n>>8)&255,n&255];}
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');}
-function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0,s=max===0?0:d/max,v=max;if(d){if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360;}return[h,s,v];}
+function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),d=M-m;let h=0,s=M?d/M:0,v=M;if(d){if(M===r)h=((g-b)/d)%6;else if(M===g)h=(b-r)/d+2;else h=(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360;}return[h,s,v];}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
-const CSS=`
-.gp{position:fixed;z-index:99999;width:260px;background:#1e1e1e;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.7);padding:14px;font-family:'DM Sans',sans-serif;user-select:none;display:none;}
-.gp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.gp-tabs{display:flex;gap:2px;background:#111;border-radius:7px;padding:2px;}
-.gp-tab{padding:4px 12px;font-size:11px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:transparent;color:#555;font-family:inherit;transition:all .15s;}
-.gp-tab.on{background:#2d2d2d;color:#fff;}
-.gp-x{background:none;border:none;color:#555;cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;}
-.gp-x:hover{color:#fff;}
-
-/* Gradient section */
-.gp-grad{margin-bottom:12px;display:none;}
-.gp-bar-label{font-size:10px;color:#666;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
-.gp-bar-label span{color:#4c9ffe;cursor:pointer;font-weight:700;}
-.gp-bar-label span:hover{color:#80bfff;}
-.gp-bar{position:relative;height:28px;border-radius:8px;cursor:crosshair;margin-bottom:8px;border:1.5px solid rgba(255,255,255,.1);}
-.gp-bar-bg{position:absolute;inset:0;border-radius:7px;}
-.gp-stop{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.6);transform:translate(-50%,-50%);cursor:grab;transition:box-shadow .1s;z-index:2;}
-.gp-stop.on{box-shadow:0 0 0 2.5px #4c9ffe,0 2px 6px rgba(0,0,0,.6);}
-.gp-stop-row{display:flex;align-items:center;gap:8px;background:#2a2a2a;border-radius:7px;padding:7px 9px;margin-bottom:4px;}
-.gp-stop-row span{font-size:11px;color:#888;}
-.gp-stop-pos{width:48px;background:#1a1a1a;border:1px solid #333;border-radius:5px;color:#fff;padding:3px 6px;font-size:11px;font-family:'DM Mono',monospace;outline:none;text-align:center;}
-.gp-angle-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#666;}
-.gp-angle-row input{width:52px;background:#2a2a2a;border:1px solid #333;border-radius:5px;color:#fff;padding:3px 7px;font-size:11px;font-family:'DM Mono',monospace;outline:none;}
-
-/* Canvas */
-.gp-cv-wrap{position:relative;border-radius:8px;overflow:hidden;margin-bottom:10px;}
-.gp-cv{display:block;width:232px;height:144px;cursor:crosshair;}
-.gp-dot{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;transform:translate(-50%,-50%);}
-
-/* Sliders */
-.gp-sls{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
-.gp-sl{position:relative;height:14px;border-radius:7px;cursor:pointer;}
-.gp-hue-bg{position:absolute;inset:0;border-radius:7px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);}
-.gp-alpha-bg{position:absolute;inset:0;border-radius:7px;background:repeating-conic-gradient(#888 0% 25%,#444 0% 50%) 0 0/8px 8px;}
-.gp-alpha-fg{position:absolute;inset:0;border-radius:7px;}
-.gp-th{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);transform:translate(-50%,-50%);cursor:grab;pointer-events:none;}
-
-/* Inputs */
-.gp-ins{display:flex;gap:8px;}
-.gp-hexb{flex:1;display:flex;align-items:center;background:#2a2a2a;border:1px solid #333;border-radius:7px;padding:5px 9px;}
-.gp-hexb input{flex:1;background:none;border:none;color:#fff;font-size:12px;font-family:'DM Mono',monospace;outline:none;min-width:0;}
-.gp-opb{display:flex;align-items:center;background:#2a2a2a;border:1px solid #333;border-radius:7px;padding:5px 8px;gap:3px;width:72px;}
-.gp-opb input{background:none;border:none;color:#fff;font-size:12px;font-family:'DM Mono',monospace;outline:none;width:32px;}
-.gp-opb span{font-size:12px;color:#666;}
+/* ── Inject CSS once ── */
+function injectCSS(){
+  if(document.getElementById('fl-css'))return;
+  const s=document.createElement('style');s.id='fl-css';
+  s.textContent=`
+.fl-root{background:#1e1e1e;border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;}
+.fl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.fl-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.06em;text-transform:uppercase;}
+.fl-head-right{display:flex;align-items:center;gap:6px;}
+.fl-angle-wrap{display:flex;align-items:center;gap:4px;font-size:11px;color:#666;}
+.fl-angle-wrap input{width:42px;background:#2a2a2a;border:1px solid #333;border-radius:5px;color:#fff;padding:2px 6px;font-size:11px;font-family:'DM Mono',monospace;outline:none;}
+.fl-add{background:none;border:1px solid #444;border-radius:5px;color:#aaa;cursor:pointer;font-size:16px;line-height:1;padding:1px 7px;}
+.fl-add:hover{border-color:#4c9ffe;color:#4c9ffe;}
+.fl-item{display:flex;align-items:center;gap:7px;margin-bottom:5px;background:#2a2a2a;border-radius:7px;padding:5px 8px;}
+.fl-swatch{width:24px;height:24px;border-radius:5px;border:1.5px solid rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;}
+.fl-hex{flex:1;background:none;border:none;color:#fff;font-size:12px;font-family:'DM Mono',monospace;outline:none;min-width:0;text-transform:uppercase;}
+.fl-op{width:32px;background:none;border:none;color:#fff;font-size:12px;font-family:'DM Mono',monospace;outline:none;text-align:right;}
+.fl-pct{font-size:12px;color:#666;}
+.fl-vis{background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:0 2px;}
+.fl-vis:hover,.fl-vis.on{color:#ddd;}
+.fl-del{background:none;border:none;color:#555;cursor:pointer;font-size:18px;line-height:1;padding:0;}
+.fl-del:hover{color:#f87171;}
+/* Tiny color picker popup */
+.fl-picker{position:fixed;z-index:99999;width:220px;background:#1e1e1e;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.7);padding:10px;font-family:'DM Sans',sans-serif;user-select:none;display:none;}
+.fl-cv-wrap{position:relative;border-radius:6px;overflow:hidden;margin-bottom:8px;}
+.fl-cv{display:block;width:200px;height:130px;cursor:crosshair;}
+.fl-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;transform:translate(-50%,-50%);}
+.fl-sl{position:relative;height:12px;border-radius:6px;margin-bottom:7px;cursor:pointer;}
+.fl-hue-bg{position:absolute;inset:0;border-radius:6px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);}
+.fl-th{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;}
+.fl-pin{display:flex;gap:7px;}
+.fl-pin-hex{flex:1;background:#2a2a2a;border:1px solid #333;border-radius:6px;padding:4px 8px;display:flex;}
+.fl-pin-hex input{flex:1;background:none;border:none;color:#fff;font-size:11px;font-family:'DM Mono',monospace;outline:none;min-width:0;}
 `;
+  document.head.appendChild(s);
+}
 
-class GradientPicker {
-  constructor(opts={}){
-    this.onChange=opts.onChange||function(){};
-    this._type='solid';
-    this._angle=135;
-    this._stops=[{c:'#1a3a6e',a:1,p:0},{c:'#06b6d4',a:1,p:100}];
-    this._active=0;
-    this._h=200;this._s=0.75;this._v=0.43;this._a=1;
-    if(!document.getElementById('gp-style')){const s=document.createElement('style');s.id='gp-style';s.textContent=CSS;document.head.appendChild(s);}
-    this._build();
+/* ── Tiny HSV popup picker ── */
+let _picker=null;
+let _pickerOwner=null;
+function getTinyPicker(){
+  if(_picker)return _picker;
+  injectCSS();
+  const d=document.createElement('div');d.className='fl-picker';
+  d.innerHTML=`<div class="fl-cv-wrap"><canvas class="fl-cv" id="flcv" width="200" height="130"></canvas><div class="fl-dot" id="fldot"></div></div>
+<div class="fl-sl" id="flhsl"><div class="fl-hue-bg"></div><div class="fl-th" id="flht"></div></div>
+<div class="fl-pin"><div class="fl-pin-hex"><input id="flhex" type="text" maxlength="7"></div></div>`;
+  document.body.appendChild(d);
+  _picker={el:d,h:0,s:1,v:1,cb:null};
+
+  function render(){
+    const cv=d.querySelector('#flcv'),ctx=cv.getContext('2d');
+    const[hr,hg,hb]=hsvToRgb(_picker.h,1,1);
+    ctx.fillStyle=`rgb(${hr},${hg},${hb})`;ctx.fillRect(0,0,200,130);
+    const wg=ctx.createLinearGradient(0,0,200,0);wg.addColorStop(0,'#fff');wg.addColorStop(1,'transparent');
+    ctx.fillStyle=wg;ctx.fillRect(0,0,200,130);
+    const bg=ctx.createLinearGradient(0,0,0,130);bg.addColorStop(0,'transparent');bg.addColorStop(1,'#000');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,200,130);
+    const dot=d.querySelector('#fldot');
+    dot.style.left=(_picker.s*200)+'px';dot.style.top=((1-_picker.v)*130)+'px';
+    d.querySelector('#flht').style.left=(_picker.h/360*100)+'%';
+    d.querySelector('#flht').style.background=`hsl(${_picker.h},100%,50%)`;
+    const[r,g,b]=hsvToRgb(_picker.h,_picker.s,_picker.v);
+    d.querySelector('#flhex').value=rgbToHex(r,g,b);
+    if(_picker.cb)_picker.cb(rgbToHex(r,g,b));
   }
+  _picker.render=render;
 
-  _build(){
-    const d=document.createElement('div');d.className='gp';
-    d.innerHTML=`
-<div class="gp-head">
-  <div class="gp-tabs">
-    <button class="gp-tab on" data-t="solid">Solid</button>
-    <button class="gp-tab" data-t="linear">Linear</button>
-    <button class="gp-tab" data-t="radial">Radial</button>
-  </div>
-  <button class="gp-x">✕</button>
-</div>
-<div class="gp-grad" id="gp-grad">
-  <div class="gp-bar-label">
-    <span style="color:#aaa">Gradient Stops</span>
-    <span id="gp-add-stop">+ Add Stop</span>
-  </div>
-  <div class="gp-bar" id="gp-bar"><div class="gp-bar-bg" id="gp-bar-bg"></div></div>
-  <div class="gp-stop-row">
-    <span>Selected stop position:</span>
-    <input class="gp-stop-pos" id="gp-stop-pos" type="number" min="0" max="100" value="0">
-    <span>%</span>
-  </div>
-  <div class="gp-angle-row" id="gp-angle-row">
-    <span>Angle:</span>
-    <input type="number" min="0" max="360" id="gp-angle" value="135">
-    <span>°</span>
-  </div>
-</div>
-<div class="gp-cv-wrap"><canvas class="gp-cv" id="gp-cv" width="232" height="144"></canvas><div class="gp-dot" id="gp-dot"></div></div>
-<div class="gp-sls">
-  <div class="gp-sl" id="gp-hsl"><div class="gp-hue-bg"></div><div class="gp-th" id="gp-ht"></div></div>
-  <div class="gp-sl" id="gp-asl"><div class="gp-alpha-bg"></div><div class="gp-alpha-fg" id="gp-afg"></div><div class="gp-th" id="gp-at"></div></div>
-</div>
-<div class="gp-ins">
-  <div class="gp-hexb"><input id="gp-hex" type="text" maxlength="7" value="#1a3a6e"></div>
-  <div class="gp-opb"><input id="gp-op" type="number" min="0" max="100" value="100"><span>%</span></div>
-</div>`;
-    this._el=d;
-    document.body.appendChild(d);
-    this._bind();
-  }
-
-  _bind(){
-    const E=id=>this._el.querySelector('#'+id);
-    const el=this._el;
-
-    el.querySelector('.gp-x').onclick=()=>this.hide();
-
-    // Type tabs
-    el.querySelectorAll('.gp-tab').forEach(b=>b.addEventListener('click',()=>{
-      el.querySelectorAll('.gp-tab').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on');this._type=b.dataset.t;
-      E('gp-grad').style.display=this._type==='solid'?'none':'block';
-      E('gp-angle-row').style.display=this._type==='radial'?'none':'flex';
-      this._render();this._emit();
-    }));
-
-    // Add stop button
-    E('gp-add-stop').addEventListener('click',()=>{
-      const[r,g,b]=hsvToRgb(this._h,this._s,this._v);
-      const used=this._stops.map(s=>s.p);
-      let p=50;while(used.includes(p)&&p<100)p++;
-      this._stops.push({c:rgbToHex(r,g,b),a:this._a,p});
-      this._stops.sort((a,b)=>a.p-b.p);
-      this._active=this._stops.findIndex(s=>s.p===p);
-      this._render();this._emit();
-    });
-
-    // Gradient bar click = add stop at position
-    const bar=E('gp-bar');
-    bar.addEventListener('click',e=>{
-      if(e.target.classList.contains('gp-stop'))return;
-      const r=bar.getBoundingClientRect();
-      const p=Math.round(clamp((e.clientX-r.left)/r.width*100,0,100));
-      const[rr,gg,bb]=hsvToRgb(this._h,this._s,this._v);
-      this._stops.push({c:rgbToHex(rr,gg,bb),a:this._a,p});
-      this._stops.sort((a,b)=>a.p-b.p);
-      this._active=this._stops.findIndex(s=>s.p===p);
-      this._render();this._emit();
-    });
-
-    // Stop position input
-    E('gp-stop-pos').oninput=e=>{
-      this._stops[this._active].p=clamp(parseInt(e.target.value)||0,0,100);
-      this._stops.sort((a,b)=>a.p-b.p);
-      this._render();this._emit();
-    };
-
-    // Angle
-    E('gp-angle').oninput=e=>{this._angle=parseInt(e.target.value)||0;this._render();this._emit();};
-
-    // Canvas
-    const cv=E('gp-cv');
-    this._drag(cv,e=>{
-      const r=cv.getBoundingClientRect();
-      this._s=clamp((e.clientX-r.left)/r.width,0,1);
-      this._v=clamp(1-(e.clientY-r.top)/r.height,0,1);
-      this._fromHSV();
-    });
-
-    // Hue slider
-    this._drag(E('gp-hsl'),e=>{
-      const r=E('gp-hsl').getBoundingClientRect();
-      this._h=clamp((e.clientX-r.left)/r.width,0,1)*360;
-      this._fromHSV();
-    });
-
-    // Alpha slider
-    this._drag(E('gp-asl'),e=>{
-      const r=E('gp-asl').getBoundingClientRect();
-      this._a=clamp((e.clientX-r.left)/r.width,0,1);
-      this._stops[this._active].a=this._a;
-      this._render();this._emit();
-    });
-
-    // Hex input
-    E('gp-hex').oninput=e=>{
-      const v=e.target.value;
-      if(!/^#[0-9a-fA-F]{6}$/.test(v))return;
-      const[r,g,b]=hexToRgb(v);[this._h,this._s,this._v]=rgbToHsv(r,g,b);
-      this._fromHSV();
-    };
-
-    // Opacity input
-    E('gp-op').oninput=e=>{
-      this._a=clamp(parseInt(e.target.value)||0,0,100)/100;
-      this._stops[this._active].a=this._a;
-      this._render();this._emit();
-    };
-
-    // Close on outside click
-    document.addEventListener('mousedown',e=>{
-      if(this._el.style.display==='block'&&!this._el.contains(e.target)&&!e._gpTrig)this.hide();
-    });
-  }
-
-  _drag(el,fn){
+  function drag(el,fn){
     let on=false;
     el.addEventListener('mousedown',e=>{on=true;fn(e);e.preventDefault();e.stopPropagation();});
     document.addEventListener('mousemove',e=>{if(on)fn(e);});
     document.addEventListener('mouseup',()=>{on=false;});
   }
+  const cv=d.querySelector('#flcv');
+  drag(cv,e=>{const r=cv.getBoundingClientRect();_picker.s=clamp((e.clientX-r.left)/r.width,0,1);_picker.v=clamp(1-(e.clientY-r.top)/r.height,0,1);render();});
+  drag(d.querySelector('#flhsl'),e=>{const r=d.querySelector('#flhsl').getBoundingClientRect();_picker.h=clamp((e.clientX-r.left)/r.width,0,1)*360;render();});
+  d.querySelector('#flhex').oninput=e=>{const v=e.target.value;if(!/^#[0-9a-fA-F]{6}$/.test(v))return;const[r,g,b]=hexToRgb(v);[_picker.h,_picker.s,_picker.v]=rgbToHsv(r,g,b);render();};
+  document.addEventListener('mousedown',e=>{if(_picker.el.style.display==='block'&&!_picker.el.contains(e.target)&&!e._flTrig){_picker.el.style.display='none';_pickerOwner=null;}});
+  return _picker;
+}
 
-  _fromHSV(){
-    const[r,g,b]=hsvToRgb(this._h,this._s,this._v);
-    this._stops[this._active].c=rgbToHex(r,g,b);
-    this._stops[this._active].a=this._a;
-    this._render();this._emit();
+function openPicker(swatchEl, currentHex, cb){
+  const p=getTinyPicker();
+  p.cb=cb;
+  const[r,g,b]=hexToRgb(currentHex.replace('#','').padEnd(6,'0'));
+  [p.h,p.s,p.v]=rgbToHsv(r,g,b);
+  p.render();
+  p.el.style.display='block';
+  const br=swatchEl.getBoundingClientRect(),W=window.innerWidth,H=window.innerHeight;
+  let left=br.right+6,top=br.top;
+  if(left+230>W)left=br.left-230;
+  if(top+200>H)top=H-200;
+  p.el.style.left=left+'px';p.el.style.top=top+'px';
+  _pickerOwner=swatchEl;
+}
+
+/* ── FillList class ── */
+class FillList {
+  constructor(container, opts={}){
+    this.container=container;
+    this.onChange=opts.onChange||function(){};
+    this.angle=opts.angle||135;
+    // Parse initial value
+    this.fills=[];
+    this._parse(opts.value||'#ffffff');
+    injectCSS();
+    this._render();
+  }
+
+  _parse(css){
+    if(!css){this.fills=[{hex:'#ffffff',op:100,vis:true}];return;}
+    if(css.includes('gradient')){
+      const m=[...css.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/g)];
+      const am=css.match(/(\d+)deg/);if(am)this.angle=parseInt(am[1]);
+      if(m.length>=2){this.fills=m.map(x=>({hex:rgbToHex(+x[1],+x[2],+x[3]),op:x[4]!=null?Math.round(parseFloat(x[4])*100):100,vis:true}));return;}
+    }
+    // solid
+    const hex=css.replace(/[^#0-9a-fA-F]/g,'').substring(0,7)||'#ffffff';
+    this.fills=[{hex:hex.startsWith('#')?hex:'#'+hex,op:100,vis:true}];
+  }
+
+  _css(){
+    const vis=this.fills.filter(f=>f.vis);
+    if(vis.length===1){const f=vis[0];const[r,g,b]=hexToRgb(f.hex);return f.op===100?f.hex:`rgba(${r},${g},${b},${f.op/100})`;}
+    const stops=vis.map((f,i)=>{const[r,g,b]=hexToRgb(f.hex);return`rgba(${r},${g},${b},${f.op/100}) ${Math.round(i/(vis.length-1)*100)}%`;}).join(', ');
+    return`linear-gradient(${this.angle}deg, ${stops})`;
   }
 
   _render(){
-    const E=id=>this._el.querySelector('#'+id);
-    // Canvas
-    const cv=E('gp-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
-    const[hr,hg,hb]=hsvToRgb(this._h,1,1);
-    ctx.fillStyle=`rgb(${hr},${hg},${hb})`;ctx.fillRect(0,0,W,H);
-    const wg=ctx.createLinearGradient(0,0,W,0);wg.addColorStop(0,'#fff');wg.addColorStop(1,'transparent');
-    ctx.fillStyle=wg;ctx.fillRect(0,0,W,H);
-    const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'transparent');bg.addColorStop(1,'#000');
-    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    // Dot
-    const dot=E('gp-dot');dot.style.left=(this._s*232)+'px';dot.style.top=((1-this._v)*144)+'px';
-    // Hue thumb
-    E('gp-ht').style.left=(this._h/360*100)+'%';
-    E('gp-ht').style.background=`hsl(${this._h},100%,50%)`;
-    // Alpha
-    const[cr,cg,cb]=hsvToRgb(this._h,this._s,this._v);
-    const curHex=rgbToHex(cr,cg,cb);
-    E('gp-afg').style.background=`linear-gradient(to right,transparent,${curHex})`;
-    E('gp-at').style.left=(this._a*100)+'%';
-    E('gp-at').style.background=`rgba(${cr},${cg},${cb},${this._a})`;
-    // Inputs
-    E('gp-hex').value=curHex;
-    E('gp-op').value=Math.round(this._a*100);
-    // Gradient bar
-    if(this._type!=='solid'){
-      E('gp-bar-bg').style.background=this._css('to right');
-      // Remove old stop markers
-      this._el.querySelectorAll('.gp-stop').forEach(s=>s.remove());
-      const bar=E('gp-bar');
-      this._stops.forEach((s,i)=>{
-        const m=document.createElement('div');m.className='gp-stop'+(i===this._active?' on':'');
-        m.style.left=s.p+'%';m.style.background=s.c;m.style.opacity=s.a;
-        // Click to select
-        m.addEventListener('mousedown',e=>{
-          e.stopPropagation();this._active=i;
-          const[r,g,b]=hexToRgb(s.c);[this._h,this._s,this._v]=rgbToHsv(r,g,b);this._a=s.a;
-          // Drag
-          let active=true;
-          const move=ev=>{
-            if(!active)return;
-            const br=bar.getBoundingClientRect();
-            s.p=Math.round(clamp((ev.clientX-br.left)/br.width*100,0,100));
-            E('gp-stop-pos').value=s.p;
-            this._stops.sort((a,b)=>a.p-b.p);
-            this._active=this._stops.indexOf(s);
-            this._render();this._emit();
-          };
-          const up=()=>{active=false;document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};
-          document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
-          this._render();
-        });
-        // Double-click to remove
-        m.addEventListener('dblclick',e=>{
-          e.stopPropagation();
-          if(this._stops.length<=2)return;
-          this._stops.splice(i,1);
-          this._active=Math.min(this._active,this._stops.length-1);
-          this._render();this._emit();
-        });
-        bar.appendChild(m);
-      });
-      if(this._active<this._stops.length)E('gp-stop-pos').value=this._stops[this._active].p;
-    }
+    this.container.innerHTML='';
+    const root=document.createElement('div');root.className='fl-root';
+
+    // Header
+    const hdr=document.createElement('div');hdr.className='fl-header';
+    const titleSpan=document.createElement('span');titleSpan.className='fl-title';titleSpan.textContent='Fill';
+    const right=document.createElement('div');right.className='fl-head-right';
+
+    // Angle input (show when 2+ fills)
+    const angleWrap=document.createElement('div');angleWrap.className='fl-angle-wrap';
+    angleWrap.innerHTML=`<span>Angle</span><input type="number" min="0" max="360" value="${this.angle}"><span>°</span>`;
+    angleWrap.style.display=this.fills.length>1?'flex':'none';
+    angleWrap.querySelector('input').oninput=e=>{this.angle=parseInt(e.target.value)||0;this.onChange(this._css());};
+
+    const addBtn=document.createElement('button');addBtn.className='fl-add';addBtn.textContent='+';addBtn.title='Add fill';
+    addBtn.onclick=()=>{this.fills.push({hex:'#ffffff',op:100,vis:true});this._render();this.onChange(this._css());};
+
+    right.appendChild(angleWrap);right.appendChild(addBtn);
+    hdr.appendChild(titleSpan);hdr.appendChild(right);
+    root.appendChild(hdr);
+
+    // Fill rows
+    this.fills.forEach((f,i)=>{
+      const row=document.createElement('div');row.className='fl-item';
+
+      const sw=document.createElement('div');sw.className='fl-swatch';
+      sw.style.background=f.hex;
+      sw.addEventListener('mousedown',e=>{e._flTrig=true;openPicker(sw,f.hex,hex=>{f.hex=hex;sw.style.background=hex;hexInput.value=hex.replace('#','').toUpperCase();this.onChange(this._css());});});
+
+      const hexInput=document.createElement('input');hexInput.className='fl-hex';hexInput.type='text';hexInput.maxLength=6;hexInput.value=f.hex.replace('#','').toUpperCase();
+      hexInput.oninput=e=>{const v='#'+e.target.value.replace(/[^0-9a-fA-F]/g,'');if(v.length===7){f.hex=v;sw.style.background=v;this.onChange(this._css());}};
+
+      const opInput=document.createElement('input');opInput.className='fl-op';opInput.type='number';opInput.min=0;opInput.max=100;opInput.value=f.op;
+      opInput.oninput=e=>{f.op=clamp(parseInt(e.target.value)||0,0,100);this.onChange(this._css());};
+
+      const pct=document.createElement('span');pct.className='fl-pct';pct.textContent='%';
+
+      const vis=document.createElement('button');vis.className='fl-vis'+(f.vis?' on':'');vis.textContent='👁';vis.title='Toggle visibility';
+      vis.onclick=()=>{f.vis=!f.vis;vis.className='fl-vis'+(f.vis?' on':'');this.onChange(this._css());};
+
+      const del=document.createElement('button');del.className='fl-del';del.textContent='—';del.title='Remove fill';
+      del.onclick=()=>{if(this.fills.length<=1)return;this.fills.splice(i,1);this._render();this.onChange(this._css());};
+
+      row.appendChild(sw);row.appendChild(hexInput);row.appendChild(opInput);row.appendChild(pct);row.appendChild(vis);row.appendChild(del);
+      root.appendChild(row);
+    });
+
+    // Update angle visibility
+    angleWrap.style.display=this.fills.length>1?'flex':'none';
+    this.container.appendChild(root);
   }
 
-  _css(dir){
-    if(this._type==='solid'){const[r,g,b]=hexToRgb(this._stops[0].c);return`rgba(${r},${g},${b},${this._stops[0].a})`;}
-    const sorted=[...this._stops].sort((a,b)=>a.p-b.p);
-    const parts=sorted.map(s=>{const[r,g,b]=hexToRgb(s.c);return`rgba(${r},${g},${b},${s.a}) ${s.p}%`;}).join(',');
-    if(this._type==='radial')return`radial-gradient(circle, ${parts})`;
-    return`linear-gradient(${this._angle}deg, ${parts})`;
-  }
-
-  _emit(){this.onChange(this._css());}
   getValue(){return this._css();}
-
-  setValue(css){
-    if(!css)return;
-    if(css.includes('linear-gradient')||css.includes('radial-gradient')){
-      this._type=css.includes('radial')?'radial':'linear';
-      const m=css.match(/(\d+)deg/);if(m)this._angle=parseInt(m[1]);
-      const matches=[...css.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)\s*([\d.]+)%/g)];
-      if(matches.length>=2)this._stops=matches.map(m=>({c:rgbToHex(+m[1],+m[2],+m[3]),a:m[4]!=null?parseFloat(m[4]):1,p:parseFloat(m[5])}));
-      this._el.querySelectorAll('.gp-tab').forEach(b=>b.classList.toggle('on',b.dataset.t===this._type));
-      this._el.querySelector('#gp-grad').style.display='block';
-      this._el.querySelector('#gp-angle-row').style.display=this._type==='radial'?'none':'flex';
-    } else {
-      this._type='solid';
-      try{const[r,g,b]=hexToRgb(css.trim());[this._h,this._s,this._v]=rgbToHsv(r,g,b);this._stops[0]={c:css.trim(),a:1,p:0};}catch(e){}
-      this._el.querySelectorAll('.gp-tab').forEach(b=>b.classList.toggle('on',b.dataset.t==='solid'));
-      this._el.querySelector('#gp-grad').style.display='none';
-    }
-    const s=this._stops[this._active]||this._stops[0];
-    try{const[r,g,b]=hexToRgb(s.c);[this._h,this._s,this._v]=rgbToHsv(r,g,b);this._a=s.a;}catch(e){}
-    this._render();
-  }
-
-  show(x,y){
-    this._el.style.display='block';
-    const W=window.innerWidth,H=window.innerHeight;
-    this._el.style.left=Math.min(x,W-270)+'px';
-    this._el.style.top=Math.min(y,H-460)+'px';
-    this._render();
-  }
-  hide(){this._el.style.display='none';}
+  setValue(css){this._parse(css);this._render();}
 }
 
-window.GradientPicker=GradientPicker;
-
-window.attachGradientPicker=function(swatchEl,hexInput,opts={}){
-  const picker=new GradientPicker({
-    onChange(val){
-      swatchEl.style.background=val;
-      if(hexInput)hexInput.value=val;
-      if(opts.onChange)opts.onChange(val);
-    }
-  });
-  swatchEl.style.cursor='pointer';
-  swatchEl.addEventListener('mousedown',e=>{
-    e._gpTrig=true;
-    if(picker._el.style.display==='block'){picker.hide();return;}
-    picker.setValue(hexInput?hexInput.value:(opts.value||'#1a3a6e'));
-    const r=swatchEl.getBoundingClientRect();
-    picker.show(r.left,r.bottom+8);
-  });
-  return picker;
-};
+window.FillList=FillList;
 })();
