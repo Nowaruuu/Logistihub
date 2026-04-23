@@ -34,6 +34,10 @@ function injectCSS(){
 .fl-pos{width:30px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:5px;color:#334155;font-size:11px;font-family:'DM Mono',monospace;outline:none;text-align:center;padding:2px 4px;}
 .fl-type-wrap{display:flex;align-items:center;}
 .fl-type-sel{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;color:#334155;font-size:11px;padding:3px 6px;outline:none;cursor:pointer;font-family:inherit;}
+.fl-gbar-wrap{position:relative;height:32px;border-radius:8px;margin-bottom:10px;cursor:crosshair;border:1.5px solid #e2e8f0;overflow:visible;}
+.fl-gbar-preview{position:absolute;inset:0;border-radius:7px;}
+.fl-ghandle{position:absolute;top:50%;width:14px;height:14px;border-radius:3px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transform:translate(-50%,-50%);cursor:grab;z-index:2;transition:box-shadow .1s;}
+.fl-ghandle.on{box-shadow:0 0 0 2px #4c9ffe,0 1px 4px rgba(0,0,0,.3);}
 /* Tiny color picker popup */
 .fl-picker{position:fixed;z-index:99999;width:220px;background:#1e1e1e;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.7);padding:10px;font-family:'DM Sans',sans-serif;user-select:none;display:none;}
 .fl-cv-wrap{position:relative;border-radius:6px;overflow:hidden;margin-bottom:8px;}
@@ -116,7 +120,7 @@ class FillList {
     this.onChange=opts.onChange||function(){};
     this.angle=opts.angle||135;
     // Parse initial value
-    this.gradType='linear';
+    this.gradType='linear';this._activeRow=0;
     this.fills=[];
     this._parse(opts.value||'#ffffff');
     injectCSS();
@@ -133,12 +137,12 @@ class FillList {
       const m=[...css.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)\s*([\d.]+)?%?/g)];
       if(m.length>=2){this.fills=m.map((x,i)=>({hex:rgbToHex(+x[1],+x[2],+x[3]),op:x[4]!=null?Math.round(parseFloat(x[4])*100):100,pos:x[5]!=null?Math.round(parseFloat(x[5])):Math.round(i/(m.length-1)*100),vis:true}));return;}
     }
-    this.gradType='linear';
+    this.gradType='linear';this._activeRow=0;
     const hex=css.replace(/[^#0-9a-fA-F]/g,'').substring(0,7)||'#ffffff';
     this.fills=[{hex:hex.startsWith('#')?hex:'#'+hex,op:100,pos:0,vis:true}];
   }
 
-  _css(){
+  _css(dir){
     const vis=this.fills.filter(f=>f.vis);
     if(vis.length===1){const f=vis[0];const[r,g,b]=hexToRgb(f.hex);return f.op===100?f.hex:`rgba(${r},${g},${b},${f.op/100})`;}
     const stops=vis.map(f=>{const[r,g,b]=hexToRgb(f.hex);return`rgba(${r},${g},${b},${f.op/100}) ${f.pos}%`;}).join(', ');
@@ -176,6 +180,48 @@ class FillList {
     right.appendChild(typeWrap);right.appendChild(angleWrap);right.appendChild(addBtn);
     hdr.appendChild(titleSpan);hdr.appendChild(right);
     root.appendChild(hdr);
+
+    // Gradient preview bar (only when 2+ fills)
+    if(this.fills.length>1){
+      const barWrap=document.createElement('div');barWrap.className='fl-gbar-wrap';
+      const barBg=document.createElement('div');barBg.className='fl-gbar-preview';
+      barBg.style.background=this._css('to right');
+      barWrap.appendChild(barBg);
+      // Handles for each stop
+      this.fills.forEach((f,i)=>{
+        const h=document.createElement('div');h.className='fl-ghandle'+(i===this._activeRow?' on':'');
+        h.style.left=f.pos+'%';h.style.background=f.hex;h.style.opacity=f.op/100;
+        h.addEventListener('mousedown',e=>{
+          e.stopPropagation();this._activeRow=i;
+          const move=ev=>{
+            const r=barWrap.getBoundingClientRect();
+            f.pos=Math.round(Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)));
+            h.style.left=f.pos+'%';
+            // update position input
+            const posInputs=root.querySelectorAll('.fl-pos');
+            if(posInputs[i])posInputs[i].value=f.pos;
+            barBg.style.background=this._css('to right');
+            this.onChange(this._css());
+          };
+          const up=()=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};
+          document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+          // highlight this row
+          root.querySelectorAll('.fl-item').forEach((r,ri)=>r.style.border=ri===i?'1.5px solid #4c9ffe':'1.5px solid #e2e8f0');
+          this._render();
+        });
+        barWrap.appendChild(h);
+      });
+      // Click bar to add stop
+      barWrap.addEventListener('click',e=>{
+        if(e.target.classList.contains('fl-ghandle'))return;
+        const r=barWrap.getBoundingClientRect();
+        const pos=Math.round(Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100)));
+        this.fills.push({hex:'#ffffff',op:100,pos:pos,vis:true});
+        this.fills.sort((a,b)=>a.pos-b.pos);
+        this._render();this.onChange(this._css());
+      });
+      root.appendChild(barWrap);
+    }
 
     // Fill rows — each shows: [pos%] [swatch] [HEX] [op] [%] [eye] [—]
     this.fills.forEach((f,i)=>{

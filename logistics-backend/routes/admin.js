@@ -210,27 +210,25 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
   const tid = req.tenantId;
 
   try {
+    // Core columns — always exist
     await query(`
-      UPDATE TENANT 
+      UPDATE TENANT
       SET company_name     = COALESCE(?, company_name),
           bg_app_color     = COALESCE(?, bg_app_color),
           bg_sidebar_color = COALESCE(?, bg_sidebar_color),
           logo_url         = COALESCE(?, logo_url),
-          background_url   = ?,
-          bg_hero_color    = ?,
-          bg_page_color    = ?
+          background_url   = ?
       WHERE tenant_id = ?`,
-      [
-        company_name || null,
-        bg_app_color || null,
-        bg_sidebar_color || null,
-        logo_url || null,
-        background_url || null,
-        bg_hero_color || null,
-        bg_page_color || null,
-        tid
-      ]
+      [company_name || null, bg_app_color || null, bg_sidebar_color || null, logo_url || null, background_url || null, tid]
     );
+
+    // Optional new columns — added via migration; skip gracefully if missing
+    try {
+      await query(`UPDATE TENANT SET bg_hero_color = ?, bg_page_color = ? WHERE tenant_id = ?`,
+        [bg_hero_color || null, bg_page_color || null, tid]);
+    } catch(colErr) {
+      console.warn('[settings] bg_hero_color/bg_page_color columns missing — run migrations:', colErr.message);
+    }
 
     if (new_password && new_password.length >= 8) {
       const hash = await bcrypt.hash(new_password, 12);
@@ -239,7 +237,8 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 
     res.json({ success: true, message: 'Settings saved successfully!' });
   } catch (err) {
-    console.error('Settings error:', err); res.status(500).json({ error: 'Failed to update settings.', detail: err.message });
+    console.error('Settings error:', err);
+    res.status(500).json({ error: 'Failed to update settings.', detail: err.message });
   }
 });
 
