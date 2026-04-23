@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -751,21 +751,17 @@ function previewBackground(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-document.getElementById('set-bg-app') && document.getElementById('set-bg-app').addEventListener('input', function() {
-  document.getElementById('set-bg-app-hex').value = this.value;
-  updateColorPreview();
-});
-document.getElementById('set-bg-sidebar') && document.getElementById('set-bg-sidebar').addEventListener('input', function() {
-  document.getElementById('set-bg-sidebar-hex').value = this.value;
-  updateColorPreview();
-});
+// FillList handles color inputs — native inputs removed
 function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
-  var app = document.getElementById('set-bg-app').value;
-  var side = document.getElementById('set-bg-sidebar').value;
+  var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
+  var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235';
   if (bar) bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
+  // Also apply live to admin UI
+  document.body.style.background = app;
+  var sb = document.querySelector('.sidebar');
+  if (sb) sb.style.background = side;
 }
-updateColorPreview();
 
 function loadSettings() {
   var t = window.__TENANT__;
@@ -778,13 +774,14 @@ function loadSettings() {
       if (d.slug) document.getElementById('set-slug').value = d.slug;
       if (d.name) document.getElementById('set-name').value = d.name;
       if (d.email) document.getElementById('set-email').value = d.email;
+      // App & Sidebar colors — load into FillList + hidden inputs
       if (d.bg_app_color) {
-        document.getElementById('set-bg-app').value = d.bg_app_color;
         document.getElementById('set-bg-app-hex').value = d.bg_app_color;
+        if (typeof _appFL !== 'undefined' && _appFL) _appFL.setValue(d.bg_app_color);
       }
       if (d.bg_sidebar_color) {
-        document.getElementById('set-bg-sidebar').value = d.bg_sidebar_color;
         document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
+        if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
       }
       if (d.logo_url) {
         document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
@@ -795,24 +792,14 @@ function loadSettings() {
         setBgType('image');
       } else if (d.bg_hero_color) {
         document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
-        document.getElementById('hero-color-swatch').style.background = d.bg_hero_color;
         var hp = document.getElementById('hero-color-preview');
-        if(hp) hp.style.background = d.bg_hero_color;
-        if(_heroPicker) _heroPicker.setValue(d.bg_hero_color);
+        if (hp) hp.style.background = d.bg_hero_color;
+        if (typeof _heroFL !== 'undefined' && _heroFL) _heroFL.setValue(d.bg_hero_color);
         setBgType('color');
       }
       if (d.bg_page_color) {
         document.getElementById('set-page-bg-hex').value = d.bg_page_color;
-        document.getElementById('page-bg-swatch').style.background = d.bg_page_color;
-        if(_pageBgPicker) _pageBgPicker.setValue(d.bg_page_color);
-      }
-      if (d.bg_app_color) {
-        document.getElementById('app-bg-swatch').style.background = d.bg_app_color;
-        if(_appBgPicker) _appBgPicker.setValue(d.bg_app_color);
-      }
-      if (d.bg_sidebar_color) {
-        document.getElementById('sidebar-bg-swatch').style.background = d.bg_sidebar_color;
-        if(_sidebarPicker) _sidebarPicker.setValue(d.bg_sidebar_color);
+        if (typeof _pageFL !== 'undefined' && _pageFL) _pageFL.setValue(d.bg_page_color);
       }
       updateColorPreview();
       applyBranding(d);
@@ -820,11 +807,10 @@ function loadSettings() {
 }
 
 function applyBranding(d) {
-  if (d.bg_app_color) document.body.style.background = d.bg_app_color;
-  if (d.bg_sidebar_color) {
-    var sidebar = document.querySelector('.sidebar');
-    if (sidebar) sidebar.style.background = d.bg_sidebar_color;
-  }
+  var appCol = d.bg_app_color || (document.getElementById('set-bg-app-hex') || {}).value;
+  var sideCol = d.bg_sidebar_color || (document.getElementById('set-bg-sidebar-hex') || {}).value;
+  if (appCol) document.body.style.background = appCol;
+  if (sideCol) { var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = sideCol; }
 }
 
 async function saveSettings() {
@@ -890,17 +876,19 @@ window.addEventListener('load', function() {
   });
 
   _appFL = new FillList(document.getElementById('app-fill-list'), {
-    value: '#f1f5f9',
+    value: (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9',
     onChange: function(v) {
       document.getElementById('set-bg-app-hex').value = v;
+      document.body.style.background = v;  // live apply
       updateColorPreview();
     }
   });
 
   _sidebarFL = new FillList(document.getElementById('sidebar-fill-list'), {
-    value: '#0f2235',
+    value: (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235',
     onChange: function(v) {
       document.getElementById('set-bg-sidebar-hex').value = v;
+      var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
       updateColorPreview();
     }
   });
