@@ -201,15 +201,6 @@ class FillList{
     this._barGrad=document.createElement('div');this._barGrad.className='fl-bar-grad';
     this._barGrad.style.background=this._barCss();
     this._barWrap.appendChild(barTrack);this._barWrap.appendChild(this._barGrad);
-    // Click bar to add stop
-    this._barWrap.addEventListener('click',e=>{
-      if(e.target.classList.contains('fl-handle'))return;
-      const br=this._barWrap.getBoundingClientRect();
-      const pos=Math.round(clamp((e.clientX-br.left)/br.width*100,0,100));
-      const ref=this.fills[0];
-      this.fills.push({hex:ref?ref.hex:'#ffffff',op:100,pos,vis:true});
-      this._rebuildRows();this._syncBar();this.onChange(this._css());
-    });
     root.appendChild(this._barWrap);
 
     // ── Rows container ──
