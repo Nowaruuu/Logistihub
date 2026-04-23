@@ -577,21 +577,21 @@ textarea{resize:vertical;}
           <div style="flex:1;background:#fff;border-radius:4px;padding:2px 6px;font-size:9px;color:#94a3b8;font-family:monospace;margin-left:4px;">logisticsos.io/workspace</div>
         </div>
         <!-- Nav -->
-        <div id="lp-nav-bar" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#fff;transition:background .3s;">
+        <div id="hidden-lp-nav-bar" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#fff;transition:background .3s;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <div id="lp-logo-box" style="width:22px;height:22px;border-radius:5px;background:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;">&#9679;</div>
-            <span id="lp-company-name" style="font-size:11px;font-weight:700;color:#0f172a;">Company</span>
+            <div id="hidden-lp-logo-box" style="width:22px;height:22px;border-radius:5px;background:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;">&#9679;</div>
+            <span id="hidden-lp-company-name" style="font-size:11px;font-weight:700;color:#0f172a;">Company</span>
           </div>
           <span style="font-size:9px;color:#64748b;white-space:nowrap;">Client Login &rarr;</span>
         </div>
         <!-- Hero -->
-        <div id="lp-hero-section" style="height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;border-radius:8px;margin:5px;transition:background .3s;background-size:cover;background-position:center;">
-          <div id="lp-hero-title" style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;text-align:center;">Company.</div>
+        <div id="hidden-lp-hero-section" style="height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;border-radius:8px;margin:5px;transition:background .3s;background-size:cover;background-position:center;">
+          <div id="hidden-lp-hero-title" style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;text-align:center;">Company.</div>
           <div style="font-size:7px;color:rgba(255,255,255,.55);margin-bottom:7px;text-align:center;">The central portal for logistics</div>
           <div style="font-size:7px;padding:3px 10px;border:1px solid rgba(255,255,255,.35);border-radius:20px;color:#fff;">Get Started</div>
         </div>
         <!-- Page body -->
-        <div id="lp-page-body" style="padding:10px 12px;background:#f8fafc;transition:background .3s;min-height:60px;display:flex;gap:8px;align-items:flex-start;">
+        <div id="hidden-lp-page-body" style="padding:10px 12px;background:#f8fafc;transition:background .3s;min-height:60px;display:flex;gap:8px;align-items:flex-start;">
           <div style="width:56px;height:38px;background:rgba(255,255,255,.35);border-radius:6px;flex-shrink:0;"></div>
           <div style="flex:1;">
             <div style="height:6px;background:rgba(0,0,0,.12);border-radius:3px;width:80%;margin-bottom:4px;"></div>
@@ -809,7 +809,7 @@ function updateColorPreview() {
   if (sb) sb.style.background = side;
 }
 
-function updateLandingPreview() {
+function _updateLandingPreviewLegacy() {
   var pageCol = document.getElementById('set-page-bg-hex').value || '#ffffff';
   var heroCol = document.getElementById('set-hero-color-hex').value || '#0f172a';
   var cname   = (document.getElementById('set-company')||{}).value || 'Company';
