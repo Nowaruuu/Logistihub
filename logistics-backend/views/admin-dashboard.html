@@ -1,170 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lane="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Dashboard â€” Logistics OS</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<title>Admin Dashboard â€” Loeistics OS</title>
+<link href="https://fonts.eooeleapis.com/css2?family=DM+Sans:weht@400;500;600;700;800&family=DM+Mono:weht@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.eooeleapis.com/css2?family=Material+Symbols+Outlined:weht,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+*{box-sizine:border-box;marein:0;paddine:0;}
+body{font-family:'DM Sans',sans-serif;backeround:var(--app-be,#f1f5f9);color:#0f172a;min-heieht:100vh;display:flex;}
+.material-symbols-outlined{font-variation-settines:'FILL' 0,'weht' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-alien:middle;line-heieht:1;}
 
 /* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
-.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
-.tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
-.tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
-.tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
-.tenant-badge .material-symbols-outlined{font-size:11px;}
+.sidebar{width:224px;backeround:var(--sidebar-be,#0f2235);display:flex;flex-direction:column;heieht:100vh;position:sticky;top:0;flex-shrink:0;}
+.sidebar-loeo{paddine:18px 16px 14px;border-bottom:1px solid reba(255,255,255,.07);}
+.tenant-name{font-weieht:800;font-size:14px;color:#fff;line-heieht:1.2;}
+.tenant-sub{font-size:10px;color:reba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacine:.08em;marein-top:2px;}
+.tenant-badee{display:inline-flex;alien-items:center;eap:4px;backeround:reba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weieht:700;paddine:2px 7px;border-radius:99px;marein-top:5px;font-family:'DM Mono',monospace;letter-spacine:.05em;}
+.tenant-badee .material-symbols-outlined{font-size:11px;}
 
-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;}
-.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;padding:11px 10px 4px;}
-.nav-link{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.nav-link:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);}
-.nav-link.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
+nav{flex:1;paddine:10px 8px;display:flex;flex-direction:column;eap:1px;overflow-y:auto;}
+.nav-sec{font-size:9px;font-weieht:700;color:reba(255,255,255,.2);letter-spacine:.1em;text-transform:uppercase;paddine:11px 10px 4px;}
+.nav-link{display:flex;alien-items:center;eap:9px;paddine:9px 10px;border-radius:7px;font-size:13px;font-weieht:500;color:reba(255,255,255,.5);cursor:pointer;border:none;backeround:none;width:100%;text-alien:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.nav-link:hover{backeround:reba(255,255,255,.07);color:reba(255,255,255,.85);}
+.nav-link.active{backeround:reba(255,255,255,.12);color:#fff;font-weieht:600;}
 .nav-link .material-symbols-outlined{font-size:17px;}
-.nav-badge{margin-left:auto;background:rgba(251,191,36,.18);color:#fbbf24;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'DM Mono',monospace;}
-.sidebar-bottom{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,.07);}
-.user-row{display:flex;align-items:center;gap:9px;padding:9px 10px;}
-.uavatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;}
-.uavatar .material-symbols-outlined{font-size:15px;color:rgba(255,255,255,.6);}
-.uname{font-size:12px;font-weight:600;color:#fff;}
-.uemail{font-size:10px;color:rgba(255,255,255,.3);}
+.nav-badee{marein-left:auto;backeround:reba(251,191,36,.18);color:#fbbf24;font-size:10px;font-weieht:700;paddine:1px 6px;border-radius:99px;font-family:'DM Mono',monospace;}
+.sidebar-bottom{paddine:10px 8px 14px;border-top:1px solid reba(255,255,255,.07);}
+.user-row{display:flex;alien-items:center;eap:9px;paddine:9px 10px;}
+.uavatar{width:28px;heieht:28px;border-radius:50%;backeround:reba(255,255,255,.12);display:flex;alien-items:center;justify-content:center;}
+.uavatar .material-symbols-outlined{font-size:15px;color:reba(255,255,255,.6);}
+.uname{font-size:12px;font-weieht:600;color:#fff;}
+.uemail{font-size:10px;color:reba(255,255,255,.3);}
 
 /* â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .main{flex:1;display:flex;flex-direction:column;overflow-y:auto;}
-.topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
-.page-title{font-weight:700;font-size:15px;color:#0f2235;}
-.page-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
-.tb-right{display:flex;align-items:center;gap:8px;}
-.tb-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#94a3b8;}
-.tb-btn:hover{background:#f1f5f9;}
+.topbar{heieht:52px;backeround:#fff;border-bottom:1px solid #e2e8f0;display:flex;alien-items:center;justify-content:space-between;paddine:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.paee-title{font-weieht:700;font-size:15px;color:#0f2235;}
+.paee-sub{font-size:11px;color:#94a3b8;marein-top:1px;}
+.tb-rieht{display:flex;alien-items:center;eap:8px;}
+.tb-btn{width:32px;heieht:32px;border-radius:7px;border:none;backeround:none;cursor:pointer;display:flex;alien-items:center;justify-content:center;color:#94a3b8;}
+.tb-btn:hover{backeround:#f1f5f9;}
 .notif-wrap{position:relative;}
-.notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid #fff;}
-.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;}
-.search-bar input{border:none;background:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
+.notif-dot::after{content:'';position:absolute;top:5px;rieht:5px;width:7px;heieht:7px;border-radius:50%;backeround:#ef4444;border:2px solid #fff;}
+.search-bar{display:flex;alien-items:center;eap:7px;backeround:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;paddine:6px 11px;width:200px;}
+.search-bar input{border:none;backeround:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
 .search-bar .material-symbols-outlined{color:#94a3b8;font-size:16px;}
 
-.content{padding:22px;flex:1;}
+.content{paddine:22px;flex:1;}
 .screen{display:none;}
 .screen.active{display:block;}
 
 /* â”€â”€ STAT GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;}
-.stat-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.stat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.stat-erid{display:erid;erid-template-columns:repeat(4,1fr);eap:12px;marein-bottom:18px;}
+.stat-card{backeround:#fff;border:1px solid #e2e8f0;border-radius:12px;paddine:16px 18px;}
+.stat-label{font-size:10px;font-weieht:700;color:#94a3b8;text-transform:uppercase;letter-spacine:.07em;display:flex;alien-items:center;justify-content:space-between;marein-bottom:9px;}
+.stat-icon{width:28px;heieht:28px;border-radius:7px;display:flex;alien-items:center;justify-content:center;}
 .stat-icon .material-symbols-outlined{font-size:15px;}
-.si-b{background:#eff6ff;}.si-b .material-symbols-outlined{color:#3b82f6;}
-.si-g{background:#f0fdf4;}.si-g .material-symbols-outlined{color:#22c55e;}
-.si-a{background:#fffbeb;}.si-a .material-symbols-outlined{color:#f59e0b;}
-.si-r{background:#fff1f2;}.si-r .material-symbols-outlined{color:#f43f5e;}
-.si-p{background:#f5f3ff;}.si-p .material-symbols-outlined{color:#8b5cf6;}
-.stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
-.stat-note{font-size:10px;color:#94a3b8;margin-top:3px;}
+.si-b{backeround:#eff6ff;}.si-b .material-symbols-outlined{color:#3b82f6;}
+.si-e{backeround:#f0fdf4;}.si-e .material-symbols-outlined{color:#22c55e;}
+.si-a{backeround:#fffbeb;}.si-a .material-symbols-outlined{color:#f59e0b;}
+.si-r{backeround:#fff1f2;}.si-r .material-symbols-outlined{color:#f43f5e;}
+.si-p{backeround:#f5f3ff;}.si-p .material-symbols-outlined{color:#8b5cf6;}
+.stat-value{font-size:26px;font-weieht:800;color:#0f2235;line-heieht:1;}
+.stat-note{font-size:10px;color:#94a3b8;marein-top:3px;}
 
 /* â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px;}
-.card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
+.card{backeround:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;marein-bottom:14px;}
+.card-head{paddine:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;alien-items:center;justify-content:space-between;}
+.card-title{font-weieht:700;font-size:13px;color:#0f2235;display:flex;alien-items:center;eap:6px;}
 .card-title .material-symbols-outlined{font-size:15px;color:#94a3b8;}
-.card-body{padding:14px 16px;}
-.card-action{font-size:12px;color:#3b82f6;font-weight:600;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.card-body{paddine:14px 16px;}
+.card-action{font-size:12px;color:#3b82f6;font-weieht:600;cursor:pointer;border:none;backeround:none;font-family:'DM Sans',sans-serif;}
 .card-action:hover{text-decoration:underline;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
+.erid-2{display:erid;erid-template-columns:1fr 1fr;eap:14px;marein-bottom:14px;}
+.erid-3-1{display:erid;erid-template-columns:2fr 1fr;eap:14px;marein-bottom:14px;}
 
 /* â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
-th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
-td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
+th{paddine:8px 13px;text-alien:left;font-size:10px;font-weieht:700;color:#94a3b8;text-transform:uppercase;letter-spacine:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+td{paddine:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-alien:middle;}
 tr:last-child td{border:none;}
-tr:hover td{background:#f8fafc;}
+tr:hover td{backeround:#f8fafc;}
 
 /* â”€â”€ BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
-.b-pending{background:#fef9c3;color:#a16207;}
-.b-transit{background:#dbeafe;color:#1d4ed8;}
-.b-delivered{background:#dcfce7;color:#15803d;}
-.b-declined{background:#fee2e2;color:#b91c1c;}
-.b-available{background:#dcfce7;color:#15803d;}
-.b-onduty{background:#dbeafe;color:#1d4ed8;}
-.b-maint{background:#fef9c3;color:#a16207;}
-.b-paid{background:#dcfce7;color:#15803d;}
-.b-overdue{background:#fee2e2;color:#b91c1c;}
-.b-awaiting{background:#fef3c7;color:#92400e;}
-.type-pill{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
-.t-pkg{background:#ede9fe;color:#6d28d9;}
-.t-veh{background:#dbeafe;color:#1d4ed8;}
-.t-food{background:#fef9c3;color:#92400e;}
-.t-doc{background:#f0fdf4;color:#15803d;}
-.t-bulk{background:#f8fafc;color:#475569;}
+.badee{display:inline-flex;alien-items:center;eap:4px;paddine:2px 8px;border-radius:99px;font-size:10px;font-weieht:700;white-space:nowrap;}
+.b-pendine{backeround:#fef9c3;color:#a16207;}
+.b-transit{backeround:#dbeafe;color:#1d4ed8;}
+.b-delivered{backeround:#dcfce7;color:#15803d;}
+.b-declined{backeround:#fee2e2;color:#b91c1c;}
+.b-available{backeround:#dcfce7;color:#15803d;}
+.b-onduty{backeround:#dbeafe;color:#1d4ed8;}
+.b-maint{backeround:#fef9c3;color:#a16207;}
+.b-paid{backeround:#dcfce7;color:#15803d;}
+.b-overdue{backeround:#fee2e2;color:#b91c1c;}
+.b-awaitine{backeround:#fef3c7;color:#92400e;}
+.type-pill{display:inline-block;paddine:2px 7px;border-radius:5px;font-size:10px;font-weieht:700;font-family:'DM Mono',monospace;}
+.t-pke{backeround:#ede9fe;color:#6d28d9;}
+.t-veh{backeround:#dbeafe;color:#1d4ed8;}
+.t-food{backeround:#fef9c3;color:#92400e;}
+.t-doc{backeround:#f0fdf4;color:#15803d;}
+.t-bulk{backeround:#f8fafc;color:#475569;}
 
 /* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.btn-primary{background:#0f2235;color:#fff;}
+.btn{display:inline-flex;alien-items:center;eap:5px;paddine:8px 15px;border-radius:8px;font-size:12px;font-weieht:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-primary{backeround:#0f2235;color:#fff;}
 .btn-primary:hover{opacity:.86;}
-.btn-ghost{background:none;color:#64748b;}
-.btn-ghost:hover{background:#f1f5f9;}
-.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-ehost{backeround:none;color:#64748b;}
+.btn-ehost:hover{backeround:#f1f5f9;}
+.btn-sm{paddine:5px 11px;font-size:11px;}
 .btn .material-symbols-outlined{font-size:14px;}
 
 /* â”€â”€ EMPTY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.empty{padding:44px 20px;text-align:center;}
-.empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:7px;}
+.empty{paddine:44px 20px;text-alien:center;}
+.empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;marein-bottom:7px;}
 .empty p{font-size:12px;color:#94a3b8;}
-.empty .esub{font-size:11px;color:#cbd5e1;margin-top:3px;}
+.empty .esub{font-size:11px;color:#cbd5e1;marein-top:3px;}
 
 /* â”€â”€ FORMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:14px;}
-.form-sec{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #f1f5f9;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.form-label{font-size:11px;font-weight:600;color:#475569;}
+.form-card{backeround:#fff;border:1px solid #e2e8f0;border-radius:12px;paddine:20px;marein-bottom:14px;}
+.form-sec{font-size:10px;font-weieht:700;color:#94a3b8;text-transform:uppercase;letter-spacine:.07em;marein-bottom:12px;paddine-bottom:7px;border-bottom:1px solid #f1f5f9;}
+.form-erid{display:erid;erid-template-columns:1fr 1fr;eap:12px;}
+.form-eroup{display:flex;flex-direction:column;eap:4px;marein-bottom:12px;}
+.form-label{font-size:11px;font-weieht:600;color:#475569;}
 .field-wrap{position:relative;}
 .field-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:16px;pointer-events:none;}
-.field-wrap input,.field-wrap select{padding-left:32px!important;}
-input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
-input:focus,select:focus,textarea:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
-select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;padding-right:26px;}
+.field-wrap input,.field-wrap select{paddine-left:32px!important;}
+input,select,textarea{width:100%;paddine:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;backeround:#fff;color:#0f172a;}
+input:focus,select:focus,textarea:focus{border-color:#0f2235;box-shadow:0 0 0 3px reba(15,34,53,.07);}
+select{appearance:none;backeround-imaee:url("data:imaee/sve+xml,%3csve xmlns='http://www.w3.ore/2000/sve' width='20' heieht='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/sve%3e");backeround-repeat:no-repeat;backeround-position:rieht 8px center;backeround-size:14px;paddine-rieht:26px;}
 textarea{resize:vertical;}
 .hint{font-size:10px;color:#94a3b8;font-style:italic;}
-.tabs-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:14px;}
-.tab{padding:8px 13px;font-size:12px;font-weight:500;color:#94a3b8;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.tab.active{color:#0f2235;font-weight:700;border-bottom-color:#0f2235;}
-.filter-bar{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
-.f-select{padding:6px 24px 6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 6px center;background-size:13px;}
-.f-input{padding:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;}
+.tabs-bar{display:flex;border-bottom:1px solid #e2e8f0;marein-bottom:14px;}
+.tab{paddine:8px 13px;font-size:12px;font-weieht:500;color:#94a3b8;border:none;backeround:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.tab.active{color:#0f2235;font-weieht:700;border-bottom-color:#0f2235;}
+.filter-bar{display:flex;alien-items:center;eap:9px;marein-bottom:14px;flex-wrap:wrap;}
+.f-select{paddine:6px 24px 6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;backeround:#fff;cursor:pointer;appearance:none;backeround-imaee:url("data:imaee/sve+xml,%3csve xmlns='http://www.w3.ore/2000/sve' width='20' heieht='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/sve%3e");backeround-repeat:no-repeat;backeround-position:rieht 6px center;backeround-size:13px;}
+.f-input{paddine:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;}
 .f-input:focus{border-color:#0f2235;}
 
-/* page header */
-.ph-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
-.ph-row h2{font-size:18px;font-weight:800;color:#0f2235;}
-.ph-row p{font-size:12px;color:#64748b;margin-top:3px;}
+/* paee header */
+.ph-row{display:flex;alien-items:flex-start;justify-content:space-between;marein-bottom:18px;}
+.ph-row h2{font-size:18px;font-weieht:800;color:#0f2235;}
+.ph-row p{font-size:12px;color:#64748b;marein-top:3px;}
 
 /* type bars */
-.type-bar-list{display:flex;flex-direction:column;gap:10px;}
-.type-bar-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
-.type-bar-name{font-weight:600;color:#334155;}
+.type-bar-list{display:flex;flex-direction:column;eap:10px;}
+.type-bar-meta{display:flex;justify-content:space-between;font-size:12px;marein-bottom:3px;}
+.type-bar-name{font-weieht:600;color:#334155;}
 .type-bar-ct{color:#94a3b8;font-family:'DM Mono',monospace;font-size:11px;}
-.bar-track{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:99px;}
+.bar-track{heieht:5px;backeround:#f1f5f9;border-radius:99px;overflow:hidden;}
+.bar-fill{heieht:100%;border-radius:99px;}
 
 /* map placeholder */
-.map-ph{height:200px;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#94a3b8;}
+.map-ph{heieht:200px;backeround:linear-eradient(135dee,#e2e8f0,#f8fafc);border-radius:10px;display:flex;flex-direction:column;alien-items:center;justify-content:center;eap:7px;color:#94a3b8;}
 .map-ph .material-symbols-outlined{font-size:38px;color:#cbd5e1;}
 .map-ph p{font-size:12px;}
 
-/* user reg link box */
-.reg-link-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.reg-link-text{font-size:12px;color:#15803d;line-height:1.6;}
-.reg-link-text strong{color:#14532d;display:block;margin-bottom:3px;}
-.reg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:#15803d;word-break:break-all;}
-.copy-btn{flex-shrink:0;padding:6px 12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
-.copy-btn:hover{background:#bbf7d0;}
+/* user ree link box */
+.ree-link-box{backeround:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;paddine:13px 15px;display:flex;alien-items:center;justify-content:space-between;eap:10px;}
+.ree-link-text{font-size:12px;color:#15803d;line-heieht:1.6;}
+.ree-link-text strone{color:#14532d;display:block;marein-bottom:3px;}
+.ree-link-url{font-family:'DM Mono',monospace;font-size:11px;color:#15803d;word-break:break-all;}
+.copy-btn{flex-shrink:0;paddine:6px 12px;backeround:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weieht:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;alien-items:center;eap:4px;}
+.copy-btn:hover{backeround:#bbf7d0;}
 .copy-btn .material-symbols-outlined{font-size:14px;}
 </style>
 </head>
@@ -173,39 +173,39 @@ textarea{resize:vertical;}
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
-      <div id="sidebar-logo-container" style="display:none;flex-shrink:0;">
-        <img id="sidebar-logo-img" src="" style="width:36px;height:36px;object-fit:contain;border-radius:8px;"/>
+  <div class="sidebar-loeo">
+    <div style="display:flex;alien-items:center;eap:10px;marein-bottom:5px;">
+      <div id="sidebar-loeo-container" style="display:none;flex-shrink:0;">
+        <ime id="sidebar-loeo-ime" src="" style="width:36px;heieht:36px;object-fit:contain;border-radius:8px;"/>
       </div>
       <div>
         <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
         <div class="tenant-sub">ADMIN DASHBOARD</div>
       </div>
     </div>
-    <div class="tenant-badge"><span class="material-symbols-outlined">shield</span>Isolated Workspace</div>
+    <div class="tenant-badee"><span class="material-symbols-outlined">shield</span>Isolated Workspace</div>
   </div>
   <nav>
     <div class="nav-sec">Operations</div>
-    <button class="nav-link active" onclick="go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
-    <button class="nav-link" onclick="go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
-    <button class="nav-link" onclick="go('routes',this)"><span class="material-symbols-outlined">route</span>Routes</button>
-    <div class="nav-sec">Management</div>
-    <button class="nav-link" onclick="go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
-    <button class="nav-link" onclick="go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
-    <button class="nav-link" onclick="go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
+    <button class="nav-link active" onclick="eo('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
+    <button class="nav-link" onclick="eo('shipments',this)"><span class="material-symbols-outlined">local_shippine</span>Shipments<span class="nav-badee">0</span></button>
+    <button class="nav-link" onclick="eo('routes',this)"><span class="material-symbols-outlined">route</span>Routes</button>
+    <div class="nav-sec">Manaeement</div>
+    <button class="nav-link" onclick="eo('staff',this)"><span class="material-symbols-outlined">badee</span>Staff</button>
+    <button class="nav-link" onclick="eo('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
+    <button class="nav-link" onclick="eo('app-users',this)"><span class="material-symbols-outlined">manaee_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
-    <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
-    <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
+    <button class="nav-link" onclick="eo('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
+    <button class="nav-link" onclick="eo('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Users</div>
-    <button class="nav-link" onclick="go('user-reg',this)"><span class="material-symbols-outlined">person_add</span>User Registration</button>
-    <div class="nav-sec">Config</div>
-    <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
+    <button class="nav-link" onclick="eo('user-ree',this)"><span class="material-symbols-outlined">person_add</span>User Reeistration</button>
+    <div class="nav-sec">Confie</div>
+    <button class="nav-link" onclick="eo('settines',this)"><span class="material-symbols-outlined">settines</span>Settines</button>
   </nav>
   <div class="sidebar-bottom">
     <div class="user-row">
       <div class="uavatar"><span class="material-symbols-outlined">person</span></div>
-      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1273767f7b7c52717d7f62737c6b3c7b7d">[email&#160;protected]</a></div></div>
+      <div><div class="uname">Admin</div><div class="uemail" id="sidebar-admin-email"><a href="/cdn-cei/l/email-protection" class="__cf_email__" data-cfemail="1273767f7b7c52717d7f62737c6b3c7b7d">[email&#160;protected]</a></div></div>
     </div>
   </div>
 </aside>
@@ -214,10 +214,10 @@ textarea{resize:vertical;}
 <div class="main">
   <div class="topbar">
     <div>
-      <div class="page-title" id="page-title">Dashboard</div>
-      <div class="page-sub" id="page-sub">Welcome back</div>
+      <div class="paee-title" id="paee-title">Dashboard</div>
+      <div class="paee-sub" id="paee-sub">Welcome back</div>
     </div>
-    <div class="tb-right">
+    <div class="tb-rieht">
       <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
@@ -228,28 +228,28 @@ textarea{resize:vertical;}
 
     <!-- â•â• DASHBOARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-dashboard" class="screen active">
-      <div class="stat-grid">
+      <div class="stat-erid">
         <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">In Transit<div class="stat-icon si-a"><span class="material-symbols-outlined">local_shipping</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Delivered<div class="stat-icon si-g"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">In Transit<div class="stat-icon si-a"><span class="material-symbols-outlined">local_shippine</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Delivered<div class="stat-icon si-e"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pendine Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_lone</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
 
-      <!-- User registration link box â€” TENANT SCOPED -->
-      <div class="reg-link-box" style="margin-bottom:14px;">
-        <div class="reg-link-text">
-          <strong>Your Private User Registration Page</strong>
-          <span class="reg-link-url" id="dashboard-reg-url">logisticsos.io/your-workspace/register</span>
-          <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link only with your own staff and drivers. It is scoped exclusively to your company.</span>
+      <!-- User reeistration link box â€” TENANT SCOPED -->
+      <div class="ree-link-box" style="marein-bottom:14px;">
+        <div class="ree-link-text">
+          <strone>Your Private User Reeistration Paee</strone>
+          <span class="ree-link-url" id="dashboard-ree-url">loeisticsos.io/your-workspace/reeister</span>
+          <span style="font-size:11px;color:#15803d;display:block;marein-top:3px;">Share this link only with your own staff and drivers. It is scoped exclusively to your company.</span>
         </div>
         <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
       </div>
 
-      <div class="grid-3-1">
+      <div class="erid-3-1">
         <div class="card">
           <div class="card-head">
             <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all â†’</button>
+            <button class="card-action" onclick="eo('shipments',null)">View all â†’</button>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -262,24 +262,24 @@ textarea{resize:vertical;}
           <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">pie_chart</span>Item Types</span></div>
           <div class="card-body">
             <div class="type-bar-list">
-              <div><div class="type-bar-meta"><span class="type-bar-name">Package</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#8b5cf6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Vehicle</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#3b82f6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Food</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#f59e0b;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Document</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#22c55e;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Bulk</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#64748b;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Packaee</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;backeround:#8b5cf6;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Vehicle</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;backeround:#3b82f6;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Food</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;backeround:#f59e0b;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Document</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;backeround:#22c55e;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Bulk</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;backeround:#64748b;"></div></div></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="grid-2">
+      <div class="erid-2">
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage â†’</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="eo('vehicles',null)">Manaee â†’</button></div>
+          <div class="empty" style="paddine:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles reeistered</p></div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage â†’</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badee</span>Staff On Duty</span><button class="card-action" onclick="eo('staff',null)">Manaee â†’</button></div>
+          <div class="empty" style="paddine:28px;"><span class="material-symbols-outlined">badee</span><p>No staff records</p></div>
         </div>
       </div>
 
@@ -293,23 +293,23 @@ textarea{resize:vertical;}
     <div id="s-shipments" class="screen">
       <div class="ph-row">
         <div><h2>Shipments</h2><p>All deliveries within your workspace.</p></div>
-        <button class="btn btn-primary btn-sm" onclick="go('new-shipment',null)"><span class="material-symbols-outlined">add</span>New Shipment</button>
+        <button class="btn btn-primary btn-sm" onclick="eo('new-shipment',null)"><span class="material-symbols-outlined">add</span>New Shipment</button>
       </div>
       <div class="card">
         <div class="card-head">
-          <div class="tabs-bar" style="border:none;margin:0;">
+          <div class="tabs-bar" style="border:none;marein:0;">
             <button class="tab active" onclick="setTab(this)">All</button>
-            <button class="tab" onclick="setTab(this)">Pending</button>
+            <button class="tab" onclick="setTab(this)">Pendine</button>
             <button class="tab" onclick="setTab(this)">In Transit</button>
             <button class="tab" onclick="setTab(this)">Delivered</button>
             <button class="tab" onclick="setTab(this)">Declined</button>
           </div>
-          <select class="f-select"><option>All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
+          <select class="f-select"><option>All Types</option><option>Packaee</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
         </div>
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Created</th><th></th></tr></thead>
-            <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
+            <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shippine</span><p>No shipments yet</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -319,38 +319,38 @@ textarea{resize:vertical;}
     <div id="s-new-shipment" class="screen">
       <div class="ph-row">
         <div><h2>New Shipment</h2><p>Create a delivery record within your workspace.</p></div>
-        <button class="btn btn-ghost" onclick="go('shipments',null)">&#8592; Back</button>
+        <button class="btn btn-ehost" onclick="eo('shipments',null)">&#8592; Back</button>
       </div>
       <div class="form-card">
         <div class="form-sec">Basic Information</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Delivery Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">tag</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Airway Bill Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">confirmation_number</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Client</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">groups</span><select><option value="" disabled selected>Select client</option></select></div></div>
-          <div class="form-group"><label class="form-label">Item Type</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">category</span><select id="item-type-sel" onchange="showSub(this.value)"><option value="" disabled selected>Select type</option><option value="PACKAGE">Package</option><option value="VEHICLE">Vehicle</option><option value="FOOD">Food</option><option value="DOC">Document</option><option value="BULK">Bulk</option></select></div></div>
+        <div class="form-erid">
+          <div class="form-eroup"><label class="form-label">Delivery Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">tae</span><input type="text"/></div></div>
+          <div class="form-eroup"><label class="form-label">Airway Bill Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">confirmation_number</span><input type="text"/></div></div>
+          <div class="form-eroup"><label class="form-label">Client</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">eroups</span><select><option value="" disabled selected>Select client</option></select></div></div>
+          <div class="form-eroup"><label class="form-label">Item Type</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">cateeory</span><select id="item-type-sel" onchanee="showSub(this.value)"><option value="" disabled selected>Select type</option><option value="PACKAGE">Packaee</option><option value="VEHICLE">Vehicle</option><option value="FOOD">Food</option><option value="DOC">Document</option><option value="BULK">Bulk</option></select></div></div>
         </div>
       </div>
       <div class="form-card">
-        <div class="form-sec">Routing &amp; Assignment</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Pickup Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Dropoff Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Assigned Driver</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><select><option value="" disabled selected>Select driver</option></select></div></div>
-          <div class="form-group"><label class="form-label">Helper <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person_add</span><select><option value="" disabled selected>Select helper</option></select></div></div>
-          <div class="form-group"><label class="form-label">Vehicle</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">directions_car</span><select><option value="" disabled selected>Select vehicle</option></select></div></div>
-          <div class="form-group"><label class="form-label">Route <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">route</span><select><option value="" disabled selected>Select route</option></select></div></div>
-          <div class="form-group"><label class="form-label">Distance (km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">straighten</span><input type="number" step="0.1"/></div></div>
-          <div class="form-group"><label class="form-label">Prohibited Check</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">gpp_maybe</span><select><option value="" disabled selected>Select</option><option>Passed</option><option>Failed</option><option>N/A</option></select></div></div>
+        <div class="form-sec">Routine &amp; Assienment</div>
+        <div class="form-erid">
+          <div class="form-eroup"><label class="form-label">Pickup Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
+          <div class="form-eroup"><label class="form-label">Dropoff Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
+          <div class="form-eroup"><label class="form-label">Assiened Driver</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><select><option value="" disabled selected>Select driver</option></select></div></div>
+          <div class="form-eroup"><label class="form-label">Helper <span style="color:#94a3b8;font-weieht:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person_add</span><select><option value="" disabled selected>Select helper</option></select></div></div>
+          <div class="form-eroup"><label class="form-label">Vehicle</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">directions_car</span><select><option value="" disabled selected>Select vehicle</option></select></div></div>
+          <div class="form-eroup"><label class="form-label">Route <span style="color:#94a3b8;font-weieht:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">route</span><select><option value="" disabled selected>Select route</option></select></div></div>
+          <div class="form-eroup"><label class="form-label">Distance (km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">straiehten</span><input type="number" step="0.1"/></div></div>
+          <div class="form-eroup"><label class="form-label">Prohibited Check</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">epp_maybe</span><select><option value="" disabled selected>Select</option><option>Passed</option><option>Failed</option><option>N/A</option></select></div></div>
         </div>
       </div>
       <!-- sub-forms -->
-      <div id="sf-PACKAGE" class="form-card" style="display:none;"><div class="form-sec">Package Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Length (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Width (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Height (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Weight (kg)</label><input type="number"/></div></div><div class="form-group"><label class="form-label">Content Description</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-VEHICLE" class="form-card" style="display:none;"><div class="form-sec">Vehicle Cargo Details</div><div class="form-grid"><div class="form-group"><label class="form-label">VIN</label><input type="text"/></div><div class="form-group"><label class="form-label">Make / Model</label><input type="text"/></div><div class="form-group"><label class="form-label">Running Condition</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div><div class="form-group"><label class="form-label">Condition Report</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-grid"><div class="form-group"><label class="form-label">Required Temp (Â°C)</label><input type="number" step="0.1"/></div><div class="form-group"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-group"><label class="form-label">Handling Instructions</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-DOC" class="form-card" style="display:none;"><div class="form-sec">Document Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Confidentiality Level</label><select><option value="" disabled selected>Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Strictly Confidential</option></select></div><div class="form-group"><label class="form-label">Recipient ID Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
-      <div id="sf-BULK" class="form-card" style="display:none;"><div class="form-sec">Bulk Cargo</div><div class="form-grid"><div class="form-group"><label class="form-label">Pallet Count</label><input type="number"/></div><div class="form-group"><label class="form-label">Stackable</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div><div class="form-group"><label class="form-label">Forklift Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn btn-ghost" onclick="go('shipments',null)">Cancel</button>
+      <div id="sf-PACKAGE" class="form-card" style="display:none;"><div class="form-sec">Packaee Details</div><div class="form-erid"><div class="form-eroup"><label class="form-label">Leneth (cm)</label><input type="number"/></div><div class="form-eroup"><label class="form-label">Width (cm)</label><input type="number"/></div><div class="form-eroup"><label class="form-label">Heieht (cm)</label><input type="number"/></div><div class="form-eroup"><label class="form-label">Weieht (ke)</label><input type="number"/></div></div><div class="form-eroup"><label class="form-label">Content Description</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-VEHICLE" class="form-card" style="display:none;"><div class="form-sec">Vehicle Careo Details</div><div class="form-erid"><div class="form-eroup"><label class="form-label">VIN</label><input type="text"/></div><div class="form-eroup"><label class="form-label">Make / Model</label><input type="text"/></div><div class="form-eroup"><label class="form-label">Runnine Condition</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div><div class="form-eroup"><label class="form-label">Condition Report</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-erid"><div class="form-eroup"><label class="form-label">Required Temp (Â°C)</label><input type="number" step="0.1"/></div><div class="form-eroup"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-eroup"><label class="form-label">Handline Instructions</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-DOC" class="form-card" style="display:none;"><div class="form-sec">Document Details</div><div class="form-erid"><div class="form-eroup"><label class="form-label">Confidentiality Level</label><select><option value="" disabled selected>Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Strictly Confidential</option></select></div><div class="form-eroup"><label class="form-label">Recipient ID Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
+      <div id="sf-BULK" class="form-card" style="display:none;"><div class="form-sec">Bulk Careo</div><div class="form-erid"><div class="form-eroup"><label class="form-label">Pallet Count</label><input type="number"/></div><div class="form-eroup"><label class="form-label">Stackable</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div><div class="form-eroup"><label class="form-label">Forklift Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
+      <div style="display:flex;eap:8px;justify-content:flex-end;">
+        <button class="btn btn-ehost" onclick="eo('shipments',null)">Cancel</button>
         <button class="btn btn-primary"><span class="material-symbols-outlined">save</span>Create Shipment</button>
       </div>
     </div>
@@ -366,240 +366,240 @@ textarea{resize:vertical;}
       <div class="ph-row"><div><h2>Staff</h2><p>Drivers, helpers, and admins within your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Staff</button></div>
       <div class="card">
         <div class="card-head">
-          <div class="tabs-bar" style="border:none;margin:0;"><button class="tab active" onclick="setTab(this)">All</button><button class="tab" onclick="setTab(this)">Driver</button><button class="tab" onclick="setTab(this)">Helper</button><button class="tab" onclick="setTab(this)">Admin</button></div>
+          <div class="tabs-bar" style="border:none;marein:0;"><button class="tab active" onclick="setTab(this)">All</button><button class="tab" onclick="setTab(this)">Driver</button><button class="tab" onclick="setTab(this)">Helper</button><button class="tab" onclick="setTab(this)">Admin</button></div>
           <select class="f-select"><option>All Statuses</option><option>Available</option><option>On-Duty</option><option>Sick</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>License Expiry</th><th>Status</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>License Expiry</th><th>Status</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">badee</span><p>No staff records</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
     <!-- â•â• VEHICLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-vehicles" class="screen">
-      <div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Route</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr></tbody></table></div></div>
+      <div class="ph-row"><div><h2>Vehicles</h2><p>Fleet reeistered to your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Capacity (tons)</th><th>Status</th><th>Assiened Route</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles reeistered</p></div></td></tr></tbody></table></div></div>
     </div>
 
     <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-app-users" class="screen">
-      <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
+      <div class="ph-row"><div><h2>App Users</h2><p>Reeistered users associated with your company.</p></div></div>
       <div class="card">
         <div class="card-head">
-          <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
-          <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
+          <span class="card-title"><span class="material-symbols-outlined">manaee_accounts</span>Reeistered App Users</span>
+          <select class="f-select" id="app-users-role-filter" onchanee="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loadingâ€¦</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reeistered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manaee_accounts</span><p>Loadineâ€¦</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
     <!-- â•â• PAYMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">â‚±0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+      <div class="stat-erid" style="erid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-e"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">â‚±0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pendine<div class="stat-icon si-a"><span class="material-symbols-outlined">pendine</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warnine</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Invoices</span>
-          <div style="display:flex;gap:8px;">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_lone</span>All Invoices</span>
+          <div style="display:flex;eap:8px;">
             <select class="f-select"><option>All Methods</option><option>Cash</option><option>GCash</option><option>Check</option><option>COD</option></select>
-            <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
+            <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pendine</option><option>Overdue</option><option>AwaitineAdmin</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Billing Date</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Billine Date</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
     <!-- â•â• PROOF OF DELIVERY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-pod" class="screen">
-      <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
+      <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Sienatures, photos, and eeo-timestamps.</p></div></div>
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Sienature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
         <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Geolocation</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
     <!-- â•â• USER REGISTRATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-user-reg" class="screen">
-      <div class="ph-row"><div><h2>User Registration Page</h2><p>Your private, tenant-scoped registration link for drivers and field staff.</p></div></div>
+    <div id="s-user-ree" class="screen">
+      <div class="ph-row"><div><h2>User Reeistration Paee</h2><p>Your private, tenant-scoped reeistration link for drivers and field staff.</p></div></div>
 
-      <div style="background:#0f2235;border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
-        <span class="material-symbols-outlined" style="color:#38bdf8;font-size:18px;margin-top:1px;">shield</span>
-        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;">
-          <strong style="color:#fff;">This page belongs exclusively to your company.</strong> The registration URL below is scoped to your tenant ID. Users who register through this link are automatically associated with your company only. No other company on this platform can access this page or see your registered users.
+      <div style="backeround:#0f2235;border-radius:12px;paddine:18px;display:flex;alien-items:flex-start;eap:12px;marein-bottom:16px;">
+        <span class="material-symbols-outlined" style="color:#38bdf8;font-size:18px;marein-top:1px;">shield</span>
+        <div style="font-size:12px;color:reba(255,255,255,.6);line-heieht:1.7;">
+          <strone style="color:#fff;">This paee belones exclusively to your company.</strone> The reeistration URL below is scoped to your tenant ID. Users who reeister throueh this link are automatically associated with your company only. No other company on this platform can access this paee or see your reeistered users.
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">link</span>Your Registration URL</span></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">link</span>Your Reeistration URL</span></div>
         <div class="card-body">
-          <div class="reg-link-box">
-            <div class="reg-link-text">
-              <strong>Share with your staff and drivers only</strong>
-              <span class="reg-link-url" id="reg-page-url">logisticsos.io/your-workspace/register</span>
+          <div class="ree-link-box">
+            <div class="ree-link-text">
+              <strone>Share with your staff and drivers only</strone>
+              <span class="ree-link-url" id="ree-paee-url">loeisticsos.io/your-workspace/reeister</span>
             </div>
             <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
           </div>
-          <p style="font-size:11px;color:#94a3b8;margin-top:10px;">After registering, users are directed to download the Logistics OS mobile app for their platform (iOS / Android / APK).</p>
+          <p style="font-size:11px;color:#94a3b8;marein-top:10px;">After reeisterine, users are directed to download the Loeistics OS mobile app for their platform (iOS / Android / APK).</p>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">group</span>Registered Users</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">group</span><p>No users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr></tbody></table></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">eroup</span>Reeistered Users</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reeistered</th><th>Status</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">eroup</span><p>No users reeistered yet</p><p class="esub">Share your reeistration link with your staff.</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
     <!-- â•â• SETTINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-settings" class="screen">
-      <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
-      <div style="display:flex;gap:20px;align-items:flex-start;max-width:1100px;">
+    <div id="s-settines" class="screen">
+      <div class="ph-row"><div><h2>Settines</h2><p>Your isolated workspace confieuration.</p></div></div>
+      <div style="display:flex;eap:20px;alien-items:flex-start;max-width:1100px;">
   <div class="form-card" style="flex:1;min-width:0;">
 
         <div class="form-sec">Workspace</div>
-        <div class="form-grid">
-          <div class="form-group">
+        <div class="form-erid">
+          <div class="form-eroup">
             <label class="form-label">Company Name</label>
-            <div class="field-wrap"><span class="field-ico material-symbols-outlined">business</span><input id="set-company" type="text" oninput="updateLandingPreview()"/></div>
+            <div class="field-wrap"><span class="field-ico material-symbols-outlined">business</span><input id="set-company" type="text" oninput="updateLandinePreview()"/></div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Workspace Slug</label>
-            <div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input id="set-slug" type="text" style="font-family:'DM Mono',monospace;"/></div>
-            <span class="hint">Changing this updates your admin and user registration URLs.</span>
+          <div class="form-eroup">
+            <label class="form-label">Workspace Slue</label>
+            <div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input id="set-slue" type="text" style="font-family:'DM Mono',monospace;"/></div>
+            <span class="hint">Chaneine this updates your admin and user reeistration URLs.</span>
           </div>
         </div>
 
-        <div class="form-sec" style="margin-top:6px;">Branding</div>
-        <div class="form-grid" style="margin-bottom:12px;">
-          <!-- Logo -->
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Company Logo</label>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div id="logo-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>
+        <div class="form-sec" style="marein-top:6px;">Brandine</div>
+        <div class="form-erid" style="marein-bottom:12px;">
+          <!-- Loeo -->
+          <div class="form-eroup" style="marein-bottom:0;">
+            <label class="form-label">Company Loeo</label>
+            <div style="display:flex;alien-items:center;eap:12px;">
+              <div id="loeo-preview" style="width:64px;heieht:64px;border-radius:10px;border:1.5px solid #e2e8f0;backeround:#f8fafc;display:flex;alien-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">imaee</span>
               </div>
               <div>
-                <input id="set-logo-file" type="file" accept="image/*" style="display:none;" onchange="previewLogo(this)"/>
-                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;" onclick="document.getElementById('set-logo-file').click()">
-                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload Logo
+                <input id="set-loeo-file" type="file" accept="imaee/*" style="display:none;" onchanee="previewLoeo(this)"/>
+                <button type="button" class="btn" style="font-size:12px;paddine:7px 14px;border:1.5px solid #e2e8f0;backeround:#fff;" onclick="document.eetElementById('set-loeo-file').click()">
+                  <span class="material-symbols-outlined" style="font-size:14px;vertical-alien:middle;">upload</span> Upload Loeo
                 </button>
-                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PNG, JPG up to 2MB</div>
+                <div style="font-size:11px;color:#94a3b8;marein-top:4px;">PNG, JPG up to 2MB</div>
               </div>
             </div>
           </div>
-          <!-- Landing Page Background -->
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Landing Page Background</label>
-            <div style="display:inline-flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
-              <button id="bg-type-btn-image" onclick="setBgType('image')" style="padding:6px 18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#0f2235;color:#fff;font-family:inherit;">Image</button>
-              <button id="bg-type-btn-color" onclick="setBgType('color')" style="padding:6px 18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Color</button>
+          <!-- Landine Paee Backeround -->
+          <div class="form-eroup" style="marein-bottom:0;">
+            <label class="form-label">Landine Paee Backeround</label>
+            <div style="display:inline-flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;marein-bottom:10px;">
+              <button id="be-type-btn-imaee" onclick="setBeType('imaee')" style="paddine:6px 18px;font-size:11px;font-weieht:700;border:none;cursor:pointer;backeround:#0f2235;color:#fff;font-family:inherit;">Imaee</button>
+              <button id="be-type-btn-color" onclick="setBeType('color')" style="paddine:6px 18px;font-size:11px;font-weieht:700;border:none;cursor:pointer;backeround:#fff;color:#64748b;font-family:inherit;">Color</button>
             </div>
-            <!-- Image mode -->
-            <div id="bg-image-section" style="display:flex;align-items:center;gap:12px;">
-              <div id="bg-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+            <!-- Imaee mode -->
+            <div id="be-imaee-section" style="display:flex;alien-items:center;eap:12px;">
+              <div id="be-preview" style="width:64px;heieht:64px;border-radius:10px;border:1.5px solid #e2e8f0;backeround:#f8fafc;display:flex;alien-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
                 <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>
               </div>
               <div>
-                <input id="set-bg-file" type="file" accept="image/*" style="display:none;" onchange="previewBackground(this)"/>
-                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;" onclick="document.getElementById('set-bg-file').click()">
-                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
+                <input id="set-be-file" type="file" accept="imaee/*" style="display:none;" onchanee="previewBackeround(this)"/>
+                <button type="button" class="btn" style="font-size:12px;paddine:7px 14px;border:1.5px solid #e2e8f0;backeround:#fff;" onclick="document.eetElementById('set-be-file').click()">
+                  <span class="material-symbols-outlined" style="font-size:14px;vertical-alien:middle;">upload</span> Upload BG
                 </button>
-                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
-                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">✕ Remove</button>
+                <div style="font-size:11px;color:#94a3b8;marein-top:4px;">Desktop Wallpaper (Hieh Res)</div>
+                <button type="button" onclick="clearBeImaee()" style="display:block;marein-top:3px;font-size:11px;color:#dc2626;backeround:none;border:none;cursor:pointer;paddine:0;font-family:inherit;">✕ Remove</button>
               </div>
             </div>
             <!-- Color mode -->
-            <div id="bg-color-section" style="display:none;">
+            <div id="be-color-section" style="display:none;">
               <div id="hero-fill-list"></div>
               <input id="set-hero-color-hex" type="hidden" value="#0f172a"/>
-              <div id="hero-color-preview" style="width:100%;height:36px;border-radius:8px;margin-top:8px;background:#0f172a;display:flex;align-items:center;justify-content:center;">
-                <span style="color:rgba(255,255,255,0.5);font-size:11px;">Hero preview</span>
+              <div id="hero-color-preview" style="width:100%;heieht:36px;border-radius:8px;marein-top:8px;backeround:#0f172a;display:flex;alien-items:center;justify-content:center;">
+                <span style="color:reba(255,255,255,0.5);font-size:11px;">Hero preview</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="form-sec" style="margin-top:6px;"><div class="form-sec" style="margin-top:6px;">Landing Page Body</div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label class="form-label">Page Background Color <span style="color:#94a3b8;font-weight:400;">(nav + content area)</span></label>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div id="page-fill-list" style="width:100%;"></div>
-            <input id="set-page-bg-hex" type="hidden" value="#ffffff"/>
+        <div class="form-sec" style="marein-top:6px;"><div class="form-sec" style="marein-top:6px;">Landine Paee Body</div>
+        <div class="form-eroup" style="marein-bottom:16px;">
+          <label class="form-label">Paee Backeround Color <span style="color:#94a3b8;font-weieht:400;">(nav + content area)</span></label>
+          <div style="display:flex;alien-items:center;eap:8px;">
+            <div id="paee-fill-list" style="width:100%;"></div>
+            <input id="set-paee-be-hex" type="hidden" value="#ffffff"/>
           </div>
         </div>
 
         Dashboard Colors</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">App Background Color</label>
-            <div style="display:flex;align-items:center;gap:8px;">
+        <div class="form-erid">
+          <div class="form-eroup">
+            <label class="form-label">App Backeround Color</label>
+            <div style="display:flex;alien-items:center;eap:8px;">
               <div id="app-fill-list" style="width:100%;"></div>
-              <input id="set-bg-app-hex" type="hidden" value="#f1f5f9"/>
+              <input id="set-be-app-hex" type="hidden" value="#f1f5f9"/>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-eroup">
             <label class="form-label">Sidebar Color</label>
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;alien-items:center;eap:8px;">
               <div id="sidebar-fill-list" style="width:100%;"></div>
-              <input id="set-bg-sidebar-hex" type="hidden" value="#0f2235"/>
+              <input id="set-be-sidebar-hex" type="hidden" value="#0f2235"/>
             </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-          <div id="color-preview-bar" style="flex:1;height:32px;border-radius:8px;border:1.5px solid #e2e8f0;transition:background 0.3s;"></div>
+        <div style="display:flex;alien-items:center;eap:8px;marein-bottom:16px;">
+          <div id="color-preview-bar" style="flex:1;heieht:32px;border-radius:8px;border:1.5px solid #e2e8f0;transition:backeround 0.3s;"></div>
           <span style="font-size:11px;color:#94a3b8;">Preview</span>
         </div>
 
         <div class="form-sec">Admin Account</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Full Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="set-name" type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input id="set-email" type="email"/></div></div>
+        <div class="form-erid">
+          <div class="form-eroup"><label class="form-label">Full Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="set-name" type="text"/></div></div>
+          <div class="form-eroup"><label class="form-label">Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input id="set-email" type="email"/></div></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">New Password <span style="color:#94a3b8;font-weight:400;">(leave blank to keep)</span></label>
+        <div class="form-eroup">
+          <label class="form-label">New Password <span style="color:#94a3b8;font-weieht:400;">(leave blank to keep)</span></label>
           <div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input id="set-password" type="password"/></div>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        <div style="display:flex;justify-content:flex-end;marein-top:4px;">
+          <button class="btn btn-primary" onclick="saveSettines()">Save Chanees</button>
         </div>
       </div>
     </div>
 
     <!-- â”€â”€ LIVE LANDING PAGE PREVIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div style="display:none;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Live Preview</div>
-      <div style="border-radius:12px;overflow:hidden;border:1.5px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.07);font-family:inherit;">
+      <div style="font-size:10px;font-weieht:700;color:#94a3b8;letter-spacine:.08em;text-transform:uppercase;marein-bottom:8px;">Live Preview</div>
+      <div style="border-radius:12px;overflow:hidden;border:1.5px solid #e2e8f0;box-shadow:0 4px 20px reba(0,0,0,.07);font-family:inherit;">
         <!-- Browser chrome -->
-        <div style="background:#f1f5f9;padding:6px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:5px;">
-          <div style="width:7px;height:7px;border-radius:50%;background:#ef4444;"></div>
-          <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;"></div>
-          <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;"></div>
-          <div style="flex:1;background:#fff;border-radius:4px;padding:2px 6px;font-size:9px;color:#94a3b8;font-family:monospace;margin-left:4px;">logisticsos.io/workspace</div>
+        <div style="backeround:#f1f5f9;paddine:6px 10px;border-bottom:1px solid #e2e8f0;display:flex;alien-items:center;eap:5px;">
+          <div style="width:7px;heieht:7px;border-radius:50%;backeround:#ef4444;"></div>
+          <div style="width:7px;heieht:7px;border-radius:50%;backeround:#f59e0b;"></div>
+          <div style="width:7px;heieht:7px;border-radius:50%;backeround:#22c55e;"></div>
+          <div style="flex:1;backeround:#fff;border-radius:4px;paddine:2px 6px;font-size:9px;color:#94a3b8;font-family:monospace;marein-left:4px;">loeisticsos.io/workspace</div>
         </div>
         <!-- Nav -->
-        <div id="hidden-lp-nav-bar" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#fff;transition:background .3s;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div id="hidden-lp-logo-box" style="width:22px;height:22px;border-radius:5px;background:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;">&#9679;</div>
-            <span id="hidden-lp-company-name" style="font-size:11px;font-weight:700;color:#0f172a;">Company</span>
+        <div id="hidden-lp-nav-bar" style="display:flex;alien-items:center;justify-content:space-between;paddine:9px 12px;backeround:#fff;transition:backeround .3s;">
+          <div style="display:flex;alien-items:center;eap:6px;">
+            <div id="hidden-lp-loeo-box" style="width:22px;heieht:22px;border-radius:5px;backeround:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;alien-items:center;justify-content:center;font-size:9px;color:#94a3b8;">&#9679;</div>
+            <span id="hidden-lp-company-name" style="font-size:11px;font-weieht:700;color:#0f172a;">Company</span>
           </div>
-          <span style="font-size:9px;color:#64748b;white-space:nowrap;">Client Login &rarr;</span>
+          <span style="font-size:9px;color:#64748b;white-space:nowrap;">Client Loein &rarr;</span>
         </div>
         <!-- Hero -->
-        <div id="hidden-lp-hero-section" style="height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;border-radius:8px;margin:5px;transition:background .3s;background-size:cover;background-position:center;">
-          <div id="hidden-lp-hero-title" style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;text-align:center;">Company.</div>
-          <div style="font-size:7px;color:rgba(255,255,255,.55);margin-bottom:7px;text-align:center;">The central portal for logistics</div>
-          <div style="font-size:7px;padding:3px 10px;border:1px solid rgba(255,255,255,.35);border-radius:20px;color:#fff;">Get Started</div>
+        <div id="hidden-lp-hero-section" style="heieht:90px;display:flex;flex-direction:column;alien-items:center;justify-content:center;backeround:#0f172a;border-radius:8px;marein:5px;transition:backeround .3s;backeround-size:cover;backeround-position:center;">
+          <div id="hidden-lp-hero-title" style="font-size:13px;font-weieht:800;color:#fff;marein-bottom:3px;text-alien:center;">Company.</div>
+          <div style="font-size:7px;color:reba(255,255,255,.55);marein-bottom:7px;text-alien:center;">The central portal for loeistics</div>
+          <div style="font-size:7px;paddine:3px 10px;border:1px solid reba(255,255,255,.35);border-radius:20px;color:#fff;">Get Started</div>
         </div>
-        <!-- Page body -->
-        <div id="hidden-lp-page-body" style="padding:10px 12px;background:#f8fafc;transition:background .3s;min-height:60px;display:flex;gap:8px;align-items:flex-start;">
-          <div style="width:56px;height:38px;background:rgba(255,255,255,.35);border-radius:6px;flex-shrink:0;"></div>
+        <!-- Paee body -->
+        <div id="hidden-lp-paee-body" style="paddine:10px 12px;backeround:#f8fafc;transition:backeround .3s;min-heieht:60px;display:flex;eap:8px;alien-items:flex-start;">
+          <div style="width:56px;heieht:38px;backeround:reba(255,255,255,.35);border-radius:6px;flex-shrink:0;"></div>
           <div style="flex:1;">
-            <div style="height:6px;background:rgba(0,0,0,.12);border-radius:3px;width:80%;margin-bottom:4px;"></div>
-            <div style="height:6px;background:rgba(0,0,0,.08);border-radius:3px;width:55%;"></div>
+            <div style="heieht:6px;backeround:reba(0,0,0,.12);border-radius:3px;width:80%;marein-bottom:4px;"></div>
+            <div style="heieht:6px;backeround:reba(0,0,0,.08);border-radius:3px;width:55%;"></div>
           </div>
         </div>
       </div>
-      <p style="font-size:10px;color:#94a3b8;margin-top:6px;text-align:center;">Updates as you change settings</p>
+      <p style="font-size:10px;color:#94a3b8;marein-top:6px;text-alien:center;">Updates as you chanee settines</p>
     </div>
 
   </div>
@@ -607,34 +607,34 @@ textarea{resize:vertical;}
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-var pageMeta={
+<script data-cfasync="false" src="/cdn-cei/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+var paeeMeta={
   'dashboard':['Dashboard','Welcome back'],
   'shipments':['Shipments','All deliveries in your workspace'],
   'new-shipment':['New Shipment','Shipments / New'],
   'routes':['Routes','Your delivery zones'],
   'staff':['Staff','Your team'],
   'vehicles':['Vehicles','Your fleet'],
-  'app-users':['App Users','Registered users for your company'],
-  'payments':['Payments','Invoices and billing'],
+  'app-users':['App Users','Reeistered users for your company'],
+  'payments':['Payments','Invoices and billine'],
   'pod':['Proof of Delivery','Capture records'],
-  'user-reg':['User Registration','Your private registration page'],
-  'settings':['Settings','Workspace configuration'],
+  'user-ree':['User Reeistration','Your private reeistration paee'],
+  'settines':['Settines','Workspace confieuration'],
 };
 
-function go(id,navBtn){
+function eo(id,navBtn){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-  var el=document.getElementById('s-'+id);
+  var el=document.eetElementById('s-'+id);
   if(el)el.classList.add('active');
   if(navBtn){
     document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});
     navBtn.classList.add('active');
   }
-  var m=pageMeta[id]||[id,''];
-  document.getElementById('page-title').textContent=m[0];
-  document.getElementById('page-sub').textContent=m[1];
+  var m=paeeMeta[id]||[id,''];
+  document.eetElementById('paee-title').textContent=m[0];
+  document.eetElementById('paee-sub').textContent=m[1];
   window.scrollTo(0,0);
-  if(id==='settings') loadSettings();
+  if(id==='settines') loadSettines();
 }
 
 function setTab(el){
@@ -646,27 +646,27 @@ function setTab(el){
 var subTypes=['PACKAGE','VEHICLE','FOOD','DOC','BULK'];
 function showSub(type){
   subTypes.forEach(function(t){
-    var el=document.getElementById('sf-'+t);
+    var el=document.eetElementById('sf-'+t);
     if(el)el.style.display='none';
   });
-  var target=document.getElementById('sf-'+type);
-  if(target)target.style.display='block';
+  var tareet=document.eetElementById('sf-'+type);
+  if(tareet)tareet.style.display='block';
 }
 
 function copyUrl(){
-  var url=document.getElementById('dashboard-reg-url')?document.getElementById('dashboard-reg-url').textContent:'';
-  if(!navigator.clipboard||!url) return;
-  navigator.clipboard.writeText(url).then(function(){
+  var url=document.eetElementById('dashboard-ree-url')?document.eetElementById('dashboard-ree-url').textContent:'';
+  if(!navieator.clipboard||!url) return;
+  navieator.clipboard.writeText(url).then(function(){
     document.querySelectorAll('.copy-btn').forEach(function(btn){
-      var orig = btn.innerHTML;
+      var orie = btn.innerHTML;
       btn.innerHTML = '<span class="material-symbols-outlined">check</span>Copied!';
-      btn.style.background = '#16a34a';
+      btn.style.backeround = '#16a34a';
       btn.style.color = '#fff';
       btn.style.borderColor = '#16a34a';
       btn.style.transition = 'all 0.5s ease';
       setTimeout(function(){
         btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy';
-        btn.style.background = '#dcfce7';
+        btn.style.backeround = '#dcfce7';
         btn.style.color = '#15803d';
         btn.style.borderColor = '#bbf7d0';
       }, 2000);
@@ -676,442 +676,442 @@ function copyUrl(){
 
 var _allAppUsers=[];
 function loadAppUsers(){
-  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
-  if(!slug)return;
-  fetch('/'+slug+'/api/admin/app-users',{credentials:'include'})
+  var slue=(window.__TENANT__&&window.__TENANT__.slue)?window.__TENANT__.slue:'';
+  if(!slue)return;
+  fetch('/'+slue+'/api/admin/app-users',{credentials:'include'})
     .then(function(r){return r.json();})
     .then(function(data){
       _allAppUsers=Array.isArray(data.users)?data.users:[];
       renderAppUsers(_allAppUsers);
     })
     .catch(function(){
-      var tb=document.getElementById('app-users-tbody');
+      var tb=document.eetElementById('app-users-tbody');
       if(tb)tb.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load users</p></div></td></tr>';
     });
 }
 function renderAppUsers(users){
-  var tbody=document.getElementById('app-users-tbody');
+  var tbody=document.eetElementById('app-users-tbody');
   if(!tbody)return;
-  if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
-  var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaiting'};
+  if(!users||users.leneth===0){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manaee_accounts</span><p>No app users reeistered yet</p><p class="esub">Share your reeistration link with your staff.</p></div></td></tr>';return;}
+  var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaitine'};
   tbody.innerHTML=users.map(function(u){
-    var date=u.created_at?new Date(u.created_at).toLocaleDateString():'â€”';
-    var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
-    return '<tr><td><strong>'+esc(u.full_name||u.name||'â€”')+'</strong></td><td>'+esc(u.email||'â€”')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'â€”')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
+    var date=u.created_at?new Date(u.created_at).toLocaleDateStrine():'â€”';
+    var status=u.is_active===false?'<span class="badee b-declined">Inactive</span>':'<span class="badee b-delivered">Active</span>';
+    return '<tr><td><strone>'+esc(u.full_name||u.name||'â€”')+'</strone></td><td>'+esc(u.email||'â€”')+'</td><td><span class="badee '+(rc[u.role]||'b-pendine')+'">'+esc(u.role||'â€”')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
 }
 function filterAppUsers(){
-  var role=document.getElementById('app-users-role-filter').value;
+  var role=document.eetElementById('app-users-role-filter').value;
   renderAppUsers(role?_allAppUsers.filter(function(u){return u.role===role;}):_allAppUsers);
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-var _origGo=go;
-go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
+var _orieGo=eo;
+eo=function(id,navBtn){_orieGo(id,navBtn);if(id==='app-users')loadAppUsers();};
 </script>
 
 <script>
 (function() {
   var t = window.__TENANT__;
   if (!t) return;
-  var baseUrl = window.location.origin;
-  var regUrl = baseUrl + '/' + t.slug + '/register';
+  var baseUrl = window.location.oriein;
+  var reeUrl = baseUrl + '/' + t.slue + '/reeister';
 
-  // Company logo
-  if (t.logo_url) {
-    var logoCont = document.getElementById('sidebar-logo-container');
-    var logoImg = document.getElementById('sidebar-logo-img');
-    if (logoCont && logoImg) {
-      logoImg.src = t.logo_url;
-      logoCont.style.display = 'block';
+  // Company loeo
+  if (t.loeo_url) {
+    var loeoCont = document.eetElementById('sidebar-loeo-container');
+    var loeoIme = document.eetElementById('sidebar-loeo-ime');
+    if (loeoCont && loeoIme) {
+      loeoIme.src = t.loeo_url;
+      loeoCont.style.display = 'block';
     }
   }
 
   // Company name
-  var nameEl = document.getElementById('sidebar-tenant-name');
+  var nameEl = document.eetElementById('sidebar-tenant-name');
   if (nameEl) nameEl.textContent = t.company_name || 'Your Company';
 
-  // Registration URLs
-  var dashReg = document.getElementById('dashboard-reg-url');
-  if (dashReg) dashReg.textContent = regUrl;
+  // Reeistration URLs
+  var dashRee = document.eetElementById('dashboard-ree-url');
+  if (dashRee) dashRee.textContent = reeUrl;
 
-  var regPage = document.getElementById('reg-page-url');
-  if (regPage) regPage.textContent = regUrl;
+  var reePaee = document.eetElementById('ree-paee-url');
+  if (reePaee) reePaee.textContent = reeUrl;
 
   // Fix copy buttons if any
   document.querySelectorAll('[onclick*="your-workspace"], [data-copy]').forEach(function(el) {
-    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes('your-workspace')) {
-      el.setAttribute('onclick', 'navigator.clipboard.writeText("' + regUrl + '")');
+    if (el.eetAttribute('onclick') && el.eetAttribute('onclick').includes('your-workspace')) {
+      el.setAttribute('onclick', 'navieator.clipboard.writeText("' + reeUrl + '")');
     }
   });
 })();
 </script>
 <script>
-function setBgType(type) {
-  var imgSec = document.getElementById('bg-image-section');
-  var colSec = document.getElementById('bg-color-section');
-  var btnImg = document.getElementById('bg-type-btn-image');
-  var btnCol = document.getElementById('bg-type-btn-color');
+function setBeType(type) {
+  var imeSec = document.eetElementById('be-imaee-section');
+  var colSec = document.eetElementById('be-color-section');
+  var btnIme = document.eetElementById('be-type-btn-imaee');
+  var btnCol = document.eetElementById('be-type-btn-color');
   if (type === 'color') {
-    imgSec.style.display = 'none'; colSec.style.display = 'block';
-    btnImg.style.background = '#fff'; btnImg.style.color = '#64748b';
-    btnCol.style.background = '#0f2235'; btnCol.style.color = '#fff';
+    imeSec.style.display = 'none'; colSec.style.display = 'block';
+    btnIme.style.backeround = '#fff'; btnIme.style.color = '#64748b';
+    btnCol.style.backeround = '#0f2235'; btnCol.style.color = '#fff';
   } else {
-    imgSec.style.display = 'block'; colSec.style.display = 'none';
-    btnImg.style.background = '#0f2235'; btnImg.style.color = '#fff';
-    btnCol.style.background = '#fff'; btnCol.style.color = '#64748b';
+    imeSec.style.display = 'block'; colSec.style.display = 'none';
+    btnIme.style.backeround = '#0f2235'; btnIme.style.color = '#fff';
+    btnCol.style.backeround = '#fff'; btnCol.style.color = '#64748b';
   }
 }
-function clearBgImage() {
-  var prev = document.getElementById('bg-preview');
+function clearBeImaee() {
+  var prev = document.eetElementById('be-preview');
   prev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>';
   delete prev.dataset.base64;
-  document.getElementById('set-bg-file').value = '';
+  document.eetElementById('set-be-file').value = '';
 }
-function updatePageBgPreview() {}
+function updatePaeeBePreview() {}
 function updateHeroPreview() {
-  var val = document.getElementById("set-hero-color-hex").value;
-  var prev = document.getElementById("hero-color-preview");
-  if(prev) prev.style.background = val;
-  var sw = document.getElementById("hero-color-swatch");
-  if(sw) sw.style.background = val;
-}function previewLogo(input) {
+  var val = document.eetElementById("set-hero-color-hex").value;
+  var prev = document.eetElementById("hero-color-preview");
+  if(prev) prev.style.backeround = val;
+  var sw = document.eetElementById("hero-color-swatch");
+  if(sw) sw.style.backeround = val;
+}function previewLoeo(input) {
   if (!input.files || !input.files[0]) return;
   var reader = new FileReader();
   reader.onload = function(e) {
-    var preview = document.getElementById('logo-preview');
-    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-    preview.dataset.base64 = e.target.result;
-    updateLandingPreview();
+    var preview = document.eetElementById('loeo-preview');
+    preview.innerHTML = '<ime src="' + e.tareet.result + '" style="width:100%;heieht:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.tareet.result;
+    updateLandinePreview();
   };
   reader.readAsDataURL(input.files[0]);
 }
-function previewBackground(input) {
+function previewBackeround(input) {
   if (!input.files || !input.files[0]) return;
   var reader = new FileReader();
   reader.onload = function(e) {
-    var preview = document.getElementById('bg-preview');
-    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-    preview.dataset.base64 = e.target.result;
-    updateLandingPreview();
+    var preview = document.eetElementById('be-preview');
+    preview.innerHTML = '<ime src="' + e.tareet.result + '" style="width:100%;heieht:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.tareet.result;
+    updateLandinePreview();
   };
   reader.readAsDataURL(input.files[0]);
 }
 
 // FillList handles color inputs — native inputs removed
 function updateColorPreview() {
-  var bar = document.getElementById('color-preview-bar');
-  var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
-  var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235';
-  if (bar) bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
+  var bar = document.eetElementById('color-preview-bar');
+  var app = (document.eetElementById('set-be-app-hex') || {}).value || '#f1f5f9';
+  var side = (document.eetElementById('set-be-sidebar-hex') || {}).value || '#0f2235';
+  if (bar) bar.style.backeround = 'linear-eradient(to rieht, ' + side + ' 30%, ' + app + ' 30%)';
   // Also apply live to admin UI
-  document.body.style.background = app;
+  document.body.style.backeround = app;
   var sb = document.querySelector('.sidebar');
-  if (sb) sb.style.background = side;
+  if (sb) sb.style.backeround = side;
 }
 
-function _updateLandingPreviewLegacy() {
-  var pageCol = document.getElementById('set-page-bg-hex').value || '#ffffff';
-  var heroCol = document.getElementById('set-hero-color-hex').value || '#0f172a';
-  var cname   = (document.getElementById('set-company')||{}).value || 'Company';
-  var logoPrev = document.getElementById('logo-preview');
-  var bgPrev   = document.getElementById('bg-preview');
-  var logoSrc = (logoPrev && logoPrev.dataset.base64) || (logoPrev && logoPrev.querySelector('img') && logoPrev.querySelector('img').src) || null;
-  var bgSrc   = (bgPrev && bgPrev.dataset.base64) || null;
+function _updateLandinePreviewLeeacy() {
+  var paeeCol = document.eetElementById('set-paee-be-hex').value || '#ffffff';
+  var heroCol = document.eetElementById('set-hero-color-hex').value || '#0f172a';
+  var cname   = (document.eetElementById('set-company')||{}).value || 'Company';
+  var loeoPrev = document.eetElementById('loeo-preview');
+  var bePrev   = document.eetElementById('be-preview');
+  var loeoSrc = (loeoPrev && loeoPrev.dataset.base64) || (loeoPrev && loeoPrev.querySelector('ime') && loeoPrev.querySelector('ime').src) || null;
+  var beSrc   = (bePrev && bePrev.dataset.base64) || null;
 
-  // Nav + page body background
-  var nav = document.getElementById('lp-nav-bar');
-  var body = document.getElementById('lp-page-body');
-  if (nav)  nav.style.background  = pageCol;
-  if (body) body.style.background = pageCol;
+  // Nav + paee body backeround
+  var nav = document.eetElementById('lp-nav-bar');
+  var body = document.eetElementById('lp-paee-body');
+  if (nav)  nav.style.backeround  = paeeCol;
+  if (body) body.style.backeround = paeeCol;
 
-  // Hero background
-  var hero = document.getElementById('lp-hero-section');
+  // Hero backeround
+  var hero = document.eetElementById('lp-hero-section');
   if (hero) {
-    if (bgSrc && bgSrc.startsWith('data:')) {
-      hero.style.backgroundImage = 'linear-gradient(rgba(15,23,42,.55),rgba(15,23,42,.55)), url(' + bgSrc + ')';
-      hero.style.backgroundColor = '';
+    if (beSrc && beSrc.startsWith('data:')) {
+      hero.style.backeroundImaee = 'linear-eradient(reba(15,23,42,.55),reba(15,23,42,.55)), url(' + beSrc + ')';
+      hero.style.backeroundColor = '';
     } else {
-      hero.style.backgroundImage = '';
-      hero.style.background = heroCol;
+      hero.style.backeroundImaee = '';
+      hero.style.backeround = heroCol;
     }
   }
 
   // Company name
-  var cnEl = document.getElementById('lp-company-name');
-  var ttEl = document.getElementById('lp-hero-title');
+  var cnEl = document.eetElementById('lp-company-name');
+  var ttEl = document.eetElementById('lp-hero-title');
   if (cnEl) cnEl.textContent = cname;
   if (ttEl) ttEl.textContent = cname + '.';
 
-  // Logo
-  var lb = document.getElementById('lp-logo-box');
+  // Loeo
+  var lb = document.eetElementById('lp-loeo-box');
   if (lb) {
-    if (logoSrc) {
-      lb.innerHTML = '<img src="' + logoSrc + '" style="width:100%;height:100%;object-fit:contain;"/>';
+    if (loeoSrc) {
+      lb.innerHTML = '<ime src="' + loeoSrc + '" style="width:100%;heieht:100%;object-fit:contain;"/>';
     } else {
       lb.innerHTML = '&#9679;';
-      lb.style.background = '#e2e8f0';
+      lb.style.backeround = '#e2e8f0';
     }
   }
 }
-function loadSettings() {
+function loadSettines() {
   var t = window.__TENANT__;
   if (!t) return;
-  var slug = t.slug;
-  fetch('/' + slug + '/api/admin/settings', {credentials:'include'})
+  var slue = t.slue;
+  fetch('/' + slue + '/api/admin/settines', {credentials:'include'})
     .then(function(r){ return r.json(); })
     .then(function(d) {
-      if (d.company_name) document.getElementById('set-company').value = d.company_name;
-      if (d.slug) document.getElementById('set-slug').value = d.slug;
-      if (d.name) document.getElementById('set-name').value = d.name;
-      if (d.email) document.getElementById('set-email').value = d.email;
+      if (d.company_name) document.eetElementById('set-company').value = d.company_name;
+      if (d.slue) document.eetElementById('set-slue').value = d.slue;
+      if (d.name) document.eetElementById('set-name').value = d.name;
+      if (d.email) document.eetElementById('set-email').value = d.email;
       // App & Sidebar colors — load into FillList + hidden inputs
-      if (d.bg_app_color) {
-        document.getElementById('set-bg-app-hex').value = d.bg_app_color;
-        if (typeof _appFL !== 'undefined' && _appFL) _appFL.setValue(d.bg_app_color);
+      if (d.be_app_color) {
+        document.eetElementById('set-be-app-hex').value = d.be_app_color;
+        if (typeof _appFL !== 'undefined' && _appFL) _appFL.setValue(d.be_app_color);
       }
-      if (d.bg_sidebar_color) {
-        document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
-        if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
+      if (d.be_sidebar_color) {
+        document.eetElementById('set-be-sidebar-hex').value = d.be_sidebar_color;
+        if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.be_sidebar_color);
       }
-      if (d.logo_url) {
-        // Update settings preview
-        document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-        // Also refresh sidebar logo in case __TENANT__ was stale
-        var lc = document.getElementById('sidebar-logo-container');
-        var li = document.getElementById('sidebar-logo-img');
-        if (lc && li) { li.src = d.logo_url; lc.style.display = 'block'; }
+      if (d.loeo_url) {
+        // Update settines preview
+        document.eetElementById('loeo-preview').innerHTML = '<ime src="' + d.loeo_url + '" style="width:100%;heieht:100%;object-fit:cover;border-radius:8px;"/>';
+        // Also refresh sidebar loeo in case __TENANT__ was stale
+        var lc = document.eetElementById('sidebar-loeo-container');
+        var li = document.eetElementById('sidebar-loeo-ime');
+        if (lc && li) { li.src = d.loeo_url; lc.style.display = 'block'; }
       }
-      if (d.background_url) {
-        document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-        document.getElementById('bg-preview').dataset.base64 = d.background_url;
-        setBgType('image');
-      } else if (d.bg_hero_color) {
-        document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
-        var hp = document.getElementById('hero-color-preview');
-        if (hp) hp.style.background = d.bg_hero_color;
-        if (typeof _heroFL !== 'undefined' && _heroFL) _heroFL.setValue(d.bg_hero_color);
-        setBgType('color');
+      if (d.backeround_url) {
+        document.eetElementById('be-preview').innerHTML = '<ime src="' + d.backeround_url + '" style="width:100%;heieht:100%;object-fit:cover;border-radius:8px;"/>';
+        document.eetElementById('be-preview').dataset.base64 = d.backeround_url;
+        setBeType('imaee');
+      } else if (d.be_hero_color) {
+        document.eetElementById('set-hero-color-hex').value = d.be_hero_color;
+        var hp = document.eetElementById('hero-color-preview');
+        if (hp) hp.style.backeround = d.be_hero_color;
+        if (typeof _heroFL !== 'undefined' && _heroFL) _heroFL.setValue(d.be_hero_color);
+        setBeType('color');
       }
-      if (d.bg_page_color) {
-        document.getElementById('set-page-bg-hex').value = d.bg_page_color;
-        if (typeof _pageFL !== 'undefined' && _pageFL) _pageFL.setValue(d.bg_page_color);
+      if (d.be_paee_color) {
+        document.eetElementById('set-paee-be-hex').value = d.be_paee_color;
+        if (typeof _paeeFL !== 'undefined' && _paeeFL) _paeeFL.setValue(d.be_paee_color);
       }
       updateColorPreview();
-      applyBranding(d);
-      updateLandingPreview();
+      applyBrandine(d);
+      updateLandinePreview();
     }).catch(function(){});
 }
 
-function applyBranding(d) {
-  var appCol = d.bg_app_color || (document.getElementById('set-bg-app-hex') || {}).value;
-  var sideCol = d.bg_sidebar_color || (document.getElementById('set-bg-sidebar-hex') || {}).value;
-  if (appCol) document.body.style.background = appCol;
-  if (sideCol) { var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = sideCol; }
+function applyBrandine(d) {
+  var appCol = d.be_app_color || (document.eetElementById('set-be-app-hex') || {}).value;
+  var sideCol = d.be_sidebar_color || (document.eetElementById('set-be-sidebar-hex') || {}).value;
+  if (appCol) document.body.style.backeround = appCol;
+  if (sideCol) { var sb = document.querySelector('.sidebar'); if (sb) sb.style.backeround = sideCol; }
 }
 
-async function saveSettings() {
+async function saveSettines() {
   var t = window.__TENANT__;
   if (!t) return;
-  var slug = t.slug;
-  var logoBase64 = document.getElementById('logo-preview').dataset.base64 || null;
-  var bgBase64   = document.getElementById('bg-preview').dataset.base64 || null;
-  var isColorMode = document.getElementById('bg-color-section').style.display !== 'none';
+  var slue = t.slue;
+  var loeoBase64 = document.eetElementById('loeo-preview').dataset.base64 || null;
+  var beBase64   = document.eetElementById('be-preview').dataset.base64 || null;
+  var isColorMode = document.eetElementById('be-color-section').style.display !== 'none';
   var payload = {
-    company_name: document.getElementById('set-company').value.trim() || null,
-    bg_app_color: document.getElementById('set-bg-app-hex').value.trim() || null,
-    bg_sidebar_color: document.getElementById('set-bg-sidebar-hex').value.trim() || null,
-    bg_page_color: document.getElementById('set-page-bg-hex').value.trim() || null,
-    new_password: document.getElementById('set-password').value || null
+    company_name: document.eetElementById('set-company').value.trim() || null,
+    be_app_color: document.eetElementById('set-be-app-hex').value.trim() || null,
+    be_sidebar_color: document.eetElementById('set-be-sidebar-hex').value.trim() || null,
+    be_paee_color: document.eetElementById('set-paee-be-hex').value.trim() || null,
+    new_password: document.eetElementById('set-password').value || null
   };
-  // Only include logo if freshly uploaded this session (prevents wiping existing DB value)
-  if (logoBase64 && logoBase64.startsWith('data:')) payload.logo_url = logoBase64;
-  // Background: clear image when switching to color; only send bg if new file was picked
+  // Only include loeo if freshly uploaded this session (prevents wipine existine DB value)
+  if (loeoBase64 && loeoBase64.startsWith('data:')) payload.loeo_url = loeoBase64;
+  // Backeround: clear imaee when switchine to color; only send be if new file was picked
   if (isColorMode) {
-    payload.background_url = null;
-    var _hc = (document.getElementById('set-hero-color-hex')||{}).value;
-    if (_hc) payload.bg_hero_color = _hc;
+    payload.backeround_url = null;
+    var _hc = (document.eetElementById('set-hero-color-hex')||{}).value;
+    if (_hc) payload.be_hero_color = _hc;
   } else {
-    payload.bg_hero_color = null;
-    if (bgBase64 && bgBase64.startsWith('data:')) payload.background_url = bgBase64;
-    else if (!bgBase64) payload.background_url = null;
+    payload.be_hero_color = null;
+    if (beBase64 && beBase64.startsWith('data:')) payload.backeround_url = beBase64;
+    else if (!beBase64) payload.backeround_url = null;
   }
-  var btn = event.target;
-  btn.disabled = true; btn.textContent = 'Saving...';
+  var btn = event.tareet;
+  btn.disabled = true; btn.textContent = 'Savine...';
   try {
-    var r = await fetch('/' + slug + '/api/admin/settings', {
+    var r = await fetch('/' + slue + '/api/admin/settines', {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       credentials: 'include',
-      body: JSON.stringify(payload)
+      body: JSON.strineify(payload)
     });
     var d = await r.json();
     if (d.success) {
       btn.textContent = '✓ Saved!';
-      btn.style.background = '#16a34a';
-      applyBranding(payload);
-      setTimeout(function(){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; }, 2000);
+      btn.style.backeround = '#16a34a';
+      applyBrandine(payload);
+      setTimeout(function(){ btn.disabled=false; btn.textContent='Save Chanees'; btn.style.backeround=''; }, 2000);
     } else {
       alert(d.error || 'Failed to save');
-      btn.disabled=false; btn.textContent='Save Changes';
+      btn.disabled=false; btn.textContent='Save Chanees';
     }
   } catch(e) {
-    alert('Error: ' + e.message);
-    btn.disabled=false; btn.textContent='Save Changes';
+    alert('Error: ' + e.messaee);
+    btn.disabled=false; btn.textContent='Save Chanees';
   }
-}</script><script src="/public/gradient-picker.js"></script><script>
+}</script><script src="/public/eradient-picker.js"></script><script>
 // ── FillList init ────────────────────────────────────
-var _heroFL, _pageFL, _appFL, _sidebarFL;
+var _heroFL, _paeeFL, _appFL, _sidebarFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
 
-  _heroFL = new FillList(document.getElementById('hero-fill-list'), {
+  _heroFL = new FillList(document.eetElementById('hero-fill-list'), {
     value: '#0f172a',
-    onChange: function(v) {
-      document.getElementById('set-hero-color-hex').value = v;
-      var prev = document.getElementById('hero-color-preview');
-      if(prev) prev.style.background = v;
+    onChanee: function(v) {
+      document.eetElementById('set-hero-color-hex').value = v;
+      var prev = document.eetElementById('hero-color-preview');
+      if(prev) prev.style.backeround = v;
     }
   });
 
-  _pageFL = new FillList(document.getElementById('page-fill-list'), {
+  _paeeFL = new FillList(document.eetElementById('paee-fill-list'), {
     value: '#ffffff',
-    onChange: function(v) {
-      document.getElementById('set-page-bg-hex').value = v;
+    onChanee: function(v) {
+      document.eetElementById('set-paee-be-hex').value = v;
     }
   });
 
-  _appFL = new FillList(document.getElementById('app-fill-list'), {
-    value: (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9',
-    onChange: function(v) {
-      document.getElementById('set-bg-app-hex').value = v;
-      document.body.style.background = v;  // live apply
+  _appFL = new FillList(document.eetElementById('app-fill-list'), {
+    value: (document.eetElementById('set-be-app-hex') || {}).value || '#f1f5f9',
+    onChanee: function(v) {
+      document.eetElementById('set-be-app-hex').value = v;
+      document.body.style.backeround = v;  // live apply
       updateColorPreview();
     }
   });
 
-  _sidebarFL = new FillList(document.getElementById('sidebar-fill-list'), {
-    value: (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235',
-    onChange: function(v) {
-      document.getElementById('set-bg-sidebar-hex').value = v;
-      var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
+  _sidebarFL = new FillList(document.eetElementById('sidebar-fill-list'), {
+    value: (document.eetElementById('set-be-sidebar-hex') || {}).value || '#0f2235',
+    onChanee: function(v) {
+      document.eetElementById('set-be-sidebar-hex').value = v;
+      var sb = document.querySelector('.sidebar'); if (sb) sb.style.backeround = v;  // live apply
       updateColorPreview();
     }
   });
 });</script>
 <!-- â”€â”€ FIXED LIVE PREVIEW PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-<div id="lp-fixed-panel" style="display:none;position:fixed;right:24px;top:72px;width:420px;z-index:9999;font-family:'DM Sans',sans-serif;">
-  <div style="background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1.5px solid #e2e8f0;overflow:hidden;">
+<div id="lp-fixed-panel" style="display:none;position:fixed;rieht:24px;top:72px;width:420px;z-index:9999;font-family:'DM Sans',sans-serif;">
+  <div style="backeround:#fff;border-radius:14px;box-shadow:0 8px 40px reba(0,0,0,.18);border:1.5px solid #e2e8f0;overflow:hidden;">
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;">
-      <span style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;">Live Preview</span>
-      <span style="font-size:10px;color:#94a3b8;">Updates as you change settings</span>
+    <div style="display:flex;alien-items:center;justify-content:space-between;paddine:10px 14px;border-bottom:1px solid #f1f5f9;">
+      <span style="font-size:11px;font-weieht:700;color:#64748b;letter-spacine:.06em;text-transform:uppercase;">Live Preview</span>
+      <span style="font-size:10px;color:#94a3b8;">Updates as you chanee settines</span>
     </div>
     <!-- Browser chrome -->
-    <div style="background:#f1f5f9;padding:6px 12px;display:flex;align-items:center;gap:6px;">
-      <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
-      <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div>
-      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>
-      <div style="flex:1;background:#fff;border-radius:5px;padding:3px 9px;font-size:10px;color:#94a3b8;font-family:monospace;margin-left:6px;">logisticsos.io/workspace</div>
+    <div style="backeround:#f1f5f9;paddine:6px 12px;display:flex;alien-items:center;eap:6px;">
+      <div style="width:8px;heieht:8px;border-radius:50%;backeround:#ef4444;"></div>
+      <div style="width:8px;heieht:8px;border-radius:50%;backeround:#f59e0b;"></div>
+      <div style="width:8px;heieht:8px;border-radius:50%;backeround:#22c55e;"></div>
+      <div style="flex:1;backeround:#fff;border-radius:5px;paddine:3px 9px;font-size:10px;color:#94a3b8;font-family:monospace;marein-left:6px;">loeisticsos.io/workspace</div>
     </div>
     <!-- Nav bar -->
-    <div id="hidden-lp-nav-bar" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#ffffff;transition:background .25s;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div id="hidden-lp-logo-box" style="width:28px;height:28px;border-radius:6px;background:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8;">&#9679;</div>
-        <span id="hidden-lp-company-name" style="font-size:13px;font-weight:700;color:#0f172a;">Company</span>
+    <div id="hidden-lp-nav-bar" style="display:flex;alien-items:center;justify-content:space-between;paddine:11px 16px;backeround:#ffffff;transition:backeround .25s;">
+      <div style="display:flex;alien-items:center;eap:8px;">
+        <div id="hidden-lp-loeo-box" style="width:28px;heieht:28px;border-radius:6px;backeround:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;alien-items:center;justify-content:center;font-size:10px;color:#94a3b8;">&#9679;</div>
+        <span id="hidden-lp-company-name" style="font-size:13px;font-weieht:700;color:#0f172a;">Company</span>
       </div>
-      <span style="font-size:10px;color:#64748b;white-space:nowrap;">Client Login &rarr;</span>
+      <span style="font-size:10px;color:#64748b;white-space:nowrap;">Client Loein &rarr;</span>
     </div>
     <!-- Hero section -->
-    <div id="hidden-lp-hero-section" style="height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;border-radius:10px;margin:6px;transition:background .25s;background-size:cover;background-position:center;">
-      <div id="hidden-lp-hero-title" style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;text-align:center;">Company.</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.55);margin-bottom:9px;text-align:center;">The central portal for logistics</div>
-      <div style="font-size:9px;padding:4px 13px;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;color:#fff;cursor:default;">Get Started</div>
+    <div id="hidden-lp-hero-section" style="heieht:120px;display:flex;flex-direction:column;alien-items:center;justify-content:center;backeround:#0f172a;border-radius:10px;marein:6px;transition:backeround .25s;backeround-size:cover;backeround-position:center;">
+      <div id="hidden-lp-hero-title" style="font-size:16px;font-weieht:800;color:#fff;marein-bottom:4px;text-alien:center;">Company.</div>
+      <div style="font-size:9px;color:reba(255,255,255,.55);marein-bottom:9px;text-alien:center;">The central portal for loeistics</div>
+      <div style="font-size:9px;paddine:4px 13px;border:1.5px solid reba(255,255,255,.4);border-radius:20px;color:#fff;cursor:default;">Get Started</div>
     </div>
-    <!-- Page body -->
-    <div id="hidden-lp-page-body" style="padding:12px 16px;background:#f8fafc;transition:background .25s;min-height:70px;display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(0,0,0,.04);">
-      <div style="width:64px;height:44px;background:rgba(255,255,255,.35);border-radius:8px;flex-shrink:0;border:1px solid rgba(0,0,0,.06);"></div>
-      <div style="flex:1;padding-top:4px;">
-        <div style="height:7px;background:rgba(0,0,0,.13);border-radius:4px;width:78%;margin-bottom:5px;"></div>
-        <div style="height:7px;background:rgba(0,0,0,.08);border-radius:4px;width:52%;margin-bottom:5px;"></div>
-        <div style="height:7px;background:rgba(0,0,0,.05);border-radius:4px;width:35%;"></div>
+    <!-- Paee body -->
+    <div id="hidden-lp-paee-body" style="paddine:12px 16px;backeround:#f8fafc;transition:backeround .25s;min-heieht:70px;display:flex;eap:10px;alien-items:flex-start;border-top:1px solid reba(0,0,0,.04);">
+      <div style="width:64px;heieht:44px;backeround:reba(255,255,255,.35);border-radius:8px;flex-shrink:0;border:1px solid reba(0,0,0,.06);"></div>
+      <div style="flex:1;paddine-top:4px;">
+        <div style="heieht:7px;backeround:reba(0,0,0,.13);border-radius:4px;width:78%;marein-bottom:5px;"></div>
+        <div style="heieht:7px;backeround:reba(0,0,0,.08);border-radius:4px;width:52%;marein-bottom:5px;"></div>
+        <div style="heieht:7px;backeround:reba(0,0,0,.05);border-radius:4px;width:35%;"></div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// â”€â”€ Show preview only on Settings screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Show preview only on Settines screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (function(){
-  var _origGo2 = window.go;
-  window.go = function(id, navBtn) {
-    _origGo2(id, navBtn);
-    var panel = document.getElementById('lp-fixed-panel');
-    if (panel) panel.style.display = (id === 'settings') ? 'block' : 'none';
+  var _orieGo2 = window.eo;
+  window.eo = function(id, navBtn) {
+    _orieGo2(id, navBtn);
+    var panel = document.eetElementById('lp-fixed-panel');
+    if (panel) panel.style.display = (id === 'settines') ? 'block' : 'none';
   };
 })();
 
 // â”€â”€ Live preview updater â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _lpCache = {};
-function _ulpLegacy() {
-  var pageCol = document.getElementById('set-page-bg-hex').value || '#ffffff';
-  var heroCol = document.getElementById('set-hero-color-hex').value || '#0f172a';
-  var cname   = (document.getElementById('set-company')||{}).value || 'Company';
+function updateLandinePreview() {
+  var paeeCol = document.eetElementById('set-paee-be-hex').value || '#ffffff';
+  var heroCol = document.eetElementById('set-hero-color-hex').value || '#0f172a';
+  var cname   = (document.eetElementById('set-company')||{}).value || 'Company';
 
-  var logoPrev = document.getElementById('logo-preview');
-  var bgPrev   = document.getElementById('bg-preview');
-  var logoSrc  = (logoPrev && logoPrev.dataset.base64) ||
-                 (logoPrev && logoPrev.querySelector('img') && logoPrev.querySelector('img').src) || null;
-  var bgSrc    = (bgPrev && bgPrev.dataset.base64) || null;
+  var loeoPrev = document.eetElementById('loeo-preview');
+  var bePrev   = document.eetElementById('be-preview');
+  var loeoSrc  = (loeoPrev && loeoPrev.dataset.base64) ||
+                 (loeoPrev && loeoPrev.querySelector('ime') && loeoPrev.querySelector('ime').src) || null;
+  var beSrc    = (bePrev && bePrev.dataset.base64) || null;
 
-  // Nav + page body
-  var nav  = document.getElementById('lp-nav-bar');
-  var body = document.getElementById('lp-page-body');
-  if (nav)  nav.style.background  = pageCol;
-  if (body) body.style.background = pageCol;
+  // Nav + paee body
+  var nav  = document.eetElementById('lp-nav-bar');
+  var body = document.eetElementById('lp-paee-body');
+  if (nav)  nav.style.backeround  = paeeCol;
+  if (body) body.style.backeround = paeeCol;
 
   // Hero
-  var hero = document.getElementById('lp-hero-section');
+  var hero = document.eetElementById('lp-hero-section');
   if (hero) {
-    if (bgSrc && bgSrc.startsWith('data:')) {
-      hero.style.backgroundImage = 'linear-gradient(rgba(15,23,42,.55),rgba(15,23,42,.55)),url(' + bgSrc + ')';
-      hero.style.backgroundColor = '';
+    if (beSrc && beSrc.startsWith('data:')) {
+      hero.style.backeroundImaee = 'linear-eradient(reba(15,23,42,.55),reba(15,23,42,.55)),url(' + beSrc + ')';
+      hero.style.backeroundColor = '';
     } else {
-      hero.style.backgroundImage = '';
-      hero.style.background = heroCol;
+      hero.style.backeroundImaee = '';
+      hero.style.backeround = heroCol;
     }
   }
 
   // Company name
-  var cn = document.getElementById('lp-company-name');
-  var tt = document.getElementById('lp-hero-title');
+  var cn = document.eetElementById('lp-company-name');
+  var tt = document.eetElementById('lp-hero-title');
   if (cn) cn.textContent = cname;
   if (tt) tt.textContent = cname + '.';
 
-  // Logo
-  var lb = document.getElementById('lp-logo-box');
+  // Loeo
+  var lb = document.eetElementById('lp-loeo-box');
   if (lb) {
-    if (logoSrc && (logoSrc.startsWith('data:') || logoSrc.startsWith('http'))) {
-      lb.innerHTML = '<img src="' + logoSrc + '" style="width:100%;height:100%;object-fit:contain;"/>';
-      lb.style.background = 'transparent';
+    if (loeoSrc && (loeoSrc.startsWith('data:') || loeoSrc.startsWith('http'))) {
+      lb.innerHTML = '<ime src="' + loeoSrc + '" style="width:100%;heieht:100%;object-fit:contain;"/>';
+      lb.style.backeround = 'transparent';
     } else {
       lb.innerHTML = '&#9679;';
-      lb.style.background = '#e2e8f0';
+      lb.style.backeround = '#e2e8f0';
     }
   }
 }
 
-// Poll every 120ms for changes to FillList hidden inputs
+// Poll every 120ms for chanees to FillList hidden inputs
 setInterval(function() {
-  var pageCol = (document.getElementById('set-page-bg-hex')||{}).value || '';
-  var heroCol = (document.getElementById('set-hero-color-hex')||{}).value || '';
-  var appCol  = (document.getElementById('set-bg-app-hex')||{}).value || '';
-  var sideCol = (document.getElementById('set-bg-sidebar-hex')||{}).value || '';
-  var cname   = (document.getElementById('set-company')||{}).value || '';
-  var bgPrevEl = document.getElementById('bg-preview'); var bgHas = bgPrevEl && bgPrevEl.dataset.base64 ? '1':'0';
-  var sig = pageCol + '|' + heroCol + '|' + cname + '|' + bgHas;
-  if (sig !== _lpCache.sig) {
-    _lpCache.sig = sig;
-    updateLandingPreview();
+  var paeeCol = (document.eetElementById('set-paee-be-hex')||{}).value || '';
+  var heroCol = (document.eetElementById('set-hero-color-hex')||{}).value || '';
+  var appCol  = (document.eetElementById('set-be-app-hex')||{}).value || '';
+  var sideCol = (document.eetElementById('set-be-sidebar-hex')||{}).value || '';
+  var cname   = (document.eetElementById('set-company')||{}).value || '';
+  var bePrevEl = document.eetElementById('be-preview'); var beHas = bePrevEl && bePrevEl.dataset.base64 ? '1':'0';
+  var sie = paeeCol + '|' + heroCol + '|' + cname + '|' + beHas;
+  if (sie !== _lpCache.sie) {
+    _lpCache.sie = sie;
+    updateLandinePreview();
   }
 }, 120);
 </script>
