@@ -734,13 +734,15 @@ function updateHeroPreview() {
   if(prev) prev.style.background = val;
   var sw = document.getElementById("hero-color-swatch");
   if(sw) sw.style.background = val;
-}function previewLogo(input) {
+}
+function previewLogo(input) {
   if (!input.files || !input.files[0]) return;
   var reader = new FileReader();
   reader.onload = function(e) {
     var preview = document.getElementById('logo-preview');
     preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
     preview.dataset.base64 = e.target.result;
+    if (typeof updateLandingPreview === 'function') updateLandingPreview();
   };
   reader.readAsDataURL(input.files[0]);
 }
@@ -751,25 +753,7 @@ function previewBackground(input) {
     var preview = document.getElementById('bg-preview');
     preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
     preview.dataset.base64 = e.target.result;
-  };
-  reader.readAsDataURL(input.files[0]);
-}function previewLogo(input) {
-  if (!input.files || !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var preview = document.getElementById('logo-preview');
-    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-    preview.dataset.base64 = e.target.result;
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-function previewBackground(input) {
-  if (!input.files || !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var preview = document.getElementById('bg-preview');
-    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-    preview.dataset.base64 = e.target.result;
+    if (typeof updateLandingPreview === 'function') updateLandingPreview();
   };
   reader.readAsDataURL(input.files[0]);
 }
@@ -831,6 +815,7 @@ function loadSettings() {
       }
       updateColorPreview();
       applyBranding(d);
+      if (typeof updateLandingPreview === 'function') updateLandingPreview();
     }).catch(function(){});
 }
 
