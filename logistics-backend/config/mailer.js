@@ -166,4 +166,39 @@ async function sendForgotCredentialsEmail(email, username, companyName, type) {
   });
 }
 
-module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail };
+async function sendPasswordResetEmail(email, otp, companyName) {
+  const subject = `Password Reset Code — ${companyName}`;
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#0a1628;padding:32px;text-align:center;">
+        <div style="color:#fff;font-size:22px;font-weight:800;">${companyName}</div>
+        <div style="color:#94a3b8;font-size:12px;">Password Reset</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 12px;">Your Reset Code</h2>
+        <p style="color:#64748b;font-size:14px;line-height:1.6;">
+          Use the code below to reset your password. This code expires in <strong>15 minutes</strong>.
+        </p>
+        <div style="text-align:center;margin:28px 0;font-size:40px;font-weight:900;letter-spacing:12px;color:#0a1628;background:#f8fafc;padding:20px;border-radius:12px;border:2px dashed #e2e8f0;">
+          ${otp}
+        </div>
+        <p style="font-size:12px;color:#94a3b8;text-align:center;">
+          If you did not request a password reset, ignore this email.<br/>Your password will not change.
+        </p>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} ${companyName} · Powered by Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email,
+    subject,
+    html
+  });
+}
+
+module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail, sendPasswordResetEmail };

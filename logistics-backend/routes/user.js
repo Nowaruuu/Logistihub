@@ -5,7 +5,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { query } = require('../config/db');
 const { requireUser } = require('../middleware/auth');
-const { sendRegistrationEmail, sendForgotCredentialsEmail } = require('../config/mailer');
+const { sendRegistrationEmail, sendForgotCredentialsEmail, sendPasswordResetEmail } = require('../config/mailer');
 
 const router = express.Router({ mergeParams: true });
 
@@ -316,11 +316,13 @@ router.get('/app-download', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /forgot-credentials  — finds the single admin for this workspace, sends email
+// POST /forgot-credentials
+// username: sends workspace username to real email
+// password: generates 6-digit OTP, stores hashed, sends to real email
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/forgot-credentials', async (req, res) => {
   const { slug } = req.params;
-  const { type } = req.body; // type = 'username' | 'password'
+  const { type } = req.body;
   try {
     const [tenants] = await query(
       "SELECT tenant_id, company_name FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
@@ -329,28 +331,88 @@ router.post('/forgot-credentials', async (req, res) => {
     if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
     const { tenant_id, company_name } = tenants[0];
 
-    // Find the single Admin for this workspace
     const [rows] = await query(
       "SELECT username, contact_email, name FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
       [tenant_id]
     );
-
-    if (!rows.length) {
-      console.warn(`[FORGOT] No admin found for tenant ${slug} (id=${tenant_id})`);
-      return res.json({ ok: true, message: 'If an admin account exists, credentials have been sent.' });
-    }
+    if (!rows.length) return res.json({ ok: true, message: 'Request processed.' });
 
     const { username, contact_email } = rows[0];
-    const sendTo = contact_email || username; // fallback to username if contact_email not set
-    console.log(`[FORGOT] Sending ${type} to real email: ${sendTo} (username: ${username}) for tenant ${slug}`);
+    const sendTo = contact_email || username;
 
-    await sendForgotCredentialsEmail(sendTo, username, company_name, type || 'username');
+    if (type === 'password') {
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = await bcrypt.hash(otp, 10);
+      const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    console.log(`[FORGOT] Email sent OK to ${sendTo}`);
-    res.json({ ok: true, message: `Your ${type === 'password' ? 'password reset info' : 'username'} has been sent to your registered email.` });
+      await query(
+        'UPDATE STAFF SET reset_token = ?, reset_expires = ? WHERE tenant_id = ? AND role = \'Admin\'',
+        [otpHash, expires, tenant_id]
+      );
+
+      console.log(`[RESET] OTP generated for ${sendTo} (tenant: ${slug})`);
+      await sendPasswordResetEmail(sendTo, otp, company_name);
+      console.log(`[RESET] OTP email sent OK to ${sendTo}`);
+      res.json({ ok: true, message: 'A 6-digit reset code has been sent to your registered email.' });
+
+    } else {
+      // Send username
+      console.log(`[FORGOT] Sending username to ${sendTo} for tenant ${slug}`);
+      await sendForgotCredentialsEmail(sendTo, username, company_name, 'username');
+      console.log(`[FORGOT] Email sent OK to ${sendTo}`);
+      res.json({ ok: true, message: 'Your username has been sent to your registered email.' });
+    }
+
   } catch (e) {
     console.error('[FORGOT] Error:', e.message);
     res.status(500).json({ error: 'Failed to send email: ' + e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /reset-password  — verify OTP and set new password
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/reset-password', async (req, res) => {
+  const { slug } = req.params;
+  const { code, new_password } = req.body;
+  if (!code || !new_password) return res.status(400).json({ error: 'Code and new password are required.' });
+  if (new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+
+  try {
+    const [tenants] = await query(
+      "SELECT tenant_id FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
+      [slug]
+    );
+    if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
+    const { tenant_id } = tenants[0];
+
+    const [rows] = await query(
+      "SELECT staff_id, reset_token, reset_expires FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1",
+      [tenant_id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Admin not found.' });
+
+    const { staff_id, reset_token, reset_expires } = rows[0];
+
+    if (!reset_token || !reset_expires) return res.status(400).json({ error: 'No reset was requested. Click Forgot Password first.' });
+    if (new Date() > new Date(reset_expires)) return res.status(400).json({ error: 'Reset code has expired. Please request a new one.' });
+
+    const valid = await bcrypt.compare(code.trim(), reset_token);
+    if (!valid) return res.status(400).json({ error: 'Invalid reset code.' });
+
+    const newHash = await bcrypt.hash(new_password, 12);
+    await query(
+      'UPDATE STAFF SET password_hash = ?, reset_token = NULL, reset_expires = NULL WHERE staff_id = ?',
+      [newHash, staff_id]
+    );
+
+    console.log(`[RESET] Password updated for staff_id=${staff_id} tenant=${slug}`);
+    res.json({ ok: true, message: 'Password reset successful. You can now log in.' });
+
+  } catch (e) {
+    console.error('[RESET] Error:', e.message);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
