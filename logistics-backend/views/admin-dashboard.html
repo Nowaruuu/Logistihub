@@ -803,7 +803,12 @@ function loadSettings() {
         if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
       }
       if (d.logo_url) {
+        // Update settings preview
         document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+        // Also refresh sidebar logo in case __TENANT__ was stale
+        var lc = document.getElementById('sidebar-logo-container');
+        var li = document.getElementById('sidebar-logo-img');
+        if (lc && li) { li.src = d.logo_url; lc.style.display = 'block'; }
       }
       if (d.background_url) {
         document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';

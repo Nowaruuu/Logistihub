@@ -272,7 +272,7 @@ class FillList{
 
       // Position input (only when multi-fill)
       const posInp=document.createElement('input');posInp.className='fl-pos-inp';posInp.type='number';posInp.min=0;posInp.max=100;posInp.value=f.pos;
-      posInp.style.display=this.fills.length>1?'block':'none';
+      posInp.style.display=this.fills.length>1?'inline-block':'none';
       posInp.oninput=e=>{f.pos=clamp(parseInt(e.target.value)||0,0,100);this._syncBar();this.onChange(this._css());};
       const posPct=document.createElement('span');posPct.className='fl-pct';posPct.textContent='%';
       posPct.style.display=this.fills.length>1?'inline':'none';
