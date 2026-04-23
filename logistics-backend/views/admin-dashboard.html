@@ -852,12 +852,25 @@ async function saveSettings() {
     company_name: document.getElementById('set-company').value.trim() || null,
     bg_app_color: document.getElementById('set-bg-app-hex').value.trim() || null,
     bg_sidebar_color: document.getElementById('set-bg-sidebar-hex').value.trim() || null,
-    logo_url: logoBase64,
-    background_url: isColorMode ? null : bgBase64,
-    bg_hero_color: isColorMode ? (document.getElementById('set-hero-color-hex').value.trim() || null) : null,
     bg_page_color: document.getElementById('set-page-bg-hex').value.trim() || null,
     new_password: document.getElementById('set-password').value || null
   };
+  // Logo: only include if freshly uploaded (prevents wiping existing DB value)
+  if (logoBase64 && logoBase64.startsWith('data:')) payload.logo_url = logoBase64;
+  // Background: in color mode clear image; in image mode only send if new file OR explicitly cleared
+  if (isColorMode) {
+    payload.background_url = null;
+    var _hc = document.getElementById('set-hero-color-hex').value.trim();
+    if (_hc) payload.bg_hero_color = _hc;
+  } else {
+    payload.bg_hero_color = null;
+    if (bgBase64 && bgBase64.startsWith('data:')) {
+      payload.background_url = bgBase64;
+    } else if (!bgBase64) {
+      // User clicked Remove and there's no image — explicitly clear
+      payload.background_url = null;
+    }
+  }
   var btn = event.target;
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
@@ -921,5 +934,110 @@ window.addEventListener('load', function() {
     }
   });
 });</script>
+
+<!-- LIVE PREVIEW PANEL -->
+<div id="lp-panel" style="display:none;position:fixed;right:24px;top:72px;width:420px;z-index:9999;font-family:'DM Sans',sans-serif;">
+  <div style="background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1.5px solid #e2e8f0;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+      <span style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;">Live Preview</span>
+      <span style="font-size:10px;color:#94a3b8;">Updates as you change settings</span>
+    </div>
+    <div style="background:#f1f5f9;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>
+      <div style="flex:1;background:#fff;border-radius:5px;padding:3px 9px;font-size:10px;color:#94a3b8;font-family:monospace;margin-left:6px;">logisticsos.io/workspace</div>
+    </div>
+    <div id="lpv-nav" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#ffffff;transition:background .25s;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="lpv-logo" style="width:28px;height:28px;border-radius:6px;background:#e2e8f0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8;">&#9679;</div>
+        <span id="lpv-name" style="font-size:13px;font-weight:700;color:#0f172a;">Company</span>
+      </div>
+      <span style="font-size:10px;color:#64748b;white-space:nowrap;">Client Login &rarr;</span>
+    </div>
+    <div id="lpv-hero" style="height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;border-radius:10px;margin:6px;transition:background .25s;background-size:cover;background-position:center;">
+      <div id="lpv-title" style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">Company.</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.55);margin-bottom:9px;">The central portal for logistics</div>
+      <div style="font-size:9px;padding:4px 13px;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;color:#fff;">Get Started</div>
+    </div>
+    <div id="lpv-body" style="padding:12px 16px;background:#f8fafc;transition:background .25s;min-height:70px;display:flex;gap:10px;align-items:flex-start;">
+      <div style="width:64px;height:44px;background:rgba(255,255,255,.35);border-radius:8px;flex-shrink:0;border:1px solid rgba(0,0,0,.06);"></div>
+      <div style="flex:1;padding-top:4px;">
+        <div style="height:7px;background:rgba(0,0,0,.13);border-radius:4px;width:78%;margin-bottom:5px;"></div>
+        <div style="height:7px;background:rgba(0,0,0,.08);border-radius:4px;width:52%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Show panel only on Settings tab
+(function(){
+  var _go = window.go;
+  window.go = function(id, btn) {
+    _go(id, btn);
+    var p = document.getElementById('lp-panel');
+    if (p) p.style.display = (id === 'settings') ? 'block' : 'none';
+  };
+})();
+
+// Live preview updater
+function updateLandingPreview() {
+  var pageCol = (document.getElementById('set-page-bg-hex')||{}).value || '#ffffff';
+  var heroCol = (document.getElementById('set-hero-color-hex')||{}).value || '#0f172a';
+  var cname   = (document.getElementById('set-company')||{}).value || 'Company';
+  var logoPrev = document.getElementById('logo-preview');
+  var bgPrev   = document.getElementById('bg-preview');
+  var logoSrc  = (logoPrev && logoPrev.dataset.base64) ||
+                 (logoPrev && logoPrev.querySelector('img') && logoPrev.querySelector('img').src) || null;
+  var bgSrc    = bgPrev && bgPrev.dataset.base64;
+
+  var nav  = document.getElementById('lpv-nav');
+  var body = document.getElementById('lpv-body');
+  var hero = document.getElementById('lpv-hero');
+  var nameEl  = document.getElementById('lpv-name');
+  var titleEl = document.getElementById('lpv-title');
+  var logoBox = document.getElementById('lpv-logo');
+
+  if (nav)  nav.style.background  = pageCol;
+  if (body) body.style.background = pageCol;
+  if (nameEl)  nameEl.textContent  = cname;
+  if (titleEl) titleEl.textContent = cname + '.';
+
+  if (hero) {
+    if (bgSrc && bgSrc.length > 10) {
+      hero.style.backgroundImage = 'linear-gradient(rgba(15,23,42,.5),rgba(15,23,42,.5)),url(' + bgSrc + ')';
+      hero.style.backgroundColor = '';
+    } else {
+      hero.style.backgroundImage = '';
+      hero.style.background = heroCol;
+    }
+  }
+
+  if (logoBox) {
+    if (logoSrc && logoSrc.length > 10 && logoSrc.indexOf('undefined') < 0) {
+      logoBox.innerHTML = '<img src="' + logoSrc + '" style="width:100%;height:100%;object-fit:contain;"/>';
+      logoBox.style.background = 'transparent';
+    } else {
+      logoBox.innerHTML = '&#9679;';
+      logoBox.style.background = '#e2e8f0';
+    }
+  }
+}
+
+// Poll every 150ms for any value change
+var _lpSig = '';
+setInterval(function() {
+  var pc = (document.getElementById('set-page-bg-hex')||{}).value||'';
+  var hc = (document.getElementById('set-hero-color-hex')||{}).value||'';
+  var cn = (document.getElementById('set-company')||{}).value||'';
+  var bgEl = document.getElementById('bg-preview');
+  var bh = (bgEl && bgEl.dataset.base64) ? '1' : '0';
+  var lgEl = document.getElementById('logo-preview');
+  var lh = (lgEl && lgEl.dataset.base64) ? '1' : '0';
+  var sig = pc+'|'+hc+'|'+cn+'|'+bh+'|'+lh;
+  if (sig !== _lpSig) { _lpSig = sig; updateLandingPreview(); }
+}, 150);
+</script>
 </body>
 </html>
