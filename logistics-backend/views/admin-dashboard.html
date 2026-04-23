@@ -506,8 +506,8 @@ textarea{resize:vertical;}
             <!-- Color mode -->
             <div id="bg-color-section" style="display:none;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <input id="set-hero-color" type="color" value="#0f172a" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('set-hero-color-hex').value=this.value;updateHeroPreview()"/>
-                <input id="set-hero-color-hex" type="text" value="#0f172a" placeholder="#0f172a" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-hero-color').value=this.value;updateHeroPreview()"/>
+                <div id="hero-color-swatch" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#0f172a;cursor:pointer;flex-shrink:0;" title="Click to pick color/gradient"></div>
+                <input id="set-hero-color-hex" type="text" value="#0f172a" placeholder="color or gradient" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;" readonly/>
               </div>
               <div id="hero-color-preview" style="width:100%;height:40px;border-radius:8px;background:#0f172a;display:flex;align-items:center;justify-content:center;">
                 <span style="color:rgba(255,255,255,0.5);font-size:11px;">Hero preview</span>
@@ -520,9 +520,8 @@ textarea{resize:vertical;}
         <div class="form-group" style="margin-bottom:16px;">
           <label class="form-label">Page Background Color <span style="color:#94a3b8;font-weight:400;">(nav + content area)</span></label>
           <div style="display:flex;align-items:center;gap:8px;">
-            <input id="set-page-bg-color" type="color" value="#ffffff" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('set-page-bg-hex').value=this.value;updatePageBgPreview()"/>
-            <input id="set-page-bg-hex" type="text" value="#ffffff" placeholder="#ffffff" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-page-bg-color').value=this.value;updatePageBgPreview()"/>
-            <div id="page-bg-preview-box" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#ffffff;transition:background 0.2s;"></div>
+            <div id="page-bg-swatch" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#ffffff;cursor:pointer;flex-shrink:0;" title="Click to pick color/gradient"></div>
+            <input id="set-page-bg-hex" type="text" value="#ffffff" placeholder="color or gradient" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;" readonly/>
           </div>
         </div>
 
@@ -531,14 +530,14 @@ textarea{resize:vertical;}
           <div class="form-group">
             <label class="form-label">App Background Color</label>
             <div style="display:flex;align-items:center;gap:8px;">
-              <input id="set-bg-app" type="color" value="#f1f5f9" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;"/>
+              <div id="app-bg-swatch" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#f1f5f9;cursor:pointer;flex-shrink:0;"></div>
               <input id="set-bg-app-hex" type="text" value="#f1f5f9" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-bg-app').value=this.value"/>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Sidebar Color</label>
             <div style="display:flex;align-items:center;gap:8px;">
-              <input id="set-bg-sidebar" type="color" value="#0f2235" style="width:40px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;"/>
+              <div id="sidebar-bg-swatch" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:#0f2235;cursor:pointer;flex-shrink:0;"></div>
               <input id="set-bg-sidebar-hex" type="text" value="#0f2235" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Mono',monospace;" oninput="document.getElementById('set-bg-sidebar').value=this.value"/>
             </div>
           </div>
@@ -726,13 +725,13 @@ function clearBgImage() {
   delete prev.dataset.base64;
   document.getElementById('set-bg-file').value = '';
 }
-function updatePageBgPreview() {
-  var val = document.getElementById("set-page-bg-hex").value;
-  document.getElementById("page-bg-preview-box").style.background = val;
-}
+function updatePageBgPreview() {}
 function updateHeroPreview() {
-  var val = document.getElementById('set-hero-color-hex').value;
-  document.getElementById('hero-color-preview').style.background = val;
+  var val = document.getElementById("set-hero-color-hex").value;
+  var prev = document.getElementById("hero-color-preview");
+  if(prev) prev.style.background = val;
+  var sw = document.getElementById("hero-color-swatch");
+  if(sw) sw.style.background = val;
 }function previewLogo(input) {
   if (!input.files || !input.files[0]) return;
   var reader = new FileReader();
@@ -797,15 +796,25 @@ function loadSettings() {
         document.getElementById('bg-preview').dataset.base64 = d.background_url;
         setBgType('image');
       } else if (d.bg_hero_color) {
-        document.getElementById('set-hero-color').value = d.bg_hero_color;
         document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
-        updateHeroPreview();
+        document.getElementById('hero-color-swatch').style.background = d.bg_hero_color;
+        var hp = document.getElementById('hero-color-preview');
+        if(hp) hp.style.background = d.bg_hero_color;
+        if(_heroPicker) _heroPicker.setValue(d.bg_hero_color);
         setBgType('color');
       }
       if (d.bg_page_color) {
-        document.getElementById('set-page-bg-color').value = d.bg_page_color;
         document.getElementById('set-page-bg-hex').value = d.bg_page_color;
-        updatePageBgPreview();
+        document.getElementById('page-bg-swatch').style.background = d.bg_page_color;
+        if(_pageBgPicker) _pageBgPicker.setValue(d.bg_page_color);
+      }
+      if (d.bg_app_color) {
+        document.getElementById('app-bg-swatch').style.background = d.bg_app_color;
+        if(_appBgPicker) _appBgPicker.setValue(d.bg_app_color);
+      }
+      if (d.bg_sidebar_color) {
+        document.getElementById('sidebar-bg-swatch').style.background = d.bg_sidebar_color;
+        if(_sidebarPicker) _sidebarPicker.setValue(d.bg_sidebar_color);
       }
       updateColorPreview();
       applyBranding(d);
@@ -860,5 +869,44 @@ async function saveSettings() {
     alert('Error: ' + e.message);
     btn.disabled=false; btn.textContent='Save Changes';
   }
-}</script></body>
+}</script><script src="/public/gradient-picker.js"></script><script>
+// ── Gradient Pickers init ──────────────────────────────
+var _pageBgPicker, _heroPicker, _appBgPicker, _sidebarPicker;
+window.addEventListener('load', function() {
+  if(typeof GradientPicker === 'undefined') return;
+
+  _pageBgPicker = attachGradientPicker(
+    document.getElementById('page-bg-swatch'),
+    document.getElementById('set-page-bg-hex'),
+    { value: '#ffffff' }
+  );
+
+  _heroPicker = attachGradientPicker(
+    document.getElementById('hero-color-swatch'),
+    document.getElementById('set-hero-color-hex'),
+    { value: '#0f172a',
+      onChange: function(v) {
+        var prev = document.getElementById('hero-color-preview');
+        if(prev) prev.style.background = v;
+      }
+    }
+  );
+
+  _appBgPicker = attachGradientPicker(
+    document.getElementById('app-bg-swatch'),
+    document.getElementById('set-bg-app-hex'),
+    { value: '#f1f5f9',
+      onChange: function(v) { updateColorPreview(); }
+    }
+  );
+
+  _sidebarPicker = attachGradientPicker(
+    document.getElementById('sidebar-bg-swatch'),
+    document.getElementById('set-bg-sidebar-hex'),
+    { value: '#0f2235',
+      onChange: function(v) { updateColorPreview(); }
+    }
+  );
+});</script>
+</body>
 </html>

@@ -229,14 +229,15 @@
             document.getElementById('nav-brand').textContent = name;
             document.getElementById('hero-title').textContent = `${name}.`;
 
-            // Apply page body background (nav + content area)
+            // Apply page body background — supports solid color or gradient
             if (bgPageColor) {
                 document.body.style.background = bgPageColor;
-                const nav = document.querySelector('.container > nav');
-                if (nav) nav.style.background = bgPageColor;
+                // Keep navbar background consistent
+                const navEl = document.querySelector('header') || document.querySelector('.container > nav');
+                if (navEl) navEl.style.background = bgPageColor;
             }
 
-            // Apply custom background — image takes priority over solid color, then default
+            // Apply hero background — image > gradient/color > default
             if (bgUrl) {
                 const hero = document.querySelector('.hero');
                 hero.style.backgroundImage = `linear-gradient(rgba(15,23,42,0.65), rgba(15,23,42,0.65)), url('${bgUrl}')`;
@@ -244,8 +245,14 @@
                 hero.style.backgroundPosition = 'center';
             } else if (bgHeroColor) {
                 const hero = document.querySelector('.hero');
-                hero.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35))`;
-                hero.style.backgroundColor = bgHeroColor;
+                // Supports both solid hex and CSS gradient strings
+                if (bgHeroColor.includes('gradient')) {
+                    hero.style.backgroundImage = bgHeroColor;
+                    hero.style.backgroundColor = '';
+                } else {
+                    hero.style.backgroundImage = 'linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3))';
+                    hero.style.backgroundColor = bgHeroColor;
+                }
             }
 
             // Show tenant logo if available
