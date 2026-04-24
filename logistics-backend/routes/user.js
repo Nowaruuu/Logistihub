@@ -268,10 +268,10 @@ router.post('/logout', (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /app-download
+// GET /app-download-v2
 // token required — either the 10-min QR token or the permanent email token
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/app-download', async (req, res) => {
+router.get('/app-download-v2', async (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   const { slug } = req.params;
   const { token } = req.query;

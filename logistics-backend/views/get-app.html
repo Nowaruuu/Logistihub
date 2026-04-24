@@ -114,8 +114,8 @@ document.title = NAME + ' — Download App';
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 const apiUrl = token
-  ? '/' + SLUG + '/api/app-download?token=' + token
-  : '/' + SLUG + '/api/app-download';
+  ? '/' + SLUG + '/api/app-download-v2?token=' + token
+  : '/' + SLUG + '/api/app-download-v2';
 
 fetch(apiUrl)
   .then(async r => {
