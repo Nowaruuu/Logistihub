@@ -298,8 +298,9 @@ router.get('/app-download', async (req, res) => {
 
     const tenant = rows[0];
     
-    // Explicitly serve the real APK file, ignoring whatever broken link might be in the database
-    const actualApkUrl = `${process.env.BASE_URL || 'https://logistichub.ddns.net'}/public/app-debug.apk`;
+    // Explicitly serve the real APK file using a custom backend route 
+    // to bypass any Nginx proxy rules that might be hijacking /public/
+    const actualApkUrl = `${process.env.BASE_URL || 'https://logistichub.ddns.net'}/${slug}/api/direct-apk`;
 
     res.json({
       download_url: actualApkUrl,
@@ -310,6 +311,15 @@ router.get('/app-download', async (req, res) => {
     console.error('[APP-DOWNLOAD] Error:', e);
     return res.status(500).json({ error: 'Server error.' });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/direct-apk (Custom Download Route to bypass Nginx static serving)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/direct-apk', (req, res) => {
+  const path = require('path');
+  const apkPath = path.join(__dirname, '../public/app-debug.apk');
+  res.download(apkPath, 'LogistiHub-Mobile.apk');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
