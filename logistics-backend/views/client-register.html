@@ -41,7 +41,7 @@
         }
       }
       // Primary color → buttons, focus ring, input border
-      var primary = t.brand_color || '#0a1628';
+      var primary = t.bg_app_color || t.brand_color || '#0a1628';
       document.documentElement.style.setProperty('--primary', primary);
       // Page background
       if (t.bg_app_color) document.body.style.background = t.bg_app_color;

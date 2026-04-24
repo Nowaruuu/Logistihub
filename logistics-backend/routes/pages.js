@@ -27,7 +27,7 @@ window.__TENANT__ = ${JSON.stringify({
 </script>
 <style>
   :root { 
-    --primary: ${tenantData.brand_color || '#3b82f6'} !important;
+    --primary: ${tenantData.bg_app_color || tenantData.brand_color || '#3b82f6'} !important;
     --sidebar-bg: ${tenantData.bg_sidebar_color || '#0f2235'} !important;
     --app-bg: ${tenantData.bg_app_color || '#f1f5f9'} !important;
   }
