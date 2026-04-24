@@ -774,7 +774,7 @@ function loadSettings() {
   var t = window.__TENANT__;
   if (!t) return;
   var slug = t.slug;
-  fetch('/' + slug + '/api/admin/settings', {credentials:'include'})
+  fetch('/' + slug + '/api/admin/settings?t=' + Date.now(), {credentials:'include'})
     .then(function(r){ return r.json(); })
     .then(function(d) {
       if (d.company_name) document.getElementById('set-company').value = d.company_name;
@@ -902,7 +902,7 @@ window.addEventListener('load', function() {
   });
 
   _appFL = new FillList(document.getElementById('app-fill-list'), {
-    value: (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9',
+    value: (window.__TENANT__ && window.__TENANT__.bg_app_color) || (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9',
     onChange: function(v) {
       document.getElementById('set-bg-app-hex').value = v;
       document.body.style.background = v;  // live apply
@@ -911,7 +911,7 @@ window.addEventListener('load', function() {
   });
 
   _sidebarFL = new FillList(document.getElementById('sidebar-fill-list'), {
-    value: (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235',
+    value: (window.__TENANT__ && window.__TENANT__.bg_sidebar_color) || (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235',
     onChange: function(v) {
       document.getElementById('set-bg-sidebar-hex').value = v;
       var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
