@@ -344,11 +344,11 @@ router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     // Delete all related data in correct order (child → parent)
-    await query('DELETE FROM proof_of_delivery WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
-    await query('DELETE FROM sub_bulk     WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
-    await query('DELETE FROM sub_document WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
-    await query('DELETE FROM sub_food     WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
-    await query('DELETE FROM sub_package  WHERE shipment_id IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM proof_of_delivery WHERE delivery_number IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_bulk     WHERE delivery_number IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_document WHERE delivery_number IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_food     WHERE delivery_number IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
+    await query('DELETE FROM sub_package  WHERE delivery_number IN (SELECT delivery_number FROM shipment WHERE tenant_id = ?)', [tenantId]);
     await query('DELETE FROM shipment     WHERE tenant_id = ?', [tenantId]);
     await query('DELETE FROM route        WHERE tenant_id = ?', [tenantId]);
     await query('DELETE FROM sub_vehicle  WHERE vehicle_id IN (SELECT vehicle_id FROM vehicle WHERE tenant_id = ?)', [tenantId]);
