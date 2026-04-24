@@ -118,7 +118,11 @@ const apiUrl = token
   : '/' + SLUG + '/api/app-download';
 
 fetch(apiUrl)
-  .then(r => r.json())
+  .then(async r => {
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Failed to fetch app data.');
+    return data;
+  })
   .then(data => {
     if (!data.download_url) throw new Error('No URL');
 
@@ -146,9 +150,12 @@ fetch(apiUrl)
       setTimeout(() => { window.location.href = url; }, 1500);
     }
   })
-  .catch(() => {
+  .catch((err) => {
     document.getElementById('available-state').style.display   = 'none';
-    document.getElementById('unavailable-state').style.display = 'block';
+    const unav = document.getElementById('unavailable-state');
+    unav.style.display = 'block';
+    const p = unav.querySelector('p');
+    if (p) p.textContent = err.message || 'App not available yet. Contact your admin.';
   });
 </script>
 </body>
