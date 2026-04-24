@@ -291,7 +291,7 @@ router.get('/app-download', async (req, res) => {
     }
 
     const [rows] = await query(
-      'SELECT app_download_url, app_name, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
+      'SELECT app_download_url, company_name FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
       [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
