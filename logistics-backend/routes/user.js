@@ -297,12 +297,12 @@ router.get('/app-download', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
 
     const tenant = rows[0];
-    if (!tenant.app_download_url) {
-      return res.status(404).json({ error: 'App not available yet. Contact your admin.' });
-    }
+    
+    // Explicitly serve the real APK file, ignoring whatever broken link might be in the database
+    const actualApkUrl = `${process.env.BASE_URL || 'https://logistichub.ddns.net'}/public/app-debug.apk`;
 
     res.json({
-      download_url: tenant.app_download_url,
+      download_url: actualApkUrl,
       app_name:     tenant.app_name || tenant.company_name,
     });
 
