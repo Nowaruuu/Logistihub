@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user profile information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth." },
+        "fullName": { "type": "string", "description": "User's full name." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "phone": { "type": "string", "description": "User's phone number." },
+        "role": { "type": "string", "enum": ["user", "admin", "driver"], "description": "User's role in the system." },
+        "tier": { "type": "string", "enum": ["Bronze", "Silver", "Gold", "Platinum"], "description": "User's loyalty tier." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp." }
+      },
+      "required": ["uid", "fullName", "email"]
+    },
+    "Driver": {
+      "title": "Driver Profile",
+      "description": "Stores additional information for delivery drivers.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "vehicleType": { "type": "string", "enum": ["Motorcycle", "Van", "Truck", "Bicycle"] },
+        "plateNumber": { "type": "string" },
+        "vehicleModel": { "type": "string" },
+        "status": { "type": "string", "enum": ["Available", "On Delivery", "Offline"] },
+        "verificationStatus": { "type": "string", "enum": ["Pending", "Verified", "Suspended"] },
+        "rating": { "type": "number" },
+        "totalDeliveries": { "type": "number" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "vehicleType", "plateNumber", "status"]
+    },
+    "Delivery": {
+      "title": "Delivery Shipment",
+      "description": "Represents a package shipment and its tracking history.",
+      "type": "object",
+      "properties": {
+        "trackingNumber": { "type": "string", "description": "Unique tracking identifier (e.g., TRK-829104)." },
+        "senderUid": { "type": "string", "description": "UID of the user who sent the package." },
+        "senderName": { "type": "string", "description": "Name of the sender." },
+        "receiverName": { "type": "string", "description": "Name of the receiver." },
+        "origin": { "type": "string", "description": "Origin address/city." },
+        "destination": { "type": "string", "description": "Destination address/city." },
+        "status": { "type": "string", "enum": ["Processing", "In Transit", "Out for Delivery", "Delivered"], "description": "Current status of the shipment." },
+        "estimatedArrival": { "type": "string", "description": "Human-readable estimated arrival time." },
+        "weight": { "type": "number", "description": "Package weight in kg." },
+        "size": { "type": "string", "description": "Package size category." },
+        "shippingMethod": { "type": "string", "description": "Selected shipping method (Standard/Express)." },
+        "totalFee": { "type": "number", "description": "Total shipping cost." },
+        "currentLat": { "type": "number", "description": "Current latitude for live tracking." },
+        "currentLng": { "type": "number", "description": "Current longitude for live tracking." },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string" },
+              "location": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["trackingNumber", "senderUid", "status", "origin", "destination"]
+    },
+    "Notification": {
+      "title": "User Notification",
+      "description": "Alerts and updates for the user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Target user UID." },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["Shipments", "Promotions", "Account"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "relatedTrackingNumber": { "type": "string" }
+      },
+      "required": ["uid", "title", "message", "type", "read", "createdAt"]
+    },
+    "Address": {
+      "title": "Saved Address",
+      "description": "Stores saved recipient or sender addresses for a user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner user UID." },
+        "label": { "type": "string", "description": "Label for the address (e.g., Home, Office)." },
+        "fullName": { "type": "string", "description": "Recipient's full name." },
+        "phone": { "type": "string", "description": "Recipient's phone number." },
+        "address": { "type": "string", "description": "Full street address." },
+        "city": { "type": "string", "description": "City/Province." },
+        "zipCode": { "type": "string", "description": "Postal code." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "label", "fullName", "address", "city"]
+    },
+    "PaymentMethod": {
+      "title": "Payment Method",
+      "description": "Stores saved payment information for a user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner user UID." },
+        "type": { "type": "string", "enum": ["Visa", "Mastercard", "Amex", "GCash", "Maya"], "description": "Type of payment method." },
+        "last4": { "type": "string", "description": "Last 4 digits of the card." },
+        "expiryDate": { "type": "string", "description": "Card expiry date (MM/YY)." },
+        "cardHolder": { "type": "string", "description": "Name on the card." },
+        "isDefault": { "type": "boolean", "description": "Whether this is the default payment method." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "type", "last4", "cardHolder"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profile documents."
+    },
+    "/drivers/{uid}": {
+      "schema": "Driver",
+      "description": "Driver profile and vehicle info."
+    },
+    "/deliveries/{deliveryId}": {
+      "schema": "Delivery",
+      "description": "Shipment tracking documents."
+    },
+    "/users/{uid}/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User-specific notifications."
+    },
+    "/users/{uid}/addresses/{addressId}": {
+      "schema": "Address",
+      "description": "User's saved addresses."
+    },
+    "/users/{uid}/payment_methods/{paymentMethodId}": {
+      "schema": "PaymentMethod",
+      "description": "User's saved payment methods."
+    }
+  }
+}

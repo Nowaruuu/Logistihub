@@ -1,0 +1,155 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        (request.auth.token.email == "shaunl1567@gmail.com" ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    function isDriver() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             isValidEmail(data.email) &&
+             (data.role in ['user', 'admin', 'driver']) &&
+             (!('tier' in data) || data.tier is string) &&
+             (!('createdAt' in data) || data.createdAt is string) &&
+             (!('username' in data) || data.username is string);
+    }
+
+    function isValidDriver(data) {
+      return data.uid is string &&
+             data.vehicleType in ['Motorcycle', 'Van', 'Truck', 'Bicycle'] &&
+             data.plateNumber is string &&
+             data.status in ['Available', 'On Delivery', 'Offline'] &&
+             data.verificationStatus in ['Pending', 'Verified', 'Suspended'];
+    }
+
+    function isValidDelivery(data) {
+      return data.trackingNumber is string &&
+             data.senderUid is string &&
+             data.origin is string && data.origin.size() > 0 &&
+             data.destination is string && data.destination.size() > 0 &&
+             data.status in ['Processing', 'In Transit', 'Out for Delivery', 'Delivered'];
+    }
+
+    function isValidNotification(data) {
+      return data.uid is string &&
+             data.title is string && data.title.size() > 0 &&
+             data.message is string && data.message.size() > 0 &&
+             data.type in ['Shipments', 'Promotions', 'Account'] &&
+             data.read is bool;
+    }
+
+    function isValidAddress(data) {
+      return data.uid is string &&
+             data.label is string && data.label.size() > 0 && data.label.size() < 50 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.address is string && data.address.size() > 0 && data.address.size() < 255 &&
+             data.city is string && data.city.size() > 0 && data.city.size() < 100;
+    }
+
+    function isValidPaymentMethod(data) {
+      return data.uid is string &&
+             data.type in ['Visa', 'Mastercard', 'Amex', 'GCash', 'Maya'] &&
+             data.last4 is string && data.last4.size() == 4 &&
+             data.cardHolder is string && data.cardHolder.size() > 0 && data.cardHolder.size() < 100;
+    }
+
+    // ===============================================================
+    // Match Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && isValidUser(incoming());
+      allow update: if (isOwner(uid) || isAdmin()) && isValidUser(incoming());
+      allow delete: if isAdmin();
+
+      match /notifications/{notificationId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isAdmin() || (isOwner(uid) && isValidNotification(incoming()));
+        allow update: if (isOwner(uid) || isAdmin()) && isValidNotification(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        allow delete: if isOwner(uid) || isAdmin();
+      }
+
+      match /addresses/{addressId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isOwner(uid) && isValidAddress(incoming());
+        allow update: if isOwner(uid) && isValidAddress(incoming());
+        allow delete: if isOwner(uid) || isAdmin();
+      }
+
+      match /payment_methods/{paymentMethodId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isOwner(uid) && isValidPaymentMethod(incoming());
+        allow update: if isOwner(uid) && isValidPaymentMethod(incoming());
+        allow delete: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    match /drivers/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid) && isValidDriver(incoming());
+      allow update: if (isOwner(uid) || isAdmin()) && isValidDriver(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /deliveries/{deliveryId} {
+      allow read: if isSignedIn(); 
+      allow create: if isSignedIn() && isValidDelivery(incoming()) && incoming().senderUid == request.auth.uid;
+      
+      allow update: if isAdmin() || (isSignedIn() && (
+        // Client can update their own delivery (e.g. cancel if not in transit)
+        (existing().senderUid == request.auth.uid && isValidDelivery(incoming())) ||
+        // Driver can accept a job
+        (existing().status == 'Processing' && incoming().status == 'In Transit' && incoming().driverUid == request.auth.uid) ||
+        // Assigned driver can update status
+        (existing().driverUid == request.auth.uid && isValidDelivery(incoming()))
+      ));
+      
+      allow delete: if isAdmin() || (isSignedIn() && existing().senderUid == request.auth.uid && existing().status == 'Processing');
+    }
+  }
+}

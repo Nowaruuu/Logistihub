@@ -1,0 +1,5 @@
+{
+  "name": "Logistics Pro",
+  "description": "A comprehensive delivery and tracking application with real-time updates, package scheduling, and shipment history.",
+  "requestFramePermissions": ["geolocation", "notifications"]
+}
