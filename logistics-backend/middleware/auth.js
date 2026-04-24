@@ -83,4 +83,20 @@ async function requireUser(req, res, next) {
   }
 }
 
-module.exports = { requireSuperadmin, requireAdmin, requireSlugMatch, requireUser };
+// ─── Staff Auth (driver / field staff) ───────────────────────────────────────
+async function requireStaff(req, res, next) {
+  const token = req.cookies?.staff_token || req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Staff authentication required.' });
+  }
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.staff    = payload;
+    req.tenantId = payload.tenant_id;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired session.' });
+  }
+}
+
+module.exports = { requireSuperadmin, requireAdmin, requireSlugMatch, requireUser, requireStaff };

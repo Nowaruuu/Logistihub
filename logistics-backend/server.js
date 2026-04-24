@@ -14,6 +14,7 @@ const superadminRouter = require('./routes/superadmin');
 const onboardingRouter = require('./routes/onboarding');
 const adminRouter      = require('./routes/admin');
 const userRouter       = require('./routes/user');
+const mobileRouter     = require('./routes/mobile');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -102,6 +103,9 @@ app.use('/', adminRouter);
 
 // User/app API  →  /:slug/api/...
 app.use('/:slug/api', userRouter);
+
+// Mobile API  →  /:slug/api/mobile/...
+app.use('/:slug/api/mobile', mobileRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE ROUTES (serve HTML files)
