@@ -276,21 +276,18 @@ router.get('/app-download', async (req, res) => {
   const { token } = req.query;
 
   try {
-    // Require a token — no anonymous access
-    if (!token) {
-      return res.status(401).json({ error: 'Missing access token. Please use your QR code or email link.' });
-    }
+    // Optional token verification
+    if (token) {
+      let payload;
+      try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (e) {
+        return res.status(401).json({ error: 'QR code expired. Please check your email for the permanent download link.' });
+      }
 
-    // Verify JWT (handles both 10-min and permanent tokens)
-    let payload;
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (e) {
-      return res.status(401).json({ error: 'QR code expired. Please check your email for the permanent download link.' });
-    }
-
-    if (payload.type !== 'app_download' || payload.slug !== slug) {
-      return res.status(401).json({ error: 'Invalid access link.' });
+      if (payload.type !== 'app_download' || payload.slug !== slug) {
+        return res.status(401).json({ error: 'Invalid access link.' });
+      }
     }
 
     const [rows] = await query(
