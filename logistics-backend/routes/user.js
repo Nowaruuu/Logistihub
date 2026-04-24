@@ -272,6 +272,7 @@ router.post('/logout', (req, res) => {
 // token required — either the 10-min QR token or the permanent email token
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/app-download', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   const { slug } = req.params;
   const { token } = req.query;
 
@@ -318,7 +319,7 @@ router.get('/app-download', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/direct-apk', (req, res) => {
   const path = require('path');
-  const apkPath = path.join(__dirname, '../public/app-debug.apk');
+  const apkPath = path.join(__dirname, '../public/LogistiHub-v1.apk');
   res.download(apkPath, 'LogistiHub-Mobile.apk');
 });
 
