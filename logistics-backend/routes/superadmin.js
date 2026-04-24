@@ -340,7 +340,7 @@ router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
   const tenantId = req.params.id;
   try {
     // Verify tenant exists first
-    const [[tenant]] = await query('SELECT tenant_id, company_name FROM TENANT WHERE tenant_id = ?', [tenantId]);
+    const [[tenant]] = await query('SELECT tenant_id, company_name, slug FROM TENANT WHERE tenant_id = ?', [tenantId]);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     // Delete all related data in correct order (child → parent)
@@ -357,7 +357,7 @@ router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {
     await query('DELETE FROM client       WHERE tenant_id = ?', [tenantId]);
     await query('DELETE FROM APP_USER     WHERE tenant_id = ?', [tenantId]);
     await query('DELETE FROM STAFF        WHERE tenant_id = ?', [tenantId]);
-    await query('DELETE FROM AUDIT_LOG    WHERE tenant_id = ?', [tenantId]);
+    await query('DELETE FROM AUDIT_LOG    WHERE tenant_slug = ?', [tenant.slug]);
     await query('DELETE FROM TENANT       WHERE tenant_id = ?', [tenantId]);
 
     logAudit({ actor: req.superadmin?.email || 'superadmin', actor_type: 'superadmin', action: 'DELETE_TENANT', target: tenant.company_name, tenant_slug: tenant.slug, ip_address: req.ip, metadata: { tenant_id: tenantId, plan: tenant.plan } });
