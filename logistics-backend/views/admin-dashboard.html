@@ -763,11 +763,18 @@ function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
   var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
   var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235';
-  if (bar) bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
-  // Also apply live to admin UI
-  document.body.style.background = app;
-  var sb = document.querySelector('.sidebar');
-  if (sb) sb.style.background = side;
+  
+  if (bar) {
+    if (app.includes('gradient')) {
+      bar.style.background = app;
+    } else {
+      bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
+    }
+  }
+  
+  // Also apply live to admin UI via CSS variables
+  document.documentElement.style.setProperty('--app-bg', app);
+  document.documentElement.style.setProperty('--sidebar-bg', side);
 }
 
 function loadSettings() {
@@ -822,8 +829,8 @@ function loadSettings() {
 function applyBranding(d) {
   var appCol = d.bg_app_color || (document.getElementById('set-bg-app-hex') || {}).value;
   var sideCol = d.bg_sidebar_color || (document.getElementById('set-bg-sidebar-hex') || {}).value;
-  if (appCol) document.body.style.background = appCol;
-  if (sideCol) { var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = sideCol; }
+  if (appCol) document.documentElement.style.setProperty('--app-bg', appCol);
+  if (sideCol) document.documentElement.style.setProperty('--sidebar-bg', sideCol);
 }
 
 async function saveSettings() {
