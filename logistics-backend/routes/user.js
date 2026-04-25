@@ -5,7 +5,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { query } = require('../config/db');
 const { requireUser } = require('../middleware/auth');
-const { sendRegistrationEmail, sendForgotCredentialsEmail, sendPasswordResetEmail } = require('../config/mailer');
+const { sendRegistrationEmail, sendForgotCredentialsEmail, sendPasswordResetEmail, sendRegistrationOtpEmail } = require('../config/mailer');
 
 const router = express.Router({ mergeParams: true });
 
@@ -193,7 +193,7 @@ router.post('/register', async (req, res) => {
     });
 
     // Using password reset template as a quick OTP email template
-    await sendPasswordResetEmail(email, generatedOtp, companyName);
+    await sendRegistrationOtpEmail(email, generatedOtp, companyName);
 
     res.json({ ok: true, message: 'OTP sent successfully to ' + email, require_otp: true, login_email: loginEmail });
     
