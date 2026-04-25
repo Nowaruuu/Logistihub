@@ -147,19 +147,8 @@ router.post('/register', async (req, res) => {
         { expiresIn: '8h' }
       );
 
-      const qrToken = jwt.sign(
-        { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
-        process.env.JWT_SECRET,
-        { expiresIn: '10m' }
-      );
-
-      const emailToken = jwt.sign(
-        { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
-        process.env.JWT_SECRET
-      );
-
       const BASE_URL = process.env.BASE_URL || 'https://logistichub.ddns.net';
-      const permanentLink = `${BASE_URL}/${slug}/get-app?token=${emailToken}`;
+      const permanentLink = `${BASE_URL}/${slug}/get-app`;
 
       // Send Welcome & Credentials Email
       sendRegistrationEmail(email, `${first_name} ${last_name}`, companyName, slug, permanentLink)
@@ -169,8 +158,6 @@ router.post('/register', async (req, res) => {
         ok:           true,
         user_id:      result.insertId,
         name:         `${first_name} ${last_name}`,
-        qr_token:     qrToken,
-        email_token:  emailToken,
         token:        token,
         login_email:  loginEmail
       });
