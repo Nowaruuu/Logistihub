@@ -181,9 +181,7 @@
           return;
         }
 
-        // qr_token is the 10-min token returned by the server
-        const qrToken = data.qr_token;
-        if (!qrToken) throw new Error('Server did not return a QR token. Please contact support.');
+
 
         // Set the assigned login email
         document.getElementById('login-email-display').textContent = 'Your App Login: ' + data.login_email;
