@@ -82,8 +82,11 @@ router.post('/staff/register', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /register (Customer)
+// POST /register (Customer) - 2 Step OTP Flow
 // ─────────────────────────────────────────────────────────────────────────────
+const crypto = require('crypto');
+const pendingRegistrations = new Map();
+
 router.post('/register', async (req, res) => {
   const { slug } = req.params;
   
@@ -98,60 +101,103 @@ router.post('/register', async (req, res) => {
     const tenantId      = tenants[0].tenant_id;
     const companyName   = tenants[0].company_name;
 
-    const { first_name, last_name, email, phone, password } = req.body;
-    if (!first_name || !last_name || !email || !password) {
+    const { first_name, last_name, email, username, phone, password, otp } = req.body;
+    if (!first_name || !last_name || !email || !password || !username) {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    const [existing] = await query(
-      'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
-      [tenantId, email]
-    );
-    if (existing.length > 0) {
-      return res.status(409).json({ error: 'Email already registered.' });
+    const safeUsername = username.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+    const loginEmail = `${safeUsername}@${slug}.com`;
+
+    // ── Step 2: Verify OTP and Create Account ──
+    if (otp) {
+      const pending = pendingRegistrations.get(email);
+      if (!pending || pending.expires < Date.now()) {
+        return res.status(400).json({ error: 'OTP expired or invalid. Please request a new one.' });
+      }
+      if (pending.otp !== otp) {
+        return res.status(400).json({ error: 'Incorrect OTP.' });
+      }
+
+      const [existing] = await query(
+        'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
+        [tenantId, loginEmail]
+      );
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'That username is already taken. Choose another.' });
+      }
+
+      // Dynamically add contact_email column if it doesn't exist
+      try {
+        await query('ALTER TABLE APP_USER ADD COLUMN contact_email VARCHAR(255)');
+      } catch (e) { /* Column probably already exists */ }
+
+      const hash = await bcrypt.hash(password, 12);
+      const [result] = await query(
+        `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, contact_email, phone, role, password_hash, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'user', ?, 'active', NOW())`,
+        [tenantId, first_name, last_name, loginEmail, email, phone || null, hash]
+      );
+
+      pendingRegistrations.delete(email);
+
+      const token = jwt.sign(
+        { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email: loginEmail },
+        process.env.JWT_SECRET,
+        { expiresIn: '8h' }
+      );
+
+      const qrToken = jwt.sign(
+        { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
+        process.env.JWT_SECRET,
+        { expiresIn: '10m' }
+      );
+
+      const emailToken = jwt.sign(
+        { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
+        process.env.JWT_SECRET
+      );
+
+      const BASE_URL = process.env.BASE_URL || 'https://logistichub.ddns.net';
+      const permanentLink = `${BASE_URL}/${slug}/get-app?token=${emailToken}`;
+
+      // Send Welcome & Credentials Email
+      const { sendRegistrationEmail } = require('../config/mailer');
+      sendRegistrationEmail(email, `${first_name} ${last_name}`, companyName, slug, permanentLink)
+        .catch(e => console.error(`[CUST REG] Async email error: ${e.message}`));
+
+      return res.status(201).json({
+        ok:           true,
+        user_id:      result.insertId,
+        name:         `${first_name} ${last_name}`,
+        qr_token:     qrToken,
+        email_token:  emailToken,
+        token:        token,
+        login_email:  loginEmail
+      });
     }
 
-    const hash = await bcrypt.hash(password, 12);
-    const [result] = await query(
-      `INSERT INTO APP_USER (tenant_id, first_name, last_name, email, phone, role, password_hash, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'user', ?, 'active', NOW())`,
-      [tenantId, first_name, last_name, email, phone || null, hash]
+    // ── Step 1: Generate OTP and send email ──
+    // Check if username already exists before sending OTP
+    const [existing] = await query(
+      'SELECT user_id FROM APP_USER WHERE tenant_id = ? AND email = ? LIMIT 1',
+      [tenantId, loginEmail]
     );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'That username is already taken. Choose another.' });
+    }
 
-    const token = jwt.sign(
-      { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email },
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
-    );
-
-    // ── Generate QR token (expires in 10 minutes) ──────────────────────────
-    const qrToken = jwt.sign(
-      { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
-      process.env.JWT_SECRET,
-      { expiresIn: '10m' }
-    );
-
-    // ── Generate permanent email token (never expires) ─────────────────────
-    const emailToken = jwt.sign(
-      { type: 'app_download', slug, user_id: result.insertId, tenant_id: tenantId },
-      process.env.JWT_SECRET
-    );
-
-    const BASE_URL      = process.env.BASE_URL || 'https://logistihub.ddns.net';
-    const permanentLink = `${BASE_URL}/${slug}/get-app?token=${emailToken}`;
-
-    // ── Send welcome email (non-blocking) ─────────────────────────────────
-    sendRegistrationEmail(email, `${first_name} ${last_name}`, companyName, slug, permanentLink)
-      .catch(e => console.error(`[CUST REG] Async email error: ${e.message}`));
-
-    res.status(201).json({
-      ok:           true,
-      user_id:      result.insertId,
-      name:         `${first_name} ${last_name}`,
-      qr_token:     qrToken,
-      email_token:  emailToken,
-      token:        token
+    const generatedOtp = crypto.randomInt(100000, 999999).toString();
+    pendingRegistrations.set(email, {
+      otp: generatedOtp,
+      expires: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
+
+    const { sendPasswordResetEmail } = require('../config/mailer');
+    // Using password reset template as a quick OTP email template
+    await sendPasswordResetEmail(email, generatedOtp, companyName);
+
+    res.json({ ok: true, message: 'OTP sent successfully to ' + email, require_otp: true, login_email: loginEmail });
     
   } catch (err) {
     console.error('[CUST REG] Critical Error:', err);
