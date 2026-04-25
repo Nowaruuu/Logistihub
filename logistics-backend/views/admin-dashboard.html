@@ -361,7 +361,7 @@ textarea{resize:vertical;}
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Route ID</th><th>Name</th><th>Vehicle</th><th>Driver</th><th>Active Shipments</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">route</span><p>No routes defined</p></div></td></tr></tbody></table></div></div>
     </div>
 
-    <!-- â•â• STAFF â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- â• â•  STAFF â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
     <div id="s-staff" class="screen">
       <div class="ph-row"><div><h2>Staff</h2><p>Drivers, helpers, and admins within your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Staff</button></div>
       <div class="card">
@@ -369,9 +369,6 @@ textarea{resize:vertical;}
           <div class="tabs-bar" style="border:none;margin:0;"><button class="tab active" onclick="setTab(this)">All</button><button class="tab" onclick="setTab(this)">Driver</button><button class="tab" onclick="setTab(this)">Helper</button><button class="tab" onclick="setTab(this)">Admin</button></div>
           <select class="f-select"><option>All Statuses</option><option>Available</option><option>On-Duty</option><option>Sick</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>License Expiry</th><th>Status</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
 
     <!-- â•â• VEHICLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-vehicles" class="screen">
@@ -387,7 +384,7 @@ textarea{resize:vertical;}
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
           <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loadingâ€¦</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -652,12 +649,12 @@ function loadAppUsers(){
 function renderAppUsers(users){
   var tbody=document.getElementById('app-users-tbody');
   if(!tbody)return;
-  if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
+  if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
   var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaiting'};
   tbody.innerHTML=users.map(function(u){
     var date=u.created_at?new Date(u.created_at).toLocaleDateString():'N/A';
     var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
-    return '<tr><td><strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
+    return '<tr><td><strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td>'+esc(u.contact_email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
 }
 function filterAppUsers(){
