@@ -162,7 +162,6 @@ router.post('/register', async (req, res) => {
       const permanentLink = `${BASE_URL}/${slug}/get-app?token=${emailToken}`;
 
       // Send Welcome & Credentials Email
-      const { sendRegistrationEmail } = require('../config/mailer');
       sendRegistrationEmail(email, `${first_name} ${last_name}`, companyName, slug, permanentLink)
         .catch(e => console.error(`[CUST REG] Async email error: ${e.message}`));
 
@@ -193,7 +192,6 @@ router.post('/register', async (req, res) => {
       expires: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
 
-    const { sendPasswordResetEmail } = require('../config/mailer');
     // Using password reset template as a quick OTP email template
     await sendPasswordResetEmail(email, generatedOtp, companyName);
 
