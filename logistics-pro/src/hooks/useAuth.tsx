@@ -1,94 +1,56 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { getProfile } from '../lib/api';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (user: User) => Promise<void>;
+  signIn: (user: any) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribeProfile: (() => void) | null = null;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      
-      if (unsubscribeProfile) {
-        unsubscribeProfile();
-        unsubscribeProfile = null;
-      }
-
-      if (firebaseUser) {
-        const docRef = doc(db, 'users', firebaseUser.uid);
-        
-        // Use onSnapshot for real-time profile updates
-        unsubscribeProfile = onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setProfile(docSnap.data() as UserProfile);
-            setLoading(false);
-          } else {
-            setProfile(null);
-            console.log("Profile document does not exist yet.");
-          }
-        }, (err) => {
-          console.error("Profile snapshot error:", err);
-          setLoading(false); // Resolve loading even on error
-        });
-        
-        // Initial check to handle loading state
-        try {
-          const initialSnap = await getDoc(docRef);
-          if (initialSnap.exists()) {
-            setProfile(initialSnap.data() as UserProfile);
-            setLoading(false);
-          } else {
-            // Profile doesn't exist yet (maybe fresh sign up)
-            // We let the snapshot listener or the timeout handle it
-            setTimeout(() => setLoading(false), 3000);
-          }
-        } catch (err) {
-          console.error("Initial profile fetch error:", err);
-          setLoading(false);
-        }
-      } else {
+    const initAuth = async () => {
+      try {
+        const data = await getProfile();
+        setUser({ uid: data.id, ...data });
+        setProfile(data as UserProfile);
+      } catch (err) {
+        setUser(null);
         setProfile(null);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_slug');
+      } finally {
         setLoading(false);
       }
-    });
-
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeProfile) unsubscribeProfile();
     };
+    initAuth();
   }, []);
 
-  const signIn = async (firebaseUser: User) => {
-    // This is now mostly handled by onAuthStateChanged + onSnapshot
-    setUser(firebaseUser);
+  const signIn = async (userData: any) => {
+    setUser(userData);
     setLoading(true);
-    
-    const docRef = doc(db, 'users', firebaseUser.uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      setProfile(docSnap.data() as UserProfile);
+    try {
+      const data = await getProfile();
+      setProfile(data as UserProfile);
+    } catch (err) {
+      console.error("Fetch profile failed after sign in:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const signOut = async () => {
-    await auth.signOut();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_slug');
     setUser(null);
     setProfile(null);
   };
