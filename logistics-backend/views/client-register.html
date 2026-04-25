@@ -47,6 +47,11 @@
       if (t.bg_app_color) document.body.style.background = t.bg_app_color;
       // Page title
       if (t.company_name) document.title = 'Register — ' + t.company_name;
+      // Slug Suffix
+      if (t.slug) {
+        var suffixEl = document.getElementById('slug-suffix');
+        if (suffixEl) suffixEl.textContent = '@' + t.slug + '.com';
+      }
     });
   </script>
 </head>
@@ -78,7 +83,12 @@
       </div>
       <div class="form-group">
         <label class="label">Username</label>
-        <input type="text" id="user" placeholder="Choose a unique username" required>
+        <div style="display: flex; align-items: stretch; border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; transition: all 0.2s;" id="user-input-wrap">
+          <input type="text" id="user" placeholder="Choose a unique username" required style="border: none; border-radius: 0; outline: none; box-shadow: none; flex: 1;">
+          <div style="padding: 0 14px; color: #64748b; font-size: 14px; font-weight: 600; background: #f8fafc; border-left: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; white-space: nowrap;" id="slug-suffix">
+            @slug.com
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label class="label">Password</label>
