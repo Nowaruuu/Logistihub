@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Delivery, Driver } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { getProfile } from '../lib/api';
 import { 
   Truck, 
   MapPin, 
@@ -27,48 +26,57 @@ export default function DriverDashboard() {
   const [activeAssignments, setActiveAssignments] = useState<Delivery[]>([]);
   const [activeTab, setActiveTab] = useState<'available' | 'active'>('available');
   const [mapCenter, setMapCenter] = useState<[number, number]>([14.5995, 120.9842]);
+  const [isOnline, setIsOnline] = useState(true);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
+    try {
+      // Fetch available jobs
+      const jobs = await deliveryService.getAvailableJobs();
+      setAvailableJobs(jobs);
 
-    // Subscribe to driver profile info
-    const unsubDriver = onSnapshot(doc(db, 'drivers', user.uid), (snap) => {
-      if (snap.exists()) {
-        setDriverInfo(snap.data() as Driver);
+      // Fetch driver's active assignments
+      const assigned = await deliveryService.getDriverDeliveries();
+      setActiveAssignments(assigned);
+
+      if (assigned.length > 0) {
+        setMapCenter([assigned[0].currentLat || 14.5995, assigned[0].currentLng || 120.9842]);
       }
-    });
 
-    // Subscribe to available jobs
-    const unsubJobs = deliveryService.subscribeToAvailableJobs((jobs) => {
-      setAvailableJobs(jobs.filter(j => !j.driverUid));
-    });
-
-    // Subscribe to driver's active assignments
-    const unsubAssignments = deliveryService.subscribeToDriverDeliveries(user.uid, (assignments) => {
-      setActiveAssignments(assignments);
-      if (assignments.length > 0) {
-        setMapCenter([assignments[0].currentLat || 14.5995, assignments[0].currentLng || 120.9842]);
+      // Fetch driver profile
+      const prof = await getProfile();
+      if (prof) {
+        setDriverInfo({
+          uid: user.uid,
+          status: 'Available',
+          vehicleType: prof.vehicle_type || 'Van',
+          plateNumber: prof.plate_number || '',
+          rating: prof.rating || 4.8,
+          totalDeliveries: prof.total_deliveries || 0,
+          verificationStatus: 'Verified'
+        } as Driver);
       }
-    });
-
-    return () => {
-      unsubDriver();
-      unsubJobs();
-      unsubAssignments();
-    };
+    } catch (err) {
+      console.error('Failed to fetch driver data:', err);
+    }
   }, [user]);
 
-  const toggleOnline = async () => {
-    if (!user || !driverInfo) return;
-    const newStatus = driverInfo.status === 'Offline' ? 'Available' : 'Offline';
-    await updateDoc(doc(db, 'drivers', user.uid), { status: newStatus });
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  const toggleOnline = () => {
+    setIsOnline(!isOnline);
   };
 
   const handleAcceptJob = async (jobId: string) => {
     if (!user || !profile) return;
     try {
-      await deliveryService.acceptJob(jobId, user.uid, profile.fullName);
+      await deliveryService.acceptJob(jobId);
       setActiveTab('active');
+      fetchData(); // refresh immediately
     } catch (err) {
       console.error("Error accepting job:", err);
     }
@@ -77,7 +85,7 @@ export default function DriverDashboard() {
   const handleCompleteDelivery = async (deliveryId: string) => {
     try {
       await deliveryService.updateStatus(deliveryId, 'Delivered', 'Recipient Location');
-      // In a real app, we'd also update the driver's totalDeliveries
+      fetchData(); // refresh immediately
     } catch (err) {
       console.error("Error completing delivery:", err);
     }
@@ -102,11 +110,11 @@ export default function DriverDashboard() {
               onClick={toggleOnline}
               className={cn(
                 "flex flex-col items-center gap-1 transition-all",
-                driverInfo?.status === 'Offline' ? "text-slate-500" : "text-green-400"
+                !isOnline ? "text-slate-500" : "text-green-400"
               )}
             >
-              {driverInfo?.status === 'Offline' ? <ToggleLeft className="size-8" /> : <ToggleRight className="size-8" />}
-              <span className="text-[10px] font-bold uppercase">{driverInfo?.status}</span>
+              {!isOnline ? <ToggleLeft className="size-8" /> : <ToggleRight className="size-8" />}
+              <span className="text-[10px] font-bold uppercase">{isOnline ? 'Online' : 'Offline'}</span>
             </button>
           </div>
 
@@ -219,7 +227,7 @@ export default function DriverDashboard() {
 
                 <button 
                   onClick={() => handleAcceptJob(job.id)}
-                  disabled={driverInfo?.status === 'Offline'}
+                  disabled={!isOnline}
                   className="w-full py-4 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all hover:brightness-110 disabled:opacity-50 disabled:grayscale"
                 >
                   Accept Job

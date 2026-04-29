@@ -17,12 +17,51 @@ export default function TrackShipment() {
   useEffect(() => {
     if (!trackingNumber) return;
 
-    const unsubscribe = deliveryService.subscribeToDeliveryByTracking(trackingNumber, (data) => {
-      setDelivery(data);
-      setLoading(false);
-    });
+    const fetchDelivery = async () => {
+      try {
+        const result = await deliveryService.getDeliveryByTracking(trackingNumber);
+        if (result?.shipment) {
+          const s = result.shipment;
+          const mapped: Delivery = {
+            id: s.delivery_number,
+            trackingNumber: s.delivery_number || trackingNumber,
+            senderUid: s.sender_user_id?.toString() || '',
+            senderName: s.client_name || '',
+            receiverName: s.receiver_name || '',
+            origin: s.pickup_location || '',
+            destination: s.dropoff_location || '',
+            status: s.status === 'In-Transit' ? 'In Transit' : (s.status === 'Pending' ? 'Processing' : s.status) as any,
+            estimatedArrival: s.estimated_arrival,
+            weight: s.weight,
+            size: s.size || s.item_type_flag,
+            shippingMethod: s.shipping_method,
+            totalFee: s.total_fee,
+            currentLat: s.pickup_lat || 14.5995,
+            currentLng: s.pickup_lng || 120.9842,
+            destLat: s.dropoff_lat,
+            destLng: s.dropoff_lng,
+            history: (result.history || []).map((h: any) => ({
+              status: h.status,
+              location: h.location || '',
+              timestamp: h.created_at,
+              description: h.description || ''
+            })),
+            createdAt: s.created_at || new Date().toISOString()
+          };
+          setDelivery(mapped);
+        } else {
+          setDelivery(null);
+        }
+      } catch {
+        setDelivery(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return unsubscribe;
+    fetchDelivery();
+    const interval = setInterval(fetchDelivery, 15000);
+    return () => clearInterval(interval);
   }, [trackingNumber]);
 
   if (loading) return <div className="flex items-center justify-center h-full">Loading...</div>;

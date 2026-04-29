@@ -19,38 +19,34 @@ export default function MyPackages() {
   useEffect(() => {
     if (!user) return;
 
-    let unsubscribe;
-    if (isDriver) {
-      unsubscribe = deliveryService.subscribeToDriverDeliveries(user.uid, (docs) => {
-        setDeliveries(docs);
-      });
-    } else {
-      unsubscribe = deliveryService.subscribeToAllDeliveries(user.uid, (docs) => {
-        setDeliveries(docs);
-      });
-    }
+    const fetchDeliveries = async () => {
+      try {
+        if (isDriver) {
+          const docs = await deliveryService.getDriverDeliveries();
+          setDeliveries(docs);
+        } else {
+          const docs = await deliveryService.getAllDeliveries();
+          setDeliveries(docs);
+        }
+      } catch (err) {
+        console.error('Failed to fetch deliveries:', err);
+      }
+    };
 
-    return unsubscribe;
+    fetchDeliveries();
+    const interval = setInterval(fetchDeliveries, 30000);
+    return () => clearInterval(interval);
   }, [user, isDriver]);
 
   const handleClearAll = async () => {
-    if (!user) return;
-    try {
-      await deliveryService.clearAllDeliveries(user.uid);
-    } catch (err) {
-      console.error("Error clearing shipments:", err);
-    }
+    // Not supported in API mode — just refresh
+    console.warn('Clear all not supported');
   };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Delete this delivery from your history?')) {
-      try {
-        await deliveryService.deleteDelivery(id);
-      } catch (err) {
-        console.error("Error deleting shipment:", err);
-      }
-    }
+    // Not supported in API mode
+    console.warn('Delete not supported');
   };
 
   const filteredDeliveries = deliveries.filter(d => {

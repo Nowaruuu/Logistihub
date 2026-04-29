@@ -1,54 +1,72 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Info, Map as MapIcon } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Info, Map as MapIcon, User, Phone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
+import { createCheckout } from '../lib/api';
 
 export default function SendPackage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [pickup, setPickup] = useState('72nd St, BGC, Taguig');
+  const [pickup, setPickup] = useState('');
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>([14.5489, 121.0486]);
   const [destination, setDestination] = useState('');
   const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
+  const [receiverName, setReceiverName] = useState('');
+  const [receiverPhone, setReceiverPhone] = useState('');
   const [weight, setWeight] = useState('');
   const [size, setSize] = useState('Small (Box)');
   const [method, setMethod] = useState<'standard' | 'express'>('standard');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [showPickupMap, setShowPickupMap] = useState(false);
 
+  const totalFee = method === 'standard' ? 750 : 1440;
+
   const handleConfirm = async () => {
-    if (!user || !destination) return;
+    if (!user || !destination || !pickup) return;
     setLoading(true);
+    setError('');
     try {
-      // Use picked coordinates or fallback to mock
       const finalOriginLat = pickupCoords ? pickupCoords[0] : 14.5489;
       const finalOriginLng = pickupCoords ? pickupCoords[1] : 121.0486;
       const finalDestLat = destCoords ? destCoords[0] : 14.5 + Math.random() * 0.2;
       const finalDestLng = destCoords ? destCoords[1] : 120.9 + Math.random() * 0.2;
 
-      await deliveryService.createDelivery({
+      const deliveryNumber = await deliveryService.createDelivery({
         senderUid: user.uid,
         senderName: profile?.fullName || user.email,
+        receiverName,
         origin: pickup,
         destination,
         estimatedArrival: method === 'standard' ? '3-5 business days' : 'Tomorrow, before 5 PM',
         weight: parseFloat(weight) || 0,
         size,
         shippingMethod: method === 'standard' ? 'Standard Delivery' : 'Express Delivery',
-        totalFee: method === 'standard' ? 750 : 1440,
+        totalFee,
         originLat: finalOriginLat,
         originLng: finalOriginLng,
         destLat: finalDestLat,
         destLng: finalDestLng,
       });
 
+      // Redirect to PayMongo checkout for payment
+      try {
+        const checkout = await createCheckout(deliveryNumber, totalFee, `Shipping: ${pickup} → ${destination}`);
+        if (checkout.checkout_url) {
+          window.open(checkout.checkout_url, '_blank');
+        }
+      } catch (payErr) {
+        console.warn('Payment checkout skipped:', payErr);
+      }
+
       navigate('/packages');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || 'Failed to create shipment');
     } finally {
       setLoading(false);
     }
