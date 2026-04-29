@@ -647,7 +647,7 @@ function apiFetch(url, opts) {
   opts = opts || {};
   opts.credentials = opts.credentials || 'include';
   return fetch(url, opts).then(function(r) {
-    if (r.status === 401 || r.status === 403) {
+    if (r.status === 401) {
       showSessionExpired();
       return Promise.reject(new Error('Session expired'));
     }
@@ -659,7 +659,7 @@ function checkSession() {
   var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
   if (!slug || _sessionExpired) return;
   fetch('/' + slug + '/api/admin/me', { credentials: 'include' }).then(function(r) {
-    if (r.status === 401 || r.status === 403) { showSessionExpired(); return null; }
+    if (r.status === 401) { showSessionExpired(); return null; }
     return r.json();
   }).then(function(d) {
     if (d && d.admin) {
