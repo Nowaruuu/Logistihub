@@ -52,7 +52,21 @@ export default function SendPackage() {
   const pickupTimer = useRef<ReturnType<typeof setTimeout>>();
   const destTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  const totalFee = method === 'standard' ? 750 : 1440;
+  // Calculate distance in km using Haversine
+  function calcDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  // Dynamic pricing: Base ₱50 + ₱15/km + ₱8/kg. Express = 1.8x. Category surcharge for Vehicle/Bulk.
+  const distKm = (pickupCoords && destCoords) ? calcDistanceKm(pickupCoords[0], pickupCoords[1], destCoords[0], destCoords[1]) : 0;
+  const weightKg = parseFloat(weight) || 1;
+  const categorySurcharge = category === 'VEHICLE' ? 500 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
+  const baseFee = 50 + (distKm * 15) + (weightKg * 8) + categorySurcharge;
+  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
 
   // Debounced address search for pickup
   const handlePickupChange = (val: string) => {
@@ -164,7 +178,7 @@ export default function SendPackage() {
   // ── Submitted Success Screen ──
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full px-8 py-20 text-center">
+      <div className="flex flex-col items-center justify-center min-h-full px-8 py-20 text-center bg-white dark:bg-slate-900">
         <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-bounce">
           <CheckCircle2 className="size-10 text-green-500" />
         </div>
@@ -398,6 +412,13 @@ export default function SendPackage() {
       {/* ── Shipping Method ── */}
       <section className="mt-8 px-5">
         <h3 className="text-[13px] font-bold mb-4 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
+        {distKm > 0 && (
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-100 dark:border-slate-700 space-y-1">
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Distance</span><span className="font-semibold text-slate-700 dark:text-slate-200">{distKm.toFixed(1)} km</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Weight</span><span className="font-semibold text-slate-700 dark:text-slate-200">{weightKg} kg</span></div>
+            {categorySurcharge > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">Category Surcharge</span><span className="font-semibold text-orange-500">+₱{categorySurcharge}</span></div>}
+          </div>
+        )}
         <div className="space-y-4">
           <button 
             onClick={() => setMethod('standard')}
@@ -418,7 +439,7 @@ export default function SendPackage() {
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
-              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱750.00</span>
+              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱{Math.round(baseFee).toLocaleString()}.00</span>
               <div className="bg-orange-600/10 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">Best Value</div>
             </div>
           </button>
@@ -442,7 +463,7 @@ export default function SendPackage() {
               </div>
             </div>
             <div className="text-right">
-              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱1,440.00</span>
+              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱{Math.round(baseFee * 1.8).toLocaleString()}.00</span>
             </div>
           </button>
         </div>

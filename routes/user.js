@@ -69,10 +69,10 @@ router.post('/staff/register', async (req, res) => {
     const token = jwt.sign(
       { role, staff_id: result.insertId, tenant_id: tenantId, slug, name: fullName, email },
       process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '30d' }
     );
 
-    res.cookie(`staff_token_${req.params.slug}`, token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'lax', maxAge:8*3600*1000 });
+    res.cookie(`staff_token_${req.params.slug}`, token, { httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'lax', maxAge:30*24*3600*1000 });
     res.status(201).json({ ok:true, staff_id: result.insertId, name: fullName, token });
 
   } catch (err) {
@@ -144,7 +144,7 @@ router.post('/register', async (req, res) => {
       const token = jwt.sign(
         { role: 'user', user_id: result.insertId, tenant_id: tenantId, slug, name: `${first_name} ${last_name}`, email: loginEmail },
         process.env.JWT_SECRET,
-        { expiresIn: '8h' }
+        { expiresIn: '30d' }
       );
 
       const BASE_URL = process.env.BASE_URL || 'https://logistichub.ddns.net';
@@ -215,13 +215,13 @@ router.post('/login', async (req, res) => {
 
   const token = jwt.sign(
     { role: 'user', user_id: user.user_id, tenant_id: tenantId, slug, name: `${user.first_name} ${user.last_name}`, email },
-    process.env.JWT_SECRET, { expiresIn: '8h' }
+    process.env.JWT_SECRET, { expiresIn: '30d' }
   );
   res.cookie('user_token', token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge:   8 * 3600 * 1000
+    maxAge:   30 * 24 * 3600 * 1000
   });
   res.json({
     ok:    true,
@@ -266,7 +266,7 @@ router.post('/staff-login', async (req, res) => {
 
   const token = jwt.sign(
     { role: tokenRole, staff_id: staff.staff_id, tenant_id: tenantId, slug, name: staff.name, email },
-    process.env.JWT_SECRET, { expiresIn: '8h' }
+    process.env.JWT_SECRET, { expiresIn: '30d' }
   );
 
   // Set appropriate cookie per role

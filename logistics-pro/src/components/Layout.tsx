@@ -178,7 +178,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 pb-28 overflow-y-auto">
+      <main className="flex-1 pb-28 overflow-y-auto bg-white dark:bg-slate-900 min-h-[50vh]">
         {children}
       </main>
 

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
 import { Search, Truck, Package as PackageIcon, ChevronRight, CheckCircle, Clock, CreditCard, Trash2 } from 'lucide-react';
+import { createCheckout } from '../lib/api';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
@@ -213,6 +214,19 @@ export default function MyPackages() {
                       </div>
                     </div>
                   </div>
+                  {/* Pay Now Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      createCheckout(delivery.trackingNumber, delivery.totalFee || 0, `Shipment ${delivery.trackingNumber}`)
+                        .then(r => { if (r.checkout_url) window.open(r.checkout_url, '_blank'); })
+                        .catch(err => console.warn('Payment error:', err));
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all"
+                  >
+                    <CreditCard className="size-3.5" />
+                    Pay Now • ₱{delivery.totalFee?.toFixed(2)}
+                  </button>
                 </motion.div>
               ))}
             </div>

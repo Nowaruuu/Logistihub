@@ -64,8 +64,8 @@ export default function TrackShipment() {
     return () => clearInterval(interval);
   }, [trackingNumber]);
 
-  if (loading) return <div className="flex items-center justify-center h-full">Loading...</div>;
-  if (!delivery) return <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+  if (loading) return <div className="flex items-center justify-center h-full bg-white dark:bg-slate-900"><div className="size-10 rounded-full border-4 border-orange-600 border-t-transparent animate-spin"></div></div>;
+  if (!delivery) return <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-white dark:bg-slate-900">
     <PackageIcon className="size-16 text-slate-200 mb-4" />
     <h2 className="text-xl font-bold text-slate-900 dark:text-white">Shipment Not Found</h2>
     <p className="text-slate-500 mt-2">We couldn't find any shipment with tracking number {trackingNumber}</p>
