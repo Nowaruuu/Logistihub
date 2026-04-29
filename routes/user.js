@@ -335,7 +335,7 @@ router.get('/me', async (req, res) => {
     // APP_USER (customers)
     if (!payload.user_id) return res.status(403).json({ error: 'Forbidden.' });
     const [rows] = await query(
-      `SELECT user_id, tenant_id, first_name, last_name, email, phone, address, status, created_at
+      `SELECT user_id, tenant_id, first_name, last_name, email, phone, status, created_at
        FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1`,
       [payload.user_id, payload.tenant_id]
     );
@@ -637,7 +637,7 @@ router.get('/dc/shipments', requireStaff, async (req, res) => {
 router.get('/dc/clients', requireStaff, async (req, res) => {
   try {
     const [rows] = await query(
-      `SELECT user_id, CONCAT(first_name,' ',last_name) AS full_name, email, phone, address, status, created_at
+      `SELECT user_id, CONCAT(first_name,' ',last_name) AS full_name, email, phone, status, created_at
        FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC`,
       [req.tenantId]
     );

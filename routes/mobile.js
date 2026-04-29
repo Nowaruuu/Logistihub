@@ -473,8 +473,8 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     // Create payment record (non-fatal — checkout URL is the primary deliverable)
     try {
       await query(
-        `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id, created_at)
-         VALUES (?, ?, ?, 'Pending', ?, NOW())`,
+        `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id)
+         VALUES (?, ?, ?, 'Pending', ?)`,
         [delivery_number, req.tenantId, amount, checkoutId]
       );
     } catch (dbErr) {
