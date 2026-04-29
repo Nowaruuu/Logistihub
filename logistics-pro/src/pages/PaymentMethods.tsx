@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Plus, Trash2, X, Shield, CheckCircle2, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
 
@@ -19,7 +17,7 @@ export default function PaymentMethods() {
   const { user } = useAuth();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -30,80 +28,31 @@ export default function PaymentMethods() {
     isDefault: false
   });
 
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(collection(db, `users/${user.uid}/payment_methods`));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as PaymentMethod[];
-      setMethods(list);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching payment methods:", error);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, [user]);
-
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    try {
-      // Basic validation for demo
-      const last4 = formData.cardNumber.slice(-4) || '4242';
-      
-      await addDoc(collection(db, `users/${user.uid}/payment_methods`), {
-        type: formData.type,
-        last4,
-        expiryDate: formData.expiryDate,
-        cardHolder: formData.cardHolder,
-        isDefault: formData.isDefault,
-        uid: user.uid,
-        createdAt: serverTimestamp()
-      });
+    const last4 = formData.cardNumber.slice(-4) || '4242';
+    const newMethod: PaymentMethod = {
+      id: Date.now().toString(),
+      type: formData.type,
+      last4,
+      expiryDate: formData.expiryDate,
+      cardHolder: formData.cardHolder,
+      isDefault: formData.isDefault || methods.length === 0,
+    };
 
-      setIsAdding(false);
-      setFormData({
-        type: 'Visa',
-        cardNumber: '',
-        expiryDate: '',
-        cardHolder: '',
-        isDefault: false
-      });
-    } catch (error) {
-      console.error("Error adding payment method:", error);
-    }
+    setMethods(prev => [...prev, newMethod]);
+    setIsAdding(false);
+    setFormData({ type: 'Visa', cardNumber: '', expiryDate: '', cardHolder: '', isDefault: false });
   };
 
   const handleDelete = async (id: string) => {
-    if (!user) return;
-    try {
-      await deleteDoc(doc(db, `users/${user.uid}/payment_methods`, id));
-    } catch (error) {
-      console.error("Error deleting payment method:", error);
-    }
+    setMethods(prev => prev.filter(m => m.id !== id));
   };
 
   const setAsDefault = async (id: string) => {
-    if (!user) return;
-    try {
-      // Reset others
-      for (const m of methods) {
-        if (m.isDefault) {
-          await updateDoc(doc(db, `users/${user.uid}/payment_methods`, m.id), { isDefault: false });
-        }
-      }
-      // Set new default
-      await updateDoc(doc(db, `users/${user.uid}/payment_methods`, id), { isDefault: true });
-    } catch (error) {
-      console.error("Error setting default:", error);
-    }
+    setMethods(prev => prev.map(m => ({ ...m, isDefault: m.id === id })));
   };
 
   const getCardColor = (type: string) => {

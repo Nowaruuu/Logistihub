@@ -1,15 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+// Firebase has been fully replaced with the MySQL backend API.
+// This file provides stubs to prevent import errors from any remaining references.
 
-// Fallback config since we are moving to MySQL backend
-const firebaseConfig = {
-  projectId: "dummy-project",
-  appId: "1:111111111:web:111111",
-  apiKey: "dummy-key",
-  authDomain: "dummy.firebaseapp.com",
-};
-
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const auth = null;
+export const db = null;
+export const app = null;
