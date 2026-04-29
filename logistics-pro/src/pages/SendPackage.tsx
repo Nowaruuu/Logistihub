@@ -36,6 +36,7 @@ export default function SendPackage() {
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
   const [weight, setWeight] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'ton'>('kg');
   const [category, setCategory] = useState('PACKAGE');
   const [method, setMethod] = useState<'standard' | 'express'>('standard');
   const [loading, setLoading] = useState(false);
@@ -61,12 +62,17 @@ export default function SendPackage() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  // Dynamic pricing: Base ₱50 + ₱15/km + ₱8/kg. Express = 1.8x. Category surcharge for Vehicle/Bulk.
+  // Convert weight to kg for pricing
+  const rawWeight = parseFloat(weight) || 0;
+  const weightKg = weightUnit === 'ton' ? rawWeight * 1000 : rawWeight;
   const distKm = (pickupCoords && destCoords) ? calcDistanceKm(pickupCoords[0], pickupCoords[1], destCoords[0], destCoords[1]) : 0;
-  const weightKg = parseFloat(weight) || 1;
-  const categorySurcharge = category === 'VEHICLE' ? 500 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
-  const baseFee = 50 + (distKm * 15) + (weightKg * 8) + categorySurcharge;
-  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
+
+  // Realistic pricing: Base ₱80 + ₱12/km + tiered per-kg rate. Express = 1.5x.
+  // Tiered: first 50kg = ₱2/kg, 50-500kg = ₱1.5/kg, 500kg+ = ₱0.80/kg
+  const tierRate = weightKg <= 50 ? weightKg * 2 : weightKg <= 500 ? 100 + (weightKg - 50) * 1.5 : 100 + 675 + (weightKg - 500) * 0.80;
+  const categorySurcharge = category === 'VEHICLE' ? 1500 : category === 'BULK' ? 500 : category === 'FOOD' ? 100 : 0;
+  const baseFee = 80 + (distKm * 12) + tierRate + categorySurcharge;
+  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.5);
 
   // Debounced address search for pickup
   const handlePickupChange = (val: string) => {
@@ -117,7 +123,13 @@ export default function SendPackage() {
   };
 
   const handleConfirm = async () => {
-    if (!user || !destination || !pickup) return;
+    // Validate ALL required fields
+    if (!user) return;
+    if (!pickup.trim()) { setError('Pickup address is required'); return; }
+    if (!destination.trim()) { setError('Destination address is required'); return; }
+    if (!receiverName.trim()) { setError('Receiver name is required'); return; }
+    if (!receiverPhone.trim()) { setError('Receiver phone number is required'); return; }
+    if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
     setLoading(true);
     setError('');
     try {
@@ -133,8 +145,8 @@ export default function SendPackage() {
         receiverPhone,
         origin: pickup,
         destination,
-        estimatedArrival: method === 'standard' ? '3-5 business days' : 'Tomorrow, before 5 PM',
-        weight: parseFloat(weight) || 0,
+        estimatedArrival: method === 'standard' ? '2-4 hours' : 'Within 1 hour',
+        weight: weightKg,
         size: PACKAGE_CATEGORIES.find(c => c.id === category)?.label || 'Standard Package',
         shippingMethod: method === 'standard' ? 'Standard Delivery' : 'Express Delivery',
         totalFee,
@@ -395,17 +407,40 @@ export default function SendPackage() {
       <section className="mt-6 px-5">
         <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Specifications</h3>
         <div className="flex flex-col gap-2">
-          <label className="text-[13px] font-semibold text-slate-600 dark:text-slate-400 ml-1">Weight (Kilograms)</label>
-          <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 overflow-hidden focus-within:ring-2 focus-within:ring-orange-600/20 focus-within:border-orange-600 transition-all">
-            <input 
-              type="number"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              className="flex-1 px-4 py-4 bg-transparent border-none focus:ring-0 outline-none text-[15px] font-medium text-slate-900 dark:text-slate-100" 
-              placeholder="e.g. 5.5" 
-            />
-            <span className="pr-4 text-orange-500 font-bold text-sm uppercase tracking-widest">KG</span>
+          <label className="text-[13px] font-semibold text-slate-600 dark:text-slate-400 ml-1">Weight <span className="text-red-500">*</span></label>
+          <div className="flex gap-2">
+            <div className="flex items-center flex-1 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 overflow-hidden focus-within:ring-2 focus-within:ring-orange-600/20 focus-within:border-orange-600 transition-all">
+              <input 
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="flex-1 px-4 py-4 bg-transparent border-none focus:ring-0 outline-none text-[15px] font-medium text-slate-900 dark:text-slate-100" 
+                placeholder={weightUnit === 'kg' ? 'e.g. 5.5' : 'e.g. 3'} 
+                required
+              />
+            </div>
+            <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setWeightUnit('kg')}
+                className={cn(
+                  "px-4 py-3 text-sm font-bold transition-all",
+                  weightUnit === 'kg' ? "bg-orange-600 text-white" : "bg-slate-50 dark:bg-slate-800 text-slate-400"
+                )}
+              >KG</button>
+              <button
+                type="button"
+                onClick={() => setWeightUnit('ton')}
+                className={cn(
+                  "px-4 py-3 text-sm font-bold transition-all",
+                  weightUnit === 'ton' ? "bg-orange-600 text-white" : "bg-slate-50 dark:bg-slate-800 text-slate-400"
+                )}
+              >TON</button>
+            </div>
           </div>
+          {weightKg > 0 && weightUnit === 'ton' && (
+            <p className="text-[11px] text-slate-400 ml-1">= {weightKg.toLocaleString()} kg</p>
+          )}
         </div>
       </section>
 
@@ -415,8 +450,8 @@ export default function SendPackage() {
         {distKm > 0 && (
           <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-100 dark:border-slate-700 space-y-1">
             <div className="flex justify-between text-xs"><span className="text-slate-400">Distance</span><span className="font-semibold text-slate-700 dark:text-slate-200">{distKm.toFixed(1)} km</span></div>
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Weight</span><span className="font-semibold text-slate-700 dark:text-slate-200">{weightKg} kg</span></div>
-            {categorySurcharge > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">Category Surcharge</span><span className="font-semibold text-orange-500">+₱{categorySurcharge}</span></div>}
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Weight</span><span className="font-semibold text-slate-700 dark:text-slate-200">{weightKg.toLocaleString()} kg</span></div>
+            {categorySurcharge > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">Category Surcharge</span><span className="font-semibold text-orange-500">+₱{categorySurcharge.toLocaleString()}</span></div>}
           </div>
         )}
         <div className="space-y-4">
@@ -434,7 +469,7 @@ export default function SendPackage() {
                 </div>
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white block">Standard Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">3-5 business days</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">2-4 hours</p>
                 </div>
               </div>
             </div>
@@ -458,7 +493,7 @@ export default function SendPackage() {
                 </div>
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white block">Express Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Next day before 5 PM</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Within 1 hour</p>
                 </div>
               </div>
             </div>
@@ -488,7 +523,7 @@ export default function SendPackage() {
         </div>
         <button 
           onClick={handleConfirm}
-          disabled={loading || !destination || !pickup}
+          disabled={loading || !destination.trim() || !pickup.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0}
           className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
         >
           {loading ? (

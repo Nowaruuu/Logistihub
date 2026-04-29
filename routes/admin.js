@@ -69,6 +69,29 @@ router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, (req, res) => 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SHIPMENTS (for admin dashboard)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const tid = req.tenantId;
+    const [rows] = await query(
+      `SELECT s.*, d.name AS driver_name, u.full_name AS client_name
+       FROM shipment s
+       LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
+       LEFT JOIN USER u ON u.user_id = s.sender_user_id
+       WHERE s.tenant_id = ?
+       ORDER BY s.created_at DESC LIMIT 200`,
+      [tid]
+    );
+    res.json({ shipments: rows });
+  } catch (err) {
+    console.error('[GET admin/shipments]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD STATS & PASSWORD
 // ─────────────────────────────────────────────────────────────────────────────
 

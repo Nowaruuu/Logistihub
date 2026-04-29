@@ -786,8 +786,72 @@ function filterAppUsers(){
   renderAppUsers(role?_allAppUsers.filter(function(u){return u.role===role;}):_allAppUsers);
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ── Shipment loading ──────────────────────────────────────────────────────────
+var _allShipments=[];
+function loadShipments(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/shipments')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      _allShipments=Array.isArray(data.shipments)?data.shipments:[];
+      renderDashboardShipments();
+      renderShipmentsTable();
+      updateStatCards();
+    })
+    .catch(function(e){console.error('Failed to load shipments:',e);});
+}
+function updateStatCards(){
+  var cards=document.querySelectorAll('.stat-card');
+  if(cards.length<4)return;
+  var total=_allShipments.length;
+  var transit=_allShipments.filter(function(s){return s.status==='In Transit'||s.status==='Out for Delivery';}).length;
+  var delivered=_allShipments.filter(function(s){return s.status==='Delivered';}).length;
+  var pending=_allShipments.filter(function(s){return s.status==='Pending'||s.status==='Processing';}).length;
+  cards[0].querySelector('.stat-value').textContent=total;
+  cards[0].querySelector('.stat-note').textContent=total?total+' total':'No data yet';
+  cards[1].querySelector('.stat-value').textContent=transit;
+  cards[1].querySelector('.stat-note').textContent=transit?transit+' active':'No data yet';
+  cards[2].querySelector('.stat-value').textContent=delivered;
+  cards[2].querySelector('.stat-note').textContent=delivered?delivered+' completed':'No data yet';
+  cards[3].querySelector('.stat-value').textContent=pending;
+  cards[3].querySelector('.stat-note').textContent=pending?pending+' awaiting':'No data yet';
+  // Nav badge
+  var navBadge=document.querySelector('.nav-badge');
+  if(navBadge)navBadge.textContent=total;
+}
+var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
+var statusCls={'Pending':'b-pending','Processing':'b-pending','In Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined'};
+function renderDashboardShipments(){
+  // Recent shipments on dashboard (first 5)
+  var tbody=document.querySelector('#s-dashboard .tbl-wrap tbody');
+  if(!tbody)return;
+  var recent=_allShipments.slice(0,5);
+  if(!recent.length){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr>';return;}
+  tbody.innerHTML=recent.map(function(s){
+    var tc=typeCls[s.item_type_flag]||'t-pkg';
+    var sc=statusCls[s.status]||'b-pending';
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td>'+esc(s.driver_name||'Unassigned')+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td></tr>';
+  }).join('');
+}
+function renderShipmentsTable(){
+  var tbody=document.querySelector('#s-shipments .tbl-wrap tbody');
+  if(!tbody)return;
+  if(!_allShipments.length){tbody.innerHTML='<tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr>';return;}
+  tbody.innerHTML=_allShipments.map(function(s){
+    var tc=typeCls[s.item_type_flag]||'t-pkg';
+    var sc=statusCls[s.status]||'b-pending';
+    var route=esc((s.pickup_location||'').split(',')[0])+' → '+esc((s.dropoff_location||'').split(',')[0]);
+    var date=s.created_at?new Date(s.created_at).toLocaleDateString():'N/A';
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'—')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>—</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td>'+date+'</td><td></td></tr>';
+  }).join('');
+}
+
 var _origGo=go;
-go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
+go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='shipments'||id==='dashboard')loadShipments();};
+// Auto-load on page load
+loadShipments();
 </script>
 
 <script>
