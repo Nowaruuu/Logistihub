@@ -149,8 +149,9 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
 
   try {
     const [rows] = await query(sql, params);
-    res.json(rows);
+    res.json({ shipments: rows, total: rows.length });
   } catch (err) {
+    console.error('[GET /admin/shipments]', err);
     res.status(500).json({ error: err.message });
   }
 });

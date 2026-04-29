@@ -462,23 +462,28 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
 
     const data = await response.json();
     if (!response.ok) {
-      console.error('[PayMongo] Checkout error:', JSON.stringify(data));
-      return res.status(500).json({ error: 'Payment gateway error.' });
+      console.error('[PayMongo] Checkout error:', JSON.stringify(data?.errors || data));
+      const pmErr = data?.errors?.[0]?.detail || 'Payment gateway error.';
+      return res.status(500).json({ error: pmErr });
     }
 
     const checkoutId = data.data.id;
     const checkoutUrl = data.data.attributes.checkout_url;
 
-    // Create payment record
-    await query(
-      `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id, created_at)
-       VALUES (?, ?, ?, 'Pending', ?, NOW())`,
-      [delivery_number, req.tenantId, amount, checkoutId]
-    );
+    // Create payment record (non-fatal — checkout URL is the primary deliverable)
+    try {
+      await query(
+        `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id, created_at)
+         VALUES (?, ?, ?, 'Pending', ?, NOW())`,
+        [delivery_number, req.tenantId, amount, checkoutId]
+      );
+    } catch (dbErr) {
+      console.error('[PayMongo] DB insert error (non-fatal):', dbErr.message);
+    }
 
     res.json({ checkout_url: checkoutUrl, checkout_id: checkoutId });
   } catch (err) {
-    console.error('[POST /pay/checkout]', err);
+    console.error('[POST /pay/checkout] Unexpected error:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to create payment.' });
   }
 });
