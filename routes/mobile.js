@@ -547,19 +547,23 @@ router.get('/pay/cancel', (req, res) => {
 // GET /pay/status/:dn — check payment status
 router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
   try {
-    // NOTE: ORDER BY id — payment table has no created_at column
+    // Check for already-Paid record first, then fall back to any Pending record
+    // (no ORDER BY — payment table PK column name is unknown; use status filter instead)
+    const [paidRows] = await query(
+      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
+      [req.params.dn, req.tenantId]
+    );
+    if (paidRows.length) {
+      return res.json({ status: 'Paid', amount: paidRows[0].total_amount, method: paidRows[0].payment_method });
+    }
+
     const [rows] = await query(
-      'SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? ORDER BY id DESC LIMIT 1',
+      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending' LIMIT 1",
       [req.params.dn, req.tenantId]
     );
     if (!rows.length) return res.json({ status: 'none' });
 
     const payment = rows[0];
-
-    // Already marked Paid in DB (by success URL handler or webhook)
-    if (payment.status === 'Paid') {
-      return res.json({ status: 'Paid', amount: payment.total_amount, method: payment.payment_method });
-    }
 
     // If still Pending, check with PayMongo API directly
     if (payment.paymongo_checkout_id) {
@@ -581,11 +585,11 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
             const method = paidPayment?.attributes?.source?.type || 'unknown';
             const pmId   = paidPayment?.id || null;
 
-            // Update DB
+            // Update DB — use delivery_number+tenant_id since PK column name is unknown
             try {
               await query(
-                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE id = ?",
-                [pmId, method, payment.id]
+                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE delivery_number = ? AND tenant_id = ?",
+                [pmId, method, req.params.dn, req.tenantId]
               );
             } catch (_) {}
 
