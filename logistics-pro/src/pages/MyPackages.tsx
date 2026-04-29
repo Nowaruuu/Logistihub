@@ -175,7 +175,7 @@ function MyPackagesInner() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-orange-600 font-bold text-sm">₱{(delivery.totalFee || 0).toFixed(2)}</p>
+                        <p className="text-orange-600 font-bold text-sm">₱{Number(delivery.totalFee || 0).toFixed(2)}</p>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                         <p className="text-slate-500 dark:text-slate-400 text-xs truncate">{delivery.destination || 'N/A'}</p>
                       </div>
@@ -238,7 +238,7 @@ function MyPackagesInner() {
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all"
                   >
                     <CreditCard className="size-3.5" />
-                    Pay Now • ₱{(delivery.totalFee || 0).toFixed(2)}
+                    Pay Now • ₱{Number(delivery.totalFee || 0).toFixed(2)}
                   </button>
                 </div>
               ))}

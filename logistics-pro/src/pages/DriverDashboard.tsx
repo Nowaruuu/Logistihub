@@ -203,7 +203,7 @@ export default function DriverDashboard() {
                     <p className="text-base font-bold text-slate-900 dark:text-slate-100">#{job.trackingNumber}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-black text-slate-900 dark:text-white">₱{job.totalFee?.toFixed(2)}</p>
+                    <p className="text-lg font-black text-slate-900 dark:text-white">₱{Number(job.totalFee || 0).toFixed(2)}</p>
                     <p className="text-[10px] text-slate-500 font-bold uppercase">Estimated Earn</p>
                   </div>
                 </div>

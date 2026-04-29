@@ -240,7 +240,7 @@ function TrackShipmentInner() {
             </div>
             <div>
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mb-1">Total Fee</p>
-              <p className="text-lg font-black text-white">₱ {(delivery.totalFee || 0).toFixed(2)}</p>
+              <p className="text-lg font-black text-white">₱ {Number(delivery.totalFee || 0).toFixed(2)}</p>
             </div>
             <div>
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mb-1">Weight</p>

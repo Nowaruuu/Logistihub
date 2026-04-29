@@ -105,7 +105,7 @@ function mapShipmentToDelivery(row: any): Delivery {
     weight: row.weight || row.distance_km || 0,
     size: row.size || row.item_type_flag || '',
     shippingMethod: row.shipping_method || 'Standard',
-    totalFee: row.total_fee || row.total_amount || 0,
+    totalFee: parseFloat(row.total_fee || row.total_amount || 0) || 0,
     currentLat: row.pickup_lat || 14.5995,
     currentLng: row.pickup_lng || 120.9842,
     originLat: row.pickup_lat,
