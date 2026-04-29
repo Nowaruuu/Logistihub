@@ -149,6 +149,11 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
 
   try {
     const [rows] = await query(sql, params);
+    // DEBUG: always log so we can see tenantId and result count in PM2 logs
+    console.log(`[GET /admin/shipments] slug=${req.params.slug} tenantId=${tid} found=${rows.length}`);
+    // Also run a raw count to compare
+    const [[{total_all}]] = await query('SELECT COUNT(*) AS total_all FROM shipment WHERE tenant_id = ?', [tid]);
+    console.log(`[GET /admin/shipments] raw count for tenantId=${tid}: ${total_all}`);
     res.json({ shipments: rows, total: rows.length });
   } catch (err) {
     console.error('[GET /admin/shipments]', err);
