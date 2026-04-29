@@ -3,7 +3,7 @@
 const express = require('express');
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
-const { query } = require('../config/db');
+const { query, logAudit } = require('../config/db');
 const { sendWelcomeEmail } = require('../config/mailer');
 
 const router = express.Router();
@@ -93,7 +93,7 @@ router.post('/checkout', async (req, res) => {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + Buffer.from(paymongoSecret).toString('base64')
+        'Authorization': 'Basic ' + Buffer.from(paymongoSecret + ':').toString('base64')
       },
       body: JSON.stringify({
         data: {
@@ -178,6 +178,10 @@ router.get('/paymongo-success', async (req, res) => {
     );
 
     sendWelcomeEmail(p.email, p.name, p.org_name || p.company_name, p.slug, staffUsername).catch(e => console.error(e));
+    // Record subscription payment
+    const isTest = !process.env.PAYMONGO_SECRET_KEY || process.env.PAYMONGO_SECRET_KEY.startsWith('sk_test_');
+    await query(`INSERT INTO SUBSCRIPTION_PAYMENT (tenant_id, plan, amount, currency, status, is_test_mode) VALUES (?, ?, ?, 'PHP', 'paid', ?)`, [tenantId, p.plan, PLAN_PRICES[p.plan], isTest ? 1 : 0]);
+    logAudit({ actor: p.email, actor_type: 'tenant', action: 'TENANT_REGISTERED', target: p.org_name || p.company_name, tenant_slug: p.slug, ip_address: req.ip, metadata: { plan: p.plan, amount: PLAN_PRICES[p.plan], is_test: isTest } });
 
     // Sign a success token so the onboarding UI can show Step 4
     const successToken = jwt.sign({ 
