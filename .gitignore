@@ -1,1 +1,8 @@
 .env
+*.bak
+fix*.ps1
+fix-db.js
+fix-names.js
+downloaded.html
+test.js
+node_modules/
