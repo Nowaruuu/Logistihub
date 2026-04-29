@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LogistiHub</string>
+    <string name="title_activity_main">LogistiHub</string>
+    <string name="package_name">com.logistihub.mobile</string>
+    <string name="custom_url_scheme">com.logistihub.mobile</string>
+</resources>

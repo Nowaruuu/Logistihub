@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../lib/api';
-import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff, Truck, UserCircle, Briefcase } from 'lucide-react';
+import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff, Truck, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
 
 export default function SignIn() {
   const [role, setRole] = useState<'user' | 'driver'>('user');
-  const [email, setEmail] = useState('');
-  const [slug, setSlug] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -27,16 +26,17 @@ export default function SignIn() {
     setError('');
     setLoading(true);
     try {
-      if (!slug) throw new Error('Workspace ID is required');
+      // Auto-extract slug from username (e.g. colz@amongiz.com → slug=amongiz)
+      const atIndex = username.indexOf('@');
+      if (atIndex === -1) throw new Error('Username must be in format: name@workspace.com');
+      const emailPart = username.substring(atIndex + 1); // amongiz.com
+      const slug = emailPart.split('.')[0]; // amongiz
+      if (!slug) throw new Error('Invalid username format. Use: name@workspace.com');
       
-      // 1. Sign in with Backend API
-      const authData = await login(slug, role, email, password);
+      // Sign in with Backend API
+      const authData = await login(slug, role, username, password);
       
-      // 2. Mock user object for context until we rewrite useAuth
       const dummyUser = { uid: authData.user?.user_id || authData.staff_id || '123' };
-      
-      // 3. Navigate
-      // Note: useAuth is still partially mocked, we'll need to update it next
       await signIn(dummyUser as any);
       navigate('/dashboard');
     } catch (err: any) {
@@ -104,32 +104,15 @@ export default function SignIn() {
           
           <div className="flex flex-col w-full">
             <label className="group flex flex-col flex-1">
-              <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Workspace ID</p>
-              <div className="relative flex items-center">
-                <Briefcase className="absolute left-4 text-slate-400 group-focus-within:text-orange-600 transition-colors duration-200 size-5" />
-                <input 
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="flex w-full min-w-0 flex-1 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-0 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 h-14 placeholder:text-slate-400 pl-12 pr-4 text-[15px] font-normal" 
-                  placeholder="e.g. company-name" 
-                  required
-                />
-              </div>
-            </label>
-          </div>
-
-          <div className="flex flex-col w-full">
-            <label className="group flex flex-col flex-1">
-              <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Email or Phone Number</p>
+              <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Username</p>
               <div className="relative flex items-center">
                 <Mail className="absolute left-4 text-slate-400 group-focus-within:text-orange-600 transition-colors duration-200 size-5" />
                 <input 
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="flex w-full min-w-0 flex-1 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-0 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 h-14 placeholder:text-slate-400 pl-12 pr-4 text-[15px] font-normal" 
-                  placeholder="e.g. name@email.com" 
+                  placeholder="e.g. colz@amongiz.com" 
                   required
                 />
               </div>
@@ -194,7 +177,7 @@ export default function SignIn() {
             <button className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Privacy</button>
             <button className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Terms</button>
           </div>
-          <p className="text-slate-400 dark:text-slate-500 text-[10px] font-medium tracking-wide">© 2024 LOGISTICS PRO. ALL RIGHTS RESERVED.</p>
+          <p className="text-slate-400 dark:text-slate-500 text-[10px] font-medium tracking-wide">© 2024 LogistiHub. ALL RIGHTS RESERVED.</p>
         </div>
       </div>
     </div>
