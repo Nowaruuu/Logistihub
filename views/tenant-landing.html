@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Logistics Hub — LogistiHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --bg: #ffffff;
+            --surface: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- Professional Animations --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-up {
+            opacity: 0;
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .del-1 { animation-delay: 0.1s; }
+        .del-2 { animation-delay: 0.25s; }
+        .del-3 { animation-delay: 0.4s; }
+        .del-4 { animation-delay: 0.55s; }
+
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 5%; }
+
+        /* --- Header --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 32px 0; border-bottom: 1px solid #f1f5f9;
+        }
+        .logo { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; }
+        .logo-box { width: 36px; height: 36px; background: var(--primary); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+        .logo-box .material-symbols-rounded { color: white; font-size: 20px; }
+        .staff-link { font-size: 13px; font-weight: 700; color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+        .staff-link:hover { color: var(--accent); }
+
+        /* --- Hero Block --- */
+        .hero {
+            position: relative;
+            background-color: #0f172a;
+            /* Default: high-quality warehouse image — overridden by JS if tenant has custom BG */
+            background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            padding: 140px 0;
+            color: white;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+        }
+        .hero h1 { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 24px; line-height: 1.1; }
+        .hero p { font-size: 18px; opacity: 0.85; max-width: 600px; margin: 0 auto 40px; }
+
+        /* --- App Download --- */
+        .block-app { padding: 100px 0; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        
+        .app-visual { 
+            position: relative;
+            background: #f8fafc; 
+            border-radius: 40px; 
+            padding: 20px;
+            overflow: hidden;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .app-visual img { 
+            width: 100%; 
+            height: 100%;
+            object-fit: cover;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .app-visual:hover img { transform: scale(1.02); }
+
+        .app-content h2 { font-size: 42px; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.02em; line-height: 1.2; }
+        .app-content p { color: var(--text-muted); font-size: 17px; margin-bottom: 40px; }
+        
+        .cta-box { 
+            display: flex; 
+            align-items: center; 
+            gap: 24px; 
+            padding: 32px; 
+            background: #fff; 
+            border-radius: 30px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+        }
+        #qr-canvas { width: 100px; height: 100px; background: white; padding: 10px; border-radius: 12px; border: 1.5px solid #e2e8f0; }
+
+        /* --- Staff Card --- */
+        .block-staff { padding: 40px 0 100px; }
+        .staff-card { 
+            background: #0f172a; 
+            color: white;
+            padding: 60px; 
+            border-radius: 40px; 
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .staff-card h3 { font-size: 28px; font-weight: 800; margin-bottom: 16px; }
+        .staff-card p { opacity: 0.7; margin-bottom: 40px; font-size: 16px; max-width: 600px; margin: 0 auto 40px; }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 16px 36px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(37, 99, 235, 0.4); }
+        .btn-secondary { background: white; color: var(--primary); }
+        .btn-secondary:hover { background: #f1f5f9; transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: white; border: 2px solid rgba(255,255,255,0.2); }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+        footer { padding: 40px 0; text-align: center; border-top: 1px solid #f1f5f9; color: var(--text-muted); font-size: 13px; }
+
+        @media (max-width: 800px) {
+            .app-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+            .hero h1 { font-size: 38px; }
+            .cta-box { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <nav class="animate-up">
+            <a href="#" class="logo">
+                <div class="logo-box"><span class="material-symbols-rounded">package_2</span></div>
+                <span id="nav-brand">LogistiHub</span>
+            </a>
+            <a href="#" id="staff-login-top" class="staff-link">Login &rarr;</a>
+        </nav>
+    </div>
+
+    <!-- Block: Header Hero -->
+    <section class="hero animate-up del-1">
+        <div class="container">
+            <h1 id="hero-title">Precision Logistics.</h1>
+            <p id="hero-sub">The central portal for real-time tracking, fleet operations, and intelligent dispatch.</p>
+            <a href="#app-section" class="btn btn-secondary">Get Started</a>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- Block: App Focus (Customer) -->
+        <section class="block-app" id="app-section">
+            <div class="app-grid">
+                <div class="app-visual animate-up del-2">
+                    <!-- Fallback to professional Unsplash mockup if local assets fail -->
+                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=1974&auto=format&fit=crop" alt="App Dashboard">
+                </div>
+                <div class="app-content animate-up del-3">
+                    <h2>Track & Register on Mobile</h2>
+                    <p>Experience seamless logistics in the palm of your hand. Download our app to register as a client, track live shipments, and receive instant status updates.</p>
+                    
+                    <div class="cta-box">
+                        <div id="qr-canvas"></div>
+                        <div>
+                            <p style="font-size:16px; font-weight:800; margin-bottom:4px;">Download to Register</p>
+                            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Scan to get started on iOS or Android</p>
+                            <a href="#" id="app-dl-link" class="btn btn-primary" style="padding: 10px 24px; font-size: 13px;">📱 Direct Download</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Block: Staff Personnel -->
+        <section class="block-staff animate-up del-4">
+            <div class="staff-card">
+                <h3>Workspace Operations</h3>
+                <p>Designed for dispatchers, fleet managers, and drivers. <strong>Drivers:</strong> You must provision your team account on this web portal before using the app.</p>
+                <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                    <a href="#" id="staff-join" class="btn btn-primary">Join Team</a>
+                    <a href="#" id="staff-login" class="btn btn-outline">Login</a>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            &copy; 2026 LogistiHub. Powered by Logistics OS.
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+        const name = (window.__TENANT__ && window.__TENANT__.company_name) || 'LogistiHub';
+        const logoUrl = (window.__TENANT__ && window.__TENANT__.logo_url) || null;
+        const bgUrl = (window.__TENANT__ && window.__TENANT__.background_url) || null;
+        const bgHeroColor = (window.__TENANT__ && window.__TENANT__.bg_hero_color) || null;
+        const bgPageColor = (window.__TENANT__ && window.__TENANT__.bg_page_color) || null;
+
+        window.onload = function() {
+            document.getElementById('nav-brand').textContent = name;
+            document.getElementById('hero-title').textContent = `${name}.`;
+
+            // Apply page body background — supports solid color or gradient
+            if (bgPageColor) {
+                document.body.style.background = bgPageColor;
+                // Do NOT set nav background separately — gradient re-renders at wrong scale
+            }
+
+            // Apply hero background — image > gradient/color > default
+            if (bgUrl) {
+                const hero = document.querySelector('.hero');
+                hero.style.backgroundImage = `linear-gradient(rgba(15,23,42,0.65), rgba(15,23,42,0.65)), url('${bgUrl}')`;
+                hero.style.backgroundSize = 'cover';
+                hero.style.backgroundPosition = 'center';
+            } else if (bgHeroColor) {
+                const hero = document.querySelector('.hero');
+                // Supports both solid hex and CSS gradient strings
+                if (bgHeroColor.includes('gradient')) {
+                    hero.style.backgroundImage = bgHeroColor;
+                    hero.style.backgroundColor = '';
+                } else {
+                    hero.style.backgroundImage = 'linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3))';
+                    hero.style.backgroundColor = bgHeroColor;
+                }
+            }
+
+            // Show tenant logo if available
+            if (logoUrl) {
+                const logoBox = document.querySelector('.logo-box');
+                logoBox.innerHTML = `<img src="${logoUrl}" alt="${name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;
+            }
+
+            // "Login" top nav → CLIENT login (login.html), not staff
+            const clientLoginUrl = `/${SLUG}/login`;
+            document.getElementById('staff-login-top').textContent = 'Client Login →';
+            document.getElementById('staff-login-top').href = clientLoginUrl;
+
+            // Staff section buttons
+            document.getElementById('staff-login').href = `/${SLUG}/staff-login`;
+            document.getElementById('staff-login').textContent = 'Staff Login';
+            document.getElementById('staff-join').href = `/${SLUG}/register`;
+            document.getElementById('app-dl-link').href = `/${SLUG}/get-app`;
+
+            // QR Generation
+            new QRCode(document.getElementById('qr-canvas'), {
+                text: window.location.origin + '/' + SLUG + '/get-app',
+                width: 80,
+                height: 80,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff'
+            });
+        };
+    </script>
+</body>
+</html>

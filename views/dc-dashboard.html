@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Document Controller Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
+.tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
+.tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
+.tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
+.tenant-badge .material-symbols-outlined{font-size:11px;}
+
+nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;}
+.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;padding:11px 10px 4px;}
+.nav-link{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.nav-link:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);}
+.nav-link.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
+.nav-link .material-symbols-outlined{font-size:17px;}
+.nav-badge{margin-left:auto;background:rgba(251,191,36,.18);color:#fbbf24;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'DM Mono',monospace;}
+.sidebar-bottom{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,.07);}
+.user-row{display:flex;align-items:center;gap:9px;padding:9px 10px;}
+.uavatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;}
+.uavatar .material-symbols-outlined{font-size:15px;color:rgba(255,255,255,.6);}
+.uname{font-size:12px;font-weight:600;color:#fff;}
+.uemail{font-size:10px;color:rgba(255,255,255,.3);}
+
+/* â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;}
+.topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.page-title{font-weight:700;font-size:15px;color:#0f2235;}
+.page-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#94a3b8;}
+.tb-btn:hover{background:#f1f5f9;}
+.notif-wrap{position:relative;}
+.notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid #fff;}
+.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;}
+.search-bar input{border:none;background:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
+.search-bar .material-symbols-outlined{color:#94a3b8;font-size:16px;}
+
+.content{padding:22px;flex:1;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* â”€â”€ STAT GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;}
+.stat-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.stat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.stat-icon .material-symbols-outlined{font-size:15px;}
+.si-b{background:#eff6ff;}.si-b .material-symbols-outlined{color:#3b82f6;}
+.si-g{background:#f0fdf4;}.si-g .material-symbols-outlined{color:#22c55e;}
+.si-a{background:#fffbeb;}.si-a .material-symbols-outlined{color:#f59e0b;}
+.si-r{background:#fff1f2;}.si-r .material-symbols-outlined{color:#f43f5e;}
+.si-p{background:#f5f3ff;}.si-p .material-symbols-outlined{color:#8b5cf6;}
+.stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
+.stat-note{font-size:10px;color:#94a3b8;margin-top:3px;}
+
+/* â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
+.card-title .material-symbols-outlined{font-size:15px;color:#94a3b8;}
+.card-body{padding:14px 16px;}
+.card-action{font-size:12px;color:#3b82f6;font-weight:600;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.card-action:hover{text-decoration:underline;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
+tr:last-child td{border:none;}
+tr:hover td{background:#f8fafc;}
+
+/* â”€â”€ BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
+.b-pending{background:#fef9c3;color:#a16207;}
+.b-transit{background:#dbeafe;color:#1d4ed8;}
+.b-delivered{background:#dcfce7;color:#15803d;}
+.b-declined{background:#fee2e2;color:#b91c1c;}
+.b-available{background:#dcfce7;color:#15803d;}
+.b-onduty{background:#dbeafe;color:#1d4ed8;}
+.b-maint{background:#fef9c3;color:#a16207;}
+.b-paid{background:#dcfce7;color:#15803d;}
+.b-overdue{background:#fee2e2;color:#b91c1c;}
+.b-awaiting{background:#fef3c7;color:#92400e;}
+.type-pill{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
+.t-pkg{background:#ede9fe;color:#6d28d9;}
+.t-veh{background:#dbeafe;color:#1d4ed8;}
+.t-food{background:#fef9c3;color:#92400e;}
+.t-doc{background:#f0fdf4;color:#15803d;}
+.t-bulk{background:#f8fafc;color:#475569;}
+
+/* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-primary{background:#0f2235;color:#fff;}
+.btn-primary:hover{opacity:.86;}
+.btn-ghost{background:none;color:#64748b;}
+.btn-ghost:hover{background:#f1f5f9;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn .material-symbols-outlined{font-size:14px;}
+
+/* â”€â”€ EMPTY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.empty{padding:44px 20px;text-align:center;}
+.empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:7px;}
+.empty p{font-size:12px;color:#94a3b8;}
+.empty .esub{font-size:11px;color:#cbd5e1;margin-top:3px;}
+
+/* â”€â”€ FORMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:14px;}
+.form-sec{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #f1f5f9;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.form-label{font-size:11px;font-weight:600;color:#475569;}
+.field-wrap{position:relative;}
+.field-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:16px;pointer-events:none;}
+.field-wrap input,.field-wrap select{padding-left:32px!important;}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
+input:focus,select:focus,textarea:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
+select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;padding-right:26px;}
+textarea{resize:vertical;}
+.hint{font-size:10px;color:#94a3b8;font-style:italic;}
+.tabs-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:14px;}
+.tab{padding:8px 13px;font-size:12px;font-weight:500;color:#94a3b8;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.tab.active{color:#0f2235;font-weight:700;border-bottom-color:#0f2235;}
+.filter-bar{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+.f-select{padding:6px 24px 6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 6px center;background-size:13px;}
+.f-input{padding:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;}
+.f-input:focus{border-color:#0f2235;}
+
+/* page header */
+.ph-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+.ph-row h2{font-size:18px;font-weight:800;color:#0f2235;}
+.ph-row p{font-size:12px;color:#64748b;margin-top:3px;}
+
+/* type bars */
+.type-bar-list{display:flex;flex-direction:column;gap:10px;}
+.type-bar-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+.type-bar-name{font-weight:600;color:#334155;}
+.type-bar-ct{color:#94a3b8;font-family:'DM Mono',monospace;font-size:11px;}
+.bar-track{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;}
+
+/* map placeholder */
+.map-ph{height:200px;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#94a3b8;}
+.map-ph .material-symbols-outlined{font-size:38px;color:#cbd5e1;}
+.map-ph p{font-size:12px;}
+
+/* user reg link box */
+.reg-link-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.reg-link-text{font-size:12px;color:#15803d;line-height:1.6;}
+.reg-link-text strong{color:#14532d;display:block;margin-bottom:3px;}
+.reg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:#15803d;word-break:break-all;}
+.copy-btn{flex-shrink:0;padding:6px 12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
+.copy-btn:hover{background:#bbf7d0;}
+.copy-btn .material-symbols-outlined{font-size:14px;}
+</style>
+</head>
+<script src="/public/frontend-api.js"></script>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+      <div id="sidebar-logo-container" style="display:none;flex-shrink:0;">
+        <img id="sidebar-logo-img" src="" style="width:36px;height:36px;object-fit:contain;border-radius:8px;"/>
+      </div>
+      <div>
+        <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
+        <div class="tenant-sub">DOCUMENT CONTROLLER</div>
+      </div>
+    </div>
+    <div class="tenant-badge"><span class="material-symbols-outlined">shield</span>Private Workspace</div>
+  </div>
+  <nav>
+    <div class="nav-sec">Operations</div>
+    <button class="nav-link active" onclick="go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
+    <button class="nav-link" onclick="go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
+    <button class="nav-link" onclick="go('routes',this)"><span class="material-symbols-outlined">route</span>Routes</button>
+    <div class="nav-sec">Finance</div>
+    <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
+    <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
+    <div class="nav-sec">Config</div>
+    <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-row" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+      <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
+        <div class="uavatar" style="flex-shrink:0;"><span class="material-symbols-outlined">person</span></div>
+        <div style="overflow:hidden;">
+          <div class="uname" id="sidebar-username" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
+          <div class="uemail" id="sidebar-role" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">DOC CONTROLLER</div>
+        </div>
+      </div>
+      <button onclick="logout()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:0.2s;" onmouseover="this.style.color='#ef4444';this.style.background='#fef2f2'" onmouseout="this.style.color='#94a3b8';this.style.background='none'" title="Logout">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">Welcome back</div>
+    </div>
+    <div class="tb-right">
+      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
+      <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
+      <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- â•â• DASHBOARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-dashboard" class="screen active">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">In Transit<div class="stat-icon si-a"><span class="material-symbols-outlined">local_shipping</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Delivered<div class="stat-icon si-g"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+      </div>
+
+      <!-- User registration link box â€” TENANT SCOPED -->
+      <div class="reg-link-box" style="margin-bottom:14px;">
+        <div class="reg-link-text">
+          <strong>Your Private User Registration Page</strong>
+          <span class="reg-link-url" id="dashboard-reg-url">logisticsos.io/your-workspace/register</span>
+          <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link only with your own staff and drivers. It is scoped exclusively to your company.</span>
+        </div>
+        <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
+      </div>
+
+      <div class="grid-3-1">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
+            <button class="card-action" onclick="go('shipments',null)">View all â†’</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
+              <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">pie_chart</span>Item Types</span></div>
+          <div class="card-body">
+            <div class="type-bar-list">
+              <div><div class="type-bar-meta"><span class="type-bar-name">Package</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#8b5cf6;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Vehicle</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#3b82f6;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Food</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#f59e0b;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Document</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#22c55e;"></div></div></div>
+              <div><div class="type-bar-meta"><span class="type-bar-name">Bulk</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#64748b;"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage â†’</button></div>
+          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage â†’</button></div>
+          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">map</span>Live Shipment Map</span></div>
+        <div class="card-body"><div class="map-ph"><span class="material-symbols-outlined">map</span><p>Map activates once shipments are in transit</p></div></div>
+      </div>
+    </div>
+
+    <!-- â•â• SHIPMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-shipments" class="screen">
+      <div class="ph-row">
+        <div><h2>Shipments</h2><p>All deliveries within your workspace.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="go('new-shipment',null)"><span class="material-symbols-outlined">add</span>New Shipment</button>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="tabs-bar" style="border:none;margin:0;">
+            <button class="tab active" onclick="setTab(this)">All</button>
+            <button class="tab" onclick="setTab(this)">Pending</button>
+            <button class="tab" onclick="setTab(this)">In Transit</button>
+            <button class="tab" onclick="setTab(this)">Delivered</button>
+            <button class="tab" onclick="setTab(this)">Declined</button>
+          </div>
+          <select class="f-select"><option>All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- â•â• NEW SHIPMENT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-new-shipment" class="screen">
+      <div class="ph-row">
+        <div><h2>New Shipment</h2><p>Create a delivery record within your workspace.</p></div>
+        <button class="btn btn-ghost" onclick="go('shipments',null)">&#8592; Back</button>
+      </div>
+      <div class="form-card">
+        <div class="form-sec">Basic Information</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Delivery Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">tag</span><input type="text"/></div></div>
+          <div class="form-group"><label class="form-label">Airway Bill Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">confirmation_number</span><input type="text"/></div></div>
+          <div class="form-group"><label class="form-label">Client</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">groups</span><select><option value="" disabled selected>Select client</option></select></div></div>
+          <div class="form-group"><label class="form-label">Item Type</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">category</span><select id="item-type-sel" onchange="showSub(this.value)"><option value="" disabled selected>Select type</option><option value="PACKAGE">Package</option><option value="VEHICLE">Vehicle</option><option value="FOOD">Food</option><option value="DOC">Document</option><option value="BULK">Bulk</option></select></div></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="form-sec">Routing &amp; Verification</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Pickup Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
+          <div class="form-group"><label class="form-label">Dropoff Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
+          <div class="form-group"><label class="form-label">Route <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">route</span><select><option value="" disabled selected>Select route</option></select></div></div>
+          <div class="form-group"><label class="form-label">Distance (km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">straighten</span><input type="number" step="0.1"/></div></div>
+          <div class="form-group"><label class="form-label">Initial Status</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">rule</span><select id="dc-shipment-status"><option value="Pending" selected>Pending</option><option value="Ready">Ready (Verified)</option><option value="Flagged">Flagged (Issue)</option></select></div></div>
+          <div class="form-group"><label class="form-label">Prohibited Check</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">gpp_maybe</span><select><option value="" disabled selected>Select</option><option>Passed</option><option>Failed</option><option>N/A</option></select></div></div>
+        </div>
+      </div>
+      <!-- sub-forms -->
+      <div id="sf-PACKAGE" class="form-card" style="display:none;"><div class="form-sec">Package Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Length (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Width (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Height (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Weight (kg)</label><input type="number"/></div></div><div class="form-group"><label class="form-label">Content Description</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-VEHICLE" class="form-card" style="display:none;"><div class="form-sec">Vehicle Cargo Details</div><div class="form-grid"><div class="form-group"><label class="form-label">VIN</label><input type="text"/></div><div class="form-group"><label class="form-label">Make / Model</label><input type="text"/></div><div class="form-group"><label class="form-label">Running Condition</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div><div class="form-group"><label class="form-label">Condition Report</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-grid"><div class="form-group"><label class="form-label">Required Temp (Â°C)</label><input type="number" step="0.1"/></div><div class="form-group"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-group"><label class="form-label">Handling Instructions</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-DOC" class="form-card" style="display:none;"><div class="form-sec">Document Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Confidentiality Level</label><select><option value="" disabled selected>Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Strictly Confidential</option></select></div><div class="form-group"><label class="form-label">Recipient ID Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
+      <div id="sf-BULK" class="form-card" style="display:none;"><div class="form-sec">Bulk Cargo</div><div class="form-grid"><div class="form-group"><label class="form-label">Pallet Count</label><input type="number"/></div><div class="form-group"><label class="form-label">Stackable</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div><div class="form-group"><label class="form-label">Forklift Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="go('shipments',null)">Cancel</button>
+        <button class="btn btn-primary"><span class="material-symbols-outlined">save</span>Create Shipment</button>
+      </div>
+    </div>
+
+    <!-- â•â• ROUTES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-routes" class="screen">
+      <div class="ph-row"><div><h2>Routes</h2><p>Delivery zones scoped to your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Route</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Route ID</th><th>Name</th><th>Vehicle</th><th>Driver</th><th>Active Shipments</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">route</span><p>No routes defined</p></div></td></tr></tbody></table></div></div>
+    </div>
+
+    <!-- â• â•  STAFF â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
+    <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
+      <div class="card">
+        <div class="card-head">
+          <div class="tabs-bar" style="border:none;margin:0;"><button class="tab active" onclick="filterStaffTab('All',this)">All</button><button class="tab" onclick="filterStaffTab('Driver',this)">Driver</button><button class="tab" onclick="filterStaffTab('Document Controller',this)">Doc Controller</button><button class="tab" onclick="filterStaffTab('Manager',this)">Manager</button></div>
+          <select class="f-select" onchange="filterStaffStatus(this.value)"><option value="">All Statuses</option><option value="active">Active</option><option value="Available">Available</option><option value="inactive">Inactive</option></select>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>License Expiry</th><th>Status</th><th></th></tr></thead><tbody id="staff-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- â•â• VEHICLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Route</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
+    </div>
+
+    <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-app-users" class="screen">
+      <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
+          <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- â•â• PAYMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-payments" class="screen">
+      <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">â‚±0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Invoices</span>
+          <div style="display:flex;gap:8px;">
+            <select class="f-select"><option>All Methods</option><option>Cash</option><option>GCash</option><option>Check</option><option>COD</option></select>
+            <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Billing Date</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- â•â• PROOF OF DELIVERY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-pod" class="screen">
+      <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
+        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Geolocation</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- â•â• USER REGISTRATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-user-reg" class="screen">
+      <div class="ph-row"><div><h2>User Registration Page</h2><p>Your private, tenant-scoped registration link for drivers and field staff.</p></div></div>
+
+      <div style="background:#0f2235;border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+        <span class="material-symbols-outlined" style="color:#38bdf8;font-size:18px;margin-top:1px;">shield</span>
+        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;">
+          <strong style="color:#fff;">This page belongs exclusively to your company.</strong> The registration URL below is scoped to your tenant ID. Users who register through this link are automatically associated with your company only. No other company on this platform can access this page or see your registered users.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">link</span>Your Registration URL</span></div>
+        <div class="card-body">
+          <div class="reg-link-box">
+            <div class="reg-link-text">
+              <strong>Share with your staff and drivers only</strong>
+              <span class="reg-link-url" id="reg-page-url">logisticsos.io/your-workspace/register</span>
+            </div>
+            <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
+          </div>
+          <p style="font-size:11px;color:#94a3b8;margin-top:10px;">After registering, users are directed to download the Logistics OS mobile app for their platform (iOS / Android / APK).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">group</span>Registered Users</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">group</span><p>No users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- â•â• SETTINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div id="s-settings" class="screen">
+      <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
+
+      <div class="form-card" style="max-width:500px;margin-bottom:20px;">
+        <div class="form-sec">My Profile</div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="st-profile-name" type="text" readonly style="background:#f8fafc;color:#64748b;"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input id="st-profile-email" type="text" readonly style="background:#f8fafc;color:#64748b;"/></div>
+        </div>
+      </div>
+
+      <div class="form-card" style="max-width:500px;">
+        <div class="form-sec">Change Password</div>
+        <div id="pw-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px;"></div>
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input id="set-current-pw" type="password" placeholder="Enter current password"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <div class="field-wrap"><span class="field-ico material-symbols-outlined">key</span><input id="set-new-pw" type="password" placeholder="Minimum 8 characters"/></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+          <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+
+<!-- SESSION EXPIRY MODAL -->
+<div id="session-expired-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;padding:40px 36px;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+    <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <span class="material-symbols-outlined" style="font-size:28px;color:#ef4444;">lock_clock</span>
+    </div>
+    <h2 style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:8px;">Session Expired</h2>
+    <p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:24px;">Your login session has expired for security reasons. Please sign in again to continue.</p>
+    <button onclick="redirectToLogin()" style="width:100%;background:#0f2235;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+      Sign In Again
+    </button>
+  </div>
+</div>
+
+<script>
+// ── Global session expiry handler ─────────────────────────────────────────────
+var _sessionExpired = false;
+
+function redirectToLogin() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  var loginUrl = slug ? ('/' + slug + '/staff-login') : '/superadmin-login';
+  window.location.href = loginUrl;
+}
+
+function showSessionExpired() {
+  if (_sessionExpired) return;
+  _sessionExpired = true;
+  var overlay = document.getElementById('session-expired-overlay');
+  if (overlay) { overlay.style.display = 'flex'; }
+}
+
+// Wrapper around fetch that detects 401/403 and shows the modal
+function apiFetch(url, opts) {
+  opts = opts || {};
+  opts.credentials = opts.credentials || 'include';
+  return fetch(url, opts).then(function(r) {
+    if (r.status === 401 || r.status === 403) {
+      showSessionExpired();
+      return Promise.reject(new Error('Session expired'));
+    }
+    return r;
+  });
+}
+
+function checkSession() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug || _sessionExpired) return;
+  fetch('/' + slug + '/api/admin/me', { credentials: 'include' }).then(function(r) {
+    if (r.status === 401 || r.status === 403) { showSessionExpired(); return null; }
+    return r.json();
+  }).then(function(d) {
+    if (d && d.admin) {
+      document.getElementById('sidebar-username').textContent = d.admin.name || d.admin.email.split('@')[0];
+      document.getElementById('sidebar-role').textContent = d.admin.role || 'DOC CONTROLLER';
+      if (document.getElementById('st-profile-name')) document.getElementById('st-profile-name').value = d.admin.name || '';
+      if (document.getElementById('st-profile-email')) document.getElementById('st-profile-email').value = d.admin.email || '';
+    }
+  }).catch(function() {});
+}
+checkSession();
+setInterval(checkSession, 4 * 60 * 1000);
+
+function logout() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  apiFetch('/' + slug + '/api/logout', { method: 'POST' })
+    .then(function() { window.location.href = '/' + slug + '/staff-login'; })
+    .catch(function() { window.location.href = '/' + slug + '/staff-login'; });
+}
+</script>
+
+<script>
+var pageMeta={
+  'dashboard':['Dashboard','Welcome back'],
+  'shipments':['Shipments','All deliveries in your workspace'],
+  'new-shipment':['New Shipment','Shipments / New'],
+  'routes':['Routes','Your delivery zones'],
+  'staff':['Staff','Your team'],
+  'vehicles':['Vehicles','Your fleet'],
+  'app-users':['App Users','Registered users for your company'],
+  'payments':['Payments','Invoices and billing'],
+  'pod':['Proof of Delivery','Capture records'],
+  'user-reg':['User Registration','Your private registration page'],
+  'settings':['Settings','Workspace configuration'],
+};
+
+function go(id,navBtn){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById('s-'+id);
+  if(el)el.classList.add('active');
+  if(navBtn){
+    document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});
+    navBtn.classList.add('active');
+  }
+  var m=pageMeta[id]||[id,''];
+  document.getElementById('page-title').textContent=m[0];
+  document.getElementById('page-sub').textContent=m[1];
+  window.scrollTo(0,0);
+  if(id==='settings') loadSettings();
+}
+
+function setTab(el){
+  var bar=el.closest('.tabs-bar')||el.parentElement;
+  bar.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+}
+
+var subTypes=['PACKAGE','VEHICLE','FOOD','DOC','BULK'];
+function showSub(type){
+  subTypes.forEach(function(t){
+    var el=document.getElementById('sf-'+t);
+    if(el)el.style.display='none';
+  });
+  var target=document.getElementById('sf-'+type);
+  if(target)target.style.display='block';
+}
+
+function copyUrl(){
+  var url=document.getElementById('dashboard-reg-url')?document.getElementById('dashboard-reg-url').textContent:'';
+  if(!navigator.clipboard||!url) return;
+  navigator.clipboard.writeText(url).then(function(){
+    document.querySelectorAll('.copy-btn').forEach(function(btn){
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined">check</span>Copied!';
+      btn.style.background = '#16a34a';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#16a34a';
+      btn.style.transition = 'all 0.5s ease';
+      setTimeout(function(){
+        btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy';
+        btn.style.background = '#dcfce7';
+        btn.style.color = '#15803d';
+        btn.style.borderColor = '#bbf7d0';
+      }, 2000);
+    });
+  });
+}
+
+var _allAppUsers=[];
+function loadAppUsers(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/app-users')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      _allAppUsers=Array.isArray(data.users)?data.users:[];
+      renderAppUsers(_allAppUsers);
+    })
+    .catch(function(){
+      var tb=document.getElementById('app-users-tbody');
+      if(tb)tb.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load users</p></div></td></tr>';
+    });
+}
+function renderAppUsers(users){
+  var tbody=document.getElementById('app-users-tbody');
+  if(!tbody)return;
+  if(!users||users.length===0){tbody.innerHTML='<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>No app users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr>';return;}
+  var rc={'Driver':'b-transit','Document Controller':'b-delivered','Admin':'b-awaiting'};
+  tbody.innerHTML=users.map(function(u){
+    var date=u.created_at?new Date(u.created_at).toLocaleDateString():'N/A';
+    var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
+    return '<tr><td><strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td>'+esc(u.contact_email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
+  }).join('');
+}
+function filterAppUsers(){
+  var role=document.getElementById('app-users-role-filter').value;
+  renderAppUsers(role?_allAppUsers.filter(function(u){return u.role===role;}):_allAppUsers);
+}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+var _origGo=go;
+go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
+</script>
+
+<script>
+(function() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var baseUrl = window.location.origin;
+  var regUrl = baseUrl + '/' + t.slug + '/register';
+
+  // Company logo
+  if (t.logo_url) {
+    var logoCont = document.getElementById('sidebar-logo-container');
+    var logoImg = document.getElementById('sidebar-logo-img');
+    if (logoCont && logoImg) {
+      logoImg.src = t.logo_url;
+      logoCont.style.display = 'block';
+    }
+  }
+
+  // Company name
+  var nameEl = document.getElementById('sidebar-tenant-name');
+  if (nameEl) nameEl.textContent = t.company_name || 'Your Company';
+
+  // Registration URLs
+  var dashReg = document.getElementById('dashboard-reg-url');
+  if (dashReg) dashReg.textContent = regUrl;
+
+  var regPage = document.getElementById('reg-page-url');
+  if (regPage) regPage.textContent = regUrl;
+
+  // Fix copy buttons if any
+  document.querySelectorAll('[onclick*="your-workspace"], [data-copy]').forEach(function(el) {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes('your-workspace')) {
+      el.setAttribute('onclick', 'navigator.clipboard.writeText("' + regUrl + '")');
+    }
+  });
+})();
+</script>
+<script>
+function setBgType(type) {
+  var imgSec = document.getElementById('bg-image-section');
+  var colSec = document.getElementById('bg-color-section');
+  var btnImg = document.getElementById('bg-type-btn-image');
+  var btnCol = document.getElementById('bg-type-btn-color');
+  if (type === 'color') {
+    imgSec.style.display = 'none'; colSec.style.display = 'block';
+    btnImg.style.background = '#fff'; btnImg.style.color = '#64748b';
+    btnCol.style.background = '#0f2235'; btnCol.style.color = '#fff';
+  } else {
+    imgSec.style.display = 'block'; colSec.style.display = 'none';
+    btnImg.style.background = '#0f2235'; btnImg.style.color = '#fff';
+    btnCol.style.background = '#fff'; btnCol.style.color = '#64748b';
+  }
+}
+function clearBgImage() {
+  var prev = document.getElementById('bg-preview');
+  prev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>';
+  delete prev.dataset.base64;
+  document.getElementById('set-bg-file').value = '';
+}
+function updatePageBgPreview() {}
+function updateHeroPreview() {
+  var val = document.getElementById("set-hero-color-hex").value;
+  var prev = document.getElementById("hero-color-preview");
+  if(prev) prev.style.background = val;
+  var sw = document.getElementById("hero-color-swatch");
+  if(sw) sw.style.background = val;
+}
+function previewLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('logo-preview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.target.result;
+    if (typeof updateLandingPreview === 'function') updateLandingPreview();
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function previewBackground(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('bg-preview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.dataset.base64 = e.target.result;
+    if (typeof updateLandingPreview === 'function') updateLandingPreview();
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// FillList handles color inputs — native inputs removed
+function updateColorPreview() {
+  var bar = document.getElementById('color-preview-bar');
+  var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
+  var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235';
+  
+  if (bar) {
+    if (app.includes('gradient')) {
+      bar.style.background = app;
+    } else {
+      bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
+    }
+  }
+  
+  // Also apply live to admin UI via CSS variables
+  document.documentElement.style.setProperty('--app-bg', app);
+  document.documentElement.style.setProperty('--sidebar-bg', side);
+}
+
+function loadSettings() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var slug = t.slug;
+  apiFetch('/' + slug + '/api/admin/settings?t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.company_name) document.getElementById('set-company').value = d.company_name;
+      if (d.slug) document.getElementById('set-slug').value = d.slug;
+      if (d.name) document.getElementById('set-name').value = d.name;
+      if (d.email) document.getElementById('set-email').value = d.email;
+      // App & Sidebar colors — load into FillList + hidden inputs
+      if (d.brand_color) {
+        document.getElementById('set-brand-color-hex').value = d.brand_color;
+        if (typeof _brandFL !== 'undefined' && _brandFL) _brandFL.setValue(d.brand_color);
+      }
+      if (d.bg_app_color) {
+        document.getElementById('set-bg-app-hex').value = d.bg_app_color;
+        if (typeof _appFL !== 'undefined' && _appFL) _appFL.setValue(d.bg_app_color);
+      }
+      if (d.bg_sidebar_color) {
+        document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
+        if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
+      }
+      if (d.logo_url) {
+        // Update settings preview
+        document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+        // Also refresh sidebar logo in case __TENANT__ was stale
+        var lc = document.getElementById('sidebar-logo-container');
+        var li = document.getElementById('sidebar-logo-img');
+        if (lc && li) { li.src = d.logo_url; lc.style.display = 'block'; }
+      }
+      if (d.background_url) {
+        document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+        document.getElementById('bg-preview').dataset.base64 = d.background_url;
+        setBgType('image');
+      } else if (d.bg_hero_color) {
+        document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
+        var hp = document.getElementById('hero-color-preview');
+        if (hp) hp.style.background = d.bg_hero_color;
+        if (typeof _heroFL !== 'undefined' && _heroFL) _heroFL.setValue(d.bg_hero_color);
+        setBgType('color');
+      }
+      if (d.bg_page_color) {
+        document.getElementById('set-page-bg-hex').value = d.bg_page_color;
+        if (typeof _pageFL !== 'undefined' && _pageFL) _pageFL.setValue(d.bg_page_color);
+      }
+      updateColorPreview();
+      applyBranding(d);
+      if (typeof updateLandingPreview === 'function') updateLandingPreview();
+    }).catch(function(){});
+}
+
+function applyBranding(d) {
+  var brandCol = d.brand_color || (document.getElementById('set-brand-color-hex') || {}).value;
+  var appCol = d.bg_app_color || (document.getElementById('set-bg-app-hex') || {}).value;
+  var sideCol = d.bg_sidebar_color || (document.getElementById('set-bg-sidebar-hex') || {}).value;
+  if (brandCol) document.documentElement.style.setProperty('--primary', brandCol);
+  if (appCol) document.documentElement.style.setProperty('--app-bg', appCol);
+  if (sideCol) document.documentElement.style.setProperty('--sidebar-bg', sideCol);
+}
+
+async function changePassword() {
+  var cpw = document.getElementById('set-current-pw').value;
+  var npw = document.getElementById('set-new-pw').value;
+  var errEl = document.getElementById('pw-err');
+  errEl.style.display = 'none';
+
+  if (!cpw || !npw) { errEl.textContent = 'Both fields are required.'; errEl.style.display = 'block'; return; }
+  if (npw.length < 8) { errEl.textContent = 'New password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/password', {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ current_password: cpw, new_password: npw })
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to update password.');
+    alert('✅ ' + d.message);
+    document.getElementById('set-current-pw').value = '';
+    document.getElementById('set-new-pw').value = '';
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}</script><script src="/public/gradient-picker.js"></script><script>
+// ── FillList init ────────────────────────────────────
+var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
+window.addEventListener('load', function() {
+  if(typeof FillList === 'undefined') return;
+
+  _brandFL = new FillList(document.getElementById('brand-fill-list'), {
+    value: (window.__TENANT__ && window.__TENANT__.brand_color) || (document.getElementById('set-brand-color-hex') || {}).value || '#3b82f6',
+    onChange: function(v) {
+      document.getElementById('set-brand-color-hex').value = v;
+      document.documentElement.style.setProperty('--primary', v);
+    }
+  });
+
+  _heroFL = new FillList(document.getElementById('hero-fill-list'), {
+    value: '#0f172a',
+    onChange: function(v) {
+      document.getElementById('set-hero-color-hex').value = v;
+      var prev = document.getElementById('hero-color-preview');
+      if(prev) prev.style.background = v;
+    }
+  });
+
+  _pageFL = new FillList(document.getElementById('page-fill-list'), {
+    value: '#ffffff',
+    onChange: function(v) {
+      document.getElementById('set-page-bg-hex').value = v;
+    }
+  });
+
+  _appFL = new FillList(document.getElementById('app-fill-list'), {
+    value: (window.__TENANT__ && window.__TENANT__.bg_app_color) || (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9',
+    onChange: function(v) {
+      document.getElementById('set-bg-app-hex').value = v;
+      document.body.style.background = v;  // live apply
+      updateColorPreview();
+    }
+  });
+
+  _sidebarFL = new FillList(document.getElementById('sidebar-fill-list'), {
+    value: (window.__TENANT__ && window.__TENANT__.bg_sidebar_color) || (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235',
+    onChange: function(v) {
+      document.getElementById('set-bg-sidebar-hex').value = v;
+      var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
+      updateColorPreview();
+    }
+  });
+});</script>
+
+
+
+<!-- ══ ADD STAFF MODAL ═══════════════════════════════════════════ -->
+<div id="modal-staff" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:800;color:#0f172a;">Add Staff Member</div>
+      <button onclick="closeStaffModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:22px;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="staff-modal-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Full Name *</label>
+        <input id="s-name" type="text" placeholder="e.g. Juan Dela Cruz" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Role *</label>
+        <select id="s-role" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">Select role...</option>
+          <option value="Driver">Driver</option>
+          <option value="Document Controller">Document Controller</option>
+          <option value="Manager">Manager</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;"><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Gmail Address *</label>
+      <input id="s-email" type="email" placeholder="e.g. juan@gmail.com" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Must be a Gmail address (@gmail.com). Login credentials will be emailed here.</div>
+    </div>
+    <div style="margin-bottom:20px;"><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">License Expiry <span style="font-weight:400;color:#94a3b8;">(optional, for drivers)</span></label>
+      <input id="s-license" type="date" min="2026-04-26" max="2031-04-26" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeStaffModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
+      <button id="staff-submit-btn" onclick="submitAddStaff()" style="flex:2;padding:12px;background:#0f2235;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD VEHICLE MODAL ══════════════════════════════════════════ -->
+<div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:800;color:#0f172a;">Add Vehicle</div>
+      <button onclick="closeVehicleModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:22px;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="vehicle-modal-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Plate Number *</label>
+        <input id="v-plate" type="text" placeholder="e.g. ABC-1234" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;text-transform:uppercase;">
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Type *</label>
+        <select id="v-type" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">Select type...</option>
+          <option value="Truck">Truck</option>
+          <option value="Van">Van</option>
+          <option value="Motorcycle">Motorcycle</option>
+          <option value="Sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="Pickup">Pickup</option>
+          <option value="Trailer">Trailer</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Capacity (tons) *</label>
+        <input id="v-capacity" type="number" min="0" step="0.1" placeholder="e.g. 2.5" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Status *</label>
+        <select id="v-status" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="Available">Available</option>
+          <option value="On-Duty">On-Duty</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Retired">Retired</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeVehicleModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
+      <button id="vehicle-submit-btn" onclick="submitAddVehicle()" style="flex:2;padding:12px;background:#0f2235;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ UPDATE VEHICLE MODAL ══════════════════════════════════════════ -->
+<div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:800;color:#0f172a;">Update Vehicle</div>
+      <button onclick="closeUpdateVehicleModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:22px;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="update-vehicle-modal-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Plate Number</label>
+        <input id="u-v-plate" type="text" disabled style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f8fafc;color:#64748b;">
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Type *</label>
+        <select id="u-v-type" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">Select type...</option>
+          <option value="Truck">Truck</option>
+          <option value="Van">Van</option>
+          <option value="Motorcycle">Motorcycle</option>
+          <option value="Sedan">Sedan</option>
+          <option value="SUV">SUV</option>
+          <option value="Pickup">Pickup</option>
+          <option value="Trailer">Trailer</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Capacity (tons) *</label>
+        <input id="u-v-capacity" type="number" min="0" step="0.1" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Status *</label>
+        <select id="u-v-status" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="Available">Available</option>
+          <option value="On-Duty">On-Duty</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Retired">Retired</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeUpdateVehicleModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
+      <button id="update-vehicle-submit-btn" onclick="submitUpdateVehicle()" style="flex:2;padding:12px;background:#0f2235;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Staff & Vehicle Data Loading ───────────────────────────────────────────────
+var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
+var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+
+function loadStaff() {
+  apiFetch('/' + _SLUG + '/api/admin/staff').then(function(r){return r.json();}).then(function(rows) {
+    _staffData = Array.isArray(rows) ? rows : [];
+    renderStaff(_staffData);
+  }).catch(function(){
+    var tb = document.getElementById('staff-tbody');
+    if(tb) tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load staff</p></div></td></tr>';
+  });
+}
+
+function renderStaff(list) {
+  var tb = document.getElementById('staff-tbody');
+  if(!tb) return;
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records found</p></div></td></tr>'; return; }
+  var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
+  tb.innerHTML = list.map(function(s) {
+    var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
+    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : '—';
+    var sid = s.staff_id || s.id || '';
+    var delBtn = (sid && !s.is_current_user) ? '<button onclick="deleteStaff(\'' + sid + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
+    return '<tr>' +
+      '<td><strong>' + esc(s.name || s.first_name || '—') + '</strong></td>' +
+      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'—') + '</span></td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'—') + '</td>' +
+      '<td>' + exp + '</td>' +
+      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':'b-declined') + '">' + esc(s.status||'—') + '</span></td>' +
+      '<td>' + delBtn + '</td></tr>';
+  }).join('');
+}
+
+function filterStaffTab(role, btn) {
+  _staffTabFilter = role;
+  document.querySelectorAll('#s-staff .tab').forEach(function(t){t.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  var filtered = role === 'All' ? _staffData : _staffData.filter(function(s){return s.role === role;});
+  renderStaff(filtered);
+}
+function filterStaffStatus(val) {
+  var filtered = val ? _staffData.filter(function(s){return (s.status||'').toLowerCase().includes(val.toLowerCase());}) : _staffData;
+  if(_staffTabFilter !== 'All') filtered = filtered.filter(function(s){return s.role === _staffTabFilter;});
+  renderStaff(filtered);
+}
+
+function loadVehicles() {
+  apiFetch('/' + _SLUG + '/api/admin/vehicles').then(function(r){return r.json();}).then(function(rows) {
+    _vehicleData = Array.isArray(rows) ? rows : [];
+    renderVehicles(_vehicleData);
+  }).catch(function(){
+    var tb = document.getElementById('vehicles-tbody');
+    if(tb) tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load vehicles</p></div></td></tr>';
+  });
+}
+
+function renderVehicles(list) {
+  var tb = document.getElementById('vehicles-tbody');
+  if(!tb) return;
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
+  var stColors = {'Available':'b-delivered','On-Duty':'b-transit','Maintenance':'b-awaiting','Retired':'b-declined'};
+  tb.innerHTML = list.map(function(v) {
+    var plate = v.plate_number || '';
+    var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
+    var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
+    return '<tr>' +
+      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
+      '<td>' + esc(v.vehicle_type||'—') + '</td>' +
+      '<td>' + (v.capacity_tons || '—') + '</td>' +
+      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
+      '<td>' + esc(v.assigned_route||'—') + '</td>' +
+      '<td><div style="display:flex;gap:4px;">' + updateBtn + delBtn + '</div></td></tr>';
+  }).join('');
+}
+
+async function deleteStaff(id, btn) {
+  if(!id || !confirm('Remove this staff member? This cannot be undone.')) return;
+  btn.disabled = true; btn.style.opacity = '0.4';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/staff/' + id, { method: 'DELETE' });
+    var d = await r.json();
+    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    loadStaff();
+  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+async function deleteVehicle(id, btn) {
+  if(!id || !confirm('Remove this vehicle? This cannot be undone.')) return;
+  btn.disabled = true; btn.style.opacity = '0.4';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + id, { method: 'DELETE' });
+    var d = await r.json();
+    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    loadVehicles();
+  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+// Hook navigation to load staff/vehicles
+var _origGoAdmin = window.go;
+window.go = function(id, btn) {
+  _origGoAdmin(id, btn);
+  if(id === 'staff')    loadStaff();
+  if(id === 'vehicles') loadVehicles();
+};
+
+// ── Staff Modal ────────────────────────────────────────────────────────────────
+function openStaffModal() {
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-email').value = '';
+  document.getElementById('s-role').value = '';
+  document.getElementById('s-license').value = '';
+  document.getElementById('staff-modal-err').style.display = 'none';
+  document.getElementById('modal-staff').style.display = 'flex';
+}
+function closeStaffModal() { document.getElementById('modal-staff').style.display = 'none'; }
+
+async function submitAddStaff() {
+  var name  = document.getElementById('s-name').value.trim();
+  var email = document.getElementById('s-email').value.trim();
+  var role  = document.getElementById('s-role').value;
+  var lic   = document.getElementById('s-license').value;
+  var errEl = document.getElementById('staff-modal-err');
+  var btn   = document.getElementById('staff-submit-btn');
+  errEl.style.display = 'none';
+
+  if(!name || !email || !role) { errEl.textContent = 'Please fill in all required fields.'; errEl.style.display = 'block'; return; }
+  if(!email.toLowerCase().endsWith('@gmail.com')) { errEl.textContent = 'Please enter a valid Gmail address (@gmail.com).'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/staff', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, role, license_expiry: lic || null})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Failed to add staff.');
+    closeStaffModal();
+    loadStaff();
+    alert('✅ Staff added! A welcome email with login credentials has been sent to ' + email + '.');
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
+}
+
+// ── Vehicle Modal ──────────────────────────────────────────────────────────────
+function openVehicleModal() {
+  document.getElementById('v-plate').value = '';
+  document.getElementById('v-type').value = '';
+  document.getElementById('v-capacity').value = '';
+  document.getElementById('v-status').value = 'Available';
+  document.getElementById('vehicle-modal-err').style.display = 'none';
+  document.getElementById('modal-vehicle').style.display = 'flex';
+}
+function closeVehicleModal() { document.getElementById('modal-vehicle').style.display = 'none'; }
+
+async function submitAddVehicle() {
+  var plate    = document.getElementById('v-plate').value.trim();
+  var type     = document.getElementById('v-type').value;
+  var capacity = document.getElementById('v-capacity').value;
+  var status   = document.getElementById('v-status').value;
+  var errEl    = document.getElementById('vehicle-modal-err');
+  var btn      = document.getElementById('vehicle-submit-btn');
+  errEl.style.display = 'none';
+
+  if(!plate || !type || !capacity || !status) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({plate_number: plate, type, capacity_tons: capacity, status})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
+    closeVehicleModal();
+    loadVehicles();
+    alert('✅ Vehicle ' + plate.toUpperCase() + ' added successfully!');
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
+}
+
+function openUpdateVehicleModal(plate, type, capacity, status) {
+  document.getElementById('u-v-plate').value = plate;
+  document.getElementById('u-v-type').value = type;
+  document.getElementById('u-v-capacity').value = capacity;
+  document.getElementById('u-v-status').value = status;
+  document.getElementById('update-vehicle-modal-err').style.display = 'none';
+  document.getElementById('modal-update-vehicle').style.display = 'flex';
+}
+function closeUpdateVehicleModal() { document.getElementById('modal-update-vehicle').style.display = 'none'; }
+
+async function submitUpdateVehicle() {
+  var plate    = document.getElementById('u-v-plate').value.trim();
+  var type     = document.getElementById('u-v-type').value;
+  var capacity = document.getElementById('u-v-capacity').value;
+  var status   = document.getElementById('u-v-status').value;
+  var errEl    = document.getElementById('update-vehicle-modal-err');
+  var btn      = document.getElementById('update-vehicle-submit-btn');
+  errEl.style.display = 'none';
+
+  if(!type || !capacity || !status) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Updating...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(plate), {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type, capacity_tons: capacity, status})
+    });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Failed to update vehicle.');
+    closeUpdateVehicleModal();
+    loadVehicles();
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
+}
+</script>
+</body>
+</html>
+

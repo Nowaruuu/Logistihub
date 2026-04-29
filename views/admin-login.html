@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Login — Logistics OS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;background:#f1f5f9;display:flex;align-items:center;justify-content:center;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(15,34,53,.06);}
+
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.logo-box{width:36px;height:36px;background:#0a1628;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.logo-box .material-symbols-outlined{color:#fff;font-size:18px;}
+.logo-name{font-weight:800;font-size:15px;color:#0a1628;}
+.logo-role{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:1px;text-transform:uppercase;}
+
+h1{font-size:22px;font-weight:800;color:#0a1628;margin-bottom:5px;}
+.sub{font-size:13px;color:#94a3b8;margin-bottom:24px;}
+
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;color:#475569;}
+.field-wrap{position:relative;}
+.field-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:17px;pointer-events:none;}
+.field-wrap input{padding-left:36px!important;}
+input{width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
+input:focus{border-color:#0a1628;box-shadow:0 0 0 3px rgba(10,22,40,.07);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:38px;}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#cbd5e1;display:flex;align-items:center;padding:0;}
+.pw-toggle:hover{color:#64748b;}
+
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 13px;font-size:12px;color:#dc2626;display:flex;align-items:center;gap:7px;margin-bottom:14px;}
+.err-box .material-symbols-outlined{font-size:15px;flex-shrink:0;}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;background:#0a1628;color:#fff;transition:opacity .15s;margin-top:6px;}
+.btn:hover{opacity:.87;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn .material-symbols-outlined{font-size:15px;}
+
+.security-note{display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-top:20px;}
+.security-note .material-symbols-outlined{font-size:15px;color:#94a3b8;margin-top:1px;flex-shrink:0;}
+.security-note p{font-size:11px;color:#94a3b8;line-height:1.5;}
+
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+</style>
+</head>
+<script src="/public/frontend-api.js"></script>
+<body>
+
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-box" id="logo-box-wrap"><span class="material-symbols-outlined" id="logo-icon-fallback">package_2</span><img id="logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:7px;"></div>
+    <div>
+      <div class="logo-name" id="logo-name">Logistics OS</div>
+      <div class="logo-role" id="logo-role">ADMIN ACCESS</div>
+    </div>
+  </div>
+
+  <h1 id="login-title">Workspace Login</h1>
+  <p class="sub" id="login-sub">This panel is restricted to workspace administrators.</p>
+
+  <div id="err-box" class="err-box" style="display:none;">
+    <span class="material-symbols-outlined">error</span>
+    <span id="err-msg">Invalid credentials.</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Email</label>
+    <div class="field-wrap">
+      <span class="field-ico material-symbols-outlined">mail</span>
+      <input id="email" type="email" placeholder="" autocomplete="username"/>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Password</label>
+    <div class="field-wrap pw-wrap">
+      <span class="field-ico material-symbols-outlined">lock</span>
+      <input id="password" type="password" placeholder="" autocomplete="current-password" style="padding-left:36px;padding-right:38px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="pw-toggle" type="button" onclick="togglePw()"><span class="material-symbols-outlined">visibility</span></button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+    <a href="#" onclick="openForgotPrompt('username');return false;" id="link-forgot-user" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Username?</a>
+    <a href="#" onclick="openForgotPrompt('password');return false;" id="link-forgot-pw" style="font-size:11px;font-weight:600;color:#6366f1;text-decoration:none;">Forgot Password?</a>
+  </div>
+  <div id="forgot-result" style="display:none;font-size:12px;border-radius:8px;padding:10px 13px;margin-bottom:12px;text-align:center;"></div>
+
+  
+
+  <button class="btn" id="login-btn" onclick="doLogin()">
+    <span class="material-symbols-outlined">login</span>Sign In
+  </button>
+
+  <div class="security-note">
+    <span class="material-symbols-outlined">shield</span>
+    <p>All login attempts are rate-limited and logged. Unauthorized access is prohibited.</p>
+  </div>
+</div>
+
+<script>
+// Determine if we are Superadmin or Tenant Admin
+var isSuperAdmin = !(window.__TENANT__ && window.__TENANT__.slug);
+var SLUG = isSuperAdmin ? '' : window.__TENANT__.slug;
+var T_NAME = isSuperAdmin ? 'Logistics OS' : window.__TENANT__.company_name;
+
+if (isSuperAdmin) {
+    document.getElementById('logo-name').textContent = 'Logistics OS';
+    document.getElementById('logo-role').textContent = 'SUPERADMIN ACCESS';
+    document.getElementById('login-title').textContent = 'Platform Login';
+    document.getElementById('login-sub').textContent = 'This panel is restricted to platform administrators only.';
+    document.title = 'Superadmin Login — Logistics OS';
+} else {
+    document.getElementById('logo-name').textContent = T_NAME;
+    document.title = 'Admin Login — Logistics OS';
+    // Render tenant logo if available
+    var logoUrl = (window.__TENANT__ && window.__TENANT__.logo_url) ? window.__TENANT__.logo_url : null;
+    if (logoUrl) {
+      var img = document.getElementById('logo-img');
+      var icon = document.getElementById('logo-icon-fallback');
+      img.src = logoUrl;
+      img.style.display = 'block';
+      if (icon) icon.style.display = 'none';
+    }
+}
+
+function togglePw() {
+  var inp = document.getElementById('password');
+  var ico = document.querySelector('.pw-toggle .material-symbols-outlined');
+  if (inp.type === 'password') { inp.type = 'text';     ico.textContent = 'visibility_off'; }
+  else                         { inp.type = 'password'; ico.textContent = 'visibility'; }
+}
+
+function showErr(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  document.getElementById('err-box').style.display = 'flex';
+}
+
+async function doLogin() {
+  var email    = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var btn      = document.getElementById('login-btn');
+
+  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+
+  document.getElementById('err-box').style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Signing in…';
+
+  try {
+    if (isSuperAdmin) {
+        await SuperadminAPI.login(email, password);
+        window.location.href = '/superadmin';
+    } else {
+        const res = await fetch('/' + SLUG + '/api/staff-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        window.location.href = '/' + SLUG + '/admin';
+    }
+  } catch (e) {
+    showErr(e.message || 'Login failed or network error.');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+  }
+}
+
+function openForgotPrompt(type) {
+  document.getElementById('forgot-result').style.display = 'none';
+  window._forgotType = type;
+  var modal = document.getElementById('prompt-modal');
+  var title = document.getElementById('prompt-title');
+  var desc = document.getElementById('prompt-desc');
+  var inp = document.getElementById('prompt-input');
+  
+  if (type === 'username') {
+    title.textContent = 'Forgot Username';
+    desc.textContent = 'Enter the personal email address you registered with.';
+    inp.placeholder = 'e.g. yourname@gmail.com';
+    inp.value = '';
+  } else {
+    title.textContent = 'Forgot Password';
+    desc.textContent = 'Enter your workspace username.';
+    inp.placeholder = 'e.g. yourname@' + SLUG + '.com';
+    inp.value = document.getElementById('email').value.trim();
+  }
+  
+  modal.style.display = 'flex';
+  setTimeout(function() { inp.focus(); }, 100);
+}
+
+async function submitPrompt() {
+  var type = window._forgotType;
+  var target = document.getElementById('prompt-input').value.trim();
+  if (!target) return;
+
+  if (type === 'password' && target.includes('@') && !target.endsWith('@' + SLUG + '.com')) {
+    alert("Please enter your workspace username ending in @" + SLUG + ".com, not your personal email!");
+    return;
+  }
+
+  document.getElementById('prompt-modal').style.display = 'none';
+
+  if (type === 'password') {
+    document.getElementById('email').value = target;
+  }
+
+  var lnk = type === 'username' ? document.getElementById('link-forgot-user') : document.getElementById('link-forgot-pw');
+  var result = document.getElementById('forgot-result');
+  lnk.textContent = 'Sending...';
+  try {
+    var r = await fetch('/' + SLUG + '/api/forgot-credentials', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, target: target })
+    });
+    var d = await r.json();
+    result.style.display = 'block';
+    if (r.ok && d.ok) {
+      result.style.background = '#f0fdf4'; result.style.color = '#16a34a'; result.style.border = '1px solid #bbf7d0';
+      result.textContent = d.message;
+      if (type === 'password') { var m=document.getElementById('reset-modal'); m.style.display='flex'; document.getElementById('reset-code').value=''; document.getElementById('reset-new-pw').value=''; document.getElementById('reset-confirm-pw').value=''; document.getElementById('reset-err').style.display='none'; document.getElementById('reset-code').focus(); }
+    } else {
+      result.style.background = '#fef2f2'; result.style.color = '#dc2626'; result.style.border = '1px solid #fecaca';
+      result.textContent = d.error || 'Error. Please try again.';
+    }
+  } catch(e) {
+    result.style.display = 'block'; result.style.background = '#fef2f2'; result.style.color = '#dc2626';
+    result.style.border = '1px solid #fecaca'; result.textContent = 'Network error.';
+  }
+  lnk.textContent = type === 'username' ? 'Forgot Username?' : 'Forgot Password?';
+}
+
+async function submitReset() {
+  var username = document.getElementById('email').value.trim();
+  var code = document.getElementById('reset-code').value.trim();
+  var newPw = document.getElementById('reset-new-pw').value;
+  var confirmPw = document.getElementById('reset-confirm-pw').value;
+  var errEl = document.getElementById('reset-err');
+  errEl.style.display = 'none';
+  if (!code || code.length !== 6) { errEl.textContent = 'Enter the 6-digit code.'; errEl.style.display='block'; return; }
+  if (newPw.length < 8) { errEl.textContent = 'Min 8 characters.'; errEl.style.display='block'; return; }
+  if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; errEl.style.display='block'; return; }
+  try {
+    var r = await fetch('/' + SLUG + '/api/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code, new_password: newPw, username: username })
+    });
+    var d = await r.json();
+    if (r.ok && d.ok) {
+      document.getElementById('reset-modal').style.display='none';
+      var res = document.getElementById('forgot-result');
+      res.style.display = 'block'; res.style.background = '#f0fdf4'; res.style.color = '#16a34a'; res.style.border = '1px solid #bbf7d0';
+      res.textContent = 'Password reset! You can now sign in.';
+    } else { errEl.textContent = d.error || 'Reset failed.'; errEl.style.display='block'; }
+  } catch(e) { errEl.textContent = 'Network error.'; errEl.style.display='block'; }
+}
+</script>
+
+<!-- Password Reset Modal Overlay -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:slideUp 0.25s ease;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-size:16px;font-weight:800;color:#0a1628;">Reset Password</div>
+      <button onclick="document.getElementById('reset-modal').style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;line-height:1;">&#x2715;</button>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin:0 0 18px;">Enter the 6-digit code sent to your email, then set a new password.</p>
+    <input id="reset-code" type="text" maxlength="6" placeholder="6-digit code" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;font-size:22px;font-weight:800;letter-spacing:10px;text-align:center;outline:none;">
+    <input id="reset-new-pw" type="password" placeholder="New password (min 8 chars)" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px;outline:none;">
+    <input id="reset-confirm-pw" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;outline:none;">
+    <div id="reset-err" style="display:none;font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;margin-bottom:12px;"></div>
+    <button onclick="submitReset()" style="width:100%;background:#0a1628;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:18px;">lock_reset</span>Reset Password
+    </button>
+  </div>
+</div>
+<!-- Prompt Modal Overlay -->
+<div id="prompt-modal" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:slideUp 0.25s ease;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div id="prompt-title" style="font-size:16px;font-weight:800;color:#0a1628;">Account Recovery</div>
+      <button onclick="document.getElementById('prompt-modal').style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;line-height:1;">&#x2715;</button>
+    </div>
+    <p id="prompt-desc" style="font-size:12px;color:#64748b;margin:0 0 18px;">Enter your details.</p>
+    <input id="prompt-input" type="text" placeholder="" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')submitPrompt()">
+    <button onclick="submitPrompt()" style="width:100%;background:#0a1628;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:18px;">send</span>Continue
+    </button>
+  </div>
+</div>
+
+<style>
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+#reset-modal, #prompt-modal { display:none; }
+#reset-modal.open, #prompt-modal.open { display:flex; }
+</style></body>
+</html>
