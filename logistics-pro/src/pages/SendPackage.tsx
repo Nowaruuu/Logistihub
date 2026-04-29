@@ -207,7 +207,7 @@ export default function SendPackage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full bg-white dark:bg-slate-900">
       {/* Step Indicator */}
       <div className="flex w-full flex-row items-center justify-center gap-2.5 py-5 bg-white dark:bg-slate-900 border-b border-slate-50 dark:border-slate-800/50">
         <div className="h-1.5 w-8 rounded-full bg-orange-600 shadow-sm shadow-orange-600/30"></div>

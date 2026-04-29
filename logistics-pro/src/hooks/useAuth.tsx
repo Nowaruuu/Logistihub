@@ -6,11 +6,23 @@ interface AuthContextType {
   user: any | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (user: any) => Promise<void>;
+  signIn: (userData: any, loginResponse?: any) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function buildProfile(data: any): UserProfile {
+  return {
+    uid: data.uid || data.user_id || data.staff_id || data.id || '',
+    fullName: data.fullName || data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User',
+    email: data.email || data.username || '',
+    phone: data.phone || '',
+    role: (data.role || 'user') as any,
+    tier: data.tier || 'Bronze',
+    createdAt: data.createdAt || data.created_at || new Date().toISOString(),
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
@@ -19,31 +31,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      const slug = localStorage.getItem('auth_slug');
+      if (!token || !slug) {
+        setLoading(false);
+        return;
+      }
+
+      // Try to restore profile from localStorage cache first
+      const cachedProfile = localStorage.getItem('auth_profile');
+      if (cachedProfile) {
+        try {
+          const parsed = JSON.parse(cachedProfile);
+          const p = buildProfile(parsed);
+          setUser({ uid: p.uid, ...p });
+          setProfile(p);
+        } catch { /* ignore parse errors */ }
+      }
+
+      // Then try to refresh from API
       try {
-        const token = localStorage.getItem('auth_token');
-        const slug = localStorage.getItem('auth_slug');
-        if (!token || !slug) {
-          setLoading(false);
-          return;
-        }
         const data = await getProfile();
-        const mappedUser = { uid: data.uid || data.user_id || data.id, ...data };
-        setUser(mappedUser);
-        setProfile({
-          uid: mappedUser.uid,
-          fullName: data.fullName || '',
-          email: data.email || '',
-          phone: data.phone || '',
-          role: data.role || 'user',
-          tier: data.tier || 'Bronze',
-          createdAt: data.createdAt || new Date().toISOString(),
-        } as UserProfile);
+        const p = buildProfile(data);
+        setUser({ uid: p.uid, ...p });
+        setProfile(p);
+        localStorage.setItem('auth_profile', JSON.stringify(data));
       } catch (err) {
-        console.warn('Auth init failed:', err);
-        setUser(null);
-        setProfile(null);
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_slug');
+        console.warn('getProfile failed:', err);
+        // If no cached profile either, clear auth
+        if (!cachedProfile) {
+          setUser(null);
+          setProfile(null);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_slug');
+          localStorage.removeItem('auth_profile');
+        }
       } finally {
         setLoading(false);
       }
@@ -51,32 +73,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
-  const signIn = async (userData: any) => {
-    setUser(userData);
-    setLoading(true);
+  const signIn = async (_userData: any, loginResponse?: any) => {
+    // Build profile immediately from login response data
+    if (loginResponse?.user) {
+      const p = buildProfile(loginResponse.user);
+      setUser({ uid: p.uid, ...p });
+      setProfile(p);
+      localStorage.setItem('auth_profile', JSON.stringify(loginResponse.user));
+    } else if (loginResponse) {
+      const p = buildProfile(loginResponse);
+      setUser({ uid: p.uid, ...p });
+      setProfile(p);
+      localStorage.setItem('auth_profile', JSON.stringify(loginResponse));
+    }
+
+    // Also try to get full profile from /me in the background
     try {
       const data = await getProfile();
-      const mappedUser = { uid: data.uid || data.user_id || data.id, ...data };
-      setUser(mappedUser);
-      setProfile({
-        uid: mappedUser.uid,
-        fullName: data.fullName || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        role: data.role || 'user',
-        tier: data.tier || 'Bronze',
-        createdAt: data.createdAt || new Date().toISOString(),
-      } as UserProfile);
+      const p = buildProfile(data);
+      setUser({ uid: p.uid, ...p });
+      setProfile(p);
+      localStorage.setItem('auth_profile', JSON.stringify(data));
     } catch (err) {
-      console.error("Fetch profile failed after sign in:", err);
-    } finally {
-      setLoading(false);
+      console.warn('getProfile after signIn failed (using login data):', err);
     }
   };
 
   const signOut = async () => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_slug');
+    localStorage.removeItem('auth_profile');
     setUser(null);
     setProfile(null);
   };

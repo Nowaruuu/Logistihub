@@ -36,8 +36,7 @@ export default function SignIn() {
       // Sign in with Backend API
       const authData = await login(slug, role, username, password);
       
-      const dummyUser = { uid: authData.user?.user_id || authData.staff_id || '123' };
-      await signIn(dummyUser as any);
+      await signIn({ uid: authData.user?.user_id || authData.staff_id || '123' }, authData);
       navigate('/dashboard');
     } catch (err: any) {
       console.error("Sign in error:", err);
