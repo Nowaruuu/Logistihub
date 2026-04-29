@@ -148,6 +148,13 @@ app.use((err, req, res, _next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // START
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Handle malformed URL params (prevents URIError crash)
+app.use((err, req, res, next) => {
+  if (err instanceof URIError) return res.status(400).send('Bad Request');
+  next(err);
+});
+
 app.listen(PORT, () => {
   console.log(`\n🚀  Logistics OS backend running`);
   console.log(`   Local:   http://localhost:${PORT}`);
