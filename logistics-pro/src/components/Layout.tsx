@@ -87,7 +87,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="size-14 rounded-2xl ring-4 ring-orange-600/10 p-1 overflow-hidden">
                     <img 
                       className="w-full h-full rounded-xl object-cover" 
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || 'U')}&background=ea580c&color=fff&size=128&bold=true`} 
                       alt="Profile"
                       referrerPolicy="no-referrer"
                     />
@@ -170,7 +170,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           >
             <img 
               className="w-full h-full rounded-full object-cover" 
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || 'U')}&background=ea580c&color=fff&size=128&bold=true`} 
               alt="Profile"
               referrerPolicy="no-referrer"
             />

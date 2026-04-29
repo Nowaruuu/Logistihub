@@ -20,10 +20,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        const slug = localStorage.getItem('auth_slug');
+        if (!token || !slug) {
+          setLoading(false);
+          return;
+        }
         const data = await getProfile();
-        setUser({ uid: data.id, ...data });
-        setProfile(data as UserProfile);
+        const mappedUser = { uid: data.uid || data.user_id || data.id, ...data };
+        setUser(mappedUser);
+        setProfile({
+          uid: mappedUser.uid,
+          fullName: data.fullName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          role: data.role || 'user',
+          tier: data.tier || 'Bronze',
+          createdAt: data.createdAt || new Date().toISOString(),
+        } as UserProfile);
       } catch (err) {
+        console.warn('Auth init failed:', err);
         setUser(null);
         setProfile(null);
         localStorage.removeItem('auth_token');
@@ -40,7 +56,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const data = await getProfile();
-      setProfile(data as UserProfile);
+      const mappedUser = { uid: data.uid || data.user_id || data.id, ...data };
+      setUser(mappedUser);
+      setProfile({
+        uid: mappedUser.uid,
+        fullName: data.fullName || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        role: data.role || 'user',
+        tier: data.tier || 'Bronze',
+        createdAt: data.createdAt || new Date().toISOString(),
+      } as UserProfile);
     } catch (err) {
       console.error("Fetch profile failed after sign in:", err);
     } finally {

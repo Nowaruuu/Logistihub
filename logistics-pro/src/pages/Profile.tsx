@@ -98,22 +98,12 @@ export default function Profile() {
 
   const handleSeedData = async () => {
     if (!profile) return;
-    try {
-      await seedService.seedSampleData(profile);
-      alert('Sample data added!');
-    } catch (err) {
-      console.error("Error seeding sample data:", err);
-    }
+    alert('Sample data feature coming soon.');
   };
 
   const handleClearShipments = async () => {
     if (!profile) return;
-    try {
-      await deliveryService.clearAllDeliveries(profile.uid);
-      alert('All shipments cleared!');
-    } catch (err) {
-      console.error("Error clearing shipments:", err);
-    }
+    alert('Clear shipments feature coming soon.');
   };
 
   const handleDeleteAccount = async () => {
@@ -138,7 +128,12 @@ export default function Profile() {
     }
   };
 
-  if (!profile) return null;
+  if (!profile) return (
+    <div className="flex flex-col items-center justify-center min-h-full bg-white dark:bg-slate-900 p-8">
+      <div className="size-12 rounded-full border-4 border-orange-600 border-t-transparent animate-spin mb-4"></div>
+      <p className="text-slate-500 text-sm">Loading profile...</p>
+    </div>
+  );
 
   return (
     <div className="flex flex-col min-h-full bg-slate-50/50 dark:bg-slate-950">
@@ -148,7 +143,7 @@ export default function Profile() {
           <div className="absolute inset-0 bg-orange-600/20 rounded-full blur-2xl -z-10 animate-pulse"></div>
           <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-36 w-36 ring-4 ring-white dark:ring-slate-800 shadow-2xl overflow-hidden">
             <img 
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'U')}&background=ea580c&color=fff&size=256&bold=true`} 
               alt="Avatar"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
