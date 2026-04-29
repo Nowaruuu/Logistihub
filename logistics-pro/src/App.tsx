@@ -28,10 +28,36 @@ import Earnings from './pages/driver/Earnings';
 import Stats from './pages/driver/Stats';
 import Documents from './pages/driver/Documents';
 
+// Global Error Boundary — catches ANY uncaught render crash in child components
+class AppErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: string}> {
+  constructor(props: any) { super(props); this.state = { hasError: false, error: '' }; }
+  static getDerivedStateFromError(err: any) { return { hasError: true, error: String(err) }; }
+  componentDidCatch(error: any, info: any) { console.error('App crash:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'#0f172a', color:'white', padding:'2rem', textAlign:'center' }}>
+          <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>📦</div>
+          <h2 style={{ fontSize:'1.5rem', fontWeight:'bold', marginBottom:'0.5rem' }}>Something went wrong</h2>
+          <p style={{ color:'#94a3b8', fontSize:'0.875rem', marginBottom:'1.5rem' }}>The page encountered an error. Please try again.</p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: '' }); window.location.href = '/dashboard'; }}
+            style={{ background:'#ea580c', color:'white', padding:'0.75rem 2rem', borderRadius:'0.75rem', border:'none', fontWeight:'bold', fontSize:'0.875rem', cursor:'pointer' }}
+          >
+            Return to Home
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <AppErrorBoundary>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -182,6 +208,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
+        </AppErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   );

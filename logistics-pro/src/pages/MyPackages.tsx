@@ -53,9 +53,9 @@ export default function MyPackages() {
   const filteredDeliveries = deliveries.filter(d => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      d.trackingNumber.toLowerCase().includes(searchLower) ||
-      d.origin.toLowerCase().includes(searchLower) ||
-      d.destination.toLowerCase().includes(searchLower)
+      (d.trackingNumber || '').toLowerCase().includes(searchLower) ||
+      (d.origin || '').toLowerCase().includes(searchLower) ||
+      (d.destination || '').toLowerCase().includes(searchLower)
     );
   });
 
@@ -128,12 +128,12 @@ export default function MyPackages() {
             </div>
 
             <div className="space-y-4 px-4">
-              {activeDeliveries.map((delivery) => (
+              {activeDeliveries.map((delivery, idx) => (
                 <motion.div 
-                  key={delivery.id}
+                  key={delivery.id || idx}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  onClick={() => navigate(`/track/${delivery.trackingNumber}`)}
+                  onClick={() => delivery.trackingNumber && navigate(`/track/${delivery.trackingNumber}`)}
                   className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800/50 flex flex-col gap-4 cursor-pointer hover:border-orange-600/30 transition-colors"
                 >
                   <div className="flex gap-4 items-center">
@@ -142,10 +142,10 @@ export default function MyPackages() {
                     </div>
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between items-start">
-                        <p className="text-slate-900 dark:text-slate-100 text-base font-bold">#{delivery.trackingNumber}</p>
+                        <p className="text-slate-900 dark:text-slate-100 text-base font-bold">#{delivery.trackingNumber || 'N/A'}</p>
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={(e) => handleDelete(e, delivery.id)}
+                            onClick={(e) => handleDelete(e, delivery.id || '')}
                             className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded-lg"
                           >
                             <Trash2 className="size-4" />
@@ -154,14 +154,14 @@ export default function MyPackages() {
                             "text-[10px] px-2 py-0.5 rounded font-bold",
                             delivery.status === 'Processing' ? "bg-slate-100 dark:bg-slate-800 text-slate-500" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
                           )}>
-                            {delivery.status}
+                            {delivery.status || 'Processing'}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-orange-600 font-bold text-sm">₱{delivery.totalFee?.toFixed(2)}</p>
+                        <p className="text-orange-600 font-bold text-sm">₱{(delivery.totalFee || 0).toFixed(2)}</p>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">{delivery.destination}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs">{delivery.destination || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -238,12 +238,12 @@ export default function MyPackages() {
             <div className="px-1 pt-6 pb-3">
               <h3 className="text-slate-800 dark:text-slate-200 text-sm font-bold uppercase tracking-wider">Recently Delivered</h3>
             </div>
-            {pastDeliveries.map((delivery) => (
+            {pastDeliveries.map((delivery, idx) => (
               <motion.div 
-                key={delivery.id}
+                key={delivery.id || idx}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                onClick={() => navigate(`/track/${delivery.trackingNumber}`)}
+                onClick={() => delivery.trackingNumber && navigate(`/track/${delivery.trackingNumber}`)}
                 className="bg-white/60 dark:bg-slate-900/60 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800/50 flex gap-4 items-center cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all"
               >
                 <div className="flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0 size-12">
