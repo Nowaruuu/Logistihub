@@ -38,7 +38,8 @@ export const deliveryService = {
       size: deliveryData.size,
       shipping_method: deliveryData.shippingMethod,
       total_fee: deliveryData.totalFee,
-      content_description: deliveryData.origin
+      content_description: deliveryData.origin,
+      estimated_arrival: deliveryData.estimatedArrival,
     });
     return result.delivery_number;
   },

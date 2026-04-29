@@ -95,6 +95,7 @@ export async function createDelivery(deliveryData: {
   shipping_method?: string;
   total_fee?: number;
   content_description?: string;
+  estimated_arrival?: string;
 }) {
   const res = await fetch(mobileUrl('/deliveries'), {
     method: 'POST',

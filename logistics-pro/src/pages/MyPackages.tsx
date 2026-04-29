@@ -7,6 +7,18 @@ import { Search, Truck, Package as PackageIcon, ChevronRight, CheckCircle, Clock
 import { createCheckout } from '../lib/api';
 import { cn } from '../lib/utils';
 
+// Capacitor-aware URL opener
+async function openUrl(url: string) {
+  try {
+    const { Capacitor, Plugins } = (window as any);
+    if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
+      await Plugins.Browser.open({ url });
+      return;
+    }
+  } catch (_) {}
+  window.open(url, '_blank', 'noopener');
+}
+
 // Error boundary for this page
 class PackagesErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, errorMsg: string}> {
   constructor(props: any) { super(props); this.state = { hasError: false, errorMsg: '' }; }
@@ -232,15 +244,17 @@ function MyPackagesInner() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setPaying(delivery.trackingNumber || '');
-                      createCheckout(delivery.trackingNumber || '', Number(delivery.totalFee || 0), `Shipment ${delivery.trackingNumber || ''}`)
-                        .then(r => {
+                      const tn = delivery.trackingNumber || '';
+                      if (paying === tn) return;
+                      setPaying(tn);
+                      createCheckout(tn, Number(delivery.totalFee || 0), `Shipment ${tn}`)
+                        .then(async r => {
                           if (r?.checkout_url) {
-                            window.location.href = r.checkout_url;
+                            await openUrl(r.checkout_url);
                           } else {
                             alert('Payment gateway not available. Please contact support.');
-                            setPaying(null);
                           }
+                          setPaying(null);
                         })
                         .catch(err => {
                           console.warn('Payment error:', err);

@@ -90,7 +90,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     pickup_location, dropoff_location, pickup_lat, pickup_lng,
     dropoff_lat, dropoff_lng, receiver_name, receiver_phone,
     receiver_address, item_type_flag, weight, size,
-    shipping_method, total_fee, content_description
+    shipping_method, total_fee, content_description, estimated_arrival
   } = req.body;
 
   if (!pickup_location || !dropoff_location) {
@@ -108,13 +108,13 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
         receiver_name, receiver_phone, receiver_address,
         item_type_flag, weight, size, shipping_method, total_fee,
         estimated_arrival, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '3-5 business days', 'Pending', NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
       [
         deliveryNumber, tid, userId, pickup_location, dropoff_location,
         pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
         itemType, weight || null, size || null, shipping_method || 'Standard',
-        total_fee || 0
+        total_fee || 0, estimated_arrival || '3-5 business days'
       ]
     );
 

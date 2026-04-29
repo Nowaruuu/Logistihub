@@ -1,11 +1,24 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Info, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
 import { createCheckout } from '../lib/api';
+
+// Open URL: use Capacitor Browser plugin if available, otherwise new window
+async function openUrl(url: string) {
+  try {
+    // @ts-ignore — Capacitor may not be typed here
+    const { Capacitor, Plugins } = (window as any);
+    if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
+      await Plugins.Browser.open({ url });
+      return;
+    }
+  } catch (_) {}
+  window.open(url, '_blank', 'noopener');
+}
 
 // Category types matching database item_type_flag
 const PACKAGE_CATEGORIES = [
@@ -89,7 +102,7 @@ export default function SendPackage() {
   const stdEta = estimateDelivery(distKm, false);
   const expEta = estimateDelivery(distKm, true);
 
-  // Debounced address search for pickup
+  // Debounced address search for pickup — ALWAYS updates coords, no guard
   const handlePickupChange = (val: string) => {
     setPickup(val);
     if (pickupTimer.current) clearTimeout(pickupTimer.current);
@@ -99,8 +112,8 @@ export default function SendPackage() {
         const results = await searchAddress(val);
         setPickupResults(results);
         setSearchingPickup(false);
-        // Auto-pin first result if available
-        if (results.length > 0 && !pickupCoords) {
+        // Always pin first result — update even if coords already set
+        if (results.length > 0) {
           setPickupCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
         }
       }, 500);
@@ -110,7 +123,29 @@ export default function SendPackage() {
     }
   };
 
-  // Debounced address search for destination
+  // Force-search and pin on blur — catches the case where user typed and walked away
+  const handlePickupBlur = async () => {
+    setTimeout(async () => {
+      if (pickup.length >= 3) {
+        if (pickupResults.length > 0) {
+          // Results already loaded — just pin the top one
+          setPickupCoords([parseFloat(pickupResults[0].lat), parseFloat(pickupResults[0].lon)]);
+          setPickup(pickupResults[0].display_name);
+          setPickupResults([]);
+        } else {
+          // No results yet — force search now
+          const results = await searchAddress(pickup);
+          if (results.length > 0) {
+            setPickupCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+            setPickup(results[0].display_name);
+          }
+          setPickupResults([]);
+        }
+      }
+    }, 200); // small delay so tap-on-suggestion still fires first
+  };
+
+  // Debounced address search for destination — ALWAYS updates coords
   const handleDestChange = (val: string) => {
     setDestination(val);
     if (destTimer.current) clearTimeout(destTimer.current);
@@ -120,8 +155,8 @@ export default function SendPackage() {
         const results = await searchAddress(val);
         setDestResults(results);
         setSearchingDest(false);
-        // Auto-pin first result if available
-        if (results.length > 0 && !destCoords) {
+        // Always pin first result
+        if (results.length > 0) {
           setDestCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
         }
       }, 500);
@@ -129,6 +164,26 @@ export default function SendPackage() {
       setDestResults([]);
       setSearchingDest(false);
     }
+  };
+
+  // Force-search and pin on blur for destination
+  const handleDestBlur = async () => {
+    setTimeout(async () => {
+      if (destination.length >= 3) {
+        if (destResults.length > 0) {
+          setDestCoords([parseFloat(destResults[0].lat), parseFloat(destResults[0].lon)]);
+          setDestination(destResults[0].display_name);
+          setDestResults([]);
+        } else {
+          const results = await searchAddress(destination);
+          if (results.length > 0) {
+            setDestCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+            setDestination(results[0].display_name);
+          }
+          setDestResults([]);
+        }
+      }
+    }, 200);
   };
 
   const selectPickup = (result: any) => {
@@ -187,7 +242,7 @@ export default function SendPackage() {
       try {
         const checkout = await createCheckout(deliveryNumber, totalFee, `Shipping: ${pickup} → ${destination}`);
         if (checkout.checkout_url) {
-          window.open(checkout.checkout_url, '_blank');
+          await openUrl(checkout.checkout_url);
         }
       } catch (payErr) {
         console.warn('Payment checkout skipped:', payErr);
@@ -281,6 +336,7 @@ export default function SendPackage() {
               type="text"
               value={pickup}
               onChange={(e) => handlePickupChange(e.target.value)}
+              onBlur={handlePickupBlur}
               className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
               placeholder="Search address or type manually" 
             />
@@ -345,6 +401,7 @@ export default function SendPackage() {
               required
               value={destination}
               onChange={(e) => handleDestChange(e.target.value)}
+              onBlur={handleDestBlur}
               className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
               placeholder="Search receiver's address" 
             />
