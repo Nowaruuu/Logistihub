@@ -246,7 +246,7 @@ router.get('/subscriptions', requireSuperadmin, async (req, res) => {
     const [rows] = await query(`
       SELECT
         t.tenant_id, t.company_name, t.plan, t.status, t.created_at,
-        COALESCE(SUM(p.total_amount), 0) AS revenue,
+        COALESCE(sp.revenue, 0) AS revenue,
         CASE t.plan
           WHEN 'startup'    THEN 99
           WHEN 'enterprise' THEN 499
@@ -254,9 +254,11 @@ router.get('/subscriptions', requireSuperadmin, async (req, res) => {
           ELSE 0
         END AS monthly_fee
       FROM TENANT t
-      LEFT JOIN payment p ON p.tenant_id = t.tenant_id AND p.status = 'Paid'
-      GROUP BY t.tenant_id, t.company_name, t.plan, t.status, t.created_at
-      ORDER BY revenue DESC
+      LEFT JOIN (
+        SELECT tenant_id, SUM(amount) AS revenue, COUNT(*) AS payment_count, MAX(created_at) AS last_payment_at, MAX(is_test_mode) AS is_test_mode
+        FROM SUBSCRIPTION_PAYMENT WHERE status = 'paid' GROUP BY tenant_id
+      ) sp ON sp.tenant_id = t.tenant_id
+      ORDER BY t.created_at DESC
     `);
 
     const totalRevenue = rows.reduce((sum, r) => sum + Number(r.revenue), 0);
