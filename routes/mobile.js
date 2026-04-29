@@ -424,8 +424,50 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     );
     if (!ship.length) return res.status(404).json({ error: 'Shipment not found.' });
 
+    // Fetch billing info from APP_USER
+    const [userRows] = await query(
+      'SELECT first_name, last_name, email, phone FROM APP_USER WHERE user_id = ? LIMIT 1',
+      [req.user.user_id]
+    );
+    const userInfo = userRows[0] || {};
+    const billingName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(' ') || 'Customer';
+    const billingEmail = userInfo.email || null;
+    const billingPhone = userInfo.phone ? userInfo.phone.replace(/\D/g, '') : null;
+
     const amountCentavos = Math.round(parseFloat(amount) * 100);
     const slug = req.params.slug;
+
+    const checkoutBody = {
+      data: {
+        attributes: {
+          billing: {
+            name: billingName,
+            ...(billingEmail && { email: billingEmail }),
+            ...(billingPhone && { phone: billingPhone })
+          },
+          send_email_receipt: true,
+          show_description: true,
+          show_line_items: true,
+          description: description || `Shipment ${delivery_number}`,
+          reference_number: delivery_number,
+          line_items: [{
+            currency: 'PHP',
+            amount: amountCentavos,
+            name: `Shipment ${delivery_number}`,
+            quantity: 1
+          }],
+          payment_method_types: ['gcash', 'grab_pay', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
+          success_url: `https://logistichub.ddns.net/${slug}/api/mobile/pay/success?dn=${delivery_number}`,
+          cancel_url:  `https://logistichub.ddns.net/${slug}/api/mobile/pay/cancel?dn=${delivery_number}`,
+          metadata: {
+            delivery_number,
+            tenant_id: req.tenantId.toString(),
+            user_id:   req.user.user_id.toString(),
+            slug
+          }
+        }
+      }
+    };
 
     const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
       method: 'POST',
@@ -433,31 +475,7 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
         'Content-Type': 'application/json',
         'Authorization': 'Basic ' + Buffer.from(secretKey + ':').toString('base64')
       },
-      body: JSON.stringify({
-        data: {
-          attributes: {
-            send_email_receipt: true,
-            show_description: true,
-            show_line_items: true,
-            description: description || `Payment for shipment ${delivery_number}`,
-            line_items: [{
-              currency: 'PHP',
-              amount: amountCentavos,
-              name: `Shipment ${delivery_number}`,
-              quantity: 1
-            }],
-            payment_method_types: ['gcash', 'grab_pay', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
-            success_url: `https://logistichub.ddns.net/${slug}/api/mobile/pay/success?dn=${delivery_number}`,
-            cancel_url: `https://logistichub.ddns.net/${slug}/api/mobile/pay/cancel?dn=${delivery_number}`,
-            metadata: {
-              delivery_number,
-              tenant_id: req.tenantId.toString(),
-              user_id: req.user.user_id.toString(),
-              slug
-            }
-          }
-        }
-      })
+      body: JSON.stringify(checkoutBody)
     });
 
     const data = await response.json();
@@ -467,10 +485,10 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
       return res.status(500).json({ error: pmErr });
     }
 
-    const checkoutId = data.data.id;
+    const checkoutId  = data.data.id;
     const checkoutUrl = data.data.attributes.checkout_url;
 
-    // Create payment record (non-fatal — checkout URL is the primary deliverable)
+    // Create payment record (non-fatal)
     try {
       await query(
         `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id)
@@ -488,12 +506,33 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /pay/success — redirect after successful payment
-router.get('/pay/success', (req, res) => {
-  res.send(`<html><body style="font-family:sans-serif;text-align:center;padding:60px;">
-    <h2 style="color:#16a34a;">✅ Payment Successful!</h2>
-    <p>Your payment for shipment <b>${req.query.dn || ''}</b> has been received.</p>
-    <p>You can close this window and return to the app.</p>
+// GET /pay/success — redirect after successful payment (marks DB and shows self-closing page)
+router.get('/pay/success', async (req, res) => {
+  const dn = req.query.dn || '';
+  const slug = req.params.slug;
+
+  // Best-effort: mark payment as Paid immediately via DB (webhook backup)
+  try {
+    await query(
+      "UPDATE payment SET status = 'Paid', paid_at = NOW() WHERE delivery_number = ? AND status = 'Pending'",
+      [dn]
+    );
+  } catch (_) {}
+
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Payment Successful</title>
+    <style>body{font-family:sans-serif;text-align:center;padding:60px;background:#f0fdf4}h2{color:#16a34a}p{color:#374151}</style>
+  </head><body>
+    <h2>&#x2705; Payment Successful!</h2>
+    <p>Your payment for shipment <b>${dn}</b> has been received.</p>
+    <p>You can now close this window and return to the app.</p>
+    <script>
+      // Auto-close after 2 seconds on mobile
+      setTimeout(function() {
+        try { window.close(); } catch(e) {}
+      }, 2000);
+    </script>
   </body></html>`);
 });
 
@@ -508,16 +547,22 @@ router.get('/pay/cancel', (req, res) => {
 // GET /pay/status/:dn — check payment status
 router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
   try {
+    // NOTE: ORDER BY id — payment table has no created_at column
     const [rows] = await query(
-      'SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? ORDER BY id DESC LIMIT 1',
       [req.params.dn, req.tenantId]
     );
     if (!rows.length) return res.json({ status: 'none' });
 
     const payment = rows[0];
 
-    // If pending and has checkout_id, check with PayMongo
-    if (payment.status === 'Pending' && payment.paymongo_checkout_id) {
+    // Already marked Paid in DB (by success URL handler or webhook)
+    if (payment.status === 'Paid') {
+      return res.json({ status: 'Paid', amount: payment.total_amount, method: payment.payment_method });
+    }
+
+    // If still Pending, check with PayMongo API directly
+    if (payment.paymongo_checkout_id) {
       const secretKey = process.env.PAYMONGO_SECRET_KEY;
       if (secretKey) {
         try {
@@ -525,26 +570,40 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
             headers: { 'Authorization': 'Basic ' + Buffer.from(secretKey + ':').toString('base64') }
           });
           const pmData = await pmRes.json();
-          const pmStatus = pmData?.data?.attributes?.status;
-          const pmPayments = pmData?.data?.attributes?.payments || [];
+          const attrs = pmData?.data?.attributes || {};
+          const pmStatus   = attrs.status;          // 'active', 'expired', etc.
+          const pmPayments = attrs.payments || [];
 
-          if (pmStatus === 'active' && pmPayments.length > 0) {
-            const pm = pmPayments[0];
-            const method = pm?.data?.attributes?.source?.type || 'unknown';
-            const pmId = pm?.data?.id || null;
+          // A payment is paid when the payments array has an entry with status 'paid'
+          const paidPayment = pmPayments.find(p => p?.attributes?.status === 'paid');
 
-            await query(
-              "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE id = ?",
-              [pmId, method, payment.id]
-            );
+          if (paidPayment) {
+            const method = paidPayment?.attributes?.source?.type || 'unknown';
+            const pmId   = paidPayment?.id || null;
 
-            // Notify
-            const [ship] = await query('SELECT sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ?', [req.params.dn, req.tenantId]);
-            if (ship[0]?.sender_user_id) {
-              await createNotification(ship[0].sender_user_id, 'app_user', req.tenantId,
-                'Payment Confirmed', `Payment of ₱${payment.total_amount} for ${req.params.dn} confirmed.`,
-                'Payments', req.params.dn);
-            }
+            // Update DB
+            try {
+              await query(
+                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE id = ?",
+                [pmId, method, payment.id]
+              );
+            } catch (_) {}
+
+            // Notify user
+            try {
+              const [ship] = await query(
+                'SELECT sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ?',
+                [req.params.dn, req.tenantId]
+              );
+              if (ship[0]?.sender_user_id) {
+                await createNotification(
+                  ship[0].sender_user_id, 'app_user', req.tenantId,
+                  'Payment Confirmed',
+                  `Payment of \u20B1${payment.total_amount} for ${req.params.dn} confirmed via ${method}.`,
+                  'Payments', req.params.dn
+                );
+              }
+            } catch (_) {}
 
             return res.json({ status: 'Paid', method, amount: payment.total_amount });
           }
@@ -556,6 +615,7 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
 
     res.json({ status: payment.status, amount: payment.total_amount, method: payment.payment_method });
   } catch (err) {
+    console.error('[GET /pay/status]', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
