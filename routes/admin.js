@@ -496,6 +496,15 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     const [existing] = await query('SELECT 1 FROM vehicle WHERE plate_number = ? AND tenant_id = ?', [plate_number.toUpperCase(), tid]);
     if (existing.length) return res.status(409).json({ error: 'A vehicle with that plate number already exists.' });
 
+    // ── Plan vehicle limit check ──────────────────────────────────────────
+    const [[tenant]] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+    if (tenant && tenant.plan === 'startup') {
+      const [[vc]] = await query('SELECT COUNT(*) AS n FROM vehicle WHERE tenant_id = ?', [tid]);
+      if (vc.n >= 10) {
+        return res.status(403).json({ error: 'Startup plan is limited to 10 vehicles. Upgrade to Enterprise or Global to add more.' });
+      }
+    }
+
     await query(
       `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status) VALUES (?, ?, ?, ?, ?)`,
       [tid, plate_number.toUpperCase(), type, capacity_tons || null, status || 'Available']
