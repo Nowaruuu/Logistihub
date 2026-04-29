@@ -14,28 +14,31 @@ async function openPaymentInApp(
   checkoutUrl: string,
   deliveryNumber: string,
   onSuccess: () => void,
-  onClose: () => void
+  onClose: () => void,
+  existingPopup?: Window | null   // pre-opened on web to bypass popup blocker
 ) {
   const slug  = localStorage.getItem('auth_slug')  || '';
   const token = localStorage.getItem('auth_token') || '';
+  const statusUrl = `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`;
+
+  const checkPaid = async (): Promise<boolean> => {
+    try {
+      const r = await fetch(statusUrl, { headers: { Authorization: `Bearer ${token}` } });
+      const d = await r.json();
+      return d.status === 'Paid' || d.status === 'paid';
+    } catch (_) { return false; }
+  };
 
   const pollStatus = (stopFn: () => void) => {
     let count = 0;
     const id = setInterval(async () => {
       count++;
       if (count > 40) { clearInterval(id); return; }
-      try {
-        const r = await fetch(
-          `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const d = await r.json();
-        if (d.status === 'Paid' || d.status === 'paid') {
-          clearInterval(id);
-          stopFn();
-          onSuccess();
-        }
-      } catch (_) {}
+      if (await checkPaid()) {
+        clearInterval(id);
+        stopFn();
+        onSuccess();
+      }
     }, 3000);
     return id;
   };
@@ -49,15 +52,7 @@ async function openPaymentInApp(
     const listener = await Browser.addListener('browserFinished', async () => {
       clearInterval(pollId);
       listener.remove();
-      // Final status check — user may have paid and closed the browser
-      try {
-        const r = await fetch(
-          `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const d = await r.json();
-        if (d.status === 'Paid' || d.status === 'paid') { onSuccess(); return; }
-      } catch (_) {}
+      if (await checkPaid()) { onSuccess(); return; }
       onClose();
     });
 
@@ -69,21 +64,31 @@ async function openPaymentInApp(
     return;
   }
 
-  // ── Web fallback: centered popup ──
-  const popup = window.open(
-    checkoutUrl,
-    'paymongo_checkout',
-    'width=520,height=720,top=50,left=50,scrollbars=yes'
-  );
+  // ── Web: use pre-opened popup (must be opened synchronously on click to bypass popup blockers) ──
+  const popup = existingPopup ?? window.open(checkoutUrl, 'paymongo_checkout', 'width=520,height=720,top=50,left=50,scrollbars=yes');
+  if (existingPopup) {
+    try { existingPopup.location.href = checkoutUrl; } catch (_) {}
+  }
+  if (!popup) {
+    // Popup was blocked — fallback to same-tab navigation
+    window.location.href = checkoutUrl;
+    return;
+  }
 
   let pollId: ReturnType<typeof setInterval>;
-  const closePoll = setInterval(() => {
-    if (popup?.closed) { clearInterval(closePoll); clearInterval(pollId); onClose(); }
+  const closePoll = setInterval(async () => {
+    if (popup.closed) {
+      clearInterval(closePoll);
+      clearInterval(pollId);
+      // Final status check before deciding success vs cancel
+      if (await checkPaid()) { onSuccess(); return; }
+      onClose();
+    }
   }, 500);
 
   pollId = pollStatus(() => {
     clearInterval(closePoll);
-    popup?.close();
+    popup.close();
   });
 }
 
@@ -317,34 +322,41 @@ function MyPackagesInner() {
                     </div>
                   ) : (
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
                       const tn = delivery.trackingNumber || '';
                       if (paying === tn) return;
                       setPaying(tn);
-                      createCheckout(tn, Number(delivery.totalFee || 0), `Shipment ${tn}`)
-                        .then(async r => {
-                          if (r?.checkout_url) {
-                            await openPaymentInApp(
-                              r.checkout_url,
-                              tn,
-                              () => {
-                                // Success — mark as paid and refresh
-                                setPaidSet(prev => new Set(prev).add(tn));
-                                setPaying(null);
-                                fetchDeliveries();
-                              },
-                              () => setPaying(null)
-                            );
-                          } else {
-                            alert('Payment gateway not available.');
-                            setPaying(null);
-                          }
-                        })
-                        .catch(err => {
-                          alert('Payment failed: ' + (err?.message || 'Unknown error'));
+
+                      // Pre-open popup SYNCHRONOUSLY on click — browsers block window.open() in async .then()
+                      const prePopup = !Capacitor.isNativePlatform()
+                        ? window.open('', 'paymongo_checkout', 'width=520,height=720,top=50,left=50,scrollbars=yes')
+                        : null;
+
+                      try {
+                        const r = await createCheckout(tn, Number(delivery.totalFee || 0), `Shipment ${tn}`);
+                        if (r?.checkout_url) {
+                          await openPaymentInApp(
+                            r.checkout_url,
+                            tn,
+                            () => {
+                              setPaidSet(prev => new Set(prev).add(tn));
+                              setPaying(null);
+                              fetchDeliveries();
+                            },
+                            () => setPaying(null),
+                            prePopup
+                          );
+                        } else {
+                          prePopup?.close();
+                          alert('Payment gateway not available.');
                           setPaying(null);
-                        });
+                        }
+                      } catch (err: any) {
+                        prePopup?.close();
+                        alert('Payment failed: ' + (err?.message || 'Unknown error'));
+                        setPaying(null);
+                      }
                     }}
                     disabled={paying === (delivery.trackingNumber || '')}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all disabled:opacity-50"
