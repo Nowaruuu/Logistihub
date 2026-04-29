@@ -6,54 +6,24 @@ import { deliveryService } from '../services/deliveryService';
 import { Search, Truck, Package as PackageIcon, ChevronRight, CheckCircle, Clock, CreditCard, X } from 'lucide-react';
 import { createCheckout } from '../lib/api';
 import { cn } from '../lib/utils';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
-// ── In-app PayMongo WebView ────────────────────────────────────────────────────
+// ── In-app PayMongo Payment ────────────────────────────────────────────────────
 async function openPaymentInApp(
   checkoutUrl: string,
   deliveryNumber: string,
   onSuccess: () => void,
   onClose: () => void
 ) {
-  const { Capacitor, Plugins } = (window as any);
+  const slug  = localStorage.getItem('auth_slug')  || '';
+  const token = localStorage.getItem('auth_token') || '';
 
-  if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
-    // Listen for the success redirect from PayMongo
-    const successPattern = `/pay/success`;
-    const cancelPattern  = `/pay/cancel`;
-
-    const listener = await Plugins.Browser.addListener(
-      'browserFinished',
-      () => { listener.remove(); onClose(); }
-    );
-
-    // Also listen for URL changes to detect success/cancel
-    let urlListener: any;
-    try {
-      urlListener = await Plugins.Browser.addListener(
-        'browserPageLoaded',
-        async () => {
-          // We can't directly read the URL in all versions, so we rely on the backend redirect
-          // to a URL that has our success/cancel pattern
-        }
-      );
-    } catch (_) {}
-
-    await Plugins.Browser.open({
-      url: checkoutUrl,
-      presentationStyle: 'popover',
-      toolbarColor: '#1a1a2e',
-    });
-
-    // Poll for payment status every 3 seconds while browser is open
-    const slug = localStorage.getItem('auth_slug') || '';
-    const token = localStorage.getItem('auth_token') || '';
-    let pollCount = 0;
-    const maxPolls = 40; // 2 minutes max
-
-    const poll = setInterval(async () => {
-      pollCount++;
-      if (pollCount > maxPolls) { clearInterval(poll); return; }
-
+  const pollStatus = (stopFn: () => void) => {
+    let count = 0;
+    const id = setInterval(async () => {
+      count++;
+      if (count > 40) { clearInterval(id); return; }
       try {
         const r = await fetch(
           `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
@@ -61,50 +31,62 @@ async function openPaymentInApp(
         );
         const d = await r.json();
         if (d.status === 'Paid' || d.status === 'paid') {
-          clearInterval(poll);
-          try { await Plugins.Browser.close(); } catch (_) {}
-          listener.remove();
-          if (urlListener) try { urlListener.remove(); } catch (_) {}
+          clearInterval(id);
+          stopFn();
           onSuccess();
         }
       } catch (_) {}
     }, 3000);
+    return id;
+  };
+
+  if (Capacitor.isNativePlatform()) {
+    // ── Native Android: in-app browser ──
+    await Browser.open({ url: checkoutUrl, presentationStyle: 'popover' });
+
+    let pollId: ReturnType<typeof setInterval>;
+
+    const listener = await Browser.addListener('browserFinished', async () => {
+      clearInterval(pollId);
+      listener.remove();
+      // Final status check — user may have paid and closed the browser
+      try {
+        const r = await fetch(
+          `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const d = await r.json();
+        if (d.status === 'Paid' || d.status === 'paid') { onSuccess(); return; }
+      } catch (_) {}
+      onClose();
+    });
+
+    pollId = pollStatus(() => {
+      Browser.close().catch(() => {});
+      listener.remove();
+    });
 
     return;
   }
 
-  // Web fallback — open in centered popup
+  // ── Web fallback: centered popup ──
   const popup = window.open(
     checkoutUrl,
     'paymongo_checkout',
-    'width=500,height=700,top=50,left=50,scrollbars=yes'
+    'width=520,height=720,top=50,left=50,scrollbars=yes'
   );
 
-  // Poll for popup close or success
-  const slug = localStorage.getItem('auth_slug') || '';
-  const token = localStorage.getItem('auth_token') || '';
-  let pollCount = 0;
-  const poll = setInterval(async () => {
-    pollCount++;
-    if (pollCount > 40 || popup?.closed) {
-      clearInterval(poll);
-      onClose();
-      return;
-    }
-    try {
-      const r = await fetch(
-        `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const d = await r.json();
-      if (d.status === 'Paid' || d.status === 'paid') {
-        clearInterval(poll);
-        popup?.close();
-        onSuccess();
-      }
-    } catch (_) {}
-  }, 3000);
+  let pollId: ReturnType<typeof setInterval>;
+  const closePoll = setInterval(() => {
+    if (popup?.closed) { clearInterval(closePoll); clearInterval(pollId); onClose(); }
+  }, 500);
+
+  pollId = pollStatus(() => {
+    clearInterval(closePoll);
+    popup?.close();
+  });
 }
+
 
 // Error boundary for this page
 class PackagesErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, errorMsg: string}> {
