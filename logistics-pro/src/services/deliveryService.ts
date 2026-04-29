@@ -1,249 +1,125 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  limit, 
-  addDoc, 
-  getDocs,
-  doc,
-  getDoc,
-  orderBy
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDeliveries, createDelivery, getDeliveryDetail, updateDeliveryStatus, getAvailableJobs, acceptJob } from '../lib/api';
 import { Delivery } from '../types';
-import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 export const deliveryService = {
+  /**
+   * Get active deliveries for the current user (polling-based)
+   */
+  async getActiveDeliveries(): Promise<Delivery[]> {
+    const all = await getDeliveries();
+    return all.filter((d: any) => ['Pending', 'In-Transit', 'Out for Delivery'].includes(d.status))
+      .map(mapShipmentToDelivery);
+  },
+
+  /**
+   * Get all deliveries for the current user
+   */
+  async getAllDeliveries(): Promise<Delivery[]> {
+    const all = await getDeliveries();
+    return all.map(mapShipmentToDelivery);
+  },
+
   /**
    * Create a new delivery shipment
    */
   async createDelivery(deliveryData: Partial<Delivery>): Promise<string> {
-    const path = 'deliveries';
+    const result = await createDelivery({
+      pickup_location: deliveryData.origin || '',
+      dropoff_location: deliveryData.destination || '',
+      receiver_name: deliveryData.receiverName,
+      item_type_flag: 'PACKAGE',
+      weight: deliveryData.weight,
+      size: deliveryData.size,
+      shipping_method: deliveryData.shippingMethod,
+      total_fee: deliveryData.totalFee,
+      content_description: deliveryData.origin
+    });
+    return result.delivery_number;
+  },
+
+  /**
+   * Get delivery detail by tracking/delivery number
+   */
+  async getDeliveryByTracking(trackingNumber: string): Promise<{ shipment: any; history: any[]; payments: any[] } | null> {
     try {
-      const trackingNumber = `TRK-${Math.floor(100000 + Math.random() * 900000)}`;
-      
-      // Ensure coordinates are set (even if mock)
-      const originLat = deliveryData.originLat || 14.5489;
-      const originLng = deliveryData.originLng || 121.0486;
-      const destLat = deliveryData.destLat || (originLat + (Math.random() - 0.5) * 0.2);
-      const destLng = deliveryData.destLng || (originLng + (Math.random() - 0.5) * 0.2);
-
-      const fullDelivery: Omit<Delivery, 'id'> = {
-        trackingNumber,
-        senderUid: deliveryData.senderUid || '',
-        senderName: deliveryData.senderName || '',
-        receiverName: deliveryData.receiverName || 'Recipient',
-        origin: deliveryData.origin || '',
-        destination: deliveryData.destination || '',
-        status: 'Processing',
-        estimatedArrival: deliveryData.estimatedArrival || '3-5 business days',
-        weight: deliveryData.weight || 0,
-        size: deliveryData.size || 'Small (Box)',
-        shippingMethod: deliveryData.shippingMethod || 'Standard Delivery',
-        totalFee: deliveryData.totalFee || 0,
-        currentLat: originLat,
-        currentLng: originLng,
-        originLat,
-        originLng,
-        destLat,
-        destLng,
-        history: [
-          {
-            status: 'Processing',
-            location: deliveryData.origin || 'Origin',
-            timestamp: new Date().toISOString(),
-            description: 'Package information received'
-          }
-        ],
-        createdAt: new Date().toISOString(),
-        ...deliveryData
-      };
-
-      const docRef = await addDoc(collection(db, path), fullDelivery);
-      return docRef.id;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, path);
-      throw err;
+      return await getDeliveryDetail(trackingNumber);
+    } catch {
+      return null;
     }
   },
 
   /**
-   * Subscribe to active deliveries for a specific user
+   * Update delivery status (driver only)
    */
-  subscribeToActiveDeliveries(uid: string, callback: (deliveries: Delivery[]) => void) {
-    const path = 'deliveries';
-    const q = query(
-      collection(db, path),
-      where('senderUid', '==', uid),
-      where('status', 'in', ['Processing', 'In Transit', 'Out for Delivery']),
-      limit(10)
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      const deliveries = snapshot.docs.map(doc => {
-        const data = doc.data() as Delivery;
-        // Ensure coordinates exist for UI mapping
-        if (!data.destLat || !data.destLng) {
-          const baseLat = data.currentLat || 14.5995;
-          const baseLng = data.currentLng || 120.9842;
-          data.destLat = baseLat + (Math.random() - 0.5) * 0.1;
-          data.destLng = baseLng + (Math.random() - 0.5) * 0.1;
-        }
-        return { id: doc.id, ...data } as Delivery;
-      });
-      callback(deliveries);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, path);
-    });
+  async updateStatus(deliveryNumber: string, status: string, location?: string): Promise<void> {
+    await updateDeliveryStatus(deliveryNumber, status);
   },
 
   /**
-   * Subscribe to all deliveries for a specific user
+   * Get available jobs for drivers
    */
-  subscribeToAllDeliveries(uid: string, callback: (deliveries: Delivery[]) => void) {
-    const path = 'deliveries';
-    const q = query(
-      collection(db, path),
-      where('senderUid', '==', uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      const deliveries = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as Delivery));
-      callback(deliveries);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, path);
-    });
+  async getAvailableJobs(): Promise<Delivery[]> {
+    const jobs = await getAvailableJobs();
+    return jobs.map(mapShipmentToDelivery);
   },
 
   /**
-   * Subscribe to a single delivery by tracking number
+   * Accept a delivery job (driver)
    */
-  subscribeToDeliveryByTracking(trackingNumber: string, callback: (delivery: Delivery | null) => void) {
-    const path = 'deliveries';
-    const q = query(
-      collection(db, path),
-      where('trackingNumber', '==', trackingNumber),
-      limit(1)
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        callback(null);
-        return;
-      }
-      
-      const data = snapshot.docs[0].data() as Delivery;
-      // Ensure coordinates exist for UI mapping
-      if (!data.destLat || !data.destLng) {
-        const baseLat = data.currentLat || 14.5995;
-        const baseLng = data.currentLng || 120.9842;
-        data.destLat = baseLat + (Math.random() - 0.5) * 0.1;
-        data.destLng = baseLng + (Math.random() - 0.5) * 0.1;
-      }
-      
-      callback({ id: snapshot.docs[0].id, ...data } as Delivery);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, path);
-    });
+  async acceptJob(deliveryNumber: string): Promise<void> {
+    await acceptJob(deliveryNumber);
   },
 
   /**
-   * Clear all deliveries for a user (Admin/Utility)
+   * Get driver's assigned deliveries
    */
-  async clearAllDeliveries(uid: string): Promise<void> {
-    const q = query(collection(db, 'deliveries'), where('senderUid', '==', uid));
-    const snapshot = await getDocs(q);
-    const { deleteDoc, doc } = await import('firebase/firestore');
-    
-    const promises = snapshot.docs.map(d => deleteDoc(doc(db, 'deliveries', d.id)));
-    await Promise.all(promises);
-  },
-
-  /**
-   * Subscribe to available jobs (Processing shipments with no driver)
-   */
-  subscribeToAvailableJobs(callback: (deliveries: Delivery[]) => void) {
-    const path = 'deliveries';
-    const q = query(
-      collection(db, path),
-      where('status', '==', 'Processing'),
-      limit(20)
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      const deliveries = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as Delivery));
-      callback(deliveries);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, path);
-    });
-  },
-
-  /**
-   * Subscribe to active assignments for a specific driver
-   */
-  subscribeToDriverDeliveries(driverUid: string, callback: (deliveries: Delivery[]) => void) {
-    const path = 'deliveries';
-    const q = query(
-      collection(db, path),
-      where('driverUid', '==', driverUid),
-      where('status', 'in', ['In Transit', 'Out for Delivery']),
-      limit(10)
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      const deliveries = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as Delivery));
-      callback(deliveries);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, path);
-    });
-  },
-
-  /**
-   * Accept a delivery job
-   */
-  async acceptJob(deliveryId: string, driverUid: string, driverName: string): Promise<void> {
-    const { updateDoc, doc } = await import('firebase/firestore');
-    await updateDoc(doc(db, 'deliveries', deliveryId), {
-      driverUid,
-      driverName,
-      status: 'In Transit',
-      updatedAt: new Date().toISOString()
-    });
-  },
-
-  /**
-   * Update delivery status
-   */
-  async updateStatus(deliveryId: string, status: Delivery['status'], location: string): Promise<void> {
-    const { updateDoc, doc, arrayUnion } = await import('firebase/firestore');
-    await updateDoc(doc(db, 'deliveries', deliveryId), {
-      status,
-      history: arrayUnion({
-        status,
-        location,
-        timestamp: new Date().toISOString(),
-        description: `Status updated to ${status}`
-      }),
-      updatedAt: new Date().toISOString()
-    });
-  },
-
-  /**
-   * Delete an individual delivery
-   */
-  async deleteDelivery(id: string): Promise<void> {
-    const { deleteDoc, doc } = await import('firebase/firestore');
-    await deleteDoc(doc(db, 'deliveries', id));
+  async getDriverDeliveries(): Promise<Delivery[]> {
+    const all = await getDeliveries();
+    return all.filter((d: any) => ['In-Transit', 'Out for Delivery'].includes(d.status))
+      .map(mapShipmentToDelivery);
   }
 };
+
+/**
+ * Map backend SHIPMENT row to frontend Delivery type
+ */
+function mapShipmentToDelivery(row: any): Delivery {
+  return {
+    id: row.delivery_number || row.id,
+    trackingNumber: row.delivery_number || row.trackingNumber || '',
+    senderUid: row.sender_user_id?.toString() || '',
+    senderName: row.sender_name || row.client_name || '',
+    receiverName: row.receiver_name || '',
+    driverUid: row.assigned_driver_id?.toString(),
+    driverName: row.driver_name,
+    origin: row.pickup_location || '',
+    destination: row.dropoff_location || '',
+    status: normalizeStatus(row.status),
+    estimatedArrival: row.estimated_arrival,
+    weight: row.weight || row.distance_km,
+    size: row.size || row.item_type_flag,
+    shippingMethod: row.shipping_method,
+    totalFee: row.total_fee || row.total_amount,
+    currentLat: row.pickup_lat || 14.5995,
+    currentLng: row.pickup_lng || 120.9842,
+    originLat: row.pickup_lat,
+    originLng: row.pickup_lng,
+    destLat: row.dropoff_lat,
+    destLng: row.dropoff_lng,
+    history: [],
+    createdAt: row.created_at || new Date().toISOString()
+  };
+}
+
+function normalizeStatus(status: string): 'Processing' | 'In Transit' | 'Out for Delivery' | 'Delivered' {
+  const map: Record<string, any> = {
+    'Pending': 'Processing',
+    'Processing': 'Processing',
+    'In-Transit': 'In Transit',
+    'In Transit': 'In Transit',
+    'Out for Delivery': 'Out for Delivery',
+    'Delivered': 'Delivered',
+    'Failed': 'Processing'
+  };
+  return map[status] || 'Processing';
+}

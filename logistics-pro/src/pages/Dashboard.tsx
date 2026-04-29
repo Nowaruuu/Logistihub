@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Delivery } from '../types';
@@ -18,22 +18,27 @@ export default function Dashboard() {
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchDeliveries = useCallback(async () => {
     if (!user || profile?.role === 'driver') return;
-
-    const unsubscribe = deliveryService.subscribeToActiveDeliveries(user.uid, (docs) => {
+    try {
+      const docs = await deliveryService.getActiveDeliveries();
       setActiveDeliveries(docs);
-      
-      // Set initial map center to first delivery if not already set
+
       if (docs.length > 0 && !selectedDeliveryId) {
         const first = docs[0];
         setMapCenter([first.currentLat || 14.5995, first.currentLng || 120.9842]);
-        setSelectedDeliveryId(first.id);
+        setSelectedDeliveryId(first.id || null);
       }
-    });
+    } catch (err) {
+      console.error('Failed to fetch deliveries:', err);
+    }
+  }, [user, profile, selectedDeliveryId]);
 
-    return unsubscribe;
-  }, [user, selectedDeliveryId]);
+  useEffect(() => {
+    fetchDeliveries();
+    const interval = setInterval(fetchDeliveries, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, [fetchDeliveries]);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +49,8 @@ export default function Dashboard() {
 
   const handleDeliveryClick = (delivery: Delivery) => {
     setMapCenter([delivery.currentLat || 14.5995, delivery.currentLng || 120.9842]);
-    setSelectedDeliveryId(delivery.id);
-    
-    // Smooth scroll to map section
+    setSelectedDeliveryId(delivery.id || null);
+
     const mapSection = document.getElementById('live-status-map');
     if (mapSection) {
       mapSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -254,4 +258,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

@@ -107,6 +107,11 @@ app.use('/:slug/api', userRouter);
 // Mobile API  →  /:slug/api/mobile/...
 app.use('/:slug/api/mobile', mobileRouter);
 
+// PayMongo Webhook (global — not under /:slug)
+if (mobileRouter.paymongoWebhook) {
+  app.post('/api/paymongo-webhook', mobileRouter.paymongoWebhook);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE ROUTES (serve HTML files)
 // Must come AFTER API routes so /:slug doesn't swallow API calls

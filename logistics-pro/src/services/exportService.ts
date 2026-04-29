@@ -1,56 +1,33 @@
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  collectionGroup 
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDeliveries } from '../lib/api';
 
 export const exportService = {
-  /**
-   * Export all data from Firestore
-   * Note: This requires admin privileges in firestore.rules
-   */
-  async exportAllData() {
-    const data: any = {
-      users: [],
-      drivers: [],
-      deliveries: [],
-      notifications: [], // Root level if any
-      global_stats: {}
-    };
+  async exportDeliveries(uid: string): Promise<string> {
+    const deliveries = await getDeliveries();
 
-    // 1. Fetch all users
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    for (const userDoc of usersSnapshot.docs) {
-      const userData = { id: userDoc.id, ...userDoc.data() } as any;
-      
-      // Fetch subcollections for each user
-      const subcollections = ['notifications', 'addresses', 'payment_methods'];
-      for (const sub of subcollections) {
-        const subSnapshot = await getDocs(collection(db, 'users', userDoc.id, sub));
-        userData[sub] = subSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      }
-      
-      data.users.push(userData);
-    }
+    if (!deliveries.length) return '';
 
-    // 2. Fetch all drivers
-    const driversSnapshot = await getDocs(collection(db, 'drivers'));
-    data.drivers = driversSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const headers = ['Delivery #', 'Status', 'Pickup', 'Dropoff', 'Weight', 'Fee', 'Created'];
+    const rows = deliveries.map((d: any) => [
+      d.delivery_number || '',
+      d.status || '',
+      d.pickup_location || '',
+      d.dropoff_location || '',
+      d.weight || '',
+      d.total_fee || '',
+      d.created_at || ''
+    ]);
 
-    // 3. Fetch all deliveries
-    const deliveriesSnapshot = await getDocs(collection(db, 'deliveries'));
-    data.deliveries = deliveriesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const csv = [headers.join(','), ...rows.map((r: string[]) => r.map(v => `"${v}"`).join(','))].join('\n');
+    return csv;
+  },
 
-    // 3. Fetch root-level notifications (if any were created there by mistake or design)
-    try {
-      const rootNotificationsSnapshot = await getDocs(collection(db, 'notifications'));
-      data.notifications = rootNotificationsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch (e) {
-      console.log("No root-level notifications or access denied");
-    }
-
-    return data;
+  downloadCSV(csv: string, filename: string = 'deliveries.csv') {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 };
