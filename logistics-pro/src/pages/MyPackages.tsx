@@ -38,6 +38,7 @@ function MyPackagesInner() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const isDriver = profile?.role === 'driver';
@@ -165,8 +166,8 @@ function MyPackagesInner() {
                       <Truck className="size-6" />
                     </div>
                     <div className="flex flex-1 flex-col">
-                      <div className="flex justify-between items-start">
-                        <p className="text-slate-900 dark:text-slate-100 text-base font-bold">#{delivery.trackingNumber || 'N/A'}</p>
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="text-slate-900 dark:text-slate-100 text-sm font-bold truncate flex-1">#{delivery.trackingNumber || 'N/A'}</p>
                         <span className={cn(
                           "text-[10px] px-2 py-0.5 rounded font-bold",
                           (delivery.status || '') === 'Processing' ? "bg-slate-100 dark:bg-slate-800 text-slate-500" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
@@ -177,7 +178,7 @@ function MyPackagesInner() {
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-orange-600 font-bold text-sm">₱{Number(delivery.totalFee || 0).toFixed(2)}</p>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs truncate">{delivery.destination || 'N/A'}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-[140px]">{delivery.destination || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -231,14 +232,27 @@ function MyPackagesInner() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      createCheckout(delivery.trackingNumber || '', delivery.totalFee || 0, `Shipment ${delivery.trackingNumber || ''}`)
-                        .then(r => { if (r?.checkout_url) window.open(r.checkout_url, '_blank'); })
-                        .catch(err => console.warn('Payment error:', err));
+                      setPaying(delivery.trackingNumber || '');
+                      createCheckout(delivery.trackingNumber || '', Number(delivery.totalFee || 0), `Shipment ${delivery.trackingNumber || ''}`)
+                        .then(r => {
+                          if (r?.checkout_url) {
+                            window.location.href = r.checkout_url;
+                          } else {
+                            alert('Payment gateway not available. Please contact support.');
+                            setPaying(null);
+                          }
+                        })
+                        .catch(err => {
+                          console.warn('Payment error:', err);
+                          alert('Payment failed: ' + (err?.message || 'Unknown error'));
+                          setPaying(null);
+                        });
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all"
+                    disabled={paying === (delivery.trackingNumber || '')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all disabled:opacity-50"
                   >
                     <CreditCard className="size-3.5" />
-                    Pay Now • ₱{Number(delivery.totalFee || 0).toFixed(2)}
+                    {paying === (delivery.trackingNumber || '') ? 'Redirecting...' : `Pay Now • ₱${Number(delivery.totalFee || 0).toFixed(2)}`}
                   </button>
                 </div>
               ))}

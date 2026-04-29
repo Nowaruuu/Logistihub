@@ -67,12 +67,27 @@ export default function SendPackage() {
   const weightKg = weightUnit === 'ton' ? rawWeight * 1000 : rawWeight;
   const distKm = (pickupCoords && destCoords) ? calcDistanceKm(pickupCoords[0], pickupCoords[1], destCoords[0], destCoords[1]) : 0;
 
-  // Realistic pricing: Base ₱80 + ₱12/km + tiered per-kg rate. Express = 1.5x.
-  // Tiered: first 50kg = ₱2/kg, 50-500kg = ₱1.5/kg, 500kg+ = ₱0.80/kg
-  const tierRate = weightKg <= 50 ? weightKg * 2 : weightKg <= 500 ? 100 + (weightKg - 50) * 1.5 : 100 + 675 + (weightKg - 500) * 0.80;
-  const categorySurcharge = category === 'VEHICLE' ? 1500 : category === 'BULK' ? 500 : category === 'FOOD' ? 100 : 0;
-  const baseFee = 80 + (distKm * 12) + tierRate + categorySurcharge;
-  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.5);
+  // Realistic pricing: Base ₱50 + ₱5/km + tiered per-kg. Express = 1.4x.
+  // Tiered: first 50kg = ₱1/kg, 50-500kg = ₱0.80/kg, 500kg+ = ₱0.50/kg
+  const tierRate = weightKg <= 50 ? weightKg * 1 : weightKg <= 500 ? 50 + (weightKg - 50) * 0.80 : 50 + 360 + (weightKg - 500) * 0.50;
+  const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
+  const baseFee = 50 + (distKm * 5) + tierRate + categorySurcharge;
+  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.4);
+
+  // Estimate delivery time based on distance + traffic buffer
+  function estimateDelivery(km: number, express: boolean): string {
+    if (km <= 0) return express ? 'Within 1-2 hours' : '2-4 hours';
+    const baseHours = km / (express ? 40 : 25); // avg speed in km/h
+    const trafficMultiplier = 1.3; // 30% traffic buffer
+    const totalHours = Math.ceil(baseHours * trafficMultiplier);
+    if (totalHours <= 1) return express ? 'Within 1 hour' : '1-2 hours';
+    if (totalHours <= 3) return express ? `${totalHours} hour${totalHours > 1 ? 's' : ''}` : `${totalHours}-${totalHours + 1} hours`;
+    if (totalHours <= 8) return express ? `${totalHours} hours` : `${totalHours}-${totalHours + 2} hours`;
+    const days = Math.ceil(totalHours / 10); // 10 working hours/day
+    return express ? `${days} day${days > 1 ? 's' : ''}` : `${days}-${days + 1} days`;
+  }
+  const stdEta = estimateDelivery(distKm, false);
+  const expEta = estimateDelivery(distKm, true);
 
   // Debounced address search for pickup
   const handlePickupChange = (val: string) => {
@@ -84,6 +99,10 @@ export default function SendPackage() {
         const results = await searchAddress(val);
         setPickupResults(results);
         setSearchingPickup(false);
+        // Auto-pin first result if available
+        if (results.length > 0 && !pickupCoords) {
+          setPickupCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+        }
       }, 500);
     } else {
       setPickupResults([]);
@@ -101,6 +120,10 @@ export default function SendPackage() {
         const results = await searchAddress(val);
         setDestResults(results);
         setSearchingDest(false);
+        // Auto-pin first result if available
+        if (results.length > 0 && !destCoords) {
+          setDestCoords([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+        }
       }, 500);
     } else {
       setDestResults([]);
@@ -145,7 +168,7 @@ export default function SendPackage() {
         receiverPhone,
         origin: pickup,
         destination,
-        estimatedArrival: method === 'standard' ? '2-4 hours' : 'Within 1 hour',
+        estimatedArrival: method === 'standard' ? stdEta : expEta,
         weight: weightKg,
         size: PACKAGE_CATEGORIES.find(c => c.id === category)?.label || 'Standard Package',
         shippingMethod: method === 'standard' ? 'Standard Delivery' : 'Express Delivery',
@@ -469,7 +492,7 @@ export default function SendPackage() {
                 </div>
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white block">Standard Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">2-4 hours</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{stdEta}</p>
                 </div>
               </div>
             </div>
@@ -493,7 +516,7 @@ export default function SendPackage() {
                 </div>
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white block">Express Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Within 1 hour</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{expEta}</p>
                 </div>
               </div>
             </div>
