@@ -22,12 +22,18 @@ export const deliveryService = {
   /**
    * Create a new delivery shipment
    */
-  async createDelivery(deliveryData: Partial<Delivery>): Promise<string> {
+  async createDelivery(deliveryData: Partial<Delivery> & { item_type_flag?: string; receiverPhone?: string }): Promise<string> {
     const result = await createDelivery({
       pickup_location: deliveryData.origin || '',
       dropoff_location: deliveryData.destination || '',
+      pickup_lat: deliveryData.originLat,
+      pickup_lng: deliveryData.originLng,
+      dropoff_lat: deliveryData.destLat,
+      dropoff_lng: deliveryData.destLng,
       receiver_name: deliveryData.receiverName,
-      item_type_flag: 'PACKAGE',
+      receiver_phone: deliveryData.receiverPhone,
+      receiver_address: deliveryData.destination,
+      item_type_flag: deliveryData.item_type_flag || 'PACKAGE',
       weight: deliveryData.weight,
       size: deliveryData.size,
       shipping_method: deliveryData.shippingMethod,

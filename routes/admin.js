@@ -127,10 +127,13 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
   const typeFilter   = req.query.item_type_flag || null;
 
   let sql = `
-    SELECT s.*, c.company_name AS client_name, d.name AS driver_name,
+    SELECT s.*, 
+           COALESCE(c.company_name, CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
+           d.name AS driver_name,
            h.name AS helper_name, r.route_name
     FROM shipment s
     LEFT JOIN client c ON c.client_id = s.client_id
+    LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
     LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
     LEFT JOIN STAFF h ON h.staff_id = s.assigned_helper_id
     LEFT JOIN route r ON r.route_id = s.route_id
@@ -584,7 +587,11 @@ router.get('/:slug/api/manager/staff', requireManager, requireSlugMatch, async (
 // Manager: GET shipments
 router.get('/:slug/api/manager/shipments', requireManager, requireSlugMatch, async (req, res) => {
   const [rows] = await query(
-    `SELECT s.*, d.name AS driver_name FROM SHIPMENT s
+    `SELECT s.*, d.name AS driver_name,
+            COALESCE(c.company_name, CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name
+     FROM SHIPMENT s
+     LEFT JOIN client c ON c.client_id = s.client_id
+     LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
      LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
      WHERE s.tenant_id = ? ORDER BY s.created_at DESC`,
     [req.tenantId]

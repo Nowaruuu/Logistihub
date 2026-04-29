@@ -620,7 +620,11 @@ router.get('/dc/stats', requireStaff, async (req, res) => {
 router.get('/dc/shipments', requireStaff, async (req, res) => {
   try {
     const [rows] = await query(
-      `SELECT s.*, d.name AS driver_name FROM SHIPMENT s
+      `SELECT s.*, d.name AS driver_name,
+              COALESCE(c.company_name, CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name
+       FROM SHIPMENT s
+       LEFT JOIN client c ON c.client_id = s.client_id
+       LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
        LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
        WHERE s.tenant_id = ? ORDER BY s.created_at DESC`,
       [req.tenantId]

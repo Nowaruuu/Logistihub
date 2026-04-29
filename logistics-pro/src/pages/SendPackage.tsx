@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Info, Map as MapIcon, User, Phone } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Info, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
 import { createCheckout } from '../lib/api';
+
+// Category types matching database item_type_flag
+const PACKAGE_CATEGORIES = [
+  { id: 'PACKAGE', label: 'Standard Package', icon: Package, desc: 'Boxes, parcels, envelopes' },
+  { id: 'VEHICLE', label: 'Vehicle', icon: Car, desc: 'Cars, motorcycles, heavy equipment' },
+  { id: 'FOOD', label: 'Food', icon: UtensilsCrossed, desc: 'Perishable goods, catering' },
+  { id: 'DOC', label: 'Document', icon: FileText, desc: 'Legal papers, contracts, IDs' },
+  { id: 'BULK', label: 'Bulk Freight', icon: Boxes, desc: 'Pallets, wholesale cargo' },
+] as const;
+
+// Nominatim address search (free, no API key)
+async function searchAddress(query: string): Promise<Array<{ display_name: string; lat: string; lon: string }>> {
+  if (!query || query.length < 3) return [];
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`,
+    { headers: { 'Accept-Language': 'en' } }
+  );
+  return res.json();
+}
 
 export default function SendPackage() {
   const { user, profile } = useAuth();
@@ -17,14 +36,71 @@ export default function SendPackage() {
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
   const [weight, setWeight] = useState('');
-  const [size, setSize] = useState('Small (Box)');
+  const [category, setCategory] = useState('PACKAGE');
   const [method, setMethod] = useState<'standard' | 'express'>('standard');
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [showPickupMap, setShowPickupMap] = useState(false);
 
+  // Address search state
+  const [pickupResults, setPickupResults] = useState<any[]>([]);
+  const [destResults, setDestResults] = useState<any[]>([]);
+  const [searchingPickup, setSearchingPickup] = useState(false);
+  const [searchingDest, setSearchingDest] = useState(false);
+  const pickupTimer = useRef<ReturnType<typeof setTimeout>>();
+  const destTimer = useRef<ReturnType<typeof setTimeout>>();
+
   const totalFee = method === 'standard' ? 750 : 1440;
+
+  // Debounced address search for pickup
+  const handlePickupChange = (val: string) => {
+    setPickup(val);
+    if (pickupTimer.current) clearTimeout(pickupTimer.current);
+    if (val.length >= 3) {
+      setSearchingPickup(true);
+      pickupTimer.current = setTimeout(async () => {
+        const results = await searchAddress(val);
+        setPickupResults(results);
+        setSearchingPickup(false);
+      }, 500);
+    } else {
+      setPickupResults([]);
+      setSearchingPickup(false);
+    }
+  };
+
+  // Debounced address search for destination
+  const handleDestChange = (val: string) => {
+    setDestination(val);
+    if (destTimer.current) clearTimeout(destTimer.current);
+    if (val.length >= 3) {
+      setSearchingDest(true);
+      destTimer.current = setTimeout(async () => {
+        const results = await searchAddress(val);
+        setDestResults(results);
+        setSearchingDest(false);
+      }, 500);
+    } else {
+      setDestResults([]);
+      setSearchingDest(false);
+    }
+  };
+
+  const selectPickup = (result: any) => {
+    setPickup(result.display_name);
+    setPickupCoords([parseFloat(result.lat), parseFloat(result.lon)]);
+    setPickupResults([]);
+    setShowPickupMap(true);
+  };
+
+  const selectDest = (result: any) => {
+    setDestination(result.display_name);
+    setDestCoords([parseFloat(result.lat), parseFloat(result.lon)]);
+    setDestResults([]);
+    setShowMap(true);
+  };
 
   const handleConfirm = async () => {
     if (!user || !destination || !pickup) return;
@@ -40,18 +116,23 @@ export default function SendPackage() {
         senderUid: user.uid,
         senderName: profile?.fullName || user.email,
         receiverName,
+        receiverPhone,
         origin: pickup,
         destination,
         estimatedArrival: method === 'standard' ? '3-5 business days' : 'Tomorrow, before 5 PM',
         weight: parseFloat(weight) || 0,
-        size,
+        size: PACKAGE_CATEGORIES.find(c => c.id === category)?.label || 'Standard Package',
         shippingMethod: method === 'standard' ? 'Standard Delivery' : 'Express Delivery',
         totalFee,
         originLat: finalOriginLat,
         originLng: finalOriginLng,
         destLat: finalDestLat,
         destLng: finalDestLng,
+        item_type_flag: category,
       });
+
+      // Show success state
+      setSubmitted(true);
 
       // Redirect to PayMongo checkout for payment
       try {
@@ -63,11 +144,11 @@ export default function SendPackage() {
         console.warn('Payment checkout skipped:', payErr);
       }
 
-      navigate('/packages');
+      // Navigate after 3 seconds
+      setTimeout(() => navigate('/packages'), 3000);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to create shipment');
-    } finally {
       setLoading(false);
     }
   };
@@ -79,6 +160,37 @@ export default function SendPackage() {
   const handlePickupMapClick = (lat: number, lng: number) => {
     setPickupCoords([lat, lng]);
   };
+
+  // ── Submitted Success Screen ──
+  if (submitted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-full px-8 py-20 text-center">
+        <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-bounce">
+          <CheckCircle2 className="size-10 text-green-500" />
+        </div>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3">Shipment Created!</h2>
+        <p className="text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed mb-4">
+          Your shipment has been submitted and is now <strong className="text-orange-500">Processing</strong>. 
+          Our team will review the details and assign a driver shortly.
+        </p>
+        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 w-full max-w-sm border border-slate-100 dark:border-slate-700 space-y-2 text-left">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-400">Status</span>
+            <span className="font-bold text-orange-500">Pending Review</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-400">Category</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">{PACKAGE_CATEGORIES.find(c => c.id === category)?.label}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-400">Estimated Fee</span>
+            <span className="font-bold text-slate-900 dark:text-white">₱{totalFee.toLocaleString()}.00</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 mt-6">Redirecting to My Packages...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-full">
@@ -96,7 +208,8 @@ export default function SendPackage() {
       </div>
 
       <section className="px-5 space-y-5">
-        <div className="group">
+        {/* ── Pickup Address with Auto-search ── */}
+        <div className="group relative">
           <div className="flex items-center justify-between mb-2 ml-1">
             <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pickup Address</label>
             <button 
@@ -111,19 +224,31 @@ export default function SendPackage() {
               {showPickupMap ? 'Hide Map' : 'Pin on Map'}
             </button>
           </div>
-          <div className="relative flex items-center mb-3">
+          <div className="relative flex items-center mb-1">
             <MapPin className="absolute left-4 text-orange-600 size-5" />
+            {searchingPickup && <Loader2 className="absolute right-4 text-orange-600 size-4 animate-spin" />}
+            {!searchingPickup && pickup.length >= 3 && <Search className="absolute right-4 text-slate-300 size-4" />}
             <input 
               type="text"
               value={pickup}
-              onChange={(e) => setPickup(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
-              placeholder="House no, Street, City" 
+              onChange={(e) => handlePickupChange(e.target.value)}
+              className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
+              placeholder="Search address or type manually" 
             />
           </div>
+          {/* Pickup address suggestions */}
+          {pickupResults.length > 0 && (
+            <div className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto mt-1">
+              {pickupResults.map((r, i) => (
+                <button key={i} onClick={() => selectPickup(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
+                </button>
+              ))}
+            </div>
+          )}
 
           {showPickupMap && (
-            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4">
+            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
               <Map 
                 center={pickupCoords || [14.5489, 121.0486]} 
                 zoom={14}
@@ -146,7 +271,8 @@ export default function SendPackage() {
           )}
         </div>
 
-        <div className="group">
+        {/* ── Destination Address with Auto-search ── */}
+        <div className="group relative">
           <div className="flex items-center justify-between mb-2 ml-1">
             <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Destination Address</label>
             <button 
@@ -161,20 +287,32 @@ export default function SendPackage() {
               {showMap ? 'Hide Map' : 'Pin on Map'}
             </button>
           </div>
-          <div className="relative flex items-center mb-3">
+          <div className="relative flex items-center mb-1">
             <Navigation className="absolute left-4 text-slate-400 size-5" />
+            {searchingDest && <Loader2 className="absolute right-4 text-orange-600 size-4 animate-spin" />}
+            {!searchingDest && destination.length >= 3 && <Search className="absolute right-4 text-slate-300 size-4" />}
             <input 
               type="text"
               required
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
-              placeholder="Receiver's address" 
+              onChange={(e) => handleDestChange(e.target.value)}
+              className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
+              placeholder="Search receiver's address" 
             />
           </div>
+          {/* Destination address suggestions */}
+          {destResults.length > 0 && (
+            <div className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto mt-1">
+              {destResults.map((r, i) => (
+                <button key={i} onClick={() => selectDest(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
+                </button>
+              ))}
+            </div>
+          )}
 
           {showMap && (
-            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4">
+            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
               <Map 
                 center={destCoords || [14.5489, 121.0486]} 
                 zoom={14}
@@ -196,42 +334,69 @@ export default function SendPackage() {
             </div>
           )}
         </div>
-      </section>
 
-      <section className="mt-10 px-5">
-        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Specifications</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-semibold text-slate-600 dark:text-slate-400 ml-1">Weight</label>
-            <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 overflow-hidden focus-within:ring-2 focus-within:ring-orange-600/20 focus-within:border-orange-600 transition-all">
-              <input 
-                type="number"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="flex-1 px-4 py-4 bg-transparent border-none focus:ring-0 outline-none text-[15px] font-medium text-slate-900 dark:text-slate-100" 
-                placeholder="0.0" 
-              />
-              <span className="pr-4 text-slate-400 font-bold text-xs uppercase tracking-widest">KG</span>
-            </div>
+        {/* ── Receiver Info ── */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+            <input type="text" value={receiverName} onChange={e => setReceiverName(e.target.value)}
+              className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+              placeholder="Receiver name" />
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-semibold text-slate-600 dark:text-slate-400 ml-1">Size</label>
-            <div className="relative">
-              <select 
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none appearance-none text-[15px] font-medium transition-all cursor-pointer text-slate-900 dark:text-slate-100"
-              >
-                <option>Small (Box)</option>
-                <option>Medium (Crate)</option>
-                <option>Large (Pallet)</option>
-              </select>
-            </div>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+            <input type="tel" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)}
+              className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+              placeholder="Phone number" />
           </div>
         </div>
       </section>
 
-      <section className="mt-10 px-5">
+      {/* ── Package Category (Issue #3) ── */}
+      <section className="mt-8 px-5">
+        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Package Category</h3>
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+          {PACKAGE_CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const active = category === cat.id;
+            return (
+              <button key={cat.id} onClick={() => setCategory(cat.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 transition-all min-w-[90px] flex-shrink-0",
+                  active ? "border-orange-600 bg-orange-600/5 text-orange-600" : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
+                )}
+              >
+                <Icon className="size-5" />
+                <span className="text-[10px] font-bold whitespace-nowrap">{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-slate-400 mt-2 ml-1">
+          {PACKAGE_CATEGORIES.find(c => c.id === category)?.desc}
+        </p>
+      </section>
+
+      {/* ── Weight & Specifications (Issue #6 — clearly shows KG) ── */}
+      <section className="mt-6 px-5">
+        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Specifications</h3>
+        <div className="flex flex-col gap-2">
+          <label className="text-[13px] font-semibold text-slate-600 dark:text-slate-400 ml-1">Weight (Kilograms)</label>
+          <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 overflow-hidden focus-within:ring-2 focus-within:ring-orange-600/20 focus-within:border-orange-600 transition-all">
+            <input 
+              type="number"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="flex-1 px-4 py-4 bg-transparent border-none focus:ring-0 outline-none text-[15px] font-medium text-slate-900 dark:text-slate-100" 
+              placeholder="e.g. 5.5" 
+            />
+            <span className="pr-4 text-orange-500 font-bold text-sm uppercase tracking-widest">KG</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Shipping Method ── */}
+      <section className="mt-8 px-5">
         <h3 className="text-[13px] font-bold mb-4 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
         <div className="space-y-4">
           <button 
@@ -283,11 +448,18 @@ export default function SendPackage() {
         </div>
       </section>
 
+      {error && (
+        <div className="mx-5 mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* ── Footer with Submit ── */}
       <footer className="p-5 mt-auto border-t border-slate-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl sticky bottom-0 z-20">
         <div className="flex items-center justify-between mb-5 px-1">
           <div className="flex flex-col">
             <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Estimated Total</span>
-            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">₱{method === 'standard' ? '750.00' : '1,440.00'}</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">₱{totalFee.toLocaleString()}.00</span>
           </div>
           <div className="text-[11px] text-right font-medium text-slate-400 dark:text-slate-500">
             Includes taxes & fees
@@ -295,11 +467,20 @@ export default function SendPackage() {
         </div>
         <button 
           onClick={handleConfirm}
-          disabled={loading || !destination}
+          disabled={loading || !destination || !pickup}
           className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
         >
-          <span>{loading ? 'Processing...' : 'Review & Confirm'}</span>
-          <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+          {loading ? (
+            <>
+              <Loader2 className="size-5 animate-spin" />
+              <span>Creating Shipment...</span>
+            </>
+          ) : (
+            <>
+              <span>Review & Confirm</span>
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+            </>
+          )}
         </button>
       </footer>
     </div>
