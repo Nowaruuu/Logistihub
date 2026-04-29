@@ -792,10 +792,13 @@ var _allShipments=[];
 function loadShipments(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
-  apiFetch('/'+slug+'/api/admin/shipments')
+  apiFetch('/'+slug+'/api/admin/shipments?t='+Date.now())
     .then(function(r){return r.json();})
     .then(function(data){
-      _allShipments=Array.isArray(data.shipments)?data.shipments:[];
+      // Handle both { shipments: [] } and plain [] responses
+      if(Array.isArray(data)) _allShipments=data;
+      else if(Array.isArray(data.shipments)) _allShipments=data.shipments;
+      else _allShipments=[];
       renderDashboardShipments();
       renderShipmentsTable();
       updateStatCards();

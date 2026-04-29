@@ -1,22 +1,109 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { Search, Truck, Package as PackageIcon, ChevronRight, CheckCircle, Clock, CreditCard, Trash2 } from 'lucide-react';
+import { Search, Truck, Package as PackageIcon, ChevronRight, CheckCircle, Clock, CreditCard, X } from 'lucide-react';
 import { createCheckout } from '../lib/api';
 import { cn } from '../lib/utils';
 
-// Capacitor-aware URL opener
-async function openUrl(url: string) {
-  try {
-    const { Capacitor, Plugins } = (window as any);
-    if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
-      await Plugins.Browser.open({ url });
+// ── In-app PayMongo WebView ────────────────────────────────────────────────────
+async function openPaymentInApp(
+  checkoutUrl: string,
+  deliveryNumber: string,
+  onSuccess: () => void,
+  onClose: () => void
+) {
+  const { Capacitor, Plugins } = (window as any);
+
+  if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
+    // Listen for the success redirect from PayMongo
+    const successPattern = `/pay/success`;
+    const cancelPattern  = `/pay/cancel`;
+
+    const listener = await Plugins.Browser.addListener(
+      'browserFinished',
+      () => { listener.remove(); onClose(); }
+    );
+
+    // Also listen for URL changes to detect success/cancel
+    let urlListener: any;
+    try {
+      urlListener = await Plugins.Browser.addListener(
+        'browserPageLoaded',
+        async () => {
+          // We can't directly read the URL in all versions, so we rely on the backend redirect
+          // to a URL that has our success/cancel pattern
+        }
+      );
+    } catch (_) {}
+
+    await Plugins.Browser.open({
+      url: checkoutUrl,
+      presentationStyle: 'popover',
+      toolbarColor: '#1a1a2e',
+    });
+
+    // Poll for payment status every 3 seconds while browser is open
+    const slug = localStorage.getItem('auth_slug') || '';
+    const token = localStorage.getItem('auth_token') || '';
+    let pollCount = 0;
+    const maxPolls = 40; // 2 minutes max
+
+    const poll = setInterval(async () => {
+      pollCount++;
+      if (pollCount > maxPolls) { clearInterval(poll); return; }
+
+      try {
+        const r = await fetch(
+          `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const d = await r.json();
+        if (d.status === 'Paid' || d.status === 'paid') {
+          clearInterval(poll);
+          try { await Plugins.Browser.close(); } catch (_) {}
+          listener.remove();
+          if (urlListener) try { urlListener.remove(); } catch (_) {}
+          onSuccess();
+        }
+      } catch (_) {}
+    }, 3000);
+
+    return;
+  }
+
+  // Web fallback — open in centered popup
+  const popup = window.open(
+    checkoutUrl,
+    'paymongo_checkout',
+    'width=500,height=700,top=50,left=50,scrollbars=yes'
+  );
+
+  // Poll for popup close or success
+  const slug = localStorage.getItem('auth_slug') || '';
+  const token = localStorage.getItem('auth_token') || '';
+  let pollCount = 0;
+  const poll = setInterval(async () => {
+    pollCount++;
+    if (pollCount > 40 || popup?.closed) {
+      clearInterval(poll);
+      onClose();
       return;
     }
-  } catch (_) {}
-  window.open(url, '_blank', 'noopener');
+    try {
+      const r = await fetch(
+        `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const d = await r.json();
+      if (d.status === 'Paid' || d.status === 'paid') {
+        clearInterval(poll);
+        popup?.close();
+        onSuccess();
+      }
+    } catch (_) {}
+  }, 3000);
 }
 
 // Error boundary for this page
@@ -51,34 +138,34 @@ function MyPackagesInner() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
+  const [paidSet, setPaidSet] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   const isDriver = profile?.role === 'driver';
 
+  const fetchDeliveries = useCallback(async () => {
+    try {
+      if (isDriver) {
+        const docs = await deliveryService.getDriverDeliveries();
+        setDeliveries(docs || []);
+      } else {
+        const docs = await deliveryService.getAllDeliveries();
+        setDeliveries(docs || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch deliveries:', err);
+      setDeliveries([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isDriver]);
+
   useEffect(() => {
     if (!user) return;
-
-    const fetchDeliveries = async () => {
-      try {
-        if (isDriver) {
-          const docs = await deliveryService.getDriverDeliveries();
-          setDeliveries(docs || []);
-        } else {
-          const docs = await deliveryService.getAllDeliveries();
-          setDeliveries(docs || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch deliveries:', err);
-        setDeliveries([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDeliveries();
     const interval = setInterval(fetchDeliveries, 30000);
     return () => clearInterval(interval);
-  }, [user, isDriver]);
+  }, [user, fetchDeliveries]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -241,6 +328,12 @@ function MyPackagesInner() {
                     </div>
                   </div>
                   {/* Pay Now Button */}
+                  {paidSet.has(delivery.trackingNumber || '') ? (
+                    <div className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 text-xs font-bold">
+                      <CheckCircle className="size-3.5" />
+                      Payment Successful
+                    </div>
+                  ) : (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -250,14 +343,23 @@ function MyPackagesInner() {
                       createCheckout(tn, Number(delivery.totalFee || 0), `Shipment ${tn}`)
                         .then(async r => {
                           if (r?.checkout_url) {
-                            await openUrl(r.checkout_url);
+                            await openPaymentInApp(
+                              r.checkout_url,
+                              tn,
+                              () => {
+                                // Success — mark as paid and refresh
+                                setPaidSet(prev => new Set(prev).add(tn));
+                                setPaying(null);
+                                fetchDeliveries();
+                              },
+                              () => setPaying(null)
+                            );
                           } else {
-                            alert('Payment gateway not available. Please contact support.');
+                            alert('Payment gateway not available.');
+                            setPaying(null);
                           }
-                          setPaying(null);
                         })
                         .catch(err => {
-                          console.warn('Payment error:', err);
                           alert('Payment failed: ' + (err?.message || 'Unknown error'));
                           setPaying(null);
                         });
@@ -266,8 +368,9 @@ function MyPackagesInner() {
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-sm active:scale-[0.97] transition-all disabled:opacity-50"
                   >
                     <CreditCard className="size-3.5" />
-                    {paying === (delivery.trackingNumber || '') ? 'Redirecting...' : `Pay Now • ₱${Number(delivery.totalFee || 0).toFixed(2)}`}
+                    {paying === (delivery.trackingNumber || '') ? 'Opening payment...' : `Pay Now • ₱${Number(delivery.totalFee || 0).toFixed(2)}`}
                   </button>
+                  )}
                 </div>
               ))}
             </div>
