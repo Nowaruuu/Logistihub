@@ -631,29 +631,65 @@ textarea{resize:vertical;}
           <h2 style="font-size:18px;font-weight:800;color:#0f172a;margin:0 0 6px;">Upgrade Your Plan</h2>
           <p style="font-size:13px;color:#64748b;margin:0;">Your current plan: <strong id="upgrade-current-plan" style="color:#3b82f6;text-transform:uppercase;">—</strong></p>
         </div>
-        <div style="padding:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-          <div class="plan-upgrade-card" id="up-startup" style="border:2px solid #e2e8f0;border-radius:14px;padding:24px;text-align:center;transition:all .2s;cursor:pointer;" onmouseover="this.style.borderColor='#0f2235';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='none'">
-            <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Startup</div>
-            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱99<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
-            <div style="font-size:12px;color:#64748b;margin-top:8px;">Up to 10 vehicles<br>Standard optimization<br>Real-time tracking</div>
-          </div>
-          <div class="plan-upgrade-card" id="up-enterprise" style="border:2px solid #3b82f6;border-radius:14px;padding:24px;text-align:center;background:#f0f7ff;transition:all .2s;cursor:pointer;position:relative;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-            <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#0f2235;color:#fff;font-size:9px;font-weight:800;padding:3px 12px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Most Popular</div>
-            <div style="font-size:13px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Enterprise</div>
-            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱499<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
-            <div style="font-size:12px;color:#64748b;margin-top:8px;">Unlimited vehicles & users<br>AI dispatching<br>Full API & Webhooks</div>
-          </div>
-          <div class="plan-upgrade-card" id="up-global" style="border:2px solid #e2e8f0;border-radius:14px;padding:24px;text-align:center;transition:all .2s;cursor:pointer;" onmouseover="this.style.borderColor='#0f2235';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='none'">
-            <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Global</div>
-            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱999<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
-            <div style="font-size:12px;color:#64748b;margin-top:8px;">Everything in Enterprise<br>Multi-region deployment<br>Dedicated account manager</div>
-          </div>
+        <div id="upgrade-plans-grid" style="padding:24px;display:grid;gap:16px;"></div>
+        <div id="upgrade-max-notice" style="display:none;padding:32px 24px;text-align:center;">
+          <span class="material-symbols-outlined" style="font-size:40px;color:#10b981;">verified</span>
+          <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:12px 0 6px;">You're on the highest plan!</h3>
+          <p style="font-size:13px;color:#64748b;">You already have access to all features with the Global plan.</p>
         </div>
         <div style="padding:16px 24px 24px;text-align:center;">
           <p style="font-size:12px;color:#94a3b8;">Contact support to change your plan. Changes take effect at the start of your next billing cycle.</p>
         </div>
       </div>
     </div>
+
+    <script>
+    (function() {
+      var plans = [
+        { key: 'startup',    label: 'Startup',    price: '₱99',  features: 'Up to 10 vehicles<br>Standard optimization<br>Real-time tracking' },
+        { key: 'enterprise', label: 'Enterprise', price: '₱499', features: 'Unlimited vehicles & users<br>AI dispatching<br>Full API & Webhooks', popular: true },
+        { key: 'global',     label: 'Global',     price: '₱999', features: 'Everything in Enterprise<br>Multi-region deployment<br>Dedicated account manager' }
+      ];
+      var currentPlan = (window.__TENANT__ && window.__TENANT__.plan) ? window.__TENANT__.plan.toLowerCase() : 'startup';
+      var currentIdx = plans.findIndex(function(p) { return p.key === currentPlan; });
+      if (currentIdx < 0) currentIdx = 0;
+
+      // Show current plan name
+      var label = document.getElementById('upgrade-current-plan');
+      if (label) label.textContent = plans[currentIdx].label;
+
+      var grid = document.getElementById('upgrade-plans-grid');
+      if (!grid) return;
+
+      // If already on highest plan
+      if (currentIdx >= plans.length - 1) {
+        grid.style.display = 'none';
+        var notice = document.getElementById('upgrade-max-notice');
+        if (notice) notice.style.display = 'block';
+        return;
+      }
+
+      // Only show plans above current
+      var upgradePlans = plans.filter(function(p, i) { return i > currentIdx; });
+      grid.style.gridTemplateColumns = 'repeat(' + Math.min(upgradePlans.length, 3) + ', 1fr)';
+      grid.innerHTML = '';
+
+      upgradePlans.forEach(function(p) {
+        var isPopular = p.popular || false;
+        var card = document.createElement('div');
+        card.style.cssText = 'border:2px solid ' + (isPopular ? '#3b82f6' : '#e2e8f0') + ';border-radius:14px;padding:24px;text-align:center;transition:all .2s;cursor:pointer;position:relative;' + (isPopular ? 'background:#f0f7ff;' : '');
+        card.onmouseover = function() { this.style.borderColor='#0f2235'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; };
+        card.onmouseout = function() { this.style.borderColor = isPopular ? '#3b82f6' : '#e2e8f0'; this.style.transform='none'; this.style.boxShadow='none'; };
+        card.innerHTML =
+          (isPopular ? '<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#0f2235;color:#fff;font-size:9px;font-weight:800;padding:3px 12px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Most Popular</div>' : '') +
+          '<div style="font-size:13px;font-weight:700;color:' + (isPopular ? '#3b82f6' : '#64748b') + ';text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">' + p.label + '</div>' +
+          '<div style="font-size:32px;font-weight:800;color:#0f172a;">' + p.price + '<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>' +
+          '<div style="font-size:12px;color:#64748b;margin-top:8px;">' + p.features + '</div>' +
+          '<div style="margin-top:16px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:8px 20px;background:#0f2235;color:#fff;border-radius:8px;font-size:12px;font-weight:700;"><span class=\'material-symbols-outlined\' style=\'font-size:14px;\'>upgrade</span>Upgrade</span></div>';
+        grid.appendChild(card);
+      });
+    })();
+    </script>
 
   </div>
 </div>
