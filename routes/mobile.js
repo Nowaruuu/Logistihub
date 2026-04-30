@@ -514,7 +514,7 @@ router.get('/pay/success', async (req, res) => {
   // Best-effort: mark payment as Paid immediately via DB (webhook backup)
   try {
     await query(
-      "UPDATE payment SET status = 'Paid', paid_at = NOW() WHERE delivery_number = ? AND status = 'Pending'",
+      "UPDATE payment SET status = 'Paid' WHERE delivery_number = ? AND status = 'Pending'",
       [dn]
     );
   } catch (_) {}
@@ -585,10 +585,10 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
             const method = paidPayment?.attributes?.source?.type || 'unknown';
             const pmId   = paidPayment?.id || null;
 
-            // Update DB — use delivery_number+tenant_id since PK column name is unknown
+            // Update DB — use delivery_number+tenant_id since PK is invoice_id
             try {
               await query(
-                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE delivery_number = ? AND tenant_id = ?",
+                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ? WHERE delivery_number = ? AND tenant_id = ?",
                 [pmId, method, req.params.dn, req.tenantId]
               );
             } catch (_) {}
@@ -646,7 +646,7 @@ router.paymongoWebhook = async (req, res) => {
 
       if (checkoutId) {
         await query(
-          "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE paymongo_checkout_id = ?",
+          "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ? WHERE paymongo_checkout_id = ?",
           [pmId, method, checkoutId]
         );
 
