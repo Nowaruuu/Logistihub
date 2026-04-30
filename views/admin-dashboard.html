@@ -1252,35 +1252,40 @@ function applyBranding(d) {
   if (brandCol) document.documentElement.style.setProperty('--primary', brandCol);
   if (appCol) document.documentElement.style.setProperty('--app-bg', appCol);
   if (sideCol) document.documentElement.style.setProperty('--sidebar-bg', sideCol);
+  if (appCol) updateAppTextContrast(appCol);
+  if (sideCol) updateSidebarTextContrast(sideCol);
+}
 
-  // Auto-contrast: switch text that sits on the app background
-  if (appCol) {
-    var hex = appCol.replace('#','');
-    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-    var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
-    var isDark = (0.299*r + 0.587*g + 0.114*b) / 255 < 0.5;
-    // Only change text that sits directly on the app background (headings, descriptions)
-    var headColor = isDark ? '#f1f5f9' : '#0f2235';
-    var subColor = isDark ? '#cbd5e1' : '#64748b';
-    document.querySelectorAll('.ph-row h2').forEach(function(el){ el.style.color = headColor; });
-    document.querySelectorAll('.ph-row p').forEach(function(el){ el.style.color = subColor; });
-  }
+function _colorLum(hex) {
+  if (!hex) return 1;
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+  return (0.299*r + 0.587*g + 0.114*b) / 255;
+}
 
-  // Auto-contrast sidebar text
-  if (sideCol) {
-    var hex2 = sideCol.replace('#','');
-    if (hex2.length === 3) hex2 = hex2[0]+hex2[0]+hex2[1]+hex2[1]+hex2[2]+hex2[2];
-    var r2 = parseInt(hex2.substr(0,2),16), g2 = parseInt(hex2.substr(2,2),16), b2 = parseInt(hex2.substr(4,2),16);
-    var sideIsDark = (0.299*r2 + 0.587*g2 + 0.114*b2) / 255 < 0.5;
-    var navTextColor = sideIsDark ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.5)';
-    var navActiveColor = sideIsDark ? '#fff' : '#0f172a';
-    var navSecColor = sideIsDark ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.25)';
-    var tenantColor = sideIsDark ? '#fff' : '#0f172a';
-    document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')) el.style.color = navTextColor; });
-    document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActiveColor; });
-    document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSecColor; });
-    var tn = document.querySelector('.tenant-name'); if(tn) tn.style.color = tenantColor;
-  }
+function updateAppTextContrast(col) {
+  var isDark = _colorLum(col) < 0.5;
+  var headColor = isDark ? '#f1f5f9' : '#0f2235';
+  var subColor = isDark ? '#cbd5e1' : '#475569';
+  document.querySelectorAll('.ph-row h2').forEach(function(el){ el.style.color = headColor; });
+  document.querySelectorAll('.ph-row p').forEach(function(el){ el.style.color = subColor; });
+}
+
+function updateSidebarTextContrast(col) {
+  var isDark = _colorLum(col) < 0.5;
+  var navText = isDark ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.5)';
+  var navActive = isDark ? '#fff' : '#0f172a';
+  var navSec = isDark ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.25)';
+  var tenant = isDark ? '#fff' : '#0f172a';
+  var subText = isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)';
+  document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')) el.style.color = navText; });
+  document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; });
+  document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; });
+  var tn = document.querySelector('.tenant-name'); if(tn) tn.style.color = tenant;
+  var ts = document.querySelector('.tenant-sub'); if(ts) ts.style.color = subText;
+  var un = document.querySelector('.uname'); if(un) un.style.color = tenant;
+  var ue = document.querySelector('.uemail'); if(ue) ue.style.color = subText;
 }
 
 async function resetToDefaults() {
@@ -1443,6 +1448,7 @@ window.addEventListener('load', function() {
     onChange: function(v) {
       document.getElementById('set-bg-app-hex').value = v;
       document.body.style.background = v;  // live apply
+      updateAppTextContrast(v);
       updateColorPreview();
     }
   });
@@ -1452,6 +1458,7 @@ window.addEventListener('load', function() {
     onChange: function(v) {
       document.getElementById('set-bg-sidebar-hex').value = v;
       var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
+      updateSidebarTextContrast(v);
       updateColorPreview();
     }
   });
