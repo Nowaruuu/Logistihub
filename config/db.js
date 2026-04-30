@@ -31,6 +31,8 @@ pool.getConnection()
       "ALTER TABLE STAFF ADD COLUMN license_url LONGTEXT DEFAULT NULL",
       "ALTER TABLE STAFF ADD COLUMN license_expiry DATE DEFAULT NULL",
       "ALTER TABLE STAFF ADD COLUMN license_status ENUM('not_uploaded','pending_review','verified','expired') DEFAULT 'not_uploaded'",
+      "ALTER TABLE STAFF ADD COLUMN vehicle_plate VARCHAR(20) DEFAULT NULL",
+      "ALTER TABLE STAFF ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {

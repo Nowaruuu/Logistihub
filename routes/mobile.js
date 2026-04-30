@@ -184,9 +184,41 @@ router.put('/driver/documents', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// GET /driver/vehicle — get driver's registered vehicle info
+router.get('/driver/vehicle', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  try {
+    const [rows] = await query(
+      'SELECT vehicle_plate, vehicle_type FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [req.staff.staff_id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('[GET /driver/vehicle]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SHIPMENT ENDPOINTS
+// PUT /driver/vehicle — register/update driver's vehicle
+router.put('/driver/vehicle', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const { vehicle_plate, vehicle_type } = req.body;
+  if (!vehicle_plate || !vehicle_type) {
+    return res.status(400).json({ error: 'vehicle_plate and vehicle_type are required.' });
+  }
+  try {
+    await query(
+      'UPDATE STAFF SET vehicle_plate = ?, vehicle_type = ? WHERE staff_id = ? AND tenant_id = ?',
+      [vehicle_plate.toUpperCase().trim(), vehicle_type, req.staff.staff_id, req.tenantId]
+    );
+    res.json({ ok: true, message: 'Vehicle info saved.' });
+  } catch (err) {
+    console.error('[PUT /driver/vehicle]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // GET /deliveries — list user's or driver's shipments
@@ -386,9 +418,18 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not available or already taken.' });
 
+    // Get driver's registered vehicle plate
+    const [driverRows] = await query(
+      'SELECT vehicle_plate, vehicle_type, name FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [staffId]
+    );
+    const driverVehiclePlate = driverRows[0]?.vehicle_plate || null;
+
     await query(
-      "UPDATE shipment SET assigned_driver_id = ?, status = 'In-Transit' WHERE delivery_number = ? AND tenant_id = ?",
-      [staffId, dn, tid]
+      `UPDATE shipment
+       SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = 'In-Transit'
+       WHERE delivery_number = ? AND tenant_id = ?`,
+      [staffId, driverVehiclePlate, dn, tid]
     );
 
     await query(
