@@ -1390,49 +1390,26 @@ function updateSidebarTextContrast(bgOverride) {
   var isGrad = bg && bg.includes('gradient');
   var isDark = _colorLum(bg) < 0.5;
 
-  var navText, navActive, navSec, tenant, subText, shadow;
-  // Backdrop for nav links on gradient backgrounds
-  var navBg, navActiveBg, secBg;
+  var navText, navActive, navSec, tenant, subText;
 
-  if (isGrad) {
-    // Gradient: text gets a subtle frosted backdrop for readability
-    if (isDark) {
-      navText = '#ffffff'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.8)';
-      tenant = '#ffffff'; subText = 'rgba(255,255,255,.8)';
-      navBg = 'rgba(0,0,0,.3)'; navActiveBg = 'rgba(0,0,0,.45)'; secBg = 'transparent';
-    } else {
-      navText = '#0f172a'; navActive = '#0f172a'; navSec = 'rgba(0,0,0,.65)';
-      tenant = '#0f172a'; subText = 'rgba(0,0,0,.65)';
-      navBg = 'rgba(255,255,255,.35)'; navActiveBg = 'rgba(255,255,255,.5)'; secBg = 'transparent';
-    }
-    shadow = 'none';
+  if (isDark) {
+    navText = 'rgba(255,255,255,.7)'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.35)';
+    tenant = '#ffffff'; subText = 'rgba(255,255,255,.55)';
   } else {
-    // Solid color: standard contrast, no backdrop needed
-    navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
-    navActive = isDark ? '#ffffff'                : '#0f172a';
-    navSec =    isDark ? 'rgba(255,255,255,.35)'  : 'rgba(0,0,0,.45)';
-    tenant =    isDark ? '#ffffff'                : '#0f172a';
-    subText =   isDark ? 'rgba(255,255,255,.55)'  : 'rgba(0,0,0,.5)';
-    shadow = 'none';
-    navBg = 'transparent'; navActiveBg = ''; secBg = 'transparent';
+    navText = 'rgba(0,0,0,.6)'; navActive = '#0f172a'; navSec = 'rgba(0,0,0,.45)';
+    tenant = '#0f172a'; subText = 'rgba(0,0,0,.5)';
   }
 
   document.querySelectorAll('.nav-link').forEach(function(el){
-    if(!el.classList.contains('active')){
-      el.style.color = navText; el.style.textShadow = shadow;
-      if (isGrad) { el.style.backgroundColor = navBg; el.style.borderRadius = '6px'; }
-      else { el.style.backgroundColor = ''; }
-    }
+    el.style.backgroundColor = '';
+    if(!el.classList.contains('active')) el.style.color = navText;
   });
-  document.querySelectorAll('.nav-link.active').forEach(function(el){
-    el.style.color = navActive; el.style.textShadow = shadow;
-    if (isGrad) { el.style.backgroundColor = navActiveBg; el.style.borderRadius = '6px'; }
-  });
-  document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; el.style.textShadow = shadow; el.style.backgroundColor = secBg; });
-  var tn = document.querySelector('.tenant-name'); if(tn){ tn.style.color = tenant; tn.style.textShadow = shadow; }
-  var ts = document.querySelector('.tenant-sub'); if(ts){ ts.style.color = subText; ts.style.textShadow = shadow; }
-  var un = document.querySelector('.uname'); if(un){ un.style.color = tenant; un.style.textShadow = shadow; }
-  var ue = document.querySelector('.uemail'); if(ue){ ue.style.color = subText; ue.style.textShadow = shadow; }
+  document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; el.style.backgroundColor = ''; });
+  document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; });
+  var tn = document.querySelector('.tenant-name'); if(tn) tn.style.color = tenant;
+  var ts = document.querySelector('.tenant-sub'); if(ts) ts.style.color = subText;
+  var un = document.querySelector('.uname'); if(un) un.style.color = tenant;
+  var ue = document.querySelector('.uemail'); if(ue) ue.style.color = subText;
 }
 
 async function resetToDefaults() {
