@@ -80,17 +80,36 @@ router.get('/tenant-config', async (req, res) => {
         const typeMap = {
           'motorcycle': 'motorcycle',
           'sedan': 'sedan',
-          'suv': 'sedan',       // SUV maps to sedan tier
-          'pickup': 'van',      // Pickup maps to van tier
+          'suv': 'sedan',
+          'pickup': 'van',
           'van': 'van',
           'truck': 'truck',
-          'trailer': 'flatbed', // Trailer maps to flatbed tier
+          'trailer': 'flatbed',
           'flatbed': 'flatbed',
         };
+        // Also get max capacity per mapped type
+        const capacityMap: Record<string, number> = {};
         const seen = new Set();
-        vrows.forEach(r => {
+        vrows.forEach((r: any) => {
           const mapped = typeMap[r.vtype];
           if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
+        });
+        // Get max capacity_tons per mapped type from DB
+        const [capRows] = await query(
+          `SELECT LOWER(vehicle_type) AS vtype, MAX(capacity_tons) AS max_cap
+           FROM vehicle WHERE tenant_id = ? AND status != 'Retired'
+           GROUP BY LOWER(vehicle_type)`,
+          [tid]
+        );
+        capRows.forEach((r: any) => {
+          const mapped = typeMap[r.vtype];
+          if (mapped && r.max_cap) {
+            // Convert tons to kg, take max if multiple vehicles of same mapped type
+            const kg = parseFloat(r.max_cap) * 1000;
+            if (!capacityMap[mapped] || kg > capacityMap[mapped]) {
+              capacityMap[mapped] = kg;
+            }
+          }
         });
       }
     } catch (e) { /* vehicle table may not exist yet */ }
@@ -107,6 +126,7 @@ router.get('/tenant-config', async (req, res) => {
       logo_url: t.logo_url || null,
       primary_color: t.primary_color || '#ea580c',
       available_vehicles: vehicleTypes,
+      vehicle_capacities: capacityMap || {}, // { motorcycle: 20000, van: 500000, ... } in kg
     });
   } catch (err) {
     console.error('[GET /tenant-config]', err);

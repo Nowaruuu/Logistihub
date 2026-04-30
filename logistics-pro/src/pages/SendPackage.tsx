@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
@@ -123,9 +123,18 @@ export default function SendPackage() {
 
   // Tenant-configured vehicles (fetched from backend)
   const [tenantVehicles, setTenantVehicles] = useState<string[]>(['motorcycle','sedan','van','truck','flatbed']);
+  // Staff-managed vehicle capacities (kg) — overrides hardcoded maxKg
+  const [tenantCapacities, setTenantCapacities] = useState<Record<string, number>>({});
   useEffect(() => {
-    getTenantConfig().then(cfg => setTenantVehicles(cfg.available_vehicles));
+    getTenantConfig().then(cfg => {
+      setTenantVehicles(cfg.available_vehicles);
+      if (cfg.vehicle_capacities) setTenantCapacities(cfg.vehicle_capacities);
+    });
   }, []);
+
+  // Extra safety / insurance toggle
+  const [extraSafety, setExtraSafety] = useState(false);
+  const SAFETY_FEE = 150; // ₱150 flat insurance surcharge
 
   // Vehicle selection state
   const [vehicle, setVehicle] = useState('sedan');
@@ -200,7 +209,8 @@ export default function SendPackage() {
   const fuelCost = distKm * fuelRate;
   const tierRate = weightKg <= 50 ? weightKg * 1 : weightKg <= 500 ? 50 + (weightKg - 50) * 0.80 : 50 + 360 + (weightKg - 500) * 0.50;
   const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
-  const baseFee = 50 + fuelCost + tierRate + categorySurcharge;
+  const safetySurcharge = extraSafety ? SAFETY_FEE : 0;
+  const baseFee = 50 + fuelCost + tierRate + categorySurcharge + safetySurcharge;
   // Express = 1.8× base (consistent in both display & totalFee)
   const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
 
@@ -451,14 +461,14 @@ export default function SendPackage() {
               type="text"
               value={pickup}
               onChange={(e) => handlePickupChange(e.target.value)}
-              onBlur={handlePickupBlur}
+              onBlur={() => setTimeout(() => setPickupResults([]), 200)}
               className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
               placeholder="Search address or type manually" 
             />
           </div>
           {/* Pickup address suggestions */}
           {pickupResults.length > 0 && (
-            <div className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto mt-1">
+            <div className="absolute z-[999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
               {pickupResults.map((r, i) => (
                 <button key={i} onClick={() => selectPickup(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
@@ -534,7 +544,7 @@ export default function SendPackage() {
           </div>
           {/* Destination address suggestions */}
           {destResults.length > 0 && (
-            <div className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto mt-1">
+            <div className="absolute z-[999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
               {destResults.map((r, i) => (
                 <button key={i} onClick={() => selectDest(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
@@ -625,7 +635,9 @@ export default function SendPackage() {
               {VEHICLE_TYPES.filter(v => tenantVehicles.includes(v.id) && compatibleVehicles.includes(v.id)).map((v) => {
                 const Icon = v.icon;
                 const isSelected = vehicle === v.id;
-                const overWeight = weightKg > 0 && weightKg > v.maxKg;
+                // Use staff-configured capacity if available, else fall back to hardcoded
+                const maxKg = tenantCapacities[v.id] ?? v.maxKg;
+                const overWeight = weightKg > 0 && weightKg > maxKg;
                 return (
                   <button key={v.id}
                     onClick={() => !overWeight && setVehicle(v.id)}
@@ -649,8 +661,8 @@ export default function SendPackage() {
                       </div>
                       <p className="text-[11px] text-slate-400 truncate">
                         {overWeight
-                          ? <span className="text-red-400">Max {v.maxKg.toLocaleString()}kg — your package is {weightKg.toLocaleString()}kg</span>
-                          : <>{v.desc} · Up to {v.maxKg.toLocaleString()}kg</>
+                          ? <span className="text-red-400">Max {maxKg.toLocaleString()}kg — your package is {weightKg.toLocaleString()}kg</span>
+                          : <>{v.desc} · Up to {maxKg.toLocaleString()}kg</>
                         }
                       </p>
                     </div>
@@ -723,8 +735,42 @@ export default function SendPackage() {
         </div>
       </section>
 
+      {/* ── Extra Safety / Insurance ── */}
+      <section className="mt-6 px-5">
+        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Package Protection</h3>
+        <button
+          type="button"
+          onClick={() => setExtraSafety(!extraSafety)}
+          className={cn(
+            "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+            extraSafety
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+              : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
+          )}
+        >
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
+            extraSafety ? "bg-blue-500 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+          )}>
+            {extraSafety ? <ShieldCheck className="size-5" /> : <Shield className="size-5" />}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900 dark:text-white">Extra Safety Handling</span>
+              <span className={cn("font-bold text-sm", extraSafety ? "text-blue-600" : "text-slate-400")}>+₱{SAFETY_FEE}</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">Fragile item · Priority care · Basic insurance coverage</p>
+          </div>
+          <div className={cn(
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+            extraSafety ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600"
+          )}>
+            {extraSafety && <div className="w-2 h-2 rounded-full bg-white" />}
+          </div>
+        </button>
+      </section>
+
       {/* ── Shipping Method ── */}
-      <section className="mt-8 px-5">
+      <section className="mt-6 px-5">
         <h3 className="text-[13px] font-bold mb-3 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
         {fetchingRoute && (
           <div className="flex items-center gap-2 text-xs text-orange-500 mb-3 ml-1">
