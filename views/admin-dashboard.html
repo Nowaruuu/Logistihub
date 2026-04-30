@@ -1372,14 +1372,30 @@ function updateSidebarTextContrast(bgOverride) {
   var bg = bgOverride || _getEffectiveBg(sb);
   var isGrad = bg && bg.includes('gradient');
   var isDark = _colorLum(bg) < 0.5;
-  // Dark bg → bright white text | Light bg → strong dark text
-  var navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
-  var navActive = isDark ? '#ffffff'                : '#0f172a';
-  var navSec =    isDark ? 'rgba(255,255,255,.35)'  : 'rgba(0,0,0,.45)';
-  var tenant =    isDark ? '#ffffff'                : '#0f172a';
-  var subText =   isDark ? 'rgba(255,255,255,.55)'  : 'rgba(0,0,0,.5)';
-  // Add text-shadow on gradient backgrounds for readability
-  var shadow = isGrad ? (isDark ? '0 1px 3px rgba(0,0,0,.5)' : '0 1px 3px rgba(255,255,255,.5)') : 'none';
+
+  var navText, navActive, navSec, tenant, subText, shadow;
+
+  if (isGrad) {
+    // Gradient: use full opacity text + strong shadow for readability
+    if (isDark) {
+      navText = '#ffffff'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.6)';
+      tenant = '#ffffff'; subText = 'rgba(255,255,255,.7)';
+      shadow = '0 1px 4px rgba(0,0,0,.7), 0 0 8px rgba(0,0,0,.3)';
+    } else {
+      navText = '#0f172a'; navActive = '#0f172a'; navSec = 'rgba(0,0,0,.55)';
+      tenant = '#0f172a'; subText = 'rgba(0,0,0,.6)';
+      shadow = '0 1px 4px rgba(255,255,255,.7), 0 0 8px rgba(255,255,255,.3)';
+    }
+  } else {
+    // Solid color: standard contrast
+    navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
+    navActive = isDark ? '#ffffff'                : '#0f172a';
+    navSec =    isDark ? 'rgba(255,255,255,.35)'  : 'rgba(0,0,0,.45)';
+    tenant =    isDark ? '#ffffff'                : '#0f172a';
+    subText =   isDark ? 'rgba(255,255,255,.55)'  : 'rgba(0,0,0,.5)';
+    shadow = 'none';
+  }
+
   document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')){ el.style.color = navText; el.style.textShadow = shadow; } });
   document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; el.style.textShadow = shadow; });
   document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; el.style.textShadow = shadow; });
