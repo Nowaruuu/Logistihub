@@ -209,11 +209,34 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!vehicle_plate || !vehicle_type) {
     return res.status(400).json({ error: 'vehicle_plate and vehicle_type are required.' });
   }
+  const plate = vehicle_plate.toUpperCase().trim();
+  const tid   = req.tenantId;
+
   try {
+    // 1. Save to STAFF record (for auto-assignment when accepting jobs)
     await query(
       'UPDATE STAFF SET vehicle_plate = ?, vehicle_type = ? WHERE staff_id = ? AND tenant_id = ?',
-      [vehicle_plate.toUpperCase().trim(), vehicle_type, req.staff.staff_id, req.tenantId]
+      [plate, vehicle_type, req.staff.staff_id, tid]
     );
+
+    // 2. Get driver name for the fleet record label
+    const [staffRows] = await query(
+      'SELECT name FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [req.staff.staff_id]
+    );
+    const driverName = staffRows[0]?.name || 'Driver';
+
+    // 3. Upsert into fleet vehicle table so it shows in admin Vehicles page
+    await query(
+      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc)
+       VALUES (?, ?, ?, 0, 'Available', ?)
+       ON DUPLICATE KEY UPDATE
+         vehicle_type  = VALUES(vehicle_type),
+         status        = IF(status = 'Retired', 'Available', status),
+         ownership_doc = VALUES(ownership_doc)`,
+      [tid, plate, vehicle_type, `Registered by driver: ${driverName}`]
+    );
+
     res.json({ ok: true, message: 'Vehicle info saved.' });
   } catch (err) {
     console.error('[PUT /driver/vehicle]', err);
