@@ -135,6 +135,57 @@ router.get('/tenant-config', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DRIVER DOCUMENT ENDPOINTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /driver/documents — get current driver's license info
+router.get('/driver/documents', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const staffId = req.staff.staff_id;
+  try {
+    const [rows] = await query(
+      'SELECT license_url, license_expiry, license_status FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [staffId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('[GET /driver/documents]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /driver/documents — upload driver's license (base64 image + expiry)
+router.put('/driver/documents', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const staffId = req.staff.staff_id;
+  const tid = req.tenantId;
+  const { license_image, license_expiry } = req.body;
+
+  if (!license_image) return res.status(400).json({ error: 'No license image provided.' });
+
+  // Validate base64 image (must start with data:image/)
+  if (!license_image.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Invalid image format. Must be a base64 image.' });
+  }
+
+  try {
+    await query(
+      `UPDATE STAFF SET
+         license_url = ?,
+         license_expiry = ?,
+         license_status = 'pending_review'
+       WHERE staff_id = ? AND tenant_id = ?`,
+      [license_image, license_expiry || null, staffId, tid]
+    );
+    res.json({ ok: true, message: 'License submitted for review.' });
+  } catch (err) {
+    console.error('[PUT /driver/documents]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SHIPMENT ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════════
 

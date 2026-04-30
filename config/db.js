@@ -28,6 +28,9 @@ pool.getConnection()
       "ALTER TABLE SUPERADMIN ADD COLUMN must_change_password TINYINT(1) DEFAULT 0",
       "ALTER TABLE vehicle ADD COLUMN ownership_doc LONGTEXT DEFAULT NULL",
       "ALTER TABLE TENANT ADD COLUMN available_vehicles VARCHAR(255) NULL DEFAULT 'motorcycle,sedan,van,truck,flatbed'",
+      "ALTER TABLE STAFF ADD COLUMN license_url LONGTEXT DEFAULT NULL",
+      "ALTER TABLE STAFF ADD COLUMN license_expiry DATE DEFAULT NULL",
+      "ALTER TABLE STAFF ADD COLUMN license_status ENUM('not_uploaded','pending_review','verified','expired') DEFAULT 'not_uploaded'",
     ];
     for (const sql of migrations) {
       try {

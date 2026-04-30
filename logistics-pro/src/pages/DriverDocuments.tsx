@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { ArrowLeft, Upload, CheckCircle, Clock, XCircle, AlertTriangle, Camera, FileText, ShieldCheck, CalendarDays, Loader2 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 
 const API_BASE = 'https://logistichub.ddns.net';
 
@@ -23,8 +24,9 @@ const STATUS_CONFIG: Record<LicenseStatus, { label: string; color: string; icon:
   expired:        { label: 'Expired',          color: 'text-red-500',    icon: XCircle,       bg: 'bg-red-50 dark:bg-red-900/20' },
 };
 
-export default function Documents() {
+export default function DriverDocuments() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [licenseUrl, setLicenseUrl] = useState<string | null>(null);
