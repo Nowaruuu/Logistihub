@@ -66,6 +66,8 @@ export interface Delivery {
   destLng?: number;
   history: DeliveryHistory[];
   createdAt: string;
+  isPaid?: boolean;       // true if a 'Paid' payment record exists in DB
+  paymentMethod?: string; // e.g. 'gcash', 'card'
 }
 
 export interface Notification {

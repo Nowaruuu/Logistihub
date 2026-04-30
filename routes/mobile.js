@@ -66,10 +66,17 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
         [tid, staffId]
       );
     } else {
-      // Customer: their own shipments
+      // Customer: their own shipments — include payment status via LEFT JOIN
       [rows] = await query(
-        `SELECT * FROM shipment WHERE tenant_id = ? AND sender_user_id = ?
-         ORDER BY created_at DESC LIMIT 50`,
+        `SELECT s.*,
+                CASE WHEN p.status = 'Paid' THEN 1 ELSE 0 END AS is_paid,
+                p.payment_method AS paid_method
+         FROM shipment s
+         LEFT JOIN payment p ON p.delivery_number = s.delivery_number
+                             AND p.tenant_id = s.tenant_id
+                             AND p.status = 'Paid'
+         WHERE s.tenant_id = ? AND s.sender_user_id = ?
+         ORDER BY s.created_at DESC LIMIT 50`,
         [tid, req.user.user_id]
       );
     }

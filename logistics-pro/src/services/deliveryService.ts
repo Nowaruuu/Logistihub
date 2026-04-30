@@ -114,7 +114,9 @@ function mapShipmentToDelivery(row: any): Delivery {
     destLat: row.dropoff_lat,
     destLng: row.dropoff_lng,
     history: [],
-    createdAt: row.created_at || new Date().toISOString()
+    createdAt: row.created_at || new Date().toISOString(),
+    isPaid: row.is_paid === 1 || row.is_paid === true,
+    paymentMethod: row.paid_method || undefined,
   };
 }
 

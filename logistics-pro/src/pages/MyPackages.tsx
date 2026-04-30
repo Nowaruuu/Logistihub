@@ -125,7 +125,6 @@ function MyPackagesInner() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
-  const [paidSet, setPaidSet] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   const isDriver = profile?.role === 'driver';
@@ -315,7 +314,7 @@ function MyPackagesInner() {
                     </div>
                   </div>
                   {/* Pay Now Button */}
-                  {paidSet.has(delivery.trackingNumber || '') ? (
+                  {delivery.isPaid ? (
                     <div className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 text-xs font-bold">
                       <CheckCircle className="size-3.5" />
                       Payment Successful
@@ -340,9 +339,12 @@ function MyPackagesInner() {
                             r.checkout_url,
                             tn,
                             () => {
-                              setPaidSet(prev => new Set(prev).add(tn));
+                              // Optimistically mark as paid in UI immediately
+                              setDeliveries(prev => prev.map(d =>
+                                d.trackingNumber === tn ? { ...d, isPaid: true } : d
+                              ));
                               setPaying(null);
-                              fetchDeliveries();
+                              fetchDeliveries(); // also refresh from DB
                             },
                             () => setPaying(null),
                             prePopup
