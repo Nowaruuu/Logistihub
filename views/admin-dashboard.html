@@ -1353,8 +1353,8 @@ function _getEffectiveBg(el) {
   return bg || '';
 }
 
-function updateAppTextContrast() {
-  var bg = _getEffectiveBg(document.body);
+function updateAppTextContrast(bgOverride) {
+  var bg = bgOverride || _getEffectiveBg(document.body);
   var isDark = _colorLum(bg) < 0.5;
   var headColor = isDark ? '#ffffff' : '#0f172a';
   var subColor = isDark ? 'rgba(255,255,255,.85)' : '#334155';
@@ -1362,10 +1362,10 @@ function updateAppTextContrast() {
   document.querySelectorAll('.ph-row p').forEach(function(el){ el.style.color = subColor; });
 }
 
-function updateSidebarTextContrast() {
+function updateSidebarTextContrast(bgOverride) {
   var sb = document.querySelector('.sidebar');
   if (!sb) return;
-  var bg = _getEffectiveBg(sb);
+  var bg = bgOverride || _getEffectiveBg(sb);
   var isDark = _colorLum(bg) < 0.5;
   // Dark bg → bright white text | Light bg → strong dark text
   var navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
@@ -1551,7 +1551,8 @@ window.addEventListener('load', function() {
     onChange: function(v) {
       document.getElementById('set-bg-app-hex').value = v;
       document.body.style.background = v;  // live apply
-      setTimeout(updateAppTextContrast, 0);
+      updateAppTextContrast(v);  // immediate with value
+      setTimeout(updateAppTextContrast, 0);  // after repaint
       updateColorPreview();
     }
   });
@@ -1561,7 +1562,8 @@ window.addEventListener('load', function() {
     onChange: function(v) {
       document.getElementById('set-bg-sidebar-hex').value = v;
       var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = v;  // live apply
-      setTimeout(updateSidebarTextContrast, 0);
+      updateSidebarTextContrast(v);  // immediate with value
+      setTimeout(updateSidebarTextContrast, 0);  // after repaint
       updateColorPreview();
     }
   });
