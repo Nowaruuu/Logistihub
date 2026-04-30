@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../lib/api';
-import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff, Truck, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { cn } from '../lib/utils';
+import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function SignIn() {
-  const [role, setRole] = useState<'user' | 'driver'>('user');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,10 +32,26 @@ export default function SignIn() {
       const emailPart = username.substring(atIndex + 1); // amongiz.com
       const slug = emailPart.split('.')[0]; // amongiz
       if (!slug) throw new Error('Invalid username format. Use: name@workspace.com');
-      
-      // Sign in with Backend API
-      const authData = await login(slug, role, username, password);
-      
+
+      // Auto-detect: try staff login first, then customer login
+      // This means ONE login box works for drivers AND customers
+      let authData: any = null;
+      let lastError = '';
+
+      try {
+        authData = await login(slug, 'driver', username, password);
+      } catch (staffErr: any) {
+        lastError = staffErr.message;
+      }
+
+      if (!authData) {
+        try {
+          authData = await login(slug, 'user', username, password);
+        } catch (userErr: any) {
+          throw new Error(lastError || userErr.message || 'Invalid credentials.');
+        }
+      }
+
       await signIn({ uid: authData.user?.user_id || authData.staff_id || '123' }, authData);
 
       // Force password change for staff with temp passwords
@@ -51,7 +65,7 @@ export default function SignIn() {
 
       navigate('/dashboard');
     } catch (err: any) {
-      console.error("Sign in error:", err);
+      console.error('Sign in error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -93,32 +107,7 @@ export default function SignIn() {
             </div>
           )}
           {error && <p className="text-red-500 text-xs font-bold px-1">{error}</p>}
-          
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-4">
-            <button
-              type="button"
-              onClick={() => setRole('user')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all",
-                role === 'user' ? "bg-white dark:bg-slate-700 text-orange-600 shadow-sm" : "text-slate-500"
-              )}
-            >
-              <UserCircle className="size-4" />
-              Client
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('driver')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all",
-                role === 'driver' ? "bg-white dark:bg-slate-700 text-orange-600 shadow-sm" : "text-slate-500"
-              )}
-            >
-              <Truck className="size-4" />
-              Driver
-            </button>
-          </div>
-          
+
           <div className="flex flex-col w-full">
             <label className="group flex flex-col flex-1">
               <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Username</p>
