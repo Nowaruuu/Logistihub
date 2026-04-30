@@ -1315,20 +1315,37 @@ function applyBranding(d) {
 
 function _colorLum(col) {
   if (!col) return 1;
-  // Handle gradient strings — use MINIMUM luminance (darkest stop)
-  // If any part of the gradient is dark, use white text for readability
+  // Handle gradient strings — weighted average by position (majority wins)
   if (col.includes('gradient')) {
+    // Extract rgba + position pairs
+    var pairs = [];
+    var re = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)\s*([\d.]+)%/g;
+    var match;
+    while ((match = re.exec(col)) !== null) {
+      var lum = (0.299*parseInt(match[1]) + 0.587*parseInt(match[2]) + 0.114*parseInt(match[3])) / 255;
+      pairs.push({ lum: lum, pos: parseFloat(match[4]) });
+    }
+    if (pairs.length >= 2) {
+      // Weighted average: each segment between stops, weighted by width
+      pairs.sort(function(a, b) { return a.pos - b.pos; });
+      var totalWeight = 0, totalLum = 0;
+      for (var i = 0; i < pairs.length - 1; i++) {
+        var width = pairs[i+1].pos - pairs[i].pos;
+        var avgLum = (pairs[i].lum + pairs[i+1].lum) / 2;
+        totalLum += avgLum * width;
+        totalWeight += width;
+      }
+      return totalWeight > 0 ? totalLum / totalWeight : pairs[0].lum;
+    }
+    // Fallback: simple average if positions not found
     var stops = col.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g);
     if (stops && stops.length) {
-      var minLum = 1;
+      var total = 0;
       stops.forEach(function(s) {
         var m = s.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-        if (m) {
-          var lum = (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
-          if (lum < minLum) minLum = lum;
-        }
+        if (m) total += (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
       });
-      return minLum;
+      return total / stops.length;
     }
     return 1;
   }
@@ -1376,16 +1393,15 @@ function updateSidebarTextContrast(bgOverride) {
   var navText, navActive, navSec, tenant, subText, shadow;
 
   if (isGrad) {
-    // Gradient: use full opacity text + strong shadow for readability
+    // Gradient: solid black or white based on which color dominates
     if (isDark) {
-      navText = '#ffffff'; navActive = '#ffffff'; navSec = '#ffffff';
-      tenant = '#ffffff'; subText = 'rgba(255,255,255,.85)';
-      shadow = '0 0 4px rgba(0,0,0,.9), 0 0 10px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.8)';
+      navText = '#ffffff'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.7)';
+      tenant = '#ffffff'; subText = 'rgba(255,255,255,.7)';
     } else {
-      navText = '#0f172a'; navActive = '#000000'; navSec = '#1e293b';
-      tenant = '#000000'; subText = 'rgba(0,0,0,.8)';
-      shadow = '0 0 4px rgba(255,255,255,.9), 0 0 10px rgba(255,255,255,.6), 0 1px 2px rgba(255,255,255,.8)';
+      navText = '#000000'; navActive = '#000000'; navSec = 'rgba(0,0,0,.6)';
+      tenant = '#000000'; subText = 'rgba(0,0,0,.6)';
     }
+    shadow = 'none';
   } else {
     // Solid color: standard contrast
     navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
