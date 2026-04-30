@@ -769,5 +769,133 @@ router.get('/:slug/api/admin/audit-logs', requireAdmin, requireSlugMatch, async 
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UPGRADE PLAN — PayMongo Checkout
+// ─────────────────────────────────────────────────────────────────────────────
+const PLAN_PRICES = {
+  startup:    { amount: 9900,  label: 'Startup Plan'    },   // ₱99 in centavos
+  enterprise: { amount: 49900, label: 'Enterprise Plan' },   // ₱499
+  global:     { amount: 99900, label: 'Global Plan'     },   // ₱999
+};
+const PLAN_ORDER = ['startup', 'enterprise', 'global'];
+
+router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { plan } = req.body;
+  const tid = req.tenantId;
+  const slug = req.params.slug;
+
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
+
+  // Check that the plan is actually an upgrade
+  const [[tenant]] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+  const currentIdx = PLAN_ORDER.indexOf(tenant?.plan?.toLowerCase() || 'startup');
+  const targetIdx  = PLAN_ORDER.indexOf(plan);
+  if (targetIdx <= currentIdx) return res.status(400).json({ error: 'You can only upgrade to a higher plan.' });
+
+  const pmKey = process.env.PAYMONGO_SECRET_KEY;
+  if (!pmKey) return res.status(500).json({ error: 'Payment gateway not configured. Contact platform support.' });
+
+  try {
+    const baseUrl = process.env.BASE_URL || 'https://logistichub.ddns.net';
+    const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64'),
+      },
+      body: JSON.stringify({
+        data: {
+          attributes: {
+            line_items: [{
+              name: PLAN_PRICES[plan].label + ' — ' + (tenant?.company_name || slug),
+              amount: PLAN_PRICES[plan].amount,
+              currency: 'PHP',
+              quantity: 1,
+            }],
+            payment_method_types: ['gcash', 'card', 'grab_pay', 'paymaya'],
+            description: `Subscription upgrade to ${plan} for ${slug}`,
+            success_url: `${baseUrl}/${slug}/api/admin/upgrade/success?plan=${plan}&session_id={id}`,
+            cancel_url: `${baseUrl}/${slug}/admin`,
+            metadata: { tenant_id: String(tid), slug, plan },
+          }
+        }
+      })
+    });
+    const pmData = await response.json();
+    if (!response.ok) {
+      console.error('[PayMongo checkout error]', JSON.stringify(pmData));
+      return res.status(502).json({ error: 'Payment gateway error. Please try again.' });
+    }
+    const checkoutUrl = pmData.data?.attributes?.checkout_url;
+    if (!checkoutUrl) return res.status(502).json({ error: 'Could not create checkout session.' });
+
+    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'UPGRADE_INITIATED', target: `${tenant?.plan} → ${plan}`, tenant_slug: slug, ip_address: req.ip });
+    res.json({ ok: true, checkout_url: checkoutUrl });
+  } catch(err) {
+    console.error('[POST /admin/upgrade]', err);
+    res.status(500).json({ error: 'Failed to create checkout. ' + err.message });
+  }
+});
+
+// Success callback after PayMongo payment
+router.get('/:slug/api/admin/upgrade/success', async (req, res) => {
+  const { plan, session_id } = req.query;
+  const slug = req.params.slug;
+
+  if (!plan || !PLAN_PRICES[plan]) return res.redirect(`/${slug}/admin`);
+
+  try {
+    // Verify the checkout session is paid
+    const pmKey = process.env.PAYMONGO_SECRET_KEY;
+    if (pmKey && session_id) {
+      const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${session_id}`, {
+        headers: { 'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64') }
+      });
+      const pmData = await pmRes.json();
+      const pmStatus = pmData.data?.attributes?.payment_intent?.attributes?.status
+                     || pmData.data?.attributes?.status;
+      if (pmStatus !== 'paid' && pmStatus !== 'active' && pmStatus !== 'succeeded') {
+        return res.redirect(`/${slug}/admin`);
+      }
+    }
+
+    // Update tenant plan
+    const [[tenant]] = await query('SELECT tenant_id, plan FROM TENANT WHERE slug = ?', [slug]);
+    if (!tenant) return res.redirect(`/${slug}/admin`);
+
+    await query('UPDATE TENANT SET plan = ? WHERE tenant_id = ?', [plan, tenant.tenant_id]);
+
+    // Record subscription payment
+    try {
+      await query(
+        'INSERT INTO SUBSCRIPTION_PAYMENT (tenant_id, plan, amount, currency, status, is_test_mode) VALUES (?, ?, ?, ?, ?, ?)',
+        [tenant.tenant_id, plan, PLAN_PRICES[plan].amount / 100, 'PHP', 'paid', pmKey?.startsWith('sk_test') ? 1 : 0]
+      );
+    } catch(_) { /* table might not exist yet */ }
+
+    logAudit({ actor: 'system', actor_type: 'system', action: 'UPGRADE_COMPLETED', target: `${tenant.plan} → ${plan}`, tenant_slug: slug });
+
+    // Redirect to admin with success message
+    res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Upgrade Successful</title>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+      <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f1f5f9;}
+      .card{background:#fff;border-radius:20px;padding:48px;text-align:center;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+      .ico{width:64px;height:64px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+      .material-symbols-outlined{font-variation-settings:'FILL' 1;font-size:32px;color:#10b981;}
+      h1{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px;}p{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:24px;}
+      a{display:inline-flex;align-items:center;gap:6px;padding:12px 28px;background:#0f2235;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;}
+      </style></head><body><div class="card">
+      <div class="ico"><span class="material-symbols-outlined">check_circle</span></div>
+      <h1>Upgrade Successful!</h1>
+      <p>Your plan has been upgraded to <strong style="text-transform:uppercase;color:#0f172a;">${plan}</strong>. Enjoy your new features!</p>
+      <a href="/${slug}/admin"><span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>Back to Dashboard</a>
+      </div></body></html>`);
+  } catch(err) {
+    console.error('[GET /admin/upgrade/success]', err);
+    res.redirect(`/${slug}/admin`);
+  }
+});
+
 module.exports = router;
 
