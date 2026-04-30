@@ -1153,8 +1153,8 @@ loadShipments();
   var appBg = t.bg_app_color;
   if (appBg) {
     var dark = _lum(appBg) < 0.5;
-    var hc = dark ? '#f1f5f9' : '#0f2235';
-    var sc = dark ? '#cbd5e1' : '#475569';
+    var hc = dark ? '#ffffff' : '#0f172a';
+    var sc = dark ? 'rgba(255,255,255,.85)' : '#334155';
     document.querySelectorAll('.ph-row h2').forEach(function(el){ el.style.color = hc; });
     document.querySelectorAll('.ph-row p').forEach(function(el){ el.style.color = sc; });
   }
@@ -1162,11 +1162,11 @@ loadShipments();
   var sideBg = t.bg_sidebar_color;
   if (sideBg) {
     var sd = _lum(sideBg) < 0.5;
-    var nt = sd ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.5)';
-    var na = sd ? '#fff' : '#0f172a';
-    var ns = sd ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.25)';
-    var tc = sd ? '#fff' : '#0f172a';
-    var st = sd ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)';
+    var nt = sd ? 'rgba(255,255,255,.7)' : 'rgba(0,0,0,.6)';
+    var na = sd ? '#ffffff' : '#0f172a';
+    var ns = sd ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.45)';
+    var tc = sd ? '#ffffff' : '#0f172a';
+    var st = sd ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.5)';
     document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')) el.style.color = nt; });
     document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = na; });
     document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = ns; });
@@ -1328,8 +1328,8 @@ function _colorLum(col) {
 function updateAppTextContrast() {
   var bg = getComputedStyle(document.body).backgroundColor;
   var isDark = _colorLum(bg) < 0.5;
-  var headColor = isDark ? '#f1f5f9' : '#0f2235';
-  var subColor = isDark ? '#cbd5e1' : '#475569';
+  var headColor = isDark ? '#ffffff' : '#0f172a';
+  var subColor = isDark ? 'rgba(255,255,255,.85)' : '#334155';
   document.querySelectorAll('.ph-row h2').forEach(function(el){ el.style.color = headColor; });
   document.querySelectorAll('.ph-row p').forEach(function(el){ el.style.color = subColor; });
 }
@@ -1339,11 +1339,12 @@ function updateSidebarTextContrast() {
   if (!sb) return;
   var bg = getComputedStyle(sb).backgroundColor;
   var isDark = _colorLum(bg) < 0.5;
-  var navText = isDark ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.5)';
-  var navActive = isDark ? '#fff' : '#0f172a';
-  var navSec = isDark ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.25)';
-  var tenant = isDark ? '#fff' : '#0f172a';
-  var subText = isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)';
+  // Dark bg → bright white text | Light bg → strong dark text
+  var navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
+  var navActive = isDark ? '#ffffff'                : '#0f172a';
+  var navSec =    isDark ? 'rgba(255,255,255,.35)'  : 'rgba(0,0,0,.45)';
+  var tenant =    isDark ? '#ffffff'                : '#0f172a';
+  var subText =   isDark ? 'rgba(255,255,255,.55)'  : 'rgba(0,0,0,.5)';
   document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')) el.style.color = navText; });
   document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; });
   document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; });
