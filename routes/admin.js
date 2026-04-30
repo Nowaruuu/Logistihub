@@ -771,7 +771,7 @@ router.get('/:slug/api/admin/audit-logs', requireAdmin, requireSlugMatch, async 
           a.actor
         ) AS actor_name
       FROM AUDIT_LOG a
-      LEFT JOIN STAFF s ON a.actor = s.email AND s.tenant_id = ?
+      LEFT JOIN STAFF s ON a.actor = s.username AND s.tenant_id = ?
       WHERE a.tenant_slug = ? AND a.actor_type != 'superadmin'
       ORDER BY a.created_at DESC LIMIT 200
     `, [tid, slug]);
