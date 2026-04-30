@@ -47,6 +47,37 @@ async function createNotification(userId, userType, tenantId, title, message, ty
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TENANT CONFIG (public — no auth, used at app boot)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /tenant-config — returns tenant branding + available vehicle types
+router.get('/tenant-config', async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const [rows] = await query(
+      `SELECT company_name, logo_url, primary_color, available_vehicles
+       FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
+      [slug]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
+    const t = rows[0];
+    // Default: all vehicles enabled if column not set
+    const vehicles = t.available_vehicles
+      ? t.available_vehicles.split(',').map(v => v.trim()).filter(Boolean)
+      : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
+    res.json({
+      company_name: t.company_name,
+      logo_url: t.logo_url || null,
+      primary_color: t.primary_color || '#ea580c',
+      available_vehicles: vehicles,
+    });
+  } catch (err) {
+    console.error('[GET /tenant-config]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SHIPMENT ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════════
 

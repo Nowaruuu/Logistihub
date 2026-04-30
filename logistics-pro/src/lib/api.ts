@@ -14,7 +14,19 @@ function mobileUrl(path: string): string {
 }
 
 function apiUrl(path: string): string {
-  return `${API_BASE_URL}/${getSlug()}/api${path}`;
+  return `${API_BASE_URL}/${getSlug()}/api${path}`; 
+}
+
+export async function getTenantConfig(): Promise<{ available_vehicles: string[]; company_name: string; logo_url: string | null; primary_color: string }> {
+  const slug = localStorage.getItem('auth_slug') || '';
+  if (!slug) return { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], company_name: '', logo_url: null, primary_color: '#ea580c' };
+  try {
+    const res = await fetch(`${API_BASE_URL}/${slug}/api/mobile/tenant-config`);
+    if (!res.ok) throw new Error('failed');
+    return res.json();
+  } catch {
+    return { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], company_name: '', logo_url: null, primary_color: '#ea580c' };
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

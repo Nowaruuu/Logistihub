@@ -37,6 +37,13 @@ export const DestinationIcon = createCustomIcon('#2563eb', 'pin'); // blue-600
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Philippines geographic bounds
+const PH_BOUNDS: L.LatLngBoundsExpression = [
+  [4.5, 114.1],  // SW corner
+  [21.1, 126.6], // NE corner
+];
+const PH_CENTER: [number, number] = [12.8797, 121.7740]; // center of PH
+
 interface MapProps {
   center: [number, number];
   zoom?: number;
@@ -104,6 +111,9 @@ export default function Map({
       zoom={zoom} 
       className={className}
       scrollWheelZoom={false}
+      maxBounds={PH_BOUNDS}
+      maxBoundsViscosity={1.0}
+      minZoom={5}
     >
       <MapController 
         center={center} 

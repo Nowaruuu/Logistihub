@@ -5,6 +5,7 @@ import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phon
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
+import { getTenantConfig } from '../lib/api';
 import { Geolocation } from '@capacitor/geolocation';
 
 // Category types matching database item_type_flag
@@ -16,13 +17,20 @@ const PACKAGE_CATEGORIES = [
   { id: 'BULK', label: 'Bulk Freight', icon: Boxes, desc: 'Pallets, wholesale cargo' },
 ] as const;
 
-// Vehicle types with compatibility per category
+// Vehicle types with REAL Philippine fuel rates
+// Based on: Gasoline ~₱61/L, Diesel ~₱55/L (as of 2025)
+// Fuel cost per km = price_per_liter ÷ km_per_liter
 const VEHICLE_TYPES = [
-  { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 20, fuelRate: 2.5, desc: 'Small parcels, documents' },
-  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 100, fuelRate: 5, desc: 'Medium packages' },
-  { id: 'van', label: 'Van', icon: Truck, maxKg: 500, fuelRate: 8, desc: 'Multiple boxes, food' },
-  { id: 'truck', label: 'Truck', icon: Truck, maxKg: 5000, fuelRate: 15, desc: 'Heavy cargo, pallets' },
-  { id: 'flatbed', label: 'Flatbed', icon: Truck, maxKg: 20000, fuelRate: 22, desc: 'Vehicles, heavy equipment' },
+  // Motorcycle: ~35 km/L gasoline → ₱61/35 = ₱1.74/km + driver labor → ~₱2.20/km
+  { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 20, fuelRate: 2.20, desc: 'Small parcels, documents', fuelType: 'Gasoline' },
+  // Sedan: ~13 km/L gasoline → ₱61/13 = ₱4.69/km
+  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 100, fuelRate: 4.70, desc: 'Medium packages', fuelType: 'Gasoline' },
+  // Van: ~9 km/L diesel → ₱55/9 = ₱6.11/km
+  { id: 'van', label: 'Van', icon: Truck, maxKg: 500, fuelRate: 6.11, desc: 'Multiple boxes, food', fuelType: 'Diesel' },
+  // Truck: ~5 km/L diesel → ₱55/5 = ₱11/km
+  { id: 'truck', label: 'Truck', icon: Truck, maxKg: 5000, fuelRate: 11.00, desc: 'Heavy cargo, pallets', fuelType: 'Diesel' },
+  // Flatbed: ~3.5 km/L diesel → ₱55/3.5 = ₱15.71/km
+  { id: 'flatbed', label: 'Flatbed', icon: Truck, maxKg: 20000, fuelRate: 15.71, desc: 'Vehicles, heavy equipment', fuelType: 'Diesel' },
 ] as const;
 
 // Which vehicles are compatible with each category
@@ -113,9 +121,17 @@ export default function SendPackage() {
   const pickupTimer = useRef<ReturnType<typeof setTimeout>>();
   const destTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  // Tenant-configured vehicles (fetched from backend)
+  const [tenantVehicles, setTenantVehicles] = useState<string[]>(['motorcycle','sedan','van','truck','flatbed']);
+  useEffect(() => {
+    getTenantConfig().then(cfg => setTenantVehicles(cfg.available_vehicles));
+  }, []);
+
   // Vehicle selection state
   const [vehicle, setVehicle] = useState('sedan');
-  const compatibleVehicles = CATEGORY_VEHICLES[category] || ['sedan'];
+  // Compatible = category rules ∩ tenant fleet
+  const categoryAllowed = CATEGORY_VEHICLES[category] || ['sedan'];
+  const compatibleVehicles = categoryAllowed.filter(v => tenantVehicles.includes(v));
 
   // OSRM route state
   const [routeDistKm, setRouteDistKm] = useState(0);
