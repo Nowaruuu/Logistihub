@@ -624,11 +624,10 @@ textarea{resize:vertical;}
                 <th>TYPE</th>
                 <th>ACTION</th>
                 <th>TARGET</th>
-                <th>IP</th>
               </tr>
             </thead>
             <tbody id="audit-logs-tbody">
-              <tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">history</span><p>No audit logs available</p></div></td></tr>
+              <tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">history</span><p>No audit logs available</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1901,12 +1900,12 @@ async function submitUpdateVehicle() {
 async function loadAuditLogs() {
   var tb = document.getElementById('audit-logs-tbody');
   if(!tb) return;
-  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
+  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
   try {
     var res = await apiFetch('/' + _SLUG + '/api/admin/audit-logs');
     var logs = await res.json();
     if(!logs || !logs.length) {
-      tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">history</span><p>No audit logs available</p></div></td></tr>';
+      tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">history</span><p>No audit logs available</p></div></td></tr>';
       return;
     }
     tb.innerHTML = logs.map(function(l) {
@@ -1925,7 +1924,6 @@ async function loadAuditLogs() {
         '<td>' + typeHtml + '</td>' +
         '<td><span style="background:#f1f5f9;color:#334155;padding:3px 8px;border-radius:6px;font-size:11px;font-family:\'DM Mono\',monospace;font-weight:600;">' + esc(l.action) + '</span></td>' +
         '<td>' + esc(l.target || '—') + '</td>' +
-        '<td style="font-family:\'DM Mono\',monospace;font-size:11px;color:#94a3b8;">' + esc(l.ip_address || '—') + '</td>' +
       '</tr>';
     }).join('');
   } catch (e) {
