@@ -1514,6 +1514,9 @@ window.addEventListener('load', function() {
       updateColorPreview();
     }
   });
+
+  // Run contrast immediately now that FillLists are initialized
+  setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
 });</script>
 
 <!-- LIVE PREVIEW PANEL -->
