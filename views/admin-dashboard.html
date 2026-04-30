@@ -603,7 +603,8 @@ textarea{resize:vertical;}
           </div>
         </div>
 
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <button class="btn" onclick="resetToDefaults()" style="font-size:12px;padding:8px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px;">restart_alt</span>Reset to Default</button>
           <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
         </div>
       </div>
@@ -1251,6 +1252,72 @@ function applyBranding(d) {
   if (brandCol) document.documentElement.style.setProperty('--primary', brandCol);
   if (appCol) document.documentElement.style.setProperty('--app-bg', appCol);
   if (sideCol) document.documentElement.style.setProperty('--sidebar-bg', sideCol);
+}
+
+async function resetToDefaults() {
+  if (!confirm('Reset all settings to default? This will clear your logo, background, and all custom colors.')) return;
+  var t = window.__TENANT__;
+  if (!t) return;
+  var slug = t.slug;
+
+  // Default values
+  var defaults = {
+    brand_color: '#3b82f6',
+    bg_app_color: '#f1f5f9',
+    bg_sidebar_color: '#0f2235',
+    bg_page_color: '#ffffff',
+    bg_hero_color: null,
+    logo_url: null,
+    background_url: null
+  };
+
+  // Reset UI fields
+  document.getElementById('set-brand-color-hex').value = defaults.brand_color;
+  document.getElementById('set-bg-app-hex').value = defaults.bg_app_color;
+  document.getElementById('set-bg-sidebar-hex').value = defaults.bg_sidebar_color;
+  document.getElementById('set-page-bg-hex').value = defaults.bg_page_color;
+  var heroHex = document.getElementById('set-hero-color-hex');
+  if (heroHex) heroHex.value = '';
+
+  // Reset fill lists if available
+  if (typeof _brandFL !== 'undefined' && _brandFL && _brandFL.setValue) _brandFL.setValue(defaults.brand_color);
+  if (typeof _appFL !== 'undefined' && _appFL && _appFL.setValue) _appFL.setValue(defaults.bg_app_color);
+  if (typeof _sidebarFL !== 'undefined' && _sidebarFL && _sidebarFL.setValue) _sidebarFL.setValue(defaults.bg_sidebar_color);
+  if (typeof _pageFL !== 'undefined' && _pageFL && _pageFL.setValue) _pageFL.setValue(defaults.bg_page_color);
+
+  // Clear logo preview
+  var logoPrev = document.getElementById('logo-preview');
+  if (logoPrev) { logoPrev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>'; logoPrev.dataset.base64 = ''; }
+
+  // Clear bg preview
+  var bgPrev = document.getElementById('bg-preview');
+  if (bgPrev) { bgPrev.style.backgroundImage = ''; bgPrev.style.display = 'none'; bgPrev.dataset.base64 = ''; }
+
+  // Reset GUI scale
+  setGuiScale('md');
+
+  // Apply live
+  document.body.style.background = defaults.bg_app_color;
+  var sb = document.querySelector('.sidebar');
+  if (sb) sb.style.background = defaults.bg_sidebar_color;
+  document.documentElement.style.setProperty('--primary', defaults.brand_color);
+
+  // Save to server
+  try {
+    var r = await apiFetch('/' + slug + '/api/admin/settings', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(defaults)
+    });
+    if (r.ok) {
+      alert('Settings reset to default successfully!');
+      location.reload();
+    } else {
+      alert('Failed to reset settings.');
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 async function saveSettings() {
