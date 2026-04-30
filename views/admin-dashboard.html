@@ -243,11 +243,7 @@ textarea{resize:vertical;}
     <div class="tb-right">
       <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
-      <select class="gui-scale-select" id="gui-scale" onchange="setGuiScale(this.value)" title="GUI Scale">
-        <option value="sm">Small</option>
-        <option value="md" selected>Medium</option>
-        <option value="lg">Large</option>
-      </select>
+
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
     </div>
   </div>
@@ -592,6 +588,17 @@ textarea{resize:vertical;}
           <label class="form-label">New Password <span style="color:#94a3b8;font-weight:400;">(leave blank to keep)</span></label>
           <div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input id="set-password" type="password"/></div>
         </div>
+        <div class="form-sec" style="margin-top:6px;">Display</div>
+        <div class="form-group">
+          <label class="form-label">GUI Scale</label>
+          <p style="font-size:11px;color:#94a3b8;margin-bottom:8px;">Adjusts the overall text and container size of the dashboard.</p>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn gui-scale-btn" data-scale="sm" onclick="setGuiScale('sm')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Small</button>
+            <button type="button" class="btn gui-scale-btn" data-scale="md" onclick="setGuiScale('md')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Medium</button>
+            <button type="button" class="btn gui-scale-btn" data-scale="lg" onclick="setGuiScale('lg')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Large</button>
+          </div>
+        </div>
+
         <div style="display:flex;justify-content:flex-end;margin-top:4px;">
           <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
         </div>
@@ -874,12 +881,20 @@ function setGuiScale(size) {
   document.body.classList.remove('scale-sm','scale-md','scale-lg');
   document.body.classList.add('scale-' + size);
   localStorage.setItem('gui_scale', size);
+  // Highlight active button
+  document.querySelectorAll('.gui-scale-btn').forEach(function(b) {
+    if (b.getAttribute('data-scale') === size) {
+      b.style.borderColor = '#3b82f6'; b.style.background = '#eff6ff'; b.style.color = '#3b82f6';
+    } else {
+      b.style.borderColor = '#e2e8f0'; b.style.background = '#fff'; b.style.color = '#0f172a';
+    }
+  });
 }
 (function(){
   var saved = localStorage.getItem('gui_scale') || 'md';
   document.body.classList.add('scale-' + saved);
-  var sel = document.getElementById('gui-scale');
-  if(sel) sel.value = saved;
+  // Highlight active button on load
+  setTimeout(function(){ setGuiScale(saved); }, 100);
 })();
 </script>
 
@@ -1889,10 +1904,9 @@ async function loadAuditLogs() {
     }
     tb.innerHTML = logs.map(function(l) {
       var ts = new Date(l.created_at).toLocaleString();
-      // Show name instead of email: resolve from actor field
-      var act = esc(l.actor || 'system');
-      // If actor looks like an email, try to display just the name part before @, capitalized
-      if (act.indexOf('@') > 0) {
+      // Use first_name + last_name from the backend if available
+      var act = l.actor_name ? esc(l.actor_name) : esc(l.actor || 'system');
+      if (!l.actor_name && act.indexOf('@') > 0) {
         var namePart = act.split('@')[0].replace(/[._]/g,' ');
         act = namePart.split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
       }

@@ -761,7 +761,21 @@ router.get('/:slug/api/manager/me', requireManager, requireSlugMatch, async (req
 router.get('/:slug/api/admin/audit-logs', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
     const slug = req.params.slug;
-    const [rows] = await query("SELECT * FROM AUDIT_LOG WHERE tenant_slug = ? AND actor_type != 'superadmin' ORDER BY created_at DESC LIMIT 200", [slug]);
+    const tid = req.tenantId;
+    // JOIN with ADMIN and STAFF to resolve first_name + last_name from the actor email
+    const [rows] = await query(`
+      SELECT a.*,
+        COALESCE(
+          CONCAT(ad.first_name, ' ', ad.last_name),
+          CONCAT(s.first_name, ' ', s.last_name),
+          a.actor
+        ) AS actor_name
+      FROM AUDIT_LOG a
+      LEFT JOIN ADMIN ad ON a.actor = ad.email AND ad.tenant_id = ?
+      LEFT JOIN STAFF s  ON a.actor = s.email  AND s.tenant_id = ?
+      WHERE a.tenant_slug = ? AND a.actor_type != 'superadmin'
+      ORDER BY a.created_at DESC LIMIT 200
+    `, [tid, tid, slug]);
     res.json(rows);
   } catch (e) {
     console.error('Admin audit logs error:', e);
