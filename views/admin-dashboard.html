@@ -1393,16 +1393,15 @@ function updateSidebarTextContrast(bgOverride) {
   var navText, navActive, navSec, tenant, subText, shadow;
 
   if (isGrad) {
-    // Gradient: majority-based color + soft glow for readability
+    // Gradient: clean text, majority color wins
     if (isDark) {
       navText = '#ffffff'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.7)';
       tenant = '#ffffff'; subText = 'rgba(255,255,255,.7)';
-      shadow = '0 0 8px rgba(0,0,0,.8), 0 0 16px rgba(0,0,0,.4)';
     } else {
       navText = '#000000'; navActive = '#000000'; navSec = 'rgba(0,0,0,.6)';
       tenant = '#000000'; subText = 'rgba(0,0,0,.6)';
-      shadow = '0 0 8px rgba(255,255,255,.8), 0 0 16px rgba(255,255,255,.4)';
     }
+    shadow = 'none';
   } else {
     // Solid color: standard contrast
     navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
