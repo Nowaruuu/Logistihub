@@ -1355,8 +1355,9 @@ async function saveSettings() {
       payload.background_url = null;
     }
   }
-  var btn = event.target;
-  btn.disabled = true; btn.textContent = 'Saving...';
+  var btn = document.querySelector('[onclick="saveSettings()"]');
+  if (!btn) btn = event && event.target ? event.target.closest('button') || event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   try {
     var r = await apiFetch('/' + slug + '/api/admin/settings', {
       method: 'PUT',
@@ -1364,21 +1365,20 @@ async function saveSettings() {
       body: JSON.stringify(payload)
     });
     if (_sessionExpired) return; // modal already shown, stop
-    if (r.status && r.status >= 400) { alert('Failed to save. Please check your connection.'); btn.disabled=false; btn.textContent='Save Changes'; return; }
+    if (r.status && r.status >= 400) { alert('Failed to save. Please check your connection.'); return; }
     var d = await r.json();
     if (d.success) {
-      btn.textContent = '✓ Saved!';
-      btn.style.background = '#16a34a';
+      if (btn) { btn.textContent = '✓ Saved!'; btn.style.background = '#16a34a'; }
       applyBranding(payload);
-      setTimeout(function(){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; }, 2000);
+      setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; } }, 2000);
+      return;
     } else {
       alert(d.error || 'Failed to save');
-      btn.disabled=false; btn.textContent='Save Changes';
     }
   } catch(e) {
     alert('Error: ' + e.message);
-    btn.disabled=false; btn.textContent='Save Changes';
   }
+  if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
 // ── FillList init ────────────────────────────────────
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
