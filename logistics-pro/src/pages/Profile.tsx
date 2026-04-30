@@ -12,6 +12,7 @@ export default function Profile() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [driverData, setDriverData] = useState<Driver | null>(null);
+  const [vehicleInfo, setVehicleInfo] = useState<{ vehicle_plate: string; vehicle_type: string } | null>(null);
   const [loadingDriver, setLoadingDriver] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,12 +64,22 @@ export default function Profile() {
           const data = await userService.getDriver(profile.uid);
           setDriverData(data);
         } catch (err) {
-          console.error("Error fetching driver record:", err);
+          console.error('Error fetching driver record:', err);
         } finally {
           setLoadingDriver(false);
         }
       };
       fetchDriver();
+
+      // Also fetch vehicle info from the real endpoint
+      const slug = localStorage.getItem('auth_slug') || '';
+      const token = localStorage.getItem('auth_token') || '';
+      fetch(`https://logistichub.ddns.net/${slug}/api/mobile/driver/vehicle`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.vehicle_plate) setVehicleInfo(d); })
+        .catch(() => {});
     }
   }, [profile]);
 
@@ -333,7 +344,11 @@ export default function Profile() {
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-slate-900 dark:text-slate-100 font-bold text-[15px]">Vehicle Information</p>
-                  <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">{driverData?.vehicleModel || 'No vehicle set'} • {driverData?.plateNumber || 'N/A'}</p>
+                  <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">
+                    {vehicleInfo?.vehicle_plate
+                      ? `${vehicleInfo.vehicle_plate} • ${vehicleInfo.vehicle_type}`
+                      : 'No vehicle set • tap to add'}
+                  </p>
                 </div>
                 <ChevronRight className="text-slate-300 dark:text-slate-600 size-5" />
               </button>
