@@ -65,6 +65,7 @@ router.get('/tenant-config', async (req, res) => {
     // Derive vehicle types from the actual vehicle table for this tenant
     // This ensures we ONLY show what the tenant actually owns
     let vehicleTypes = [];
+    let capacityMap = {};
     try {
       const [tenantRow] = await query(
         'SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [slug]
@@ -88,9 +89,8 @@ router.get('/tenant-config', async (req, res) => {
           'flatbed': 'flatbed',
         };
         // Also get max capacity per mapped type
-        const capacityMap: Record<string, number> = {};
         const seen = new Set();
-        vrows.forEach((r: any) => {
+        vrows.forEach((r) => {
           const mapped = typeMap[r.vtype];
           if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
         });
@@ -101,7 +101,7 @@ router.get('/tenant-config', async (req, res) => {
            GROUP BY LOWER(vehicle_type)`,
           [tid]
         );
-        capRows.forEach((r: any) => {
+        capRows.forEach((r) => {
           const mapped = typeMap[r.vtype];
           if (mapped && r.max_cap) {
             // Convert tons to kg, take max if multiple vehicles of same mapped type
