@@ -1240,19 +1240,14 @@ function loadSettings() {
       if (d.slug) document.getElementById('set-slug').value = d.slug;
       if (d.name) document.getElementById('set-name').value = d.name;
       if (d.email) document.getElementById('set-email').value = d.email;
-      // App & Sidebar colors — load into FillList + hidden inputs
-      if (d.brand_color) {
-        document.getElementById('set-brand-color-hex').value = d.brand_color;
-        if (typeof _brandFL !== 'undefined' && _brandFL) _brandFL.setValue(d.brand_color);
-      }
-      if (d.bg_app_color) {
-        document.getElementById('set-bg-app-hex').value = d.bg_app_color;
-        if (typeof _appFL !== 'undefined' && _appFL) _appFL.setValue(d.bg_app_color);
-      }
-      if (d.bg_sidebar_color) {
-        document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
-        if (typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
-      }
+      // Set ALL hidden inputs FIRST (before FillList setValue which triggers updateColorPreview)
+      if (d.brand_color)      document.getElementById('set-brand-color-hex').value = d.brand_color;
+      if (d.bg_app_color)     document.getElementById('set-bg-app-hex').value = d.bg_app_color;
+      if (d.bg_sidebar_color) document.getElementById('set-bg-sidebar-hex').value = d.bg_sidebar_color;
+      // Now update FillLists (their onChange calls updateColorPreview which reads the inputs above)
+      if (d.brand_color && typeof _brandFL !== 'undefined' && _brandFL)     _brandFL.setValue(d.brand_color);
+      if (d.bg_app_color && typeof _appFL !== 'undefined' && _appFL)        _appFL.setValue(d.bg_app_color);
+      if (d.bg_sidebar_color && typeof _sidebarFL !== 'undefined' && _sidebarFL) _sidebarFL.setValue(d.bg_sidebar_color);
       if (d.logo_url) {
         // Update settings preview
         document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
