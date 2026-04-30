@@ -13,7 +13,9 @@ const authMiddleware = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'Authentication required.' });
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.role === 'user') {
+    // Normalize role: 'user'/'User' → req.user, anything else (Driver, Manager…) → req.staff
+    const roleLower = (payload.role || '').toLowerCase();
+    if (roleLower === 'user') {
       req.user = payload;
     } else {
       req.staff = payload;
