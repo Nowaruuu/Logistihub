@@ -1393,15 +1393,18 @@ function updateSidebarTextContrast(bgOverride) {
   var navText, navActive, navSec, tenant, subText, shadow;
 
   if (isGrad) {
-    // Gradient: solid black or white based on which color dominates
+    // Gradient: majority-based color + strong stroke for the minority area
     if (isDark) {
       navText = '#ffffff'; navActive = '#ffffff'; navSec = 'rgba(255,255,255,.7)';
       tenant = '#ffffff'; subText = 'rgba(255,255,255,.7)';
+      // White text with dark stroke so it's readable on lighter parts too
+      shadow = '-1px -1px 0 rgba(0,0,0,.6), 1px -1px 0 rgba(0,0,0,.6), -1px 1px 0 rgba(0,0,0,.6), 1px 1px 0 rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.5)';
     } else {
       navText = '#000000'; navActive = '#000000'; navSec = 'rgba(0,0,0,.6)';
       tenant = '#000000'; subText = 'rgba(0,0,0,.6)';
+      // Black text with light stroke so it's readable on darker parts too
+      shadow = '-1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 0 6px rgba(255,255,255,.5)';
     }
-    shadow = 'none';
   } else {
     // Solid color: standard contrast
     navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
