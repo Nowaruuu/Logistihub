@@ -15,6 +15,7 @@ export default function Profile() {
   const [loadingDriver, setLoadingDriver] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deliveryCounts, setDeliveryCounts] = useState({ total: 0, active: 0 });
   const [editForm, setEditForm] = useState({
     fullName: '',
     phone: '',
@@ -30,6 +31,18 @@ export default function Profile() {
         phone: profile.phone || ''
       }));
     }
+  }, [profile]);
+
+  // Load real delivery counts for the stats grid
+  useEffect(() => {
+    if (!profile || profile.role === 'driver') return;
+    deliveryService.getAllDeliveries().then(docs => {
+      const all = docs || [];
+      setDeliveryCounts({
+        total: all.length,
+        active: all.filter(d => d.status !== 'Delivered' && !d.isPaid).length
+      });
+    }).catch(() => {});
   }, [profile]);
 
   useEffect(() => {
@@ -290,11 +303,11 @@ export default function Profile() {
         ) : (
           <>
             <div className="bg-white dark:bg-slate-900 shadow-sm p-4 rounded-2xl flex flex-col items-center border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-900 dark:text-white font-bold text-xl">24</span>
+              <span className="text-slate-900 dark:text-white font-bold text-xl">{deliveryCounts.total}</span>
               <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">Orders</span>
             </div>
             <div className="bg-orange-600/5 dark:bg-orange-600/10 p-4 rounded-2xl flex flex-col items-center border border-orange-600/10">
-              <span className="text-orange-600 font-bold text-xl">2</span>
+              <span className="text-orange-600 font-bold text-xl">{deliveryCounts.active}</span>
               <span className="text-orange-600/70 dark:text-orange-600/60 text-[10px] uppercase font-bold tracking-widest mt-1">Active</span>
             </div>
             <div className="bg-white dark:bg-slate-900 shadow-sm p-4 rounded-2xl flex flex-col items-center border border-slate-100 dark:border-slate-800">
