@@ -1,10 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
+import { Geolocation } from '@capacitor/geolocation';
 
 // Category types matching database item_type_flag
 const PACKAGE_CATEGORIES = [
@@ -15,6 +16,33 @@ const PACKAGE_CATEGORIES = [
   { id: 'BULK', label: 'Bulk Freight', icon: Boxes, desc: 'Pallets, wholesale cargo' },
 ] as const;
 
+// Vehicle types with compatibility per category
+const VEHICLE_TYPES = [
+  { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 20, fuelRate: 2.5, desc: 'Small parcels, documents' },
+  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 100, fuelRate: 5, desc: 'Medium packages' },
+  { id: 'van', label: 'Van', icon: Truck, maxKg: 500, fuelRate: 8, desc: 'Multiple boxes, food' },
+  { id: 'truck', label: 'Truck', icon: Truck, maxKg: 5000, fuelRate: 15, desc: 'Heavy cargo, pallets' },
+  { id: 'flatbed', label: 'Flatbed', icon: Truck, maxKg: 20000, fuelRate: 22, desc: 'Vehicles, heavy equipment' },
+] as const;
+
+// Which vehicles are compatible with each category
+const CATEGORY_VEHICLES: Record<string, string[]> = {
+  PACKAGE: ['motorcycle', 'sedan', 'van'],
+  VEHICLE: ['flatbed', 'truck'],
+  FOOD: ['motorcycle', 'sedan', 'van'],
+  DOC: ['motorcycle', 'sedan'],
+  BULK: ['truck', 'flatbed'],
+};
+
+// Why a vehicle is incompatible with a category
+const INCOMPATIBLE_REASONS: Record<string, Record<string, string>> = {
+  BULK: { motorcycle: 'Too small for bulk freight', sedan: 'Cannot fit pallets/wholesale cargo', van: 'Insufficient capacity for bulk' },
+  VEHICLE: { motorcycle: 'Cannot transport vehicles', sedan: 'Cannot carry heavy equipment', van: 'Insufficient for vehicle transport' },
+  DOC: { truck: 'Overkill for documents', flatbed: 'Overkill for documents', van: 'Unnecessary for small docs' },
+  FOOD: { truck: 'Not suited for food delivery', flatbed: 'Not suited for food delivery' },
+  PACKAGE: { truck: 'Oversized for standard parcels', flatbed: 'Oversized for standard parcels' },
+};
+
 // Nominatim address search (free, no API key)
 async function searchAddress(query: string): Promise<Array<{ display_name: string; lat: string; lon: string }>> {
   if (!query || query.length < 3) return [];
@@ -23,6 +51,39 @@ async function searchAddress(query: string): Promise<Array<{ display_name: strin
     { headers: { 'Accept-Language': 'en' } }
   );
   return res.json();
+}
+
+// Reverse geocode coords to address
+async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+    { headers: { 'Accept-Language': 'en' } }
+  );
+  const data = await res.json();
+  return data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+}
+
+// Get actual road distance using OSRM (free, no API key)
+async function getRouteDistance(lat1: number, lon1: number, lat2: number, lon2: number): Promise<{ distKm: number; durationMin: number }> {
+  try {
+    const res = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`
+    );
+    const data = await res.json();
+    if (data.routes && data.routes.length > 0) {
+      return {
+        distKm: data.routes[0].distance / 1000,
+        durationMin: data.routes[0].duration / 60,
+      };
+    }
+  } catch (e) { console.warn('OSRM fallback to Haversine:', e); }
+  // Fallback to Haversine
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return { distKm: dist, durationMin: dist / 0.5 }; // rough estimate
 }
 
 export default function SendPackage() {
@@ -52,41 +113,93 @@ export default function SendPackage() {
   const pickupTimer = useRef<ReturnType<typeof setTimeout>>();
   const destTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  // Calculate distance in km using Haversine
-  function calcDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  }
+  // Vehicle selection state
+  const [vehicle, setVehicle] = useState('sedan');
+  const compatibleVehicles = CATEGORY_VEHICLES[category] || ['sedan'];
+
+  // OSRM route state
+  const [routeDistKm, setRouteDistKm] = useState(0);
+  const [routeDurationMin, setRouteDurationMin] = useState(0);
+  const [fetchingRoute, setFetchingRoute] = useState(false);
+
+  // GPS loading
+  const [gpsLoadingPickup, setGpsLoadingPickup] = useState(false);
+  const [gpsLoadingDest, setGpsLoadingDest] = useState(false);
+
+  // Auto-select first compatible vehicle when category changes
+  useEffect(() => {
+    const compat = CATEGORY_VEHICLES[category] || ['sedan'];
+    if (!compat.includes(vehicle)) {
+      setVehicle(compat[0]);
+    }
+  }, [category]);
+
+  // Fetch OSRM route when both coords are set
+  useEffect(() => {
+    if (!pickupCoords || !destCoords) { setRouteDistKm(0); setRouteDurationMin(0); return; }
+    let cancelled = false;
+    setFetchingRoute(true);
+    getRouteDistance(pickupCoords[0], pickupCoords[1], destCoords[0], destCoords[1])
+      .then(({ distKm, durationMin }) => {
+        if (!cancelled) { setRouteDistKm(distKm); setRouteDurationMin(durationMin); }
+      })
+      .finally(() => { if (!cancelled) setFetchingRoute(false); });
+    return () => { cancelled = true; };
+  }, [pickupCoords, destCoords]);
+
+  // Use current GPS location
+  const useCurrentLocation = async (target: 'pickup' | 'dest') => {
+    const setLoading = target === 'pickup' ? setGpsLoadingPickup : setGpsLoadingDest;
+    setLoading(true);
+    try {
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const addr = await reverseGeocode(lat, lon);
+      if (target === 'pickup') {
+        setPickup(addr);
+        setPickupCoords([lat, lon]);
+        setShowPickupMap(true);
+      } else {
+        setDestination(addr);
+        setDestCoords([lat, lon]);
+        setShowMap(true);
+      }
+    } catch (e: any) {
+      console.error('GPS error:', e);
+      setError('Could not get location. Please enable GPS.');
+    }
+    setLoading(false);
+  };
 
   // Convert weight to kg for pricing
   const rawWeight = parseFloat(weight) || 0;
   const weightKg = weightUnit === 'ton' ? rawWeight * 1000 : rawWeight;
-  const distKm = (pickupCoords && destCoords) ? calcDistanceKm(pickupCoords[0], pickupCoords[1], destCoords[0], destCoords[1]) : 0;
+  const distKm = routeDistKm;
 
-  // Realistic pricing: Base ₱50 + ₱5/km + tiered per-kg. Express = 1.4x.
-  // Tiered: first 50kg = ₱1/kg, 50-500kg = ₱0.80/kg, 500kg+ = ₱0.50/kg
+  // Gas estimation pricing: base + fuel cost + weight surcharge + category surcharge
+  // Fuel cost = road distance × vehicle fuel rate (₱/km)
+  const selectedVehicle = VEHICLE_TYPES.find(v => v.id === vehicle);
+  const fuelRate = selectedVehicle?.fuelRate || 5;
+  const fuelCost = distKm * fuelRate;
   const tierRate = weightKg <= 50 ? weightKg * 1 : weightKg <= 500 ? 50 + (weightKg - 50) * 0.80 : 50 + 360 + (weightKg - 500) * 0.50;
   const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
-  const baseFee = 50 + (distKm * 5) + tierRate + categorySurcharge;
+  const baseFee = 50 + fuelCost + tierRate + categorySurcharge;
   const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.4);
 
-  // Estimate delivery time based on distance + traffic buffer
-  function estimateDelivery(km: number, express: boolean): string {
+  // Estimate delivery time from OSRM duration
+  function estimateDelivery(durationMin: number, km: number, express: boolean): string {
     if (km <= 0) return express ? 'Within 1-2 hours' : '2-4 hours';
-    const baseHours = km / (express ? 40 : 25); // avg speed in km/h
-    const trafficMultiplier = 1.3; // 30% traffic buffer
-    const totalHours = Math.ceil(baseHours * trafficMultiplier);
-    if (totalHours <= 1) return express ? 'Within 1 hour' : '1-2 hours';
-    if (totalHours <= 3) return express ? `${totalHours} hour${totalHours > 1 ? 's' : ''}` : `${totalHours}-${totalHours + 1} hours`;
-    if (totalHours <= 8) return express ? `${totalHours} hours` : `${totalHours}-${totalHours + 2} hours`;
-    const days = Math.ceil(totalHours / 10); // 10 working hours/day
+    const mins = express ? durationMin * 0.8 : durationMin * 1.3;
+    const hours = Math.ceil(mins / 60);
+    if (hours <= 1) return express ? 'Within 1 hour' : '1-2 hours';
+    if (hours <= 3) return express ? `${hours} hour${hours > 1 ? 's' : ''}` : `${hours}-${hours + 1} hours`;
+    if (hours <= 8) return express ? `${hours} hours` : `${hours}-${hours + 2} hours`;
+    const days = Math.ceil(hours / 10);
     return express ? `${days} day${days > 1 ? 's' : ''}` : `${days}-${days + 1} days`;
   }
-  const stdEta = estimateDelivery(distKm, false);
-  const expEta = estimateDelivery(distKm, true);
+  const stdEta = estimateDelivery(routeDurationMin, distKm, false);
+  const expEta = estimateDelivery(routeDurationMin, distKm, true);
 
   // Debounced address search for pickup — ALWAYS updates coords, no guard
   const handlePickupChange = (val: string) => {
@@ -290,17 +403,28 @@ export default function SendPackage() {
         <div className="group relative">
           <div className="flex items-center justify-between mb-2 ml-1">
             <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pickup Address</label>
-            <button 
-              type="button"
-              onClick={() => setShowPickupMap(!showPickupMap)}
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all",
-                showPickupMap ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              )}
-            >
-              <MapIcon className="size-3" />
-              {showPickupMap ? 'Hide Map' : 'Pin on Map'}
-            </button>
+            <div className="flex gap-1.5">
+              <button 
+                type="button"
+                onClick={() => useCurrentLocation('pickup')}
+                disabled={gpsLoadingPickup}
+                className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 active:scale-95"
+              >
+                {gpsLoadingPickup ? <Loader2 className="size-3 animate-spin" /> : <Crosshair className="size-3" />}
+                {gpsLoadingPickup ? 'Getting...' : 'My Location'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowPickupMap(!showPickupMap)}
+                className={cn(
+                  "flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all",
+                  showPickupMap ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                )}
+              >
+                <MapIcon className="size-3" />
+                {showPickupMap ? 'Hide Map' : 'Pin on Map'}
+              </button>
+            </div>
           </div>
           <div className="relative flex items-center mb-1">
             <MapPin className="absolute left-4 text-orange-600 size-5" />
@@ -354,17 +478,28 @@ export default function SendPackage() {
         <div className="group relative">
           <div className="flex items-center justify-between mb-2 ml-1">
             <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Destination Address</label>
-            <button 
-              type="button"
-              onClick={() => setShowMap(!showMap)}
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all",
-                showMap ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              )}
-            >
-              <MapIcon className="size-3" />
-              {showMap ? 'Hide Map' : 'Pin on Map'}
-            </button>
+            <div className="flex gap-1.5">
+              <button 
+                type="button"
+                onClick={() => useCurrentLocation('dest')}
+                disabled={gpsLoadingDest}
+                className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 active:scale-95"
+              >
+                {gpsLoadingDest ? <Loader2 className="size-3 animate-spin" /> : <Crosshair className="size-3" />}
+                {gpsLoadingDest ? 'Getting...' : 'My Location'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className={cn(
+                  "flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full transition-all",
+                  showMap ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                )}
+              >
+                <MapIcon className="size-3" />
+                {showMap ? 'Hide Map' : 'Pin on Map'}
+              </button>
+            </div>
           </div>
           <div className="relative flex items-center mb-1">
             <Navigation className="absolute left-4 text-slate-400 size-5" />
@@ -457,6 +592,60 @@ export default function SendPackage() {
         </p>
       </section>
 
+      {/* ── Vehicle Recommendation ── */}
+      <section className="mt-6 px-5">
+        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Transport Vehicle</h3>
+        <div className="space-y-2">
+          {VEHICLE_TYPES.map((v) => {
+            const Icon = v.icon;
+            const isCompat = compatibleVehicles.includes(v.id);
+            const isSelected = vehicle === v.id;
+            const reason = INCOMPATIBLE_REASONS[category]?.[v.id];
+            const overWeight = weightKg > 0 && weightKg > v.maxKg;
+            return (
+              <button key={v.id}
+                onClick={() => isCompat && !overWeight && setVehicle(v.id)}
+                disabled={!isCompat || overWeight}
+                className={cn(
+                  "w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left",
+                  isSelected && isCompat ? "border-orange-600 bg-orange-600/5" :
+                  !isCompat || overWeight ? "border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed" :
+                  "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                )}
+              >
+                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                  isSelected && isCompat ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                )}>
+                  <Icon className="size-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-sm font-bold", isSelected && isCompat ? "text-orange-600" : "text-slate-700 dark:text-slate-300")}>{v.label}</span>
+                    {isCompat && !overWeight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-600">Recommended</span>}
+                    {overWeight && isCompat && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-500">Over capacity</span>}
+                  </div>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {!isCompat ? (
+                      <span className="flex items-center gap-1 text-amber-500"><AlertTriangle className="size-3" />{reason || 'Not compatible'}</span>
+                    ) : overWeight ? (
+                      <span className="text-red-400">Max {v.maxKg.toLocaleString()}kg — your package is {weightKg.toLocaleString()}kg</span>
+                    ) : (
+                      <>{v.desc} · Up to {v.maxKg.toLocaleString()}kg</>
+                    )}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <Fuel className="size-3" />
+                    <span>₱{v.fuelRate}/km</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ── Weight & Specifications (Issue #6 — clearly shows KG) ── */}
       <section className="mt-6 px-5">
         <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Specifications</h3>
@@ -501,9 +690,17 @@ export default function SendPackage() {
       {/* ── Shipping Method ── */}
       <section className="mt-8 px-5">
         <h3 className="text-[13px] font-bold mb-4 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
+        {fetchingRoute && (
+          <div className="flex items-center gap-2 text-xs text-orange-500 mb-3 ml-1">
+            <Loader2 className="size-3 animate-spin" /> Calculating route...
+          </div>
+        )}
         {distKm > 0 && (
           <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-100 dark:border-slate-700 space-y-1">
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Distance</span><span className="font-semibold text-slate-700 dark:text-slate-200">{distKm.toFixed(1)} km</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Road Distance</span><span className="font-semibold text-slate-700 dark:text-slate-200">{distKm.toFixed(1)} km</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Est. Drive Time</span><span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(routeDurationMin)} min</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Vehicle</span><span className="font-semibold text-slate-700 dark:text-slate-200">{selectedVehicle?.label || 'Sedan'}</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-400">Fuel Cost</span><span className="font-semibold text-green-600">₱{Math.round(fuelCost).toLocaleString()} ({fuelRate}/km × {distKm.toFixed(1)}km)</span></div>
             <div className="flex justify-between text-xs"><span className="text-slate-400">Weight</span><span className="font-semibold text-slate-700 dark:text-slate-200">{weightKg.toLocaleString()} kg</span></div>
             {categorySurcharge > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">Category Surcharge</span><span className="font-semibold text-orange-500">+₱{categorySurcharge.toLocaleString()}</span></div>}
           </div>
