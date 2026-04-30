@@ -1224,6 +1224,7 @@ function previewBackground(input) {
   reader.onload = function(e) {
     var preview = document.getElementById('bg-preview');
     preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+    preview.style.display = '';
     preview.dataset.base64 = e.target.result;
     if (typeof updateLandingPreview === 'function') updateLandingPreview();
   };
@@ -1449,7 +1450,9 @@ async function resetToDefaults() {
 
   // Clear bg preview
   var bgPrev = document.getElementById('bg-preview');
-  if (bgPrev) { bgPrev.style.backgroundImage = ''; bgPrev.style.display = 'none'; bgPrev.dataset.base64 = ''; }
+  if (bgPrev) { bgPrev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>'; bgPrev.style.display = ''; bgPrev.dataset.base64 = ''; }
+  document.getElementById('set-bg-file').value = '';
+  setBgType('image');
 
   // Reset GUI scale
   setGuiScale('md');
