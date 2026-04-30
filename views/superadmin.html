@@ -1147,10 +1147,7 @@
         if (!Array.isArray(rows) || !rows.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;">No audit logs yet</td></tr>'; return; }
         tb.innerHTML = rows.map(l => {
           let actor = l.actor || '-';
-          // Convert email to friendly name
-          if (actor.indexOf('@') > 0) {
-            actor = actor.split('@')[0].replace(/[._]/g,' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-          }
+          // Show the raw email/identifier as-is in superadmin view
           return `
           <tr>
             <td style="font-size:11px;color:#94a3b8;white-space:nowrap;">${new Date(l.created_at).toLocaleString()}</td>
