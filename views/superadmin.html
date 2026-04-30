@@ -564,7 +564,7 @@
 
                 <div id="add-dev-section">
                   <h4 style="margin-bottom:16px;font-size:14px;">Add New Developer</h4>
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;">
                     <div>
                       <label class="form-label">Full Name</label>
                       <input type="text" id="dev-name" class="form-control" placeholder="e.g. Jane Doe">
@@ -573,13 +573,13 @@
                       <label class="form-label">Email</label>
                       <input type="email" id="dev-email" class="form-control" placeholder="developer@example.com">
                     </div>
-                    <div>
-                      <label class="form-label">Password</label>
-                      <input type="password" id="dev-password" class="form-control" placeholder="Min. 8 characters">
-                    </div>
                     <button class="btn btn-primary" onclick="addDeveloper()" id="add-dev-btn">
                       <span class="material-symbols-rounded">person_add</span> Add
                     </button>
+                  </div>
+                  <div style="margin-top:10px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1d4ed8;display:flex;align-items:center;gap:8px;">
+                    <span class="material-symbols-rounded" style="font-size:16px;">info</span>
+                    A temporary password will be auto-generated. The new developer must change it on first login.
                   </div>
                 </div>
                 <div id="no-add-dev-notice" style="display:none;padding:12px 16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:13px;color:#c2410c;margin-top:8px;">
@@ -719,20 +719,19 @@
     async function addDeveloper() {
       const name  = document.getElementById('dev-name').value.trim();
       const email = document.getElementById('dev-email').value.trim();
-      const pass  = document.getElementById('dev-password').value;
-      if (!name || !email || !pass) { showToast('All fields are required.', 'error'); return; }
+      if (!name || !email) { showToast('Name and email are required.', 'error'); return; }
       const btn = document.getElementById('add-dev-btn');
       btn.disabled = true;
       try {
-        await fetch('/api/superadmin/developers', {
+        const resp = await fetch('/api/superadmin/developers', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password: pass })
+          body: JSON.stringify({ name, email })
         }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; });
-        showToast(`Developer "${name}" added!`);
+        const tempPw = resp.temp_password || '(check server logs)';
+        alert('Developer "' + name + '" added!\n\nTemporary Password: ' + tempPw + '\n\nPlease share this with the developer. They will be forced to change it on first login.');
         document.getElementById('dev-name').value = '';
         document.getElementById('dev-email').value = '';
-        document.getElementById('dev-password').value = '';
         loadDevelopers();
       } catch(e) { showToast(e.message, 'error'); }
       finally { btn.disabled = false; }

@@ -6,6 +6,7 @@ const jwt       = require('jsonwebtoken');
 const fs        = require('fs');
 const path      = require('path');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const { query, logAudit } = require('../config/db');
 const { requireSuperadmin } = require('../middleware/auth');
 const { sendInviteEmail }   = require('../config/mailer');
@@ -68,7 +69,7 @@ router.post('/login', async (req, res) => {
           maxAge:   4 * 60 * 60 * 1000,
         });
         logAudit({ actor: email, actor_type: 'superadmin', action: 'LOGIN', target: 'Superadmin Panel', ip_address: req.ip });
-        return res.json({ ok: true, role: 'superadmin', is_primary: false, message: 'Logged in as superadmin.' });
+        return res.json({ ok: true, role: 'superadmin', is_primary: false, message: 'Logged in as superadmin.', must_change_password: !!sa.must_change_password });
       }
     }
   } catch (saErr) {
@@ -151,18 +152,20 @@ router.get('/developers', requireSuperadmin, async (req, res) => {
 router.post('/developers', requireSuperadmin, async (req, res) => {
   if (!req.superadmin.is_primary) return res.status(403).json({ error: 'Only the root superadmin can add developers.' });
   const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required.' });
-  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
+  // Auto-generate temp password if not provided
+  const tempPassword = password || ('Temp@' + crypto.randomBytes(3).toString('hex').toUpperCase());
+  if (tempPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
   try {
     const [existing] = await query('SELECT superadmin_id FROM SUPERADMIN WHERE email = ?', [email]);
     if (existing.length > 0) return res.status(409).json({ error: 'A developer with this email already exists.' });
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(tempPassword, 10);
     await query(
-      'INSERT INTO SUPERADMIN (name, email, password_hash, is_primary, created_by) VALUES (?, ?, ?, 0, ?)',
+      'INSERT INTO SUPERADMIN (name, email, password_hash, is_primary, created_by, must_change_password) VALUES (?, ?, ?, 0, ?, 1)',
       [name, email, hash, req.superadmin.superadmin_id || null]
     );
     logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'ADD_DEVELOPER', target: `${name} <${email}>`, ip_address: req.ip });
-    res.json({ ok: true, message: `Developer "${name}" added successfully.` });
+    res.json({ ok: true, message: `Developer "${name}" added successfully.`, temp_password: tempPassword });
   } catch(e) {
     res.status(500).json({ error: 'Failed to add developer. ' + e.message });
   }
@@ -406,6 +409,32 @@ router.patch('/platform-settings', requireSuperadmin, (req, res) => {
   savePlatform(current);
   logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'UPDATE_PLATFORM_SETTINGS', ip_address: req.ip });
   res.json({ ok: true, settings: current });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/superadmin/change-password  — force change from temp password
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/change-password', async (req, res) => {
+  const { email, current_password, new_password } = req.body;
+  if (!email || !current_password || !new_password) return res.status(400).json({ error: 'All fields are required.' });
+  if (new_password.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+
+  try {
+    const [rows] = await query("SELECT * FROM SUPERADMIN WHERE email = ? AND status = 'active' LIMIT 1", [email]);
+    if (!rows.length) return res.status(404).json({ error: 'Account not found.' });
+    const sa = rows[0];
+
+    if (!await bcrypt.compare(current_password, sa.password_hash)) return res.status(401).json({ error: 'Current password is incorrect.' });
+    if (current_password === new_password) return res.status(400).json({ error: 'New password must be different from the temporary password.' });
+
+    const newHash = await bcrypt.hash(new_password, 10);
+    await query('UPDATE SUPERADMIN SET password_hash = ?, must_change_password = 0 WHERE superadmin_id = ?', [newHash, sa.superadmin_id]);
+
+    logAudit({ actor: email, actor_type: 'superadmin', action: 'CHANGE_PASSWORD', target: 'Password Changed', ip_address: req.ip });
+    res.json({ ok: true, message: 'Password changed successfully. Please sign in again.' });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to change password.' });
+  }
 });
 
 module.exports = router;

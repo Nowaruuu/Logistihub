@@ -125,6 +125,14 @@ window.doLogin = async function() {
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
         
+        // Handle forced password change for sub-superadmins
+        if (data.must_change_password) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">login</span>Sign In';
+            showForceChangePassword(emailInput.value, passwordInput.value);
+            return;
+        }
+
         // Handle redirection based on role
         if (data.role === 'superadmin') {
             window.location.href = '/superadmin';
@@ -153,6 +161,57 @@ window.togglePw = function() {
         if(icon) icon.textContent = 'visibility';
     }
 };
+
+function showForceChangePassword(email, currentPw) {
+  window._fcpEmail = email;
+  window._fcpCurrent = currentPw;
+  document.getElementById('sa-fcp-modal').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('sa-fcp-new-pw').focus(); }, 100);
+}
+
+async function submitSaForceChangePassword() {
+  var newPw = document.getElementById('sa-fcp-new-pw').value;
+  var confirmPw = document.getElementById('sa-fcp-confirm-pw').value;
+  var errEl = document.getElementById('sa-fcp-err');
+  errEl.style.display = 'none';
+  if (newPw.length < 8) { errEl.textContent = 'New password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+  if (newPw === window._fcpCurrent) { errEl.textContent = 'New password must be different from the temporary password.'; errEl.style.display = 'block'; return; }
+  if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  var btn = document.getElementById('sa-fcp-submit-btn');
+  btn.disabled = true; btn.textContent = 'Changing...';
+  try {
+    var r = await fetch('/api/superadmin/change-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: window._fcpEmail, current_password: window._fcpCurrent, new_password: newPw })
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to change password.');
+    document.getElementById('sa-fcp-modal').style.display = 'none';
+    alert('Password changed successfully! Please sign in with your new password.');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Set New Password';
+}
 </script>
+
+<!-- Force Change Password Modal -->
+<div id="sa-fcp-modal" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,0.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="width:52px;height:52px;background:#fef3c7;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
+        <span class="material-symbols-outlined" style="font-size:26px;color:#f59e0b;">lock_reset</span>
+      </div>
+      <div style="font-size:18px;font-weight:800;color:#0f2235;">Change Your Password</div>
+      <p style="font-size:12px;color:#64748b;margin-top:6px;">You're using a temporary password. You must set a new password to continue.</p>
+    </div>
+    <input id="sa-fcp-new-pw" type="password" placeholder="New password (min 8 chars)" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px;outline:none;">
+    <input id="sa-fcp-confirm-pw" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;border:2px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')submitSaForceChangePassword()">
+    <div id="sa-fcp-err" style="display:none;font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;margin-bottom:12px;"></div>
+    <button id="sa-fcp-submit-btn" onclick="submitSaForceChangePassword()" style="width:100%;background:#0a1628;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:18px;">lock</span>Set New Password
+    </button>
+  </div>
+</div>
 </body>
 </html>

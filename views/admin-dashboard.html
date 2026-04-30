@@ -1424,6 +1424,22 @@ setInterval(function() {
           <option value="Retired">Retired</option>
         </select>
       </div>
+      </div>
+    </div>
+    <!-- Ownership Document -->
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;color:#f59e0b;">verified</span> Certificate of Registration / Official Receipt (CR/OR) *</label>
+      <div id="v-doc-zone" style="border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc;" onclick="document.getElementById('v-ownership-doc').click()" ondragover="event.preventDefault();this.style.borderColor='#3b82f6';this.style.background='#eff6ff'" ondragleave="this.style.borderColor='#e2e8f0';this.style.background='#fafbfc'" ondrop="handleDocDrop(event)">
+        <input id="v-ownership-doc" type="file" accept="image/*,.pdf" style="display:none;" onchange="handleDocSelect(this)">
+        <span class="material-symbols-outlined" style="font-size:28px;color:#94a3b8;">upload_file</span>
+        <p style="font-size:12px;color:#64748b;margin-top:6px;">Click or drag to upload CR/OR document</p>
+        <p style="font-size:10px;color:#94a3b8;margin-top:2px;">Accepts images or PDF (max 5MB)</p>
+      </div>
+      <div id="v-doc-preview" style="display:none;margin-top:8px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#16a34a;display:flex;align-items:center;gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+        <span id="v-doc-filename">file.pdf</span>
+        <button onclick="clearDocUpload()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#dc2626;font-size:18px;line-height:1;">&times;</button>
+      </div>
     </div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeVehicleModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
@@ -1653,6 +1669,7 @@ function openVehicleModal() {
   document.getElementById('v-capacity').value = '';
   document.getElementById('v-status').value = 'Available';
   document.getElementById('vehicle-modal-err').style.display = 'none';
+  clearDocUpload();
   document.getElementById('modal-vehicle').style.display = 'flex';
 }
 function closeVehicleModal() { document.getElementById('modal-vehicle').style.display = 'none'; }
@@ -1667,12 +1684,13 @@ async function submitAddVehicle() {
   errEl.style.display = 'none';
 
   if(!plate || !type || !capacity || !status) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
+  if(!window._vehicleDocBase64) { errEl.textContent = 'Please upload the CR/OR (Certificate of Registration / Official Receipt) document.'; errEl.style.display = 'block'; return; }
 
   btn.disabled = true; btn.textContent = 'Adding...';
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({plate_number: plate, type, capacity_tons: capacity, status})
+      body: JSON.stringify({plate_number: plate, type, capacity_tons: capacity, status, ownership_doc: window._vehicleDocBase64})
     });
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
@@ -1825,6 +1843,43 @@ async function confirmPayment(invoiceId, btn) {
     if(!r.ok) throw new Error(d.error || 'Failed');
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
+}
+</script>
+
+<script>
+// ── Vehicle CR/OR Document Upload ─────────────────────────────────────────────
+window._vehicleDocBase64 = null;
+
+function handleDocSelect(input) {
+  if (input.files && input.files[0]) processDocFile(input.files[0]);
+}
+
+function handleDocDrop(e) {
+  e.preventDefault();
+  var zone = document.getElementById('v-doc-zone');
+  zone.style.borderColor = '#e2e8f0';
+  zone.style.background = '#fafbfc';
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) processDocFile(e.dataTransfer.files[0]);
+}
+
+function processDocFile(file) {
+  if (file.size > 5 * 1024 * 1024) { alert('File too large. Maximum 5MB.'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    window._vehicleDocBase64 = ev.target.result;
+    document.getElementById('v-doc-filename').textContent = file.name;
+    document.getElementById('v-doc-preview').style.display = 'flex';
+    document.getElementById('v-doc-zone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearDocUpload() {
+  window._vehicleDocBase64 = null;
+  document.getElementById('v-doc-preview').style.display = 'none';
+  document.getElementById('v-doc-zone').style.display = '';
+  var input = document.getElementById('v-ownership-doc');
+  if (input) input.value = '';
 }
 </script>
 </body>

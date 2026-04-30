@@ -512,8 +512,8 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
     const lastName  = name.split(' ').slice(1).join(' ') || '';
 
     await query(
-      `INSERT INTO STAFF (tenant_id, name, first_name, last_name, role, username, password_hash, status, contact_email)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      `INSERT INTO STAFF (tenant_id, name, first_name, last_name, role, username, password_hash, status, contact_email, must_change_password)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, 1)`,
       [tid, name, firstName, lastName, role, loginUsername, hash, email]
     );
 
@@ -547,10 +547,11 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
 // CREATE VEHICLE (Admin only)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { plate_number, type, capacity_tons, status } = req.body;
+    const { plate_number, type, capacity_tons, status, ownership_doc } = req.body;
   const tid = req.tenantId;
 
   if (!plate_number || !type) return res.status(400).json({ error: 'plate_number and type are required.' });
+  if (!ownership_doc) return res.status(400).json({ error: 'Certificate of Registration / Official Receipt (CR/OR) document is required.' });
 
   try {
     // Use SELECT 1 to avoid unknown column names
@@ -567,8 +568,8 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     }
 
     await query(
-      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status) VALUES (?, ?, ?, ?, ?)`,
-      [tid, plate_number.toUpperCase(), type, capacity_tons || null, status || 'Available']
+      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc) VALUES (?, ?, ?, ?, ?, ?)`,
+      [tid, plate_number.toUpperCase(), type, capacity_tons || null, status || 'Available', ownership_doc || null]
     );
 
     res.status(201).json({ ok: true, message: 'Vehicle added successfully.' });

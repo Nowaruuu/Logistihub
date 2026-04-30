@@ -286,9 +286,35 @@ router.post('/staff-login', async (req, res) => {
   const auditTarget = staff.role === 'Admin' ? 'Admin Dashboard' : staff.role === 'Manager' ? 'Manager Dashboard' : 'Staff App';
   logAudit({ actor: email, actor_type: auditType, action: 'LOGIN', target: auditTarget, tenant_slug: slug, ip_address: req.ip });
 
-  res.json({ ok: true, name: staff.name, role: returnRole, slug, token });
+  res.json({ ok: true, name: staff.name, role: returnRole, slug, token, must_change_password: !!staff.must_change_password });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /change-password  — force change from temp password
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/change-password', async (req, res) => {
+  const { slug } = req.params;
+  const { username, current_password, new_password } = req.body;
+  if (!username || !current_password || !new_password) return res.status(400).json({ error: 'All fields are required.' });
+  if (new_password.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+
+  const [tenants] = await query("SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
+  if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
+  const tenantId = tenants[0].tenant_id;
+
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1", [tenantId, username]);
+  if (!rows.length) return res.status(401).json({ error: 'User not found.' });
+  const staff = rows[0];
+
+  if (!await bcrypt.compare(current_password, staff.password_hash)) return res.status(401).json({ error: 'Current password is incorrect.' });
+  if (current_password === new_password) return res.status(400).json({ error: 'New password must be different from the temporary password.' });
+
+  const newHash = await bcrypt.hash(new_password, 10);
+  await query('UPDATE STAFF SET password_hash = ?, must_change_password = 0 WHERE staff_id = ?', [newHash, staff.staff_id]);
+
+  logAudit({ actor: username, actor_type: staff.role === 'Admin' ? 'admin' : 'staff', action: 'CHANGE_PASSWORD', target: 'Password Changed', tenant_slug: slug, ip_address: req.ip });
+  res.json({ ok: true, message: 'Password changed successfully. Please sign in again.' });
+});
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /me  (PROTECTED)
 // ─────────────────────────────────────────────────────────────────────────────
