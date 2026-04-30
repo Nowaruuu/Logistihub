@@ -297,12 +297,12 @@
           </div>
           <div class="stat-card purple">
             <div class="stat-header">
-              <div class="stat-label">Platform Revenue</div>
+              <div class="stat-label">Subscription Revenue</div>
               <div class="stat-icon purple"><span class="material-symbols-rounded">account_balance</span></div>
             </div>
-            <div class="stat-value" id="val-platform-revenue">$0</div>
-            <div class="stat-trend trend-up" id="trend-platform-revenue"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> 0% vs last month</div>
-            <div style="font-size:10px;color:#94a3b8;margin-top:4px;" title="SUM of all 'Paid' entries in the payment table (shipment payments collected via PayMongo)">Source: payment table (Paid shipments)</div>
+            <div class="stat-value" id="val-platform-revenue">₱0</div>
+            <div class="stat-trend trend-up" id="trend-platform-revenue"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> From plan upgrades</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px;" title="SUM of all paid entries in SUBSCRIPTION_PAYMENT (tenant plan upgrade fees)">Source: SUBSCRIPTION_PAYMENT table</div>
           </div>
         </div>
 
@@ -314,6 +314,22 @@
               <span class="material-symbols-rounded" style="color:#16a34a;font-size:20px;margin-top:2px;">trending_up</span>
               <div><strong style="color:#166534;font-size:13px;">Loading insights...</strong><p style="font-size:12px;color:#15803d;margin:4px 0 0;">Analyzing platform data...</p></div>
             </div>
+          </div>
+        </div>
+
+        <!-- Predictive Analytics & Forecast -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <div class="card-title"><span class="material-symbols-rounded">query_stats</span>Predictive Forecast</div>
+            <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">info</span>Based on last 6 months trend</div>
+          </div>
+          <div class="card-body">
+            <div id="forecast-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+              <div style="background:#f8fafc;border-radius:12px;padding:18px;border:1px solid #e2e8f0;">
+                <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Loading...</div>
+              </div>
+            </div>
+            <div style="margin-top:16px;"><canvas id="forecastChart" height="180"></canvas></div>
           </div>
         </div>
 
@@ -677,7 +693,82 @@
         document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
         renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
+        renderForecast(data);
       } catch(e) { console.error('Dashboard error:', e); }
+    }
+
+    // ── PREDICTIVE FORECAST ──────────────────────────────────────────────
+    function linearForecast(values) {
+      // Simple linear regression: y = mx + b
+      var n = values.length;
+      if (n < 2) return { predicted: values[0] || 0, trend: 0 };
+      var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+      for (var i = 0; i < n; i++) {
+        sumX += i; sumY += values[i]; sumXY += i * values[i]; sumX2 += i * i;
+      }
+      var m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      var b = (sumY - m * sumX) / n;
+      var predicted = Math.max(0, Math.round(m * n + b));
+      var lastVal = values[n - 1] || 0;
+      var trend = lastVal > 0 ? ((predicted - lastVal) / lastVal * 100).toFixed(0) : 0;
+      return { predicted, trend: Number(trend), m, b };
+    }
+
+    function renderForecast(data) {
+      var el = document.getElementById('forecast-body');
+      if (!el) return;
+
+      var revValues = (data.monthlyRevenue || []).map(function(r) { return Number(r.total) || 0; });
+      var tenValues = (data.monthlyTenants || []).map(function(r) { return Number(r.total) || 0; });
+      var shipValues = (data.monthlyShipments || []).map(function(r) { return Number(r.total) || 0; });
+
+      var revForecast = linearForecast(revValues);
+      var tenForecast = linearForecast(tenValues);
+      var shipForecast = linearForecast(shipValues);
+
+      function card(label, icon, value, prefix, trend, color) {
+        var trendDir = trend > 0 ? 'trending_up' : trend < 0 ? 'trending_down' : 'trending_flat';
+        var trendColor = trend > 0 ? '#10b981' : trend < 0 ? '#ef4444' : '#94a3b8';
+        return '<div style="background:' + color + ';border-radius:12px;padding:18px;border:1px solid #e2e8f0;">' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">' +
+            '<span class="material-symbols-rounded" style="font-size:16px;color:#64748b;">' + icon + '</span>' +
+            '<div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">' + label + '</div>' +
+          '</div>' +
+          '<div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:4px;">' + prefix + value.toLocaleString() + '</div>' +
+          '<div style="display:flex;align-items:center;gap:4px;font-size:12px;color:' + trendColor + ';font-weight:600;">' +
+            '<span class="material-symbols-rounded" style="font-size:16px;">' + trendDir + '</span>' +
+            (trend > 0 ? '+' : '') + trend + '% projected' +
+          '</div>' +
+        '</div>';
+      }
+
+      el.innerHTML = card('Revenue (Next Month)', 'payments', revForecast.predicted, '₱', revForecast.trend, '#f0fdf4') +
+                      card('New Tenants (Next Month)', 'group_add', tenForecast.predicted, '', tenForecast.trend, '#eff6ff') +
+                      card('Shipments (Next Month)', 'local_shipping', shipForecast.predicted, '', shipForecast.trend, '#fefce8');
+
+      // Render forecast chart
+      var canvas = document.getElementById('forecastChart');
+      if (!canvas) return;
+      var labels = (data.monthlyRevenue || []).map(function(r) { return r.month; });
+      labels.push('Next');
+
+      var actual = revValues.slice();
+      var predicted = revValues.map(function(_, i) { return Math.round(revForecast.m * i + revForecast.b); });
+      predicted.push(revForecast.predicted);
+      actual.push(null);
+
+      if (window._forecastChart) window._forecastChart.destroy();
+      window._forecastChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Actual Revenue', data: actual, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, pointRadius: 4, borderWidth: 2 },
+            { label: 'Forecast', data: predicted, borderColor: '#8b5cf6', borderDash: [6, 3], backgroundColor: 'transparent', tension: 0.3, pointRadius: 4, borderWidth: 2, pointStyle: 'triangle' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return '₱' + v.toLocaleString(); } } } } }
+      });
     }
 
     async function doLogout() {

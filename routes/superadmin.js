@@ -199,7 +199,49 @@ router.get('/overview', requireSuperadmin, async (req, res) => {
     const [[suspended]]  = await query("SELECT COUNT(*) AS total FROM TENANT WHERE status = 'suspended'");
     const [[users]]      = await query('SELECT (SELECT COUNT(*) FROM APP_USER) + (SELECT COUNT(*) FROM STAFF) AS total');
     const [[shipments]]  = await query('SELECT COUNT(*) AS total FROM shipment');
-    const [[revenue]]    = await query("SELECT COALESCE(SUM(total_amount),0) AS total FROM payment WHERE status = 'Paid'");
+
+    // Subscription revenue from SUBSCRIPTION_PAYMENT (plan upgrades)
+    let subRevenue = 0;
+    try {
+      const [[rev]] = await query("SELECT COALESCE(SUM(amount),0) AS total FROM SUBSCRIPTION_PAYMENT WHERE status = 'paid'");
+      subRevenue = rev.total;
+    } catch(_) { /* table might not exist yet */ }
+
+    // Monthly revenue history (last 6 months) for forecast
+    let monthlyRevenue = [];
+    try {
+      const [rows] = await query(`
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total
+        FROM SUBSCRIPTION_PAYMENT WHERE status = 'paid'
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC LIMIT 6
+      `);
+      monthlyRevenue = rows.reverse();
+    } catch(_) {}
+
+    // Monthly tenant growth (last 6 months)
+    let monthlyTenants = [];
+    try {
+      const [rows] = await query(`
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
+        FROM TENANT
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC LIMIT 6
+      `);
+      monthlyTenants = rows.reverse();
+    } catch(_) {}
+
+    // Monthly shipment growth (last 6 months)
+    let monthlyShipments = [];
+    try {
+      const [rows] = await query(`
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
+        FROM shipment
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC LIMIT 6
+      `);
+      monthlyShipments = rows.reverse();
+    } catch(_) {}
 
     res.json({
       totalTenants:      tenants.total,
@@ -208,7 +250,10 @@ router.get('/overview', requireSuperadmin, async (req, res) => {
       suspendedTenants:  suspended.total,
       totalUsers:        users.total,
       totalShipments:    shipments.total,
-      totalRevenue:      revenue.total,
+      totalRevenue:      subRevenue,
+      monthlyRevenue,
+      monthlyTenants,
+      monthlyShipments,
     });
   } catch(e) {
     console.error('Overview error:', e);
