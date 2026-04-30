@@ -117,6 +117,57 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    const [rows] = await query(
+      `SELECT p.*,
+              COALESCE(u.first_name, '') AS customer_first,
+              COALESCE(u.last_name, '')  AS customer_last,
+              u.email                    AS customer_email,
+              s.receiver_name, s.total_fee
+       FROM payment p
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
+       WHERE p.tenant_id = ?
+       ORDER BY p.invoice_id DESC
+       LIMIT 200`,
+      [tid]
+    );
+    const [[{ total_revenue }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS total_revenue FROM payment WHERE tenant_id = ? AND status = 'Paid'",
+      [tid]
+    );
+    const [[{ pending_count }]] = await query(
+      "SELECT COUNT(*) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
+      [tid]
+    );
+    res.json({ payments: rows, total_revenue, pending_count });
+  } catch (err) {
+    console.error('[GET /admin/payments]', err);
+    res.status(500).json({ error: err.message || 'Failed to load payments.' });
+  }
+});
+
+// Admin manually confirms a payment (cash, etc.)
+router.post('/:slug/api/admin/payments/:id/confirm', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const { id } = req.params;
+  try {
+    await query(
+      "UPDATE payment SET status = 'Paid', admin_confirmed = 1, paid_at = NOW() WHERE invoice_id = ? AND tenant_id = ?",
+      [id, tid]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[POST /admin/payments/confirm]', err);
+    res.status(500).json({ error: err.message || 'Failed to confirm payment.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SHIPMENTS
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
