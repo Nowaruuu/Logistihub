@@ -5,20 +5,6 @@ import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phon
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
-import { createCheckout } from '../lib/api';
-
-// Open URL: use Capacitor Browser plugin if available, otherwise new window
-async function openUrl(url: string) {
-  try {
-    // @ts-ignore — Capacitor may not be typed here
-    const { Capacitor, Plugins } = (window as any);
-    if (Capacitor?.isNativePlatform?.() && Plugins?.Browser) {
-      await Plugins.Browser.open({ url });
-      return;
-    }
-  } catch (_) {}
-  window.open(url, '_blank', 'noopener');
-}
 
 // Category types matching database item_type_flag
 const PACKAGE_CATEGORIES = [
@@ -235,21 +221,9 @@ export default function SendPackage() {
         item_type_flag: category,
       });
 
-      // Show success state
+      // Success — show success screen, then navigate to packages so user can pay via Pay Now button
       setSubmitted(true);
-
-      // Redirect to PayMongo checkout for payment
-      try {
-        const checkout = await createCheckout(deliveryNumber, totalFee, `Shipping: ${pickup} → ${destination}`);
-        if (checkout.checkout_url) {
-          await openUrl(checkout.checkout_url);
-        }
-      } catch (payErr) {
-        console.warn('Payment checkout skipped:', payErr);
-      }
-
-      // Navigate after 3 seconds
-      setTimeout(() => navigate('/packages'), 3000);
+      setTimeout(() => navigate('/packages'), 2000);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to create shipment');
