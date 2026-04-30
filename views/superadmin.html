@@ -302,6 +302,18 @@
             </div>
             <div class="stat-value" id="val-platform-revenue">$0</div>
             <div class="stat-trend trend-up" id="trend-platform-revenue"><span class="material-symbols-rounded" style="font-size:16px;">trending_up</span> 0% vs last month</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px;" title="SUM of all 'Paid' entries in the payment table (shipment payments collected via PayMongo)">Source: payment table (Paid shipments)</div>
+          </div>
+        </div>
+
+        <!-- Prescriptive Insights -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title"><span class="material-symbols-rounded">lightbulb</span>Business Insights & Recommendations</div></div>
+          <div class="card-body" id="insights-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="padding:16px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;display:flex;align-items:flex-start;gap:10px;">
+              <span class="material-symbols-rounded" style="color:#16a34a;font-size:20px;margin-top:2px;">trending_up</span>
+              <div><strong style="color:#166534;font-size:13px;">Loading insights...</strong><p style="font-size:12px;color:#15803d;margin:4px 0 0;">Analyzing platform data...</p></div>
+            </div>
           </div>
         </div>
 
@@ -326,7 +338,19 @@
             <option>Last 30 Days</option>
             <option>This Year</option>
           </select>
-          <button class="btn btn-secondary"><span class="material-symbols-rounded">download</span> Export CSV</button>
+        </div>
+
+        <!-- Pie Chart Section -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <div class="card-title"><span class="material-symbols-rounded">pie_chart</span>Tenant Breakdown</div>
+            <select class="form-control" id="pie-metric-select" style="width:200px;padding:8px 12px;" onchange="renderPieChart(this.value)">
+              <option value="users">Registered Users</option>
+              <option value="shipments">Shipments</option>
+              <option value="storage">Storage Used</option>
+            </select>
+          </div>
+          <div class="card-body"><div class="chart-container" style="height:320px;"><canvas id="reportsPieChart"></canvas></div></div>
         </div>
 
         <div class="card">
@@ -344,6 +368,11 @@
 
       <!-- ==================== SALES REPORT ==================== -->
       <div id="screen-sales" class="screen">
+        <div class="flex-row">
+          <div class="spacer"></div>
+          <button class="btn btn-secondary" onclick="exportSalesCSV()"><span class="material-symbols-rounded">download</span> Export CSV</button>
+          <button class="btn btn-secondary" onclick="exportSalesPDF()"><span class="material-symbols-rounded">picture_as_pdf</span> Export PDF</button>
+        </div>
         <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
           <div class="stat-card">
             <div class="stat-header"><div class="stat-label">Total Revenue (YTD)</div><div class="stat-icon success"><span class="material-symbols-rounded">attach_money</span></div></div>
@@ -610,12 +639,21 @@
       const ctxG = document.getElementById('growthChart');
       const ctxS = document.getElementById('statusChart');
       if (!ctxG || !ctxS) return;
+      // Generate real month labels for last 6 months
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const now = new Date();
+      const labels = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(monthNames[d.getMonth()]);
+      }
+      const total = active + pending + suspended;
       gChart = new Chart(ctxG.getContext('2d'), {
         type: 'line',
         data: {
-          labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
+          labels: labels,
           datasets: [
-            { label: 'Total Tenants', data: [0,0,0,0,0,active+pending+suspended], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
+            { label: 'Total Tenants', data: [0,0,0,0,0,total], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
             { label: 'Active Tenants', data: [0,0,0,0,0,active], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0)', borderWidth:2, tension:0.4, borderDash:[5,5] }
           ]
         },
@@ -901,12 +939,175 @@
       } catch(e) { showToast('Save failed: ' + e.message, 'error'); }
     }
 
+    // ── PRESCRIPTIVE INSIGHTS ──────────────────────────────────────────────
+    function generateInsights(data) {
+      const el = document.getElementById('insights-body');
+      if (!el) return;
+      const insights = [];
+      const totalTenants = data.totalTenants || 0;
+      const totalUsers = data.totalUsers || 0;
+      const totalShipments = data.totalShipments || 0;
+      const revenue = data.totalRevenue || 0;
+
+      // Forecast / trend analysis
+      if (totalTenants > 0 && totalUsers / totalTenants < 5) {
+        insights.push({ icon: 'warning', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', title: 'Low User Adoption', text: 'Average ' + (totalUsers/totalTenants).toFixed(1) + ' users per tenant. Consider sending activation emails or offering onboarding support to boost adoption.' });
+      }
+      if (totalShipments === 0) {
+        insights.push({ icon: 'inventory_2', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', title: 'No Shipments Processed', text: 'No shipments have been created yet. Reach out to tenants and assist with their first shipment setup.' });
+      } else if (totalShipments > 50) {
+        insights.push({ icon: 'trending_up', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', title: 'Strong Shipment Volume', text: totalShipments + ' shipments processed. Platform usage is healthy. Consider marketing to attract more tenants.' });
+      }
+      if (revenue > 0) {
+        const avgRev = revenue / Math.max(totalTenants, 1);
+        insights.push({ icon: 'payments', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', title: 'Revenue Per Tenant: ₱' + avgRev.toLocaleString(undefined,{maximumFractionDigits:0}), text: 'Total platform revenue is ₱' + revenue.toLocaleString() + '. ' + (avgRev < 200 ? 'Consider upselling higher-tier plans.' : 'Revenue per tenant looks healthy.') });
+      }
+      if (totalTenants < 3) {
+        insights.push({ icon: 'group_add', color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe', title: 'Grow Your Tenant Base', text: 'Only ' + totalTenants + ' tenant(s) registered. Send more invitations to increase platform adoption and recurring revenue.' });
+      }
+      if (!insights.length) {
+        insights.push({ icon: 'check_circle', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', title: 'Everything Looks Good', text: 'Platform metrics are within normal range. Keep monitoring for trends.' });
+      }
+      el.innerHTML = insights.map(i => `
+        <div style="padding:14px 16px;background:${i.bg};border-radius:10px;border:1px solid ${i.border};display:flex;align-items:flex-start;gap:10px;">
+          <span class="material-symbols-rounded" style="color:${i.color};font-size:20px;margin-top:2px;">${i.icon}</span>
+          <div><strong style="color:${i.color};font-size:13px;">${i.title}</strong><p style="font-size:12px;color:#475569;margin:4px 0 0;">${i.text}</p></div>
+        </div>
+      `).join('');
+    }
+
+    // ── PIE CHART ─────────────────────────────────────────────────────────
+    let _reportsTenantData = [];
+    let _reportsPie = null;
+    function renderPieChart(metric) {
+      if (_reportsPie) _reportsPie.destroy();
+      const ctx = document.getElementById('reportsPieChart');
+      if (!ctx || !_reportsTenantData.length) return;
+      const labels = _reportsTenantData.map(t => t.company_name);
+      let dataPoints;
+      let title;
+      if (metric === 'users') {
+        dataPoints = _reportsTenantData.map(t => t.user_count || 0);
+        title = 'Registered Users by Tenant';
+      } else if (metric === 'shipments') {
+        dataPoints = _reportsTenantData.map(t => t.shipment_count || 0);
+        title = 'Shipments by Tenant';
+      } else {
+        // Storage: estimate as shipments * 0.5 MB
+        dataPoints = _reportsTenantData.map(t => ((t.shipment_count || 0) * 0.5).toFixed(1));
+        title = 'Estimated Storage (MB) by Tenant';
+      }
+      const colors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
+      _reportsPie = new Chart(ctx.getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{ data: dataPoints, backgroundColor: colors.slice(0, labels.length), borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, title: { display: true, text: title, font: { size: 14, weight: 'bold' } } } }
+      });
+    }
+
+    // ── EXPORT FUNCTIONS ──────────────────────────────────────────────────
+    function exportSalesCSV() {
+      const rows = document.querySelectorAll('#sales-top-tenants-tbody tr');
+      if (!rows.length) { showToast('No data to export.', 'error'); return; }
+      let csv = 'Tenant Name,Plan,Revenue,Status\n';
+      rows.forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 4) csv += Array.from(cells).map(c => '"' + c.textContent.trim() + '"').join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sales_report_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    }
+
+    function exportSalesPDF() {
+      // Simple print-based PDF
+      const content = document.getElementById('screen-sales').innerHTML;
+      const win = window.open('', '_blank');
+      win.document.write('<html><head><title>Sales Report</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;}th{background:#f1f5f9;font-weight:700;}.btn,.stat-icon,.material-symbols-rounded{display:none!important;}.stat-card{border:1px solid #ddd;padding:16px;margin:8px;display:inline-block;}.stat-value{font-size:24px;font-weight:800;}.stat-label{font-size:11px;color:#666;text-transform:uppercase;}</style></head><body>');
+      win.document.write('<h1 style="font-size:18px;">Sales & Revenue Report — ' + new Date().toLocaleDateString() + '</h1>');
+      win.document.write(content);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
+    }
+
+    // ── TOAST ──────────────────────────────────────────────────────────────
+    function showToast(msg, type) {
+      let t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;z-index:10000;animation:fadeIn 0.3s ease;';
+      t.style.background = type === 'error' ? '#ef4444' : '#10b981';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    // ── SUPERADMIN AUDIT LOG NAME FIX ─────────────────────────────────────
+    // Override loadAuditLogs to resolve email to display name
+    const _origLoadAuditLogs = loadAuditLogs;
+    loadAuditLogs = async function() {
+      try {
+        const rows = await fetch('/api/superadmin/audit-logs', { credentials:'include' }).then(r => r.json());
+        const tb = document.getElementById('audit-logs-tbody');
+        if (!tb) return;
+        if (!Array.isArray(rows) || !rows.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;">No audit logs yet</td></tr>'; return; }
+        tb.innerHTML = rows.map(l => {
+          let actor = l.actor || '-';
+          // Convert email to friendly name
+          if (actor.indexOf('@') > 0) {
+            actor = actor.split('@')[0].replace(/[._]/g,' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          }
+          return `
+          <tr>
+            <td style="font-size:11px;color:#94a3b8;white-space:nowrap;">${new Date(l.created_at).toLocaleString()}</td>
+            <td style="font-size:12px;"><strong>${actor}</strong></td>
+            <td><span class="badge ${l.actor_type==='superadmin'?'bg-pending':'bg-neutral'}">${l.actor_type || '-'}</span></td>
+            <td><strong>${l.action || '-'}</strong></td>
+            <td>${l.target || '-'}</td>
+            <td style="font-size:11px;color:#94a3b8;">${l.tenant_slug || '-'}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) { console.error('Audit error:', e); }
+    };
+
     window.onload = async () => {
       await loadMe();
-      await loadDashboard();
+      const data = await loadDashboard2();
       await loadAll();
       await loadReports();
       await loadPlatformSettings();
+    };
+
+    // Extended loadDashboard that also generates insights
+    async function loadDashboard2() {
+      try {
+        const data = await SuperadminAPI.getOverview();
+        document.getElementById('val-total-tenants').textContent    = data.totalTenants   || 0;
+        document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
+        document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
+        document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
+        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
+        generateInsights(data);
+        return data;
+      } catch(e) { console.error('Dashboard error:', e); }
+    }
+
+    // Extended loadReports that also renders pie chart
+    const _origLoadReports = loadReports;
+    loadReports = async function() {
+      try {
+        const tenants = await SuperadminAPI.getTenants();
+        _reportsTenantData = tenants || [];
+        const tb = document.getElementById('reports-tbody');
+        if (tb) {
+          tb.innerHTML = tenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>${t.user_count||0}</td><td>${t.shipment_count||0}</td><td>${((t.shipment_count||0)*0.5).toFixed(1)} MB</td><td>-</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No data</td></tr>';
+        }
+        renderPieChart(document.getElementById('pie-metric-select')?.value || 'users');
+      } catch(e) { console.error('Reports error:', e); }
     };
   </script>
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>

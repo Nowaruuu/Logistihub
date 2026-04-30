@@ -8,6 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+/* GUI Scale */
+.scale-sm .content { font-size: 13px; }
+.scale-sm .content .stat-value { font-size: 22px; }
+.scale-sm .content .card { padding: 0; }
+.scale-md .content { font-size: 14px; }
+.scale-lg .content { font-size: 16px; }
+.scale-lg .content .stat-value { font-size: 30px; }
+.scale-lg .content .stat-card { padding: 22px 20px; }
+.scale-lg .content .card { margin-bottom: 20px; }
+.scale-lg .content h2 { font-size: 20px; }
+.scale-lg .content .table td, .scale-lg .content .table th { padding: 14px 16px; font-size: 14px; }
+.gui-scale-select { padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;color:#475569;background:#fff;cursor:pointer;outline:none; }
+.gui-scale-select:focus { border-color:#3b82f6; }
 body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
 
@@ -201,6 +214,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="go('user-reg',this)"><span class="material-symbols-outlined">person_add</span>User Registration</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
+    <button class="nav-link" onclick="go('upgrade',this)"><span class="material-symbols-outlined">upgrade</span>Upgrade Plan</button>
     <button class="nav-link" onclick="go('audit',this)"><span class="material-symbols-outlined">history</span>Audit Logs</button>
   </nav>
   <div class="sidebar-bottom">
@@ -229,6 +243,11 @@ textarea{resize:vertical;}
     <div class="tb-right">
       <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
+      <select class="gui-scale-select" id="gui-scale" onchange="setGuiScale(this.value)" title="GUI Scale">
+        <option value="sm">Small</option>
+        <option value="md" selected>Medium</option>
+        <option value="lg">Large</option>
+      </select>
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
     </div>
   </div>
@@ -605,6 +624,37 @@ textarea{resize:vertical;}
       </div>
     </div>
 
+    <!-- ══ UPGRADE PLAN ═════════════════════════ -->
+    <div id="s-upgrade" class="screen">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:24px;border-bottom:1px solid #f1f5f9;">
+          <h2 style="font-size:18px;font-weight:800;color:#0f172a;margin:0 0 6px;">Upgrade Your Plan</h2>
+          <p style="font-size:13px;color:#64748b;margin:0;">Your current plan: <strong id="upgrade-current-plan" style="color:#3b82f6;text-transform:uppercase;">—</strong></p>
+        </div>
+        <div style="padding:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+          <div class="plan-upgrade-card" id="up-startup" style="border:2px solid #e2e8f0;border-radius:14px;padding:24px;text-align:center;transition:all .2s;cursor:pointer;" onmouseover="this.style.borderColor='#0f2235';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='none'">
+            <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Startup</div>
+            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱99<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
+            <div style="font-size:12px;color:#64748b;margin-top:8px;">Up to 10 vehicles<br>Standard optimization<br>Real-time tracking</div>
+          </div>
+          <div class="plan-upgrade-card" id="up-enterprise" style="border:2px solid #3b82f6;border-radius:14px;padding:24px;text-align:center;background:#f0f7ff;transition:all .2s;cursor:pointer;position:relative;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+            <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#0f2235;color:#fff;font-size:9px;font-weight:800;padding:3px 12px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Most Popular</div>
+            <div style="font-size:13px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Enterprise</div>
+            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱499<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
+            <div style="font-size:12px;color:#64748b;margin-top:8px;">Unlimited vehicles & users<br>AI dispatching<br>Full API & Webhooks</div>
+          </div>
+          <div class="plan-upgrade-card" id="up-global" style="border:2px solid #e2e8f0;border-radius:14px;padding:24px;text-align:center;transition:all .2s;cursor:pointer;" onmouseover="this.style.borderColor='#0f2235';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='none'">
+            <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Global</div>
+            <div style="font-size:32px;font-weight:800;color:#0f172a;">₱999<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span></div>
+            <div style="font-size:12px;color:#64748b;margin-top:8px;">Everything in Enterprise<br>Multi-region deployment<br>Dedicated account manager</div>
+          </div>
+        </div>
+        <div style="padding:16px 24px 24px;text-align:center;">
+          <p style="font-size:12px;color:#94a3b8;">Contact support to change your plan. Changes take effect at the start of your next billing cycle.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -680,6 +730,21 @@ function logout() {
 </script>
 
 <script>
+// GUI Scale
+function setGuiScale(size) {
+  document.body.classList.remove('scale-sm','scale-md','scale-lg');
+  document.body.classList.add('scale-' + size);
+  localStorage.setItem('gui_scale', size);
+}
+(function(){
+  var saved = localStorage.getItem('gui_scale') || 'md';
+  document.body.classList.add('scale-' + saved);
+  var sel = document.getElementById('gui-scale');
+  if(sel) sel.value = saved;
+})();
+</script>
+
+<script>
 var pageMeta={
   'dashboard':['Dashboard','Welcome back'],
   'shipments':['Shipments','All deliveries in your workspace'],
@@ -692,6 +757,7 @@ var pageMeta={
   'pod':['Proof of Delivery','Capture records'],
   'user-reg':['User Registration','Your private registration page'],
   'settings':['Settings','Workspace configuration'],
+  'upgrade':['Upgrade Plan','Change your subscription'],
   'audit':['Audit Logs','System activity history']
 };
 
@@ -1666,7 +1732,13 @@ async function loadAuditLogs() {
     }
     tb.innerHTML = logs.map(function(l) {
       var ts = new Date(l.created_at).toLocaleString();
+      // Show name instead of email: resolve from actor field
       var act = esc(l.actor || 'system');
+      // If actor looks like an email, try to display just the name part before @, capitalized
+      if (act.indexOf('@') > 0) {
+        var namePart = act.split('@')[0].replace(/[._]/g,' ');
+        act = namePart.split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+      }
       var type = esc(l.actor_type || '');
       var typeHtml = type === 'superadmin' ? '<span style="color:#d97706;font-weight:700;font-size:10px;background:#fef3c7;padding:2px 6px;border-radius:4px;text-transform:uppercase;">Superadmin</span>' : '<span style="color:#64748b;font-weight:700;font-size:10px;text-transform:uppercase;">' + type + '</span>';
       return '<tr>' +
