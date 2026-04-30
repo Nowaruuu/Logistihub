@@ -61,15 +61,52 @@ router.get('/tenant-config', async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
     const t = rows[0];
-    // Default: all vehicles enabled if column not set
-    const vehicles = t.available_vehicles
-      ? t.available_vehicles.split(',').map(v => v.trim()).filter(Boolean)
-      : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
+
+    // Derive vehicle types from the actual vehicle table for this tenant
+    // This ensures we ONLY show what the tenant actually owns
+    let vehicleTypes = [];
+    try {
+      const [tenantRow] = await query(
+        'SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [slug]
+      );
+      if (tenantRow.length) {
+        const tid = tenantRow[0].tenant_id;
+        const [vrows] = await query(
+          `SELECT DISTINCT LOWER(vehicle_type) AS vtype FROM vehicle
+           WHERE tenant_id = ? AND status != 'Retired'`,
+          [tid]
+        );
+        // Map DB vehicle_type values to mobile app vehicle IDs
+        const typeMap = {
+          'motorcycle': 'motorcycle',
+          'sedan': 'sedan',
+          'suv': 'sedan',       // SUV maps to sedan tier
+          'pickup': 'van',      // Pickup maps to van tier
+          'van': 'van',
+          'truck': 'truck',
+          'trailer': 'flatbed', // Trailer maps to flatbed tier
+          'flatbed': 'flatbed',
+        };
+        const seen = new Set();
+        vrows.forEach(r => {
+          const mapped = typeMap[r.vtype];
+          if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
+        });
+      }
+    } catch (e) { /* vehicle table may not exist yet */ }
+
+    // Fallback: use static available_vehicles column
+    if (vehicleTypes.length === 0) {
+      vehicleTypes = t.available_vehicles
+        ? t.available_vehicles.split(',').map(v => v.trim()).filter(Boolean)
+        : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
+    }
+
     res.json({
       company_name: t.company_name,
       logo_url: t.logo_url || null,
       primary_color: t.primary_color || '#ea580c',
-      available_vehicles: vehicles,
+      available_vehicles: vehicleTypes,
     });
   } catch (err) {
     console.error('[GET /tenant-config]', err);

@@ -612,53 +612,72 @@ export default function SendPackage() {
       <section className="mt-6 px-5">
         <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Transport Vehicle</h3>
         <div className="space-y-2">
-          {VEHICLE_TYPES.map((v) => {
-            const Icon = v.icon;
-            const isCompat = compatibleVehicles.includes(v.id);
-            const isSelected = vehicle === v.id;
-            const reason = INCOMPATIBLE_REASONS[category]?.[v.id];
-            const overWeight = weightKg > 0 && weightKg > v.maxKg;
-            return (
-              <button key={v.id}
-                onClick={() => isCompat && !overWeight && setVehicle(v.id)}
-                disabled={!isCompat || overWeight}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left",
-                  isSelected && isCompat ? "border-orange-600 bg-orange-600/5" :
-                  !isCompat || overWeight ? "border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed" :
-                  "border-slate-100 dark:border-slate-800 hover:border-slate-200"
-                )}
-              >
-                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
-                  isSelected && isCompat ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                )}>
-                  <Icon className="size-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-sm font-bold", isSelected && isCompat ? "text-orange-600" : "text-slate-700 dark:text-slate-300")}>{v.label}</span>
-                    {isCompat && !overWeight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-600">Recommended</span>}
-                    {overWeight && isCompat && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-500">Over capacity</span>}
-                  </div>
-                  <p className="text-[11px] text-slate-400 truncate">
-                    {!isCompat ? (
-                      <span className="flex items-center gap-1 text-amber-500"><AlertTriangle className="size-3" />{reason || 'Not compatible'}</span>
-                    ) : overWeight ? (
-                      <span className="text-red-400">Max {v.maxKg.toLocaleString()}kg — your package is {weightKg.toLocaleString()}kg</span>
-                    ) : (
-                      <>{v.desc} · Up to {v.maxKg.toLocaleString()}kg</>
+          {/* Only show vehicles the tenant actually owns */}
+          {VEHICLE_TYPES.filter(v => tenantVehicles.includes(v.id)).length === 0 ? (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="size-5 text-amber-500 flex-shrink-0" />
+              <p className="text-[13px] text-amber-700 dark:text-amber-300">No vehicles registered yet. Contact your admin to add vehicles to the fleet.</p>
+            </div>
+          ) : (
+            <>
+              {/* Compatible vehicles first */}
+              {VEHICLE_TYPES.filter(v => tenantVehicles.includes(v.id) && compatibleVehicles.includes(v.id)).map((v) => {
+                const Icon = v.icon;
+                const isSelected = vehicle === v.id;
+                const overWeight = weightKg > 0 && weightKg > v.maxKg;
+                return (
+                  <button key={v.id}
+                    onClick={() => !overWeight && setVehicle(v.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left",
+                      isSelected ? "border-orange-600 bg-orange-600/5" :
+                      overWeight ? "border-red-100 dark:border-red-900/30 opacity-60 cursor-not-allowed" :
+                      "border-slate-100 dark:border-slate-800 hover:border-orange-300"
                     )}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                    <Fuel className="size-3" />
-                    <span>₱{v.fuelRate}/km</span>
+                  >
+                    <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                      isSelected ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                    )}>
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={cn("text-sm font-bold", isSelected ? "text-orange-600" : "text-slate-700 dark:text-slate-300")}>{v.label}</span>
+                        {!overWeight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-600">✓ Suitable</span>}
+                        {overWeight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-500">Over capacity</span>}
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {overWeight
+                          ? <span className="text-red-400">Max {v.maxKg.toLocaleString()}kg — your package is {weightKg.toLocaleString()}kg</span>
+                          : <>{v.desc} · Up to {v.maxKg.toLocaleString()}kg</>
+                        }
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <Fuel className="size-3" />
+                        <span>₱{v.fuelRate}/km</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* If tenant has vehicles but none fit this category */}
+              {VEHICLE_TYPES.filter(v => tenantVehicles.includes(v.id) && compatibleVehicles.includes(v.id)).length === 0 && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="size-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-semibold text-amber-700 dark:text-amber-300">No suitable vehicle available</p>
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                      Your tenant's fleet doesn't have a vehicle suitable for <strong>{PACKAGE_CATEGORIES.find(c => c.id === category)?.label}</strong>. 
+                      Try a different package category, or contact your admin to add the right vehicle type.
+                    </p>
                   </div>
                 </div>
-              </button>
-            );
-          })}
+              )}
+            </>
+          )}
         </div>
       </section>
 
