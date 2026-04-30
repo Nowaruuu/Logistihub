@@ -24,6 +24,7 @@ import DataExport from './pages/DataExport';
 import ForceChangePassword from './pages/ForceChangePassword';
 
 // Driver Pages
+import DriverDashboard from './pages/DriverDashboard';
 import VehicleInfo from './pages/driver/VehicleInfo';
 import Earnings from './pages/driver/Earnings';
 import Stats from './pages/driver/Stats';
@@ -174,6 +175,14 @@ export default function App() {
             } />
 
             {/* Driver Routes */}
+            <Route path="/driver/jobs" element={
+              <AuthGuard>
+                <Layout>
+                  <DriverDashboard />
+                </Layout>
+              </AuthGuard>
+            } />
+
             <Route path="/driver/vehicle" element={
               <AuthGuard>
                 <Layout>

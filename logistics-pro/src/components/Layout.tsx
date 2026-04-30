@@ -16,7 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = isDriver ? [
     { icon: Home, label: 'Home', path: '/dashboard' },
     { icon: MapPin, label: 'Nearby', path: '/stations' },
-    { icon: Package, label: 'Jobs', path: '/packages', isAction: true }, // Repurpose middle button for drivers
+    { icon: Package, label: 'Jobs', path: '/driver/jobs', isAction: true },
     { icon: Bell, label: 'Inbox', path: '/notifications' },
     { icon: User, label: 'Profile', path: '/profile' },
   ] : [
@@ -146,7 +146,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
           <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
             {location.pathname === '/dashboard' ? (isDriver ? 'Driver Dashboard' : 'My Deliveries') : 
-             location.pathname === '/packages' ? (isDriver ? 'Available Jobs' : 'My Packages') :
+             location.pathname === '/packages' ? 'My Packages' :
+             location.pathname === '/driver/jobs' ? 'Available Jobs' :
              location.pathname === '/send' ? 'Send Package' :
              location.pathname === '/stations' ? 'Nearby Stations' :
              location.pathname === '/calculator' ? 'Rate Calculator' :
