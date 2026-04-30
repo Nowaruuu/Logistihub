@@ -13,12 +13,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function buildProfile(data: any): UserProfile {
+  // Always normalize role to lowercase so 'Driver' from DB === 'driver' in all app checks
+  const rawRole = (data.role || data.user_type || 'user') as string;
+  const normalizedRole = rawRole.toLowerCase();
+
   return {
     uid: data.uid || data.user_id || data.staff_id || data.id || '',
     fullName: data.fullName || data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User',
     email: data.email || data.username || '',
     phone: data.phone || '',
-    role: (data.role || 'user') as any,
+    role: normalizedRole as any,
     tier: data.tier || 'Bronze',
     createdAt: data.createdAt || data.created_at || new Date().toISOString(),
   };
@@ -74,6 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (_userData: any, loginResponse?: any) => {
+    // Clear any stale cached profile so old 'user' role never bleeds into a new driver session
+    localStorage.removeItem('auth_profile');
+
     // Build profile immediately from login response data
     if (loginResponse?.user) {
       const p = buildProfile(loginResponse.user);
