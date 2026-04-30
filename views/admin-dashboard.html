@@ -1310,8 +1310,12 @@ async function resetToDefaults() {
       body: JSON.stringify(defaults)
     });
     if (r.ok) {
-      alert('Settings reset to default successfully!');
-      location.reload();
+      var toast = document.createElement('div');
+      toast.textContent = '✓ Reset to default!';
+      toast.style.cssText = 'position:fixed;top:24px;right:24px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+      document.body.appendChild(toast);
+      setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 300); }, 2500);
+      loadSettings();
     } else {
       alert('Failed to reset settings.');
     }
