@@ -27,6 +27,7 @@ pool.getConnection()
       "ALTER TABLE STAFF ADD COLUMN must_change_password TINYINT(1) DEFAULT 0",
       "ALTER TABLE SUPERADMIN ADD COLUMN must_change_password TINYINT(1) DEFAULT 0",
       "ALTER TABLE vehicle ADD COLUMN ownership_doc LONGTEXT DEFAULT NULL",
+      "ALTER TABLE TENANT ADD COLUMN available_vehicles VARCHAR(255) NULL DEFAULT 'motorcycle,sedan,van,truck,flatbed'",
     ];
     for (const sql of migrations) {
       try {
