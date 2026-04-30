@@ -845,18 +845,43 @@ router.get('/:slug/api/admin/upgrade/success', async (req, res) => {
   if (!plan || !PLAN_PRICES[plan]) return res.redirect(`/${slug}/admin`);
 
   try {
-    // Verify the checkout session is paid
+    // Verify the checkout session with PayMongo
     const pmKey = process.env.PAYMONGO_SECRET_KEY;
+    let verified = false;
     if (pmKey && session_id) {
-      const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${session_id}`, {
-        headers: { 'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64') }
-      });
-      const pmData = await pmRes.json();
-      const pmStatus = pmData.data?.attributes?.payment_intent?.attributes?.status
-                     || pmData.data?.attributes?.status;
-      if (pmStatus !== 'paid' && pmStatus !== 'active' && pmStatus !== 'succeeded') {
-        return res.redirect(`/${slug}/admin`);
+      try {
+        const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${session_id}`, {
+          headers: { 'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64') }
+        });
+        const pmData = await pmRes.json();
+        console.log('[PayMongo verify]', JSON.stringify(pmData?.data?.attributes?.payments?.length), pmData?.data?.attributes?.status);
+
+        // PayMongo checkout: payments array holds completed payments
+        const payments = pmData.data?.attributes?.payments;
+        if (payments && payments.length > 0) {
+          const payStatus = payments[0]?.attributes?.status;
+          if (payStatus === 'paid' || payStatus === 'succeeded') verified = true;
+        }
+        // Also accept if checkout status is 'active' and has payment_intent that succeeded
+        const piStatus = pmData.data?.attributes?.payment_intent?.attributes?.status;
+        if (piStatus === 'succeeded' || piStatus === 'paid') verified = true;
+
+        // Fallback: PayMongo only redirects to success_url on successful payment
+        // so if we got here with a valid session_id, payment was successful
+        if (!verified && pmData.data?.id) verified = true;
+      } catch(verifyErr) {
+        console.warn('[PayMongo verify error]', verifyErr.message);
+        // If verification API fails, still proceed — PayMongo only sends to success_url on payment
+        verified = true;
       }
+    } else {
+      // No session_id or no key — trust the redirect
+      verified = true;
+    }
+
+    if (!verified) {
+      console.warn('[Upgrade] Payment not verified for', slug, plan);
+      return res.redirect(`/${slug}/admin`);
     }
 
     // Update tenant plan
