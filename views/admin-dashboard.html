@@ -1286,7 +1286,7 @@ function loadSettings() {
       if (typeof updateLandingPreview === 'function') updateLandingPreview();
       // Final contrast fix after all FillList setValue callbacks finish
       setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 100);
-    }).catch(function(){});
+    }).catch(function(err){ console.error('[loadSettings] Error:', err); });
 }
 
 function applyBranding(d) {

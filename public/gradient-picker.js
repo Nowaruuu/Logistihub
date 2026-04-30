@@ -303,7 +303,7 @@ class FillList{
   }
 
   getValue(){return this._css();}
-  setValue(css){this._parse(css);this._build();}
+  setValue(css){this._parse(css);this._build();this.onChange(this._css());}
 }
 
 window.FillList=FillList;
