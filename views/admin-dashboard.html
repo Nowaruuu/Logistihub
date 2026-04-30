@@ -1250,6 +1250,7 @@ function loadSettings() {
       var _brand = d.brand_color || _t.brand_color;
       var _app = d.bg_app_color || _t.bg_app_color;
       var _side = d.bg_sidebar_color || _t.bg_sidebar_color;
+      console.log('[loadSettings] API:', d.bg_app_color, d.bg_sidebar_color, '| TENANT:', _t.bg_app_color, _t.bg_sidebar_color, '| Final:', _app, _side);
       // Set ALL hidden inputs FIRST
       if (_brand) document.getElementById('set-brand-color-hex').value = _brand;
       if (_app)   document.getElementById('set-bg-app-hex').value = _app;
@@ -1455,6 +1456,15 @@ async function saveSettings() {
     var d = await r.json();
     if (d.success) {
       if (btn) { btn.textContent = '✓ Saved!'; btn.style.background = '#16a34a'; }
+      // Update __TENANT__ with saved values so section switches don't use stale data
+      if (payload.brand_color)      window.__TENANT__.brand_color = payload.brand_color;
+      if (payload.bg_app_color)     window.__TENANT__.bg_app_color = payload.bg_app_color;
+      if (payload.bg_sidebar_color) window.__TENANT__.bg_sidebar_color = payload.bg_sidebar_color;
+      if (payload.bg_hero_color !== undefined) window.__TENANT__.bg_hero_color = payload.bg_hero_color;
+      if (payload.bg_page_color)    window.__TENANT__.bg_page_color = payload.bg_page_color;
+      if (payload.company_name)     window.__TENANT__.company_name = payload.company_name;
+      if (payload.logo_url)         window.__TENANT__.logo_url = payload.logo_url;
+      if (payload.background_url !== undefined) window.__TENANT__.background_url = payload.background_url;
       applyBranding(payload);
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; } }, 2000);
       return;
