@@ -8,19 +8,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-/* GUI Scale */
-.scale-sm .content { font-size: 13px; }
-.scale-sm .content .stat-value { font-size: 22px; }
+/* ── GUI Scale ─────────────────────────────────────────── */
+/* Small */
+.scale-sm .content { font-size: 12px; }
+.scale-sm .content .stat-value { font-size: 20px; }
+.scale-sm .content .stat-card { padding: 12px 14px; }
+.scale-sm .content .stat-label { font-size: 10px; }
+.scale-sm .content h2 { font-size: 14px; }
 .scale-sm .content .card { padding: 0; }
+.scale-sm .content td, .scale-sm .content th { padding: 8px 10px; font-size: 11px; }
+.scale-sm .content .form-label { font-size: 11px; }
+.scale-sm .content input, .scale-sm .content select, .scale-sm .content textarea { font-size: 12px; }
+.scale-sm .content .btn { font-size: 11px; padding: 6px 12px; }
+.scale-sm .page-title { font-size: 13px; }
+.scale-sm .page-sub { font-size: 10px; }
+
+/* Medium (default) */
 .scale-md .content { font-size: 14px; }
+.scale-md .content .stat-value { font-size: 26px; }
+
+/* Large */
 .scale-lg .content { font-size: 16px; }
-.scale-lg .content .stat-value { font-size: 30px; }
-.scale-lg .content .stat-card { padding: 22px 20px; }
-.scale-lg .content .card { margin-bottom: 20px; }
-.scale-lg .content h2 { font-size: 20px; }
-.scale-lg .content .table td, .scale-lg .content .table th { padding: 14px 16px; font-size: 14px; }
-.gui-scale-select { padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;color:#475569;background:#fff;cursor:pointer;outline:none; }
-.gui-scale-select:focus { border-color:#3b82f6; }
+.scale-lg .content .stat-value { font-size: 32px; }
+.scale-lg .content .stat-card { padding: 22px 22px; }
+.scale-lg .content .stat-label { font-size: 13px; }
+.scale-lg .content h2 { font-size: 22px; }
+.scale-lg .content .card { margin-bottom: 22px; }
+.scale-lg .content td, .scale-lg .content th { padding: 14px 16px; font-size: 14px; }
+.scale-lg .content .form-label { font-size: 15px; }
+.scale-lg .content input, .scale-lg .content select, .scale-lg .content textarea { font-size: 15px; padding: 12px 14px; }
+.scale-lg .content .btn { font-size: 14px; padding: 11px 20px; }
+.scale-lg .content .form-sec { font-size: 12px; }
+.scale-lg .content .hint { font-size: 12px; }
+.scale-lg .content .ph-row h2 { font-size: 22px; }
+.scale-lg .content .ph-row p { font-size: 14px; }
+.scale-lg .page-title { font-size: 18px; }
+.scale-lg .page-sub { font-size: 13px; }
+.scale-lg .nav-link { font-size: 14px; padding: 11px 12px; }
+.scale-lg .nav-sec { font-size: 10px; }
 body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
 

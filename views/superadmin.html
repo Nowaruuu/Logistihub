@@ -649,31 +649,45 @@
       Chart.defaults.color = '#64748b';
     }
 
-    function renderCharts(active, pending, suspended) {
+    function renderCharts(active, pending, suspended, monthlyTenants) {
       if (gChart) gChart.destroy();
       if (sChart) sChart.destroy();
       const ctxG = document.getElementById('growthChart');
       const ctxS = document.getElementById('statusChart');
       if (!ctxG || !ctxS) return;
-      // Generate real month labels for last 6 months
+
+      // Use actual monthly data — only show months with data
       const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const now = new Date();
-      const labels = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(monthNames[d.getMonth()]);
+      var labels = [];
+      var totalData = [];
+      var activeData = [];
+
+      if (monthlyTenants && monthlyTenants.length > 0) {
+        monthlyTenants.forEach(function(m) {
+          var parts = m.month.split('-');
+          var monthIdx = parseInt(parts[1], 10) - 1;
+          labels.push(monthNames[monthIdx] + ' ' + parts[0].slice(2));
+          totalData.push(Number(m.total) || 0);
+          activeData.push(Math.round((Number(m.total) || 0) * (active / Math.max(active + pending + suspended, 1))));
+        });
+      } else {
+        // Fallback: just show current month
+        var now = new Date();
+        labels = [monthNames[now.getMonth()]];
+        totalData = [active + pending + suspended];
+        activeData = [active];
       }
-      const total = active + pending + suspended;
+
       gChart = new Chart(ctxG.getContext('2d'), {
         type: 'line',
         data: {
           labels: labels,
           datasets: [
-            { label: 'Total Tenants', data: [0,0,0,0,0,total], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
-            { label: 'Active Tenants', data: [0,0,0,0,0,active], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0)', borderWidth:2, tension:0.4, borderDash:[5,5] }
+            { label: 'Total Tenants', data: totalData, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', borderWidth:3, tension:0.4, fill:true },
+            { label: 'Active Tenants', data: activeData, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0)', borderWidth:2, tension:0.4, borderDash:[5,5] }
           ]
         },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, grid:{ color:'#f1f5f9' } }, x:{ grid:{ display:false } } } }
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 }, grid:{ color:'#f1f5f9' } }, x:{ grid:{ display:false } } } }
       });
       sChart = new Chart(ctxS.getContext('2d'), {
         type: 'doughnut',
@@ -692,7 +706,7 @@
         document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
         document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
+        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants);
         renderForecast(data);
       } catch(e) { console.error('Dashboard error:', e); }
     }
@@ -1177,7 +1191,7 @@
         document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
         document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0);
+        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants);
         generateInsights(data);
         return data;
       } catch(e) { console.error('Dashboard error:', e); }
