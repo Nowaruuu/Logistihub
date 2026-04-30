@@ -334,7 +334,14 @@ function MyPackagesInner() {
 
                       try {
                         const r = await createCheckout(tn, Number(delivery.totalFee || 0), `Shipment ${tn}`);
-                        if (r?.checkout_url) {
+                        if (r?.already_paid) {
+                          // Already paid — close popup and mark as paid
+                          prePopup?.close();
+                          setDeliveries(prev => prev.map(d =>
+                            d.trackingNumber === tn ? { ...d, isPaid: true } : d
+                          ));
+                          setPaying(null);
+                        } else if (r?.checkout_url) {
                           await openPaymentInApp(
                             r.checkout_url,
                             tn,

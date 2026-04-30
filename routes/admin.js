@@ -122,6 +122,7 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
+    // Only show the LATEST payment record per delivery (deduplicates multiple Pay Now clicks)
     const [rows] = await query(
       `SELECT p.*,
               COALESCE(u.first_name, '') AS customer_first,
@@ -129,19 +130,24 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
               u.email                    AS customer_email,
               s.receiver_name, s.total_fee
        FROM payment p
+       INNER JOIN (
+         SELECT delivery_number, MAX(invoice_id) AS latest_id
+         FROM payment WHERE tenant_id = ?
+         GROUP BY delivery_number
+       ) latest ON latest.latest_id = p.invoice_id
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
        LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
        WHERE p.tenant_id = ?
        ORDER BY p.invoice_id DESC
        LIMIT 200`,
-      [tid]
+      [tid, tid]
     );
     const [[{ total_revenue }]] = await query(
       "SELECT COALESCE(SUM(total_amount),0) AS total_revenue FROM payment WHERE tenant_id = ? AND status = 'Paid'",
       [tid]
     );
     const [[{ pending_count }]] = await query(
-      "SELECT COUNT(*) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
+      "SELECT COUNT(DISTINCT delivery_number) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
       [tid]
     );
     res.json({ payments: rows, total_revenue, pending_count });

@@ -418,6 +418,18 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
   if (!req.user) return res.status(403).json({ error: 'Customers only.' });
 
   const { delivery_number, amount, description } = req.body;
+
+  // Guard: if already Paid, don't create another checkout
+  try {
+    const [existing] = await query(
+      "SELECT invoice_id FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
+      [delivery_number, req.tenantId]
+    );
+    if (existing.length) {
+      return res.status(409).json({ error: 'already_paid', message: 'This shipment has already been paid.' });
+    }
+  } catch (_) {}
+
   if (!delivery_number || !amount) return res.status(400).json({ error: 'delivery_number and amount required.' });
 
   const secretKey = process.env.PAYMONGO_SECRET_KEY;

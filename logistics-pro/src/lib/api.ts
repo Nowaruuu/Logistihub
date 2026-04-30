@@ -199,6 +199,10 @@ export async function createCheckout(deliveryNumber: string, amount: number, des
     headers: getAuthHeaders(),
     body: JSON.stringify({ delivery_number: deliveryNumber, amount, description })
   });
+  if (res.status === 409) {
+    // Already paid — return special marker so UI can update immediately
+    return { already_paid: true };
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => null);
     throw new Error(err?.error || 'Failed to create payment');
