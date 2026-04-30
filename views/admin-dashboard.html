@@ -1315,8 +1315,23 @@ function applyBranding(d) {
 
 function _colorLum(col) {
   if (!col) return 1;
+  // Handle gradient strings — average all color stops
+  if (col.includes('gradient')) {
+    var stops = col.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g);
+    if (stops && stops.length) {
+      var total = 0;
+      stops.forEach(function(s) {
+        var m = s.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (m) total += (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
+      });
+      return total / stops.length;
+    }
+    return 1;
+  }
+  // Handle rgb(r,g,b) or rgba(r,g,b,a)
   var m = col.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
   if (m) return (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
+  // Handle hex
   var hex = col.replace('#','');
   if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
   if (hex.length !== 6) return 1;
@@ -1325,8 +1340,21 @@ function _colorLum(col) {
   return (0.299*r + 0.587*g + 0.114*b) / 255;
 }
 
+function _getEffectiveBg(el) {
+  var bg = getComputedStyle(el).backgroundColor;
+  // If backgroundColor is transparent, check backgroundImage (gradients)
+  if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') {
+    bg = getComputedStyle(el).backgroundImage;
+  }
+  // Also check inline style.background which may have gradient
+  if (!bg || bg === 'none') {
+    bg = el.style.background || el.style.backgroundColor;
+  }
+  return bg || '';
+}
+
 function updateAppTextContrast() {
-  var bg = getComputedStyle(document.body).backgroundColor;
+  var bg = _getEffectiveBg(document.body);
   var isDark = _colorLum(bg) < 0.5;
   var headColor = isDark ? '#ffffff' : '#0f172a';
   var subColor = isDark ? 'rgba(255,255,255,.85)' : '#334155';
@@ -1337,7 +1365,7 @@ function updateAppTextContrast() {
 function updateSidebarTextContrast() {
   var sb = document.querySelector('.sidebar');
   if (!sb) return;
-  var bg = getComputedStyle(sb).backgroundColor;
+  var bg = _getEffectiveBg(sb);
   var isDark = _colorLum(bg) < 0.5;
   // Dark bg → bright white text | Light bg → strong dark text
   var navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
