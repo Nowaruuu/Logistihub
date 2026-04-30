@@ -1090,6 +1090,14 @@ loadShipments();
   var baseUrl = window.location.origin;
   var regUrl = baseUrl + '/' + t.slug + '/register';
 
+  // Sync hidden color inputs with __TENANT__ values immediately
+  var appHex = document.getElementById('set-bg-app-hex');
+  var sideHex = document.getElementById('set-bg-sidebar-hex');
+  var brandHex = document.getElementById('set-brand-color-hex');
+  if (appHex && t.bg_app_color)     appHex.value = t.bg_app_color;
+  if (sideHex && t.bg_sidebar_color) sideHex.value = t.bg_sidebar_color;
+  if (brandHex && t.brand_color)     brandHex.value = t.brand_color;
+
   // Company logo
   if (t.logo_url) {
     var logoCont = document.getElementById('sidebar-logo-container');
@@ -1214,7 +1222,7 @@ function previewBackground(input) {
 function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
   var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
-  var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || '#0f2235';
+  var side = (document.getElementById('set-bg-sidebar-hex') || {}).value || (window.__TENANT__ && window.__TENANT__.bg_sidebar_color) || '#0f2235';
   
   if (bar) {
     if (app.includes('gradient')) {
