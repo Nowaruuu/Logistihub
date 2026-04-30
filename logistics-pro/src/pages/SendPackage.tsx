@@ -201,7 +201,8 @@ export default function SendPackage() {
   const tierRate = weightKg <= 50 ? weightKg * 1 : weightKg <= 500 ? 50 + (weightKg - 50) * 0.80 : 50 + 360 + (weightKg - 500) * 0.50;
   const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
   const baseFee = 50 + fuelCost + tierRate + categorySurcharge;
-  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.4);
+  // Express = 1.8× base (consistent in both display & totalFee)
+  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
 
   // Estimate delivery time from OSRM duration
   function estimateDelivery(durationMin: number, km: number, express: boolean): string {
@@ -724,70 +725,109 @@ export default function SendPackage() {
 
       {/* ── Shipping Method ── */}
       <section className="mt-8 px-5">
-        <h3 className="text-[13px] font-bold mb-4 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
+        <h3 className="text-[13px] font-bold mb-3 uppercase tracking-wider text-slate-500 dark:text-slate-400">Shipping Method</h3>
         {fetchingRoute && (
           <div className="flex items-center gap-2 text-xs text-orange-500 mb-3 ml-1">
             <Loader2 className="size-3 animate-spin" /> Calculating route...
           </div>
         )}
-        {distKm > 0 && (
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-100 dark:border-slate-700 space-y-1">
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Road Distance</span><span className="font-semibold text-slate-700 dark:text-slate-200">{distKm.toFixed(1)} km</span></div>
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Est. Drive Time</span><span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(routeDurationMin)} min</span></div>
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Vehicle</span><span className="font-semibold text-slate-700 dark:text-slate-200">{selectedVehicle?.label || 'Sedan'}</span></div>
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Fuel Cost</span><span className="font-semibold text-green-600">₱{Math.round(fuelCost).toLocaleString()} ({fuelRate}/km × {distKm.toFixed(1)}km)</span></div>
-            <div className="flex justify-between text-xs"><span className="text-slate-400">Weight</span><span className="font-semibold text-slate-700 dark:text-slate-200">{weightKg.toLocaleString()} kg</span></div>
-            {categorySurcharge > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">Category Surcharge</span><span className="font-semibold text-orange-500">+₱{categorySurcharge.toLocaleString()}</span></div>}
-          </div>
-        )}
-        <div className="space-y-4">
-          <button 
+        <div className="space-y-3">
+          {/* Standard */}
+          <button
             onClick={() => setMethod('standard')}
             className={cn(
-              "w-full flex items-center p-4 rounded-2xl border-2 transition-all duration-200 text-left",
-              method === 'standard' ? "border-orange-600 bg-orange-600/5" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
+              "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+              method === 'standard'
+                ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
+                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
             )}
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", method === 'standard' ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400")}>
-                  <Truck className="size-5" />
-                </div>
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">Standard Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{stdEta}</p>
-                </div>
+            <div className="flex items-start gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                method === 'standard' ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+              )}>
+                <Truck className="size-5" />
               </div>
-            </div>
-            <div className="text-right flex flex-col items-end gap-1">
-              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱{Math.round(baseFee).toLocaleString()}.00</span>
-              <div className="bg-orange-600/10 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">Best Value</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">Standard</span>
+                  <span className={cn("font-bold text-lg tracking-tight", method === 'standard' ? "text-orange-600" : "text-slate-900 dark:text-white")}>
+                    ₱{Math.round(baseFee).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-slate-400">{stdEta} · {distKm > 0 ? `${distKm.toFixed(1)} km` : 'Enter addresses'}</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600">Best Value</span>
+                </div>
+                {distKm > 0 && method === 'standard' && (
+                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
+                    <span className="text-[10px] text-slate-400">Fuel ({selectedVehicle?.fuelType})</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost)} ({fuelRate}/km)</span>
+                    <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(tierRate)}</span>
+                    {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{categorySurcharge}</span></>}
+                    <span className="text-[10px] text-slate-400">Base fee</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱50</span>
+                  </div>
+                )}
+              </div>
             </div>
           </button>
 
-          <button 
+          {/* Express */}
+          <button
             onClick={() => setMethod('express')}
             className={cn(
-              "w-full flex items-center p-4 rounded-2xl border-2 transition-all duration-200 text-left",
-              method === 'express' ? "border-orange-600 bg-orange-600/5" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
+              "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+              method === 'express'
+                ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
+                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
             )}
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", method === 'express' ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400")}>
-                  <Bolt className="size-5" />
-                </div>
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">Express Delivery</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{expEta}</p>
-                </div>
+            <div className="flex items-start gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                method === 'express' ? "bg-orange-600/10 text-orange-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+              )}>
+                <Bolt className="size-5" />
               </div>
-            </div>
-            <div className="text-right">
-              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">₱{Math.round(baseFee * 1.8).toLocaleString()}.00</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">Express</span>
+                  <span className={cn("font-bold text-lg tracking-tight", method === 'express' ? "text-orange-600" : "text-slate-900 dark:text-white")}>
+                    ₱{Math.round(baseFee * 1.8).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-slate-400">{expEta} · Priority handling</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600">1.8× rate</span>
+                </div>
+                {distKm > 0 && method === 'express' && (
+                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
+                    <span className="text-[10px] text-slate-400">Fuel + Priority</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost * 1.8)}</span>
+                    <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(tierRate * 1.8)}</span>
+                    {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{Math.round(categorySurcharge * 1.8)}</span></>}
+                    <span className="text-[10px] text-slate-400">Base fee</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(50 * 1.8)}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </button>
         </div>
+
+        {/* Route info pill — only when route is loaded */}
+        {distKm > 0 && !fetchingRoute && (
+          <div className="flex items-center gap-3 mt-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+            <MapPin className="size-3.5 text-slate-400 flex-shrink-0" />
+            <span className="text-[11px] text-slate-500">{distKm.toFixed(1)} km road distance</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-[11px] text-slate-500">{Math.round(routeDurationMin)} min drive</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-[11px] text-slate-500">{selectedVehicle?.label}</span>
+          </div>
+        )}
       </section>
 
       {error && (
