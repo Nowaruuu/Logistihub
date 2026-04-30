@@ -50,14 +50,24 @@ export default function VehicleInfo() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save.');
+
+      // Immediately re-fetch to confirm the server actually saved it
+      const verify = await fetch(mobileUrl('/driver/vehicle'), { headers: authHeaders() });
+      if (verify.ok) {
+        const saved = await verify.json();
+        if (saved.vehicle_plate) setVehiclePlate(saved.vehicle_plate);
+        if (saved.vehicle_type)  setVehicleType(saved.vehicle_type);
+      }
+
       setSuccess(true);
-      setTimeout(() => { setSuccess(false); navigate(-1); }, 1500);
+      setTimeout(() => { setSuccess(false); navigate(-1); }, 1800);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong.');
+      setError(err.message || 'Something went wrong. Make sure the server is running the latest version.');
     } finally {
       setSaving(false);
     }
   };
+
 
   if (loading) {
     return (

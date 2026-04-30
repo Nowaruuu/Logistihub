@@ -226,16 +226,29 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
     );
     const driverName = staffRows[0]?.name || 'Driver';
 
-    // 3. Upsert into fleet vehicle table so it shows in admin Vehicles page
-    await query(
-      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc)
-       VALUES (?, ?, ?, 0, 'Available', ?)
-       ON DUPLICATE KEY UPDATE
-         vehicle_type  = VALUES(vehicle_type),
-         status        = IF(status = 'Retired', 'Available', status),
-         ownership_doc = VALUES(ownership_doc)`,
-      [tid, plate, vehicle_type, `Registered by driver: ${driverName}`]
+    // 3. Sync to fleet vehicle table so admin can see driver's vehicle
+    //    IMPORTANT: Never overwrite an existing admin-managed vehicle's type/capacity.
+    //    Only insert if the plate is brand new; if it exists, just note the driver link.
+    const [existing] = await query(
+      'SELECT plate_number FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+      [plate, tid]
     );
+
+    if (existing.length === 0) {
+      // New plate — insert into fleet
+      await query(
+        `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc)
+         VALUES (?, ?, ?, 0, 'Available', ?)`,
+        [tid, plate, vehicle_type, `Registered by driver: ${driverName}`]
+      );
+    } else {
+      // Plate already exists — only update the ownership note, NEVER touch type/capacity
+      await query(
+        `UPDATE vehicle SET ownership_doc = ? WHERE plate_number = ? AND tenant_id = ?`,
+        [`Driver: ${driverName}`, plate, tid]
+      );
+    }
+
 
     res.json({ ok: true, message: 'Vehicle info saved.' });
   } catch (err) {
