@@ -1188,7 +1188,7 @@ function setBgType(type) {
     btnImg.style.background = '#fff'; btnImg.style.color = '#64748b';
     btnCol.style.background = '#0f2235'; btnCol.style.color = '#fff';
   } else {
-    imgSec.style.display = 'block'; colSec.style.display = 'none';
+    imgSec.style.display = 'flex'; colSec.style.display = 'none';
     btnImg.style.background = '#0f2235'; btnImg.style.color = '#fff';
     btnCol.style.background = '#fff'; btnCol.style.color = '#64748b';
   }
@@ -1290,6 +1290,8 @@ function loadSettings() {
         if (hp) hp.style.background = d.bg_hero_color;
         if (typeof _heroFL !== 'undefined' && _heroFL) _heroFL.setValue(d.bg_hero_color);
         setBgType('color');
+      } else {
+        setBgType('image');
       }
       if (d.bg_page_color) {
         document.getElementById('set-page-bg-hex').value = d.bg_page_color;
@@ -1447,6 +1449,7 @@ async function resetToDefaults() {
   // Clear logo preview
   var logoPrev = document.getElementById('logo-preview');
   if (logoPrev) { logoPrev.innerHTML = '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>'; logoPrev.dataset.base64 = ''; }
+  document.getElementById('set-logo-file').value = '';
 
   // Clear bg preview
   var bgPrev = document.getElementById('bg-preview');
