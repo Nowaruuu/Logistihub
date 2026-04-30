@@ -29,6 +29,7 @@ import VehicleInfo from './pages/driver/VehicleInfo';
 import Earnings from './pages/driver/Earnings';
 import Stats from './pages/driver/Stats';
 import Documents from './pages/driver/Documents';
+import DriverNavigate from './pages/driver/Navigate';
 
 // Global Error Boundary — catches ANY uncaught render crash in child components
 class AppErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: string}> {
@@ -212,6 +213,13 @@ export default function App() {
                 <Layout>
                   <Documents />
                 </Layout>
+              </AuthGuard>
+            } />
+
+            {/* Fullscreen navigation — no Layout (no nav bars) */}
+            <Route path="/driver/navigate" element={
+              <AuthGuard>
+                <DriverNavigate />
               </AuthGuard>
             } />
 

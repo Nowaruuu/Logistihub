@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Delivery, Driver } from '../types';
 import { deliveryService } from '../services/deliveryService';
 import { getProfile } from '../lib/api';
@@ -20,17 +21,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import Map, { RiderIcon } from '../components/Map';
 
-// Opens Google Maps / native maps to navigate to an address
-function openNavigation(address: string, lat?: number | null, lng?: number | null) {
-  const dest = (lat && lng)
-    ? `${lat},${lng}`
-    : encodeURIComponent(address);
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
-  window.open(url, '_blank');
-}
-
 export default function DriverDashboard() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [driverInfo, setDriverInfo] = useState<Driver | null>(null);
   const [availableJobs, setAvailableJobs] = useState<Delivery[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<Delivery[]>([]);
@@ -339,11 +332,21 @@ export default function DriverDashboard() {
                   {/* Action buttons */}
                   <div className="grid grid-cols-2 gap-3 px-5 pb-5">
                     <button
-                      onClick={() => openNavigation(
-                        assignment.destination,
-                        assignment.destLat,
-                        assignment.destLng
-                      )}
+                      onClick={() => navigate('/driver/navigate', {
+                        state: {
+                          job: {
+                            id: assignment.id,
+                            trackingNumber: assignment.trackingNumber,
+                            receiverName: assignment.receiverName,
+                            receiverPhone: (assignment as any).receiverPhone,
+                            destination: assignment.destination,
+                            destLat: assignment.destLat,
+                            destLng: assignment.destLng,
+                            origin: assignment.origin,
+                            status: assignment.status,
+                          }
+                        }
+                      })}
                       className="flex items-center justify-center gap-2 py-3.5 bg-slate-900 dark:bg-slate-700 text-white font-bold rounded-xl active:scale-[0.98] transition-all shadow-sm"
                     >
                       <ExternalLink className="size-4" />
