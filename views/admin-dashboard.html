@@ -937,6 +937,18 @@ function go(id,navBtn){
     loadSettings();
   } else {
     if(lp) lp.style.display='none';
+    // Revert unsaved color changes back to saved values
+    var t = window.__TENANT__;
+    if (t) {
+      var savedApp = t.bg_app_color || '#f1f5f9';
+      var savedSide = t.bg_sidebar_color || '#0f2235';
+      var savedBrand = t.brand_color || '#3b82f6';
+      document.body.style.background = savedApp;
+      var sb = document.querySelector('.sidebar'); if (sb) sb.style.background = savedSide;
+      document.documentElement.style.setProperty('--app-bg', savedApp);
+      document.documentElement.style.setProperty('--sidebar-bg', savedSide);
+      document.documentElement.style.setProperty('--primary', savedBrand);
+    }
   }
   if(id==='audit') loadAuditLogs();
   if(id==='payments') loadPayments();
