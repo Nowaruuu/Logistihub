@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../lib/api';
 import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff, Truck, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -13,7 +13,9 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, user, profile } = useAuth();
+  const successMsg = (location.state as any)?.message || '';
 
   React.useEffect(() => {
     if (user && profile) {
@@ -37,6 +39,16 @@ export default function SignIn() {
       const authData = await login(slug, role, username, password);
       
       await signIn({ uid: authData.user?.user_id || authData.staff_id || '123' }, authData);
+
+      // Force password change for staff with temp passwords
+      if (authData.must_change_password) {
+        navigate('/force-change-password', {
+          replace: true,
+          state: { slug, username, tempPassword: password }
+        });
+        return;
+      }
+
       navigate('/dashboard');
     } catch (err: any) {
       console.error("Sign in error:", err);
@@ -74,6 +86,12 @@ export default function SignIn() {
         </div>
 
         <form onSubmit={handleSignIn} className="flex flex-col gap-4 px-6 py-2">
+        {/* Success message (e.g. after password change) */}
+          {successMsg && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 mb-1">
+              <span className="text-green-600 text-sm font-bold">✓ {successMsg}</span>
+            </div>
+          )}
           {error && <p className="text-red-500 text-xs font-bold px-1">{error}</p>}
           
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-4">

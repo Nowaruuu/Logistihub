@@ -21,6 +21,7 @@ import PaymentMethods from './pages/PaymentMethods';
 import Settings from './pages/Settings';
 import HelpCenter from './pages/HelpCenter';
 import DataExport from './pages/DataExport';
+import ForceChangePassword from './pages/ForceChangePassword';
 
 // Driver Pages
 import VehicleInfo from './pages/driver/VehicleInfo';
@@ -63,6 +64,7 @@ export default function App() {
             {/* Public Routes */}
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/force-change-password" element={<ForceChangePassword />} />
 
             <Route path="/" element={<SignIn />} />
 
