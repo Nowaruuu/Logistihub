@@ -18,9 +18,30 @@ const pool = mysql.createPool({
 
 // ─── Test connection on startup ───────────────────────────────────────────────
 pool.getConnection()
-  .then(conn => {
+  .then(async conn => {
     console.log('✅  MySQL connected:', process.env.DB_NAME);
     conn.release();
+
+    // ── Auto-migrations: add missing columns safely ────────────────────────
+    const migrations = [
+      "ALTER TABLE STAFF ADD COLUMN must_change_password TINYINT(1) DEFAULT 0",
+      "ALTER TABLE SUPERADMIN ADD COLUMN must_change_password TINYINT(1) DEFAULT 0",
+      "ALTER TABLE vehicle ADD COLUMN ownership_doc LONGTEXT DEFAULT NULL",
+    ];
+    for (const sql of migrations) {
+      try {
+        await pool.execute(sql);
+        console.log('  ✅ Migration applied:', sql.substring(0, 60) + '...');
+      } catch (e) {
+        // Error 1060 = "Duplicate column name" — column already exists, safe to skip
+        if (e.errno === 1060) {
+          // Column already exists — skip silently
+        } else {
+          console.warn('  ⚠️  Migration skipped:', e.message);
+        }
+      }
+    }
+    console.log('  ✅ All migrations checked.');
   })
   .catch(err => {
     console.error('❌  MySQL connection failed:', err.message);
