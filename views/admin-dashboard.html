@@ -237,8 +237,6 @@ textarea{resize:vertical;}
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
-    <div class="nav-sec">Users</div>
-    <button class="nav-link" onclick="go('user-reg',this)"><span class="material-symbols-outlined">person_add</span>User Registration</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
     <button class="nav-link" onclick="go('upgrade',this)"><span class="material-symbols-outlined">upgrade</span>Upgrade Plan</button>
@@ -289,9 +287,9 @@ textarea{resize:vertical;}
       <!-- User registration link box â€” TENANT SCOPED -->
       <div class="reg-link-box" style="margin-bottom:14px;">
         <div class="reg-link-text">
-          <strong>Your Private User Registration Page</strong>
+          <strong>Your User Registration Page</strong>
           <span class="reg-link-url" id="dashboard-reg-url">logisticsos.io/your-workspace/register</span>
-          <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link only with your own staff and drivers. It is scoped exclusively to your company.</span>
+          <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link with your staff and drivers to register.</span>
         </div>
         <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
       </div>
@@ -430,6 +428,13 @@ textarea{resize:vertical;}
     <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-app-users" class="screen">
       <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
+      <div class="reg-link-box" style="margin-bottom:14px;">
+        <div class="reg-link-text">
+          <strong>Registration Page</strong>
+          <span class="reg-link-url" id="app-users-reg-url">logisticsos.io/your-workspace/register</span>
+        </div>
+        <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
+      </div>
       <div class="card">
         <div class="card-head">
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
@@ -468,35 +473,7 @@ textarea{resize:vertical;}
     </div>
 
     <!-- â•â• USER REGISTRATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-user-reg" class="screen">
-      <div class="ph-row"><div><h2>User Registration Page</h2><p>Your private, tenant-scoped registration link for drivers and field staff.</p></div></div>
 
-      <div style="background:#0f2235;border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
-        <span class="material-symbols-outlined" style="color:#38bdf8;font-size:18px;margin-top:1px;">shield</span>
-        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;">
-          <strong style="color:#fff;">This page belongs exclusively to your company.</strong> The registration URL below is scoped to your tenant ID. Users who register through this link are automatically associated with your company only. No other company on this platform can access this page or see your registered users.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">link</span>Your Registration URL</span></div>
-        <div class="card-body">
-          <div class="reg-link-box">
-            <div class="reg-link-text">
-              <strong>Share with your staff and drivers only</strong>
-              <span class="reg-link-url" id="reg-page-url">logisticsos.io/your-workspace/register</span>
-            </div>
-            <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
-          </div>
-          <p style="font-size:11px;color:#94a3b8;margin-top:10px;">After registering, users are directed to download the Logistics OS mobile app for their platform (iOS / Android / APK).</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">group</span>Registered Users</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">group</span><p>No users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
 
     <!-- â•â• SETTINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-settings" class="screen">
@@ -1131,6 +1108,9 @@ loadShipments();
 
   var regPage = document.getElementById('reg-page-url');
   if (regPage) regPage.textContent = regUrl;
+
+  var appUsersReg = document.getElementById('app-users-reg-url');
+  if (appUsersReg) appUsersReg.textContent = regUrl;
 
   // Fix copy buttons if any
   document.querySelectorAll('[onclick*="your-workspace"], [data-copy]').forEach(function(el) {
