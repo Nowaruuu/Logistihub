@@ -1287,8 +1287,11 @@ function applyBranding(d) {
   if (brandCol) document.documentElement.style.setProperty('--primary', brandCol);
   if (appCol) document.documentElement.style.setProperty('--app-bg', appCol);
   if (sideCol) document.documentElement.style.setProperty('--sidebar-bg', sideCol);
-  if (appCol) updateAppTextContrast(appCol);
-  if (sideCol) updateSidebarTextContrast(sideCol);
+  // Always run contrast with the actual current color
+  var actualApp = appCol || window.__TENANT__.bg_app_color || getComputedStyle(document.body).backgroundColor;
+  var actualSide = sideCol || window.__TENANT__.bg_sidebar_color || '#0f2235';
+  updateAppTextContrast(actualApp);
+  updateSidebarTextContrast(actualSide);
 }
 
 function _colorLum(hex) {
