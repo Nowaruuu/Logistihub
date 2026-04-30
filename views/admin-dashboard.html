@@ -1315,16 +1315,20 @@ function applyBranding(d) {
 
 function _colorLum(col) {
   if (!col) return 1;
-  // Handle gradient strings — average all color stops
+  // Handle gradient strings — use MINIMUM luminance (darkest stop)
+  // If any part of the gradient is dark, use white text for readability
   if (col.includes('gradient')) {
     var stops = col.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g);
     if (stops && stops.length) {
-      var total = 0;
+      var minLum = 1;
       stops.forEach(function(s) {
         var m = s.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-        if (m) total += (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
+        if (m) {
+          var lum = (0.299*parseInt(m[1]) + 0.587*parseInt(m[2]) + 0.114*parseInt(m[3])) / 255;
+          if (lum < minLum) minLum = lum;
+        }
       });
-      return total / stops.length;
+      return minLum;
     }
     return 1;
   }
@@ -1366,6 +1370,7 @@ function updateSidebarTextContrast(bgOverride) {
   var sb = document.querySelector('.sidebar');
   if (!sb) return;
   var bg = bgOverride || _getEffectiveBg(sb);
+  var isGrad = bg && bg.includes('gradient');
   var isDark = _colorLum(bg) < 0.5;
   // Dark bg → bright white text | Light bg → strong dark text
   var navText =   isDark ? 'rgba(255,255,255,.7)'  : 'rgba(0,0,0,.6)';
@@ -1373,13 +1378,15 @@ function updateSidebarTextContrast(bgOverride) {
   var navSec =    isDark ? 'rgba(255,255,255,.35)'  : 'rgba(0,0,0,.45)';
   var tenant =    isDark ? '#ffffff'                : '#0f172a';
   var subText =   isDark ? 'rgba(255,255,255,.55)'  : 'rgba(0,0,0,.5)';
-  document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')) el.style.color = navText; });
-  document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; });
-  document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; });
-  var tn = document.querySelector('.tenant-name'); if(tn) tn.style.color = tenant;
-  var ts = document.querySelector('.tenant-sub'); if(ts) ts.style.color = subText;
-  var un = document.querySelector('.uname'); if(un) un.style.color = tenant;
-  var ue = document.querySelector('.uemail'); if(ue) ue.style.color = subText;
+  // Add text-shadow on gradient backgrounds for readability
+  var shadow = isGrad ? (isDark ? '0 1px 3px rgba(0,0,0,.5)' : '0 1px 3px rgba(255,255,255,.5)') : 'none';
+  document.querySelectorAll('.nav-link').forEach(function(el){ if(!el.classList.contains('active')){ el.style.color = navText; el.style.textShadow = shadow; } });
+  document.querySelectorAll('.nav-link.active').forEach(function(el){ el.style.color = navActive; el.style.textShadow = shadow; });
+  document.querySelectorAll('.nav-sec').forEach(function(el){ el.style.color = navSec; el.style.textShadow = shadow; });
+  var tn = document.querySelector('.tenant-name'); if(tn){ tn.style.color = tenant; tn.style.textShadow = shadow; }
+  var ts = document.querySelector('.tenant-sub'); if(ts){ ts.style.color = subText; ts.style.textShadow = shadow; }
+  var un = document.querySelector('.uname'); if(un){ un.style.color = tenant; un.style.textShadow = shadow; }
+  var ue = document.querySelector('.uemail'); if(ue){ ue.style.color = subText; ue.style.textShadow = shadow; }
 }
 
 async function resetToDefaults() {
