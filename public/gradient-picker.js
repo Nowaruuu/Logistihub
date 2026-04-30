@@ -130,8 +130,9 @@ class FillList{
         return;
       }
     }
-    // solid hex or fallback
-    let hex=css.match(/#[0-9a-fA-F]{6}/)?.[0]||'#ffffff';
+    // solid hex or fallback — support with or without #
+    if (!css.startsWith('#') && /^[0-9a-fA-F]{3,6}$/.test(css)) css = '#' + css;
+    let hex=css.match(/#[0-9a-fA-F]{6}/)?.[0]||css.match(/#[0-9a-fA-F]{3}/)?.[0]||'#ffffff';
     this.fills=[{hex,op:100,pos:0,vis:true}];
     this.gradType='linear';
   }
