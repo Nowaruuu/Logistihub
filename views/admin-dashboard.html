@@ -1525,9 +1525,19 @@ window.addEventListener('load', function() {
     }
   });
 
-  // Run contrast immediately now that FillLists are initialized
-  setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
+  // Run contrast immediately and repeatedly to guarantee it applies
+  updateAppTextContrast(); updateSidebarTextContrast();
+  setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 100);
+  setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 500);
 });</script>
+<script>
+// Safety net: also run on DOMContentLoaded in case window.load is delayed
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof updateAppTextContrast === 'function') {
+    setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 200);
+  }
+});
+</script>
 
 <!-- LIVE PREVIEW PANEL -->
 <div id="lp-panel" style="display:none;position:fixed;right:24px;top:72px;width:420px;z-index:9999;font-family:'DM Sans',sans-serif;">
