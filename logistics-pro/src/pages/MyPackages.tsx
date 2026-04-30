@@ -168,8 +168,10 @@ function MyPackagesInner() {
     return tn.includes(searchLower) || orig.includes(searchLower) || dest.includes(searchLower);
   });
 
-  const activeDeliveries = filteredDeliveries.filter(d => (d.status || '') !== 'Delivered');
-  const pastDeliveries = filteredDeliveries.filter(d => d.status === 'Delivered');
+  // Active = not delivered AND not paid (customer still needs to act)
+  // Past   = delivered OR paid (no further action needed)
+  const activeDeliveries = filteredDeliveries.filter(d => d.status !== 'Delivered' && !d.isPaid);
+  const pastDeliveries   = filteredDeliveries.filter(d => d.status === 'Delivered' || d.isPaid);
   const displayedDeliveries = activeTab === 'active' ? activeDeliveries : pastDeliveries;
 
   if (loading) return (
