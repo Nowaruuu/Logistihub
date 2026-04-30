@@ -432,27 +432,34 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
   const { company_name, brand_color, bg_app_color, bg_sidebar_color, logo_url, background_url, bg_hero_color, bg_page_color, new_password } = req.body;
   const tid = req.tenantId;
 
-  const safeSet = async (col, val) => {
-    if (val === undefined) return;
-    try {
-      await query(`UPDATE TENANT SET ${col} = ? WHERE tenant_id = ?`, [val || null, tid]);
-    } catch(e) {
-      console.warn(`[settings] Could not update ${col}:`, e.message);
-    }
-  };
-
   try {
-    if (company_name)    await safeSet('company_name', company_name);
-    if (brand_color !== undefined)      await safeSet('brand_color', brand_color);
-    if (bg_app_color !== undefined)     await safeSet('bg_app_color', bg_app_color);
-    if (bg_sidebar_color !== undefined) await safeSet('bg_sidebar_color', bg_sidebar_color);
-    if (logo_url !== undefined)         await safeSet('logo_url', logo_url);
-    if (background_url !== undefined)   await safeSet('background_url', background_url);
-    await safeSet('bg_hero_color', bg_hero_color);
-    await safeSet('bg_page_color', bg_page_color);
+    // Build single UPDATE query with all changed fields
+    const sets = [];
+    const vals = [];
+    const addField = (col, val) => {
+      if (val === undefined) return;
+      sets.push(`${col} = ?`);
+      vals.push(val || null);
+    };
 
+    if (company_name) addField('company_name', company_name);
+    addField('brand_color', brand_color);
+    addField('bg_app_color', bg_app_color);
+    addField('bg_sidebar_color', bg_sidebar_color);
+    addField('logo_url', logo_url);
+    addField('background_url', background_url);
+    addField('bg_hero_color', bg_hero_color);
+    addField('bg_page_color', bg_page_color);
+
+    // Single DB call for all tenant fields
+    if (sets.length > 0) {
+      vals.push(tid);
+      await query(`UPDATE TENANT SET ${sets.join(', ')} WHERE tenant_id = ?`, vals);
+    }
+
+    // Password update (separate table)
     if (new_password && new_password.length >= 8) {
-      const hash = await bcrypt.hash(new_password, 12);
+      const hash = await bcrypt.hash(new_password, 10);
       await query("UPDATE STAFF SET password_hash = ? WHERE tenant_id = ? AND role = 'Admin' AND username = ?", [hash, tid, req.admin.email]);
     }
 
