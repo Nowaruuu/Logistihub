@@ -307,18 +307,6 @@ textarea{resize:vertical;}
             </table>
           </div>
         </div>
-        <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">pie_chart</span>Item Types</span></div>
-          <div class="card-body">
-            <div class="type-bar-list">
-              <div><div class="type-bar-meta"><span class="type-bar-name">Package</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#8b5cf6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Vehicle</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#3b82f6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Food</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#f59e0b;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Document</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#22c55e;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Bulk</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#64748b;"></div></div></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="grid-2">
@@ -2097,20 +2085,24 @@ async function denyVehicleRequest(id) {
   } catch(e) { alert('Network error.'); }
 }
 
-// ── Assign Vehicle to Driver modal ──────────────────────────────────────────
+// ── Assign Vehicle to Driver modal ───────────────────────────────────────────
 var _assignVehiclePlate = '';
 function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
-  // Build driver list from staff
   var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && !s.vehicle_plate;});
-  if(!drivers.length) { alert('No drivers without a vehicle found.'); return; }
+  if(!drivers.length) { alert('No unassigned drivers found.'); return; }
+  var bg  = getComputedStyle(document.body).getPropertyValue('--bg-1').trim()  || '#1e1b4b';
+  var bg2 = getComputedStyle(document.body).getPropertyValue('--bg-2').trim()  || '#2d2a5e';
+  var bdr = getComputedStyle(document.body).getPropertyValue('--border').trim()|| '#3b3880';
+  var txt = getComputedStyle(document.body).getPropertyValue('--text').trim()  || '#f8fafc';
+  var txtMuted = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#94a3b8';
   var opts = drivers.map(function(d){return '<option value="'+d.staff_id+'">'+esc(d.name)+'</option>';}).join('');
-  var html = '<div style="padding:18px;">' +
-    '<h3 style="margin:0 0 14px;font-size:15px;">Assign <strong style=\'font-family:monospace;\'>' + plate + '</strong> to Driver</h3>' +
-    '<select id="assign-driver-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:13px;margin-bottom:14px;">' + opts + '</select>' +
-    '<p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">The driver will receive a notification and must accept the assignment.</p>' +
+  var html = '<div style="padding:20px;">' +
+    '<h3 style="margin:0 0 14px;font-size:15px;color:'+txt+';">Assign <strong style="font-family:monospace;">' + plate + '</strong> to Driver</h3>' +
+    '<select id="assign-driver-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid '+bdr+';background:'+bg2+';color:'+txt+';font-size:13px;margin-bottom:10px;">' + opts + '</select>' +
+    '<p style="font-size:11px;color:'+txtMuted+';margin-bottom:14px;">Driver will receive a notification and must accept the assignment.</p>' +
     '<div style="display:flex;gap:8px;">' +
-      '<button class="btn" style="flex:1;background:var(--bg-2);" onclick="closeModal(\'assign-vehicle-modal\')">Cancel</button>' +
+      '<button class="btn" style="flex:1;background:'+bg2+';color:'+txt+';" onclick="closeModal(\'assign-vehicle-modal\')">Cancel</button>' +
       '<button class="btn btn-primary" style="flex:1;" onclick="submitAssignVehicle()">Send Assignment</button>' +
     '</div>' +
   '</div>';
@@ -2118,12 +2110,51 @@ function openAssignVehicleModal(plate) {
   if(!modal) {
     modal = document.createElement('div');
     modal.id = 'assign-vehicle-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     document.body.appendChild(modal);
   }
-  modal.innerHTML = '<div style="background:var(--bg-1);border-radius:16px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' + html + '</div>';
+  modal.innerHTML = '<div style="background:'+bg+';border-radius:16px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">' + html + '</div>';
   modal.style.display = 'flex';
   modal.onclick = function(e){ if(e.target===modal) closeModal('assign-vehicle-modal'); };
+}
+
+// ── Item Types Modal ──────────────────────────────────────────────────────────
+var _itemTypesPlate = '';
+var _ALL_ITEM_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
+function openItemTypesModal(plate, currentTypes) {
+  _itemTypesPlate = plate;
+  var current = (currentTypes || '').split(',').filter(Boolean);
+  var bg  = getComputedStyle(document.body).getPropertyValue('--bg-1').trim()  || '#1e1b4b';
+  var bg2 = getComputedStyle(document.body).getPropertyValue('--bg-2').trim()  || '#2d2a5e';
+  var bdr = getComputedStyle(document.body).getPropertyValue('--border').trim()|| '#3b3880';
+  var txt = getComputedStyle(document.body).getPropertyValue('--text').trim()  || '#f8fafc';
+  var txtMuted = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#94a3b8';
+  var checkboxes = _ALL_ITEM_TYPES.map(function(t) {
+    var checked = current.includes(t) ? 'checked' : '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid '+bdr+';cursor:pointer;">' +
+      '<input type="checkbox" id="itype-'+t+'" value="'+t+'" '+checked+' style="width:16px;height:16px;accent-color:#ea580c;">' +
+      '<span style="font-weight:600;font-size:13px;color:'+txt+';">'+t+'</span>' +
+    '</label>';
+  }).join('');
+  var html = '<div style="padding:20px;">' +
+    '<h3 style="margin:0 0 4px;font-size:15px;color:'+txt+';">Item Types — <strong style="font-family:monospace;">' + plate + '</strong></h3>' +
+    '<p style="font-size:11px;color:'+txtMuted+';margin:0 0 14px;">Toggle which package categories this vehicle can handle.</p>' +
+    checkboxes +
+    '<div style="display:flex;gap:8px;margin-top:16px;">' +
+      '<button class="btn" style="flex:1;background:'+bg2+';color:'+txt+';" onclick="closeModal(\'item-types-modal\')">Cancel</button>' +
+      '<button class="btn btn-primary" style="flex:1;" onclick="saveItemTypes()">Save</button>' +
+    '</div>' +
+  '</div>';
+  var modal = document.getElementById('item-types-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'item-types-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = '<div style="background:'+bg+';border-radius:16px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">' + html + '</div>';
+  modal.style.display = 'flex';
+  modal.onclick = function(e){ if(e.target===modal) closeModal('item-types-modal'); };
 }
 
 async function submitAssignVehicle() {
