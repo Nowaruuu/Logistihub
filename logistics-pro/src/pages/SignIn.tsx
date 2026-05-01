@@ -32,6 +32,7 @@ export default function SignIn() {
       const emailPart = username.substring(atIndex + 1); // amongiz.com
       const slug = emailPart.split('.')[0]; // amongiz
       if (!slug) throw new Error('Invalid username format. Use: name@workspace.com');
+      localStorage.setItem('auth_slug', slug); // needed by getTenantConfig() and other API calls
 
       // Auto-detect: try staff login first, then customer login
       // This means ONE login box works for drivers AND customers
