@@ -403,10 +403,27 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- â•â• ROUTES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- â• â•  ROUTES â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
     <div id="s-routes" class="screen">
       <div class="ph-row"><div><h2>Routes</h2><p>Delivery zones scoped to your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Route</button></div>
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Route ID</th><th>Name</th><th>Vehicle</th><th>Driver</th><th>Active Shipments</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">route</span><p>No routes defined</p></div></td></tr></tbody></table></div></div>
+    </div>
+
+    <!-- ╔═ VEHICLES ══════════════════════════════ -->
+    <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
+
+      <!-- Vehicle Requests Panel -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="ph-row" style="padding:16px 18px 10px;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;">Vehicle Requests</strong><p style="font-size:11px;color:var(--text-muted);margin:0;">Driver requests &amp; staff assignments</p></div>
+          <button class="btn btn-sm" style="background:var(--bg-2);" onclick="loadVehicleRequests()"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">refresh</span></button>
+        </div>
+        <div id="vehicle-requests-list" style="padding:12px 18px;">
+          <p style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Loading requests...</p>
+        </div>
+      </div>
+
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Item Types</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
     </div>
 
     <!-- â• â•  STAFF â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
@@ -1990,28 +2007,190 @@ function loadVehicles() {
     renderVehicles(_vehicleData);
   }).catch(function(){
     var tb = document.getElementById('vehicles-tbody');
-    if(tb) tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load vehicles</p></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load vehicles</p></div></td></tr>';
   });
+  loadVehicleRequests();
 }
 
 function renderVehicles(list) {
   var tb = document.getElementById('vehicles-tbody');
   if(!tb) return;
-  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
   var stColors = {'Available':'b-delivered','On-Duty':'b-transit','Maintenance':'b-awaiting','Retired':'b-declined'};
+  var ALL_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
   tb.innerHTML = list.map(function(v) {
     var plate = v.plate_number || '';
+    var supported = (v.supported_item_types || '').split(',').filter(Boolean);
+    var typeBadges = ALL_TYPES.map(function(t) {
+      var on = supported.includes(t);
+      return '<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin:1px;cursor:default;' +
+        (on ? 'background:#dcfce7;color:#16a34a;' : 'background:#f1f5f9;color:#94a3b8;text-decoration:line-through;') + '">' + t + '</span>';
+    }).join('');
     var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
+    var itemTypesBtn = plate ? '<button onclick="openItemTypesModal(\'' + plate + '\', \'' + esc(v.supported_item_types||'') + '\')" style="background:none;border:none;cursor:pointer;color:#8b5cf6;padding:3px 6px;border-radius:6px;" title="Manage Item Types"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">tune</span></button>' : '';
+    var assignBtn = (plate && v.status === 'Available') ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
       '<td>' + esc(v.vehicle_type||'—') + '</td>' +
       '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
       '<td>' + (v.capacity_tons || '—') + '</td>' +
+      '<td style="max-width:160px;">' + typeBadges + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
       '<td>' + esc(v.assigned_driver_name||'—') + '</td>' +
-      '<td><div style="display:flex;gap:4px;">' + updateBtn + delBtn + '</div></td></tr>';
+      '<td><div style="display:flex;gap:2px;">' + itemTypesBtn + assignBtn + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
+}
+
+// ── Vehicle Requests ─────────────────────────────────────────────────────────
+function loadVehicleRequests() {
+  var el = document.getElementById('vehicle-requests-list');
+  if(!el) return;
+  apiFetch('/' + _SLUG + '/api/admin/vehicle-requests').then(function(r){return r.json();}).then(function(rows) {
+    var pending = Array.isArray(rows) ? rows.filter(function(r){return r.status==='pending';}) : [];
+    if(!pending.length) {
+      el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">No pending requests</p>';
+      return;
+    }
+    el.innerHTML = pending.map(function(r) {
+      var isAssignment = r.request_type === 'staff_assignment';
+      var flagHtml = r.refusal_count >= 3
+        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">⚠ ' + r.refusal_count + 'x refused</span>'
+        : (r.refusal_count > 0 ? '<span style="background:#fff7ed;color:#ea580c;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">' + r.refusal_count + 'x refused</span>' : '');
+      var typeLabel = isAssignment
+        ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
+        : '<span style="background:#dbeafe;color:#1d4ed8;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">DRIVER REQUEST</span>';
+      var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">✓ Approve</button>' : '';
+      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">✕ Deny</button>';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+            typeLabel + flagHtml +
+            '<strong style="font-family:monospace;font-size:13px;">' + esc(r.vehicle_plate) + '</strong>' +
+          '</div>' +
+          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' · ' + esc(r.vehicle_type) + (r.model ? ' · ' + esc(r.model) : '') + '</p>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-shrink:0;">' + approveBtn + denyBtn + '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function(){
+    el.innerHTML = '<p style="color:#ef4444;font-size:12px;text-align:center;">Failed to load requests</p>';
+  });
+}
+
+async function approveVehicleRequest(id) {
+  if(!confirm('Approve this vehicle request? The vehicle will be assigned to the driver.')) return;
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicle-requests/' + id + '/approve', { method: 'PUT' });
+    var d = await r.json();
+    if(!r.ok) { alert(d.error || 'Failed'); return; }
+    loadVehicles();
+  } catch(e) { alert('Network error.'); }
+}
+
+async function denyVehicleRequest(id) {
+  if(!confirm('Deny this request?')) return;
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicle-requests/' + id + '/deny', { method: 'PUT' });
+    if(!r.ok) { alert('Failed to deny.'); return; }
+    loadVehicleRequests();
+  } catch(e) { alert('Network error.'); }
+}
+
+// ── Assign Vehicle to Driver modal ──────────────────────────────────────────
+var _assignVehiclePlate = '';
+function openAssignVehicleModal(plate) {
+  _assignVehiclePlate = plate;
+  // Build driver list from staff
+  var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && !s.vehicle_plate;});
+  if(!drivers.length) { alert('No drivers without a vehicle found.'); return; }
+  var opts = drivers.map(function(d){return '<option value="'+d.staff_id+'">'+esc(d.name)+'</option>';}).join('');
+  var html = '<div style="padding:18px;">' +
+    '<h3 style="margin:0 0 14px;font-size:15px;">Assign <strong style=\'font-family:monospace;\'>' + plate + '</strong> to Driver</h3>' +
+    '<select id="assign-driver-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:13px;margin-bottom:14px;">' + opts + '</select>' +
+    '<p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">The driver will receive a notification and must accept the assignment.</p>' +
+    '<div style="display:flex;gap:8px;">' +
+      '<button class="btn" style="flex:1;background:var(--bg-2);" onclick="closeModal(\'assign-vehicle-modal\')">Cancel</button>' +
+      '<button class="btn btn-primary" style="flex:1;" onclick="submitAssignVehicle()">Send Assignment</button>' +
+    '</div>' +
+  '</div>';
+  var modal = document.getElementById('assign-vehicle-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'assign-vehicle-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = '<div style="background:var(--bg-1);border-radius:16px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' + html + '</div>';
+  modal.style.display = 'flex';
+  modal.onclick = function(e){ if(e.target===modal) closeModal('assign-vehicle-modal'); };
+}
+
+async function submitAssignVehicle() {
+  var driverId = document.getElementById('assign-driver-select')?.value;
+  if(!driverId) return;
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + _assignVehiclePlate + '/assign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driver_id: parseInt(driverId) })
+    });
+    var d = await r.json();
+    closeModal('assign-vehicle-modal');
+    if(!r.ok) { alert(d.error || 'Failed'); return; }
+    alert('Assignment sent! Driver will receive a notification to accept or refuse.');
+    loadVehicles();
+  } catch(e) { alert('Network error.'); }
+}
+
+function closeModal(id) { var m = document.getElementById(id); if(m) m.style.display = 'none'; }
+
+// ── Item Types Modal ─────────────────────────────────────────────────────────
+var _itemTypesPlate = '';
+var _ALL_ITEM_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
+function openItemTypesModal(plate, currentTypes) {
+  _itemTypesPlate = plate;
+  var current = (currentTypes || '').split(',').filter(Boolean);
+  var checkboxes = _ALL_ITEM_TYPES.map(function(t) {
+    var checked = current.includes(t) ? 'checked' : '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">' +
+      '<input type="checkbox" id="itype-'+t+'" value="'+t+'" '+checked+' style="width:16px;height:16px;accent-color:#ea580c;">' +
+      '<span style="font-weight:600;font-size:13px;">'+t+'</span>' +
+    '</label>';
+  }).join('');
+  var html = '<div style="padding:18px;">' +
+    '<h3 style="margin:0 0 4px;font-size:15px;">Item Types for <strong style=\'font-family:monospace;\'>' + plate + '</strong></h3>' +
+    '<p style="font-size:11px;color:var(--text-muted);margin:0 0 14px;">Only compatible jobs will be shown to drivers using this vehicle.</p>' +
+    checkboxes +
+    '<div style="display:flex;gap:8px;margin-top:16px;">' +
+      '<button class="btn" style="flex:1;background:var(--bg-2);" onclick="closeModal(\'item-types-modal\')">Cancel</button>' +
+      '<button class="btn btn-primary" style="flex:1;" onclick="saveItemTypes()">Save</button>' +
+    '</div>' +
+  '</div>';
+  var modal = document.getElementById('item-types-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'item-types-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = '<div style="background:var(--bg-1);border-radius:16px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' + html + '</div>';
+  modal.style.display = 'flex';
+  modal.onclick = function(e){ if(e.target===modal) closeModal('item-types-modal'); };
+}
+
+async function saveItemTypes() {
+  var selected = _ALL_ITEM_TYPES.filter(function(t){ return document.getElementById('itype-'+t)?.checked; });
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + _itemTypesPlate + '/item-types', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supported_item_types: selected.join(',') })
+    });
+    closeModal('item-types-modal');
+    if(r.ok) loadVehicles();
+    else alert('Failed to save item types.');
+  } catch(e) { alert('Network error.'); }
 }
 
 async function deleteStaff(id, btn) {

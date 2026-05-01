@@ -26,6 +26,7 @@ import ForceChangePassword from './pages/ForceChangePassword';
 // Driver Pages
 import DriverDashboard from './pages/DriverDashboard';
 import VehicleInfo from './pages/driver/VehicleInfo';
+import VehicleRequest from './pages/driver/VehicleRequest';
 import Earnings from './pages/driver/Earnings';
 import Stats from './pages/driver/Stats';
 import Documents from './pages/driver/Documents';
@@ -188,6 +189,14 @@ export default function App() {
               <AuthGuard>
                 <Layout>
                   <VehicleInfo />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/driver/vehicle-request" element={
+              <AuthGuard>
+                <Layout>
+                  <VehicleRequest />
                 </Layout>
               </AuthGuard>
             } />

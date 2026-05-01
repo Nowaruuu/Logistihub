@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const API_BASE = 'https://logistichub.ddns.net';
@@ -203,6 +203,25 @@ export default function VehicleInfo() {
           ) : (
             <><Save className="size-5" />Save Vehicle Details</>
           )}
+        </button>
+      </div>
+
+      {/* Request fleet vehicle */}
+      <div className="mx-5">
+        <button
+          onClick={() => navigate('/driver/vehicle-request')}
+          className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+              <Truck className="size-4 text-orange-600" />
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-sm text-slate-900 dark:text-white">Don't own a vehicle?</p>
+              <p className="text-xs text-slate-400">Request a fleet vehicle from admin</p>
+            </div>
+          </div>
+          <ChevronRight className="size-4 text-slate-400" />
         </button>
       </div>
     </div>

@@ -259,6 +259,134 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /driver/fleet-vehicles — list available fleet vehicles driver can request
+router.get('/driver/fleet-vehicles', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  try {
+    const [rows] = await query(
+      `SELECT v.plate_number, v.vehicle_type, v.model, v.capacity_tons, v.supported_item_types
+       FROM vehicle v
+       WHERE v.tenant_id = ? AND v.status = 'Available'
+         AND NOT EXISTS (
+           SELECT 1 FROM STAFF s WHERE s.vehicle_plate = v.plate_number AND s.tenant_id = v.tenant_id
+         )
+       ORDER BY v.vehicle_type, v.plate_number`,
+      [req.tenantId]
+    );
+    res.json({ vehicles: rows });
+  } catch (err) {
+    console.error('[GET /driver/fleet-vehicles]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /driver/vehicle-request — driver requests a specific fleet vehicle
+router.post('/driver/vehicle-request', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const { vehicle_plate } = req.body;
+  if (!vehicle_plate) return res.status(400).json({ error: 'vehicle_plate is required.' });
+  const tid = req.tenantId;
+  const driverId = req.staff.staff_id;
+  try {
+    // Check vehicle exists and is available
+    const [veh] = await query(
+      "SELECT plate_number FROM vehicle WHERE plate_number = ? AND tenant_id = ? AND status = 'Available' LIMIT 1",
+      [vehicle_plate, tid]
+    );
+    if (!veh.length) return res.status(400).json({ error: 'Vehicle not available.' });
+
+    // Check no pending request already
+    const [existing] = await query(
+      "SELECT id FROM VEHICLE_REQUEST WHERE driver_id = ? AND tenant_id = ? AND status = 'pending' LIMIT 1",
+      [driverId, tid]
+    );
+    if (existing.length) return res.status(400).json({ error: 'You already have a pending request.' });
+
+    await query(
+      `INSERT INTO VEHICLE_REQUEST (tenant_id, vehicle_plate, driver_id, request_type, status, initiated_by)
+       VALUES (?, ?, ?, 'driver_request', 'pending', ?)`,
+      [tid, vehicle_plate, driverId, driverId]
+    );
+    res.json({ ok: true, message: 'Request submitted. Waiting for admin approval.' });
+  } catch (err) {
+    console.error('[POST /driver/vehicle-request]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /driver/vehicle-requests — driver sees their own requests & incoming assignments
+router.get('/driver/vehicle-requests', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  try {
+    const [rows] = await query(
+      `SELECT vr.*, v.vehicle_type, v.model, v.capacity_tons, v.supported_item_types
+       FROM VEHICLE_REQUEST vr
+       JOIN vehicle v ON v.plate_number = vr.vehicle_plate AND v.tenant_id = vr.tenant_id
+       WHERE vr.driver_id = ? AND vr.tenant_id = ?
+       ORDER BY vr.created_at DESC LIMIT 20`,
+      [req.staff.staff_id, req.tenantId]
+    );
+    res.json({ requests: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /driver/vehicle-request/:id/respond — accept or refuse a staff_assignment
+router.put('/driver/vehicle-request/:id/respond', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const { action, reason } = req.body; // action: 'accept' | 'refuse'
+  if (!['accept', 'refuse'].includes(action)) return res.status(400).json({ error: 'action must be accept or refuse.' });
+  if (action === 'refuse' && !reason?.trim()) return res.status(400).json({ error: 'Please provide a reason for refusing.' });
+
+  const tid = req.tenantId;
+  const driverId = req.staff.staff_id;
+  try {
+    const [rows] = await query(
+      "SELECT * FROM VEHICLE_REQUEST WHERE id = ? AND driver_id = ? AND tenant_id = ? AND request_type = 'staff_assignment' AND status = 'pending' LIMIT 1",
+      [req.params.id, driverId, tid]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Assignment not found or already resolved.' });
+    const request = rows[0];
+
+    if (action === 'accept') {
+      // Assign vehicle to driver
+      await query('UPDATE STAFF SET vehicle_plate = ? WHERE staff_id = ? AND tenant_id = ?', [request.vehicle_plate, driverId, tid]);
+      await query('UPDATE vehicle SET status = ? WHERE plate_number = ? AND tenant_id = ?', ['On-Duty', request.vehicle_plate, tid]);
+      await query('UPDATE VEHICLE_REQUEST SET status = ? WHERE id = ?', ['approved', request.id]);
+      res.json({ ok: true, message: 'Vehicle accepted and assigned to you.' });
+    } else {
+      // Refuse — revert vehicle to Available
+      await query('UPDATE vehicle SET status = ? WHERE plate_number = ? AND tenant_id = ?', ['Available', request.vehicle_plate, tid]);
+      await query('UPDATE VEHICLE_REQUEST SET status = ?, refusal_reason = ? WHERE id = ?', ['refused', reason.trim(), request.id]);
+
+      // 3x flag check — count refused assignments for this driver
+      const [refusals] = await query(
+        "SELECT COUNT(*) AS cnt FROM VEHICLE_REQUEST WHERE driver_id = ? AND tenant_id = ? AND status = 'refused'",
+        [driverId, tid]
+      );
+      const refusalCount = refusals[0]?.cnt || 0;
+
+      // Notify admins if 3+ refusals
+      if (refusalCount >= 3) {
+        const [admins] = await query('SELECT staff_id FROM STAFF WHERE tenant_id = ? AND role = ? LIMIT 5', [tid, 'Admin']);
+        for (const a of admins) {
+          await createNotification(
+            a.staff_id, 'staff', tid,
+            '⚠️ Driver Refusal Alert',
+            `Driver ${req.staff.name || 'Unknown'} has refused ${refusalCount} vehicle assignments. Please review.`,
+            'General', null
+          );
+        }
+      }
+      res.json({ ok: true, message: 'Vehicle assignment refused.', refusal_count: refusalCount });
+    }
+  } catch (err) {
+    console.error('[PUT /driver/vehicle-request/respond]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // GET /deliveries — list user's or driver's shipments

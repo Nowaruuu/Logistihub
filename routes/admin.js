@@ -612,6 +612,101 @@ router.put('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, a
   }
 });
 
+// ── Vehicle Requests (admin view) ─────────────────────────────────────────────
+
+// GET all vehicle requests for this tenant
+router.get('/:slug/api/admin/vehicle-requests', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const [rows] = await query(
+      `SELECT vr.*,
+              v.vehicle_type, v.model, v.capacity_tons,
+              s.name AS driver_name, s.email AS driver_email,
+              (SELECT COUNT(*) FROM VEHICLE_REQUEST r2
+               WHERE r2.driver_id = vr.driver_id AND r2.tenant_id = vr.tenant_id AND r2.status = 'refused') AS refusal_count
+       FROM VEHICLE_REQUEST vr
+       JOIN vehicle v ON v.plate_number = vr.vehicle_plate AND v.tenant_id = vr.tenant_id
+       JOIN STAFF s ON s.staff_id = vr.driver_id
+       WHERE vr.tenant_id = ?
+       ORDER BY vr.created_at DESC LIMIT 50`,
+      [req.tenantId]
+    );
+    res.json(rows);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT approve a driver_request
+router.put('/:slug/api/admin/vehicle-requests/:id/approve', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    const [rows] = await query(
+      "SELECT * FROM VEHICLE_REQUEST WHERE id = ? AND tenant_id = ? AND status = 'pending' LIMIT 1",
+      [req.params.id, tid]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Request not found.' });
+    const r = rows[0];
+    // Assign vehicle to driver's STAFF record
+    await query('UPDATE STAFF SET vehicle_plate = ?, vehicle_type = (SELECT vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ?) WHERE staff_id = ? AND tenant_id = ?',
+      [r.vehicle_plate, r.vehicle_plate, tid, r.driver_id, tid]);
+    await query("UPDATE vehicle SET status = 'On-Duty' WHERE plate_number = ? AND tenant_id = ?", [r.vehicle_plate, tid]);
+    await query("UPDATE VEHICLE_REQUEST SET status = 'approved', reviewed_by = ? WHERE id = ?", [req.adminId || null, r.id]);
+    res.json({ ok: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT deny a driver_request
+router.put('/:slug/api/admin/vehicle-requests/:id/deny', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    await query("UPDATE VEHICLE_REQUEST SET status = 'denied', reviewed_by = ? WHERE id = ? AND tenant_id = ?",
+      [req.adminId || null, req.params.id, req.tenantId]);
+    res.json({ ok: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST assign a fleet vehicle to a specific driver (staff-initiated)
+router.post('/:slug/api/admin/vehicles/:plate/assign', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { driver_id } = req.body;
+  const tid = req.tenantId;
+  const plate = req.params.plate;
+  if (!driver_id) return res.status(400).json({ error: 'driver_id is required.' });
+  try {
+    const [veh] = await query("SELECT plate_number FROM vehicle WHERE plate_number = ? AND tenant_id = ? AND status = 'Available' LIMIT 1", [plate, tid]);
+    if (!veh.length) return res.status(400).json({ error: 'Vehicle not available for assignment.' });
+
+    // Cancel any pending requests for this driver
+    await query("UPDATE VEHICLE_REQUEST SET status = 'denied' WHERE driver_id = ? AND tenant_id = ? AND status = 'pending'", [driver_id, tid]);
+
+    // Create staff_assignment request (driver must accept)
+    await query(
+      `INSERT INTO VEHICLE_REQUEST (tenant_id, vehicle_plate, driver_id, request_type, status, initiated_by)
+       VALUES (?, ?, ?, 'staff_assignment', 'pending', ?)`,
+      [tid, plate, driver_id, req.adminId || null]
+    );
+    // Mark vehicle as tentatively On-Duty
+    await query("UPDATE vehicle SET status = 'On-Duty' WHERE plate_number = ? AND tenant_id = ?", [plate, tid]);
+    res.json({ ok: true, message: 'Assignment sent to driver for acceptance.' });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update supported item types for a vehicle
+router.put('/:slug/api/admin/vehicles/:plate/item-types', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { supported_item_types } = req.body; // comma-separated string
+  try {
+    await query('UPDATE vehicle SET supported_item_types = ? WHERE plate_number = ? AND tenant_id = ?',
+      [supported_item_types || '', req.params.plate, req.tenantId]);
+    res.json({ ok: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGER LOGIN
 // ─────────────────────────────────────────────────────────────────────────────
