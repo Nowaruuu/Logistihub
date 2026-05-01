@@ -152,7 +152,7 @@ export default function SendPackage() {
     document.addEventListener('visibilitychange', onVisibility);
 
     // Poll every 30 seconds for near-real-time updates
-    const interval = setInterval(refreshConfig, 30_000);
+    const interval = setInterval(refreshConfig, 15_000);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
@@ -160,8 +160,16 @@ export default function SendPackage() {
     };
   }, []);
 
-  // Filtered category list for UI
-  const visibleCategories = PACKAGE_CATEGORIES.filter(c => enabledCatIds.includes(c.id));
+  // All categories shown, but disabled ones are marked
+  const isCategoryEnabled = (id: string) => enabledCatIds.includes(id);
+
+  // Auto-reset selection if current category gets disabled
+  useEffect(() => {
+    if (!isCategoryEnabled(category) && enabledCatIds.length > 0) {
+      const firstEnabled = PACKAGE_CATEGORIES.find(c => enabledCatIds.includes(c.id));
+      if (firstEnabled) setCategory(firstEnabled.id);
+    }
+  }, [enabledCatIds, category]);
 
   // Extra safety / insurance toggle
   const [extraSafety, setExtraSafety] = useState(false);
@@ -627,34 +635,41 @@ export default function SendPackage() {
 
       <section className="mt-8 px-5">
         <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Package Category</h3>
-        {visibleCategories.length === 0 ? (
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200">
-            <AlertTriangle className="size-5 text-amber-500 flex-shrink-0" />
-            <p className="text-[13px] text-amber-700 dark:text-amber-300">No package categories are currently enabled. Contact your admin.</p>
-          </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+          {PACKAGE_CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const enabled = isCategoryEnabled(cat.id);
+            const active = category === cat.id && enabled;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => { if (enabled) setCategory(cat.id); }}
+                disabled={!enabled}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 transition-all min-w-[90px] flex-shrink-0",
+                  !enabled
+                    ? "border-red-300 dark:border-red-800/60 bg-red-50 dark:bg-red-900/10 text-red-400 dark:text-red-500 opacity-60 cursor-not-allowed"
+                    : active
+                      ? "border-orange-600 bg-orange-600/5 text-orange-600"
+                      : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
+                )}
+              >
+                <Icon className="size-5" />
+                <span className="text-[10px] font-bold whitespace-nowrap">{cat.label}</span>
+                {!enabled && <span className="text-[8px] text-red-500 font-semibold leading-tight">Not Supported</span>}
+              </button>
+            );
+          })}
+        </div>
+        {isCategoryEnabled(category) ? (
+          <p className="text-[11px] text-slate-400 mt-2 ml-1">
+            {PACKAGE_CATEGORIES.find(c => c.id === category)?.desc}
+          </p>
         ) : (
-          <>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-              {visibleCategories.map((cat) => {
-                const Icon = cat.icon;
-                const active = category === cat.id;
-                return (
-                  <button key={cat.id} onClick={() => setCategory(cat.id)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 transition-all min-w-[90px] flex-shrink-0",
-                      active ? "border-orange-600 bg-orange-600/5 text-orange-600" : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
-                    )}
-                  >
-                    <Icon className="size-5" />
-                    <span className="text-[10px] font-bold whitespace-nowrap">{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-2 ml-1">
-              {PACKAGE_CATEGORIES.find(c => c.id === category)?.desc}
-            </p>
-          </>
+          <div className="flex items-center gap-2 mt-2 ml-1">
+            <AlertTriangle className="size-3.5 text-red-500 flex-shrink-0" />
+            <p className="text-[11px] text-red-500 font-medium">We do not support this kind of package category</p>
+          </div>
         )}
       </section>
 
