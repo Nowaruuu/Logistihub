@@ -554,7 +554,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
 // CREATE VEHICLE (Admin only)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-    const { plate_number, type, capacity_tons, status, ownership_doc } = req.body;
+    const { plate_number, type, capacity_tons, status, ownership_doc, model } = req.body;
   const tid = req.tenantId;
 
   if (!plate_number || !type) return res.status(400).json({ error: 'plate_number and type are required.' });
@@ -575,8 +575,8 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     }
 
     await query(
-      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc) VALUES (?, ?, ?, ?, ?, ?)`,
-      [tid, plate_number.toUpperCase(), type, capacity_tons || null, status || 'Available', ownership_doc || null]
+      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [tid, plate_number.toUpperCase(), type, model || null, capacity_tons || null, status || 'Available', ownership_doc || null]
     );
 
     res.status(201).json({ ok: true, message: 'Vehicle added successfully.' });
@@ -587,7 +587,7 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
 });
 
 router.put('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { type, capacity_tons, status } = req.body;
+  const { type, capacity_tons, status, model } = req.body;
   const tid = req.tenantId;
   const plate = req.params.plate;
 
@@ -595,8 +595,8 @@ router.put('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, a
 
   try {
     await query(
-      `UPDATE vehicle SET vehicle_type = ?, capacity_tons = ?, status = ? WHERE plate_number = ? AND tenant_id = ?`,
-      [type, capacity_tons || null, status || 'Available', plate, tid]
+      `UPDATE vehicle SET vehicle_type = ?, model = ?, capacity_tons = ?, status = ? WHERE plate_number = ? AND tenant_id = ?`,
+      [type, model || null, capacity_tons || null, status || 'Available', plate, tid]
     );
     res.json({ ok: true, message: 'Vehicle updated successfully.' });
   } catch(err) {

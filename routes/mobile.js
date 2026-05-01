@@ -205,7 +205,7 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
 // PUT /driver/vehicle — register/update driver's vehicle
 router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
-  const { vehicle_plate, vehicle_type } = req.body;
+  const { vehicle_plate, vehicle_type, model } = req.body;
   if (!vehicle_plate || !vehicle_type) {
     return res.status(400).json({ error: 'vehicle_plate and vehicle_type are required.' });
   }
@@ -237,18 +237,17 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
     if (existing.length === 0) {
       // New plate — insert into fleet
       await query(
-        `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, capacity_tons, status, ownership_doc)
-         VALUES (?, ?, ?, 0, 'Available', ?)`,
-        [tid, plate, vehicle_type, `Registered by driver: ${driverName}`]
+        `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc)
+         VALUES (?, ?, ?, ?, 0, 'Available', ?)`,
+        [tid, plate, vehicle_type, model || null, `Registered by driver: ${driverName}`]
       );
     } else {
-      // Plate already exists — only update the ownership note, NEVER touch type/capacity
+      // Plate already exists — only update model and ownership note, NEVER touch type/capacity
       await query(
-        `UPDATE vehicle SET ownership_doc = ? WHERE plate_number = ? AND tenant_id = ?`,
-        [`Driver: ${driverName}`, plate, tid]
+        `UPDATE vehicle SET model = COALESCE(?, model), ownership_doc = ? WHERE plate_number = ? AND tenant_id = ?`,
+        [model || null, `Driver: ${driverName}`, plate, tid]
       );
     }
-
 
     res.json({ ok: true, message: 'Vehicle info saved.' });
   } catch (err) {

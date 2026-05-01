@@ -46,7 +46,7 @@ export default function VehicleInfo() {
       const res = await fetch(mobileUrl('/driver/vehicle'), {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ vehicle_plate: vehiclePlate, vehicle_type: vehicleType }),
+        body: JSON.stringify({ vehicle_plate: vehiclePlate, vehicle_type: vehicleType, model: vehicleModel || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save.');

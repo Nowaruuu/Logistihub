@@ -1830,8 +1830,15 @@ setInterval(function() {
           <option value="SUV">SUV</option>
           <option value="Pickup">Pickup</option>
           <option value="Trailer">Trailer</option>
+          <option value="Flatbed">Flatbed</option>
+          <option value="L300">L300</option>
+          <option value="Elf Truck">Elf Truck</option>
         </select>
       </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Model / Description <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+      <input id="v-model" type="text" placeholder="e.g. Toyota Hi-Ace 2021" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
       <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Capacity (tons) *</label>
@@ -1892,8 +1899,15 @@ setInterval(function() {
           <option value="SUV">SUV</option>
           <option value="Pickup">Pickup</option>
           <option value="Trailer">Trailer</option>
+          <option value="Flatbed">Flatbed</option>
+          <option value="L300">L300</option>
+          <option value="Elf Truck">Elf Truck</option>
         </select>
       </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Model / Description <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+      <input id="u-v-model" type="text" placeholder="e.g. Toyota Hi-Ace 2021" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
       <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Capacity (tons) *</label>
@@ -1988,10 +2002,11 @@ function renderVehicles(list) {
   tb.innerHTML = list.map(function(v) {
     var plate = v.plate_number || '';
     var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
-    var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
+    var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
       '<td>' + esc(v.vehicle_type||'—') + '</td>' +
+      '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
       '<td>' + (v.capacity_tons || '—') + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
       '<td>' + esc(v.assigned_route||'—') + '</td>' +
@@ -2086,6 +2101,7 @@ async function submitAddStaff() {
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
+  document.getElementById('v-model').value = '';
   document.getElementById('v-capacity').value = '';
   document.getElementById('v-status').value = 'Available';
   document.getElementById('vehicle-modal-err').style.display = 'none';
@@ -2097,6 +2113,7 @@ function closeVehicleModal() { document.getElementById('modal-vehicle').style.di
 async function submitAddVehicle() {
   var plate    = document.getElementById('v-plate').value.trim();
   var type     = document.getElementById('v-type').value;
+  var model    = document.getElementById('v-model').value.trim();
   var capacity = document.getElementById('v-capacity').value;
   var status   = document.getElementById('v-status').value;
   var errEl    = document.getElementById('vehicle-modal-err');
@@ -2110,7 +2127,7 @@ async function submitAddVehicle() {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({plate_number: plate, type, capacity_tons: capacity, status, ownership_doc: window._vehicleDocBase64})
+      body: JSON.stringify({plate_number: plate, type, model: model || null, capacity_tons: capacity, status, ownership_doc: window._vehicleDocBase64})
     });
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
@@ -2121,9 +2138,10 @@ async function submitAddVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
 
-function openUpdateVehicleModal(plate, type, capacity, status) {
+function openUpdateVehicleModal(plate, type, capacity, status, model) {
   document.getElementById('u-v-plate').value = plate;
   document.getElementById('u-v-type').value = type;
+  document.getElementById('u-v-model').value = model || '';
   document.getElementById('u-v-capacity').value = capacity;
   document.getElementById('u-v-status').value = status;
   document.getElementById('update-vehicle-modal-err').style.display = 'none';
@@ -2134,6 +2152,7 @@ function closeUpdateVehicleModal() { document.getElementById('modal-update-vehic
 async function submitUpdateVehicle() {
   var plate    = document.getElementById('u-v-plate').value.trim();
   var type     = document.getElementById('u-v-type').value;
+  var model    = document.getElementById('u-v-model').value.trim();
   var capacity = document.getElementById('u-v-capacity').value;
   var status   = document.getElementById('u-v-status').value;
   var errEl    = document.getElementById('update-vehicle-modal-err');
@@ -2146,7 +2165,7 @@ async function submitUpdateVehicle() {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(plate), {
       method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({type, capacity_tons: capacity, status})
+      body: JSON.stringify({type, model: model || null, capacity_tons: capacity, status})
     });
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed to update vehicle.');
