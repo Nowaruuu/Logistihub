@@ -410,8 +410,18 @@ textarea{resize:vertical;}
           <p style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Loading requests...</p>
         </div>
       </div>
+      <!-- Package Categories (global) -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="ph-row" style="padding:14px 18px 10px;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;">Package Categories</strong><p style="font-size:11px;color:var(--text-muted);margin:0;">Toggle which delivery types your fleet currently supports</p></div>
+          <span id="pkg-cat-saving" style="font-size:11px;color:var(--text-muted);display:none;">Saving…</span>
+        </div>
+        <div id="pkg-cat-list" style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:10px;">
+          <p style="color:var(--text-muted);font-size:12px;">Loading…</p>
+        </div>
+      </div>
 
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Item Types</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
     </div>
 
     <!-- â• â•  STAFF â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
@@ -1995,39 +2005,69 @@ function loadVehicles() {
     renderVehicles(_vehicleData);
   }).catch(function(){
     var tb = document.getElementById('vehicles-tbody');
-    if(tb) tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load vehicles</p></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load vehicles</p></div></td></tr>';
   });
   loadVehicleRequests();
+  loadPackageCategories();
 }
 
 function renderVehicles(list) {
   var tb = document.getElementById('vehicles-tbody');
   if(!tb) return;
-  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
   var stColors = {'Available':'b-delivered','On-Duty':'b-transit','Maintenance':'b-awaiting','Retired':'b-declined'};
-  var ALL_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
   tb.innerHTML = list.map(function(v) {
     var plate = v.plate_number || '';
-    var supported = (v.supported_item_types || '').split(',').filter(Boolean);
-    var typeBadges = ALL_TYPES.map(function(t) {
-      var on = supported.includes(t);
-      return '<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin:1px;cursor:default;' +
-        (on ? 'background:#dcfce7;color:#16a34a;' : 'background:#f1f5f9;color:#94a3b8;text-decoration:line-through;') + '">' + t + '</span>';
-    }).join('');
-    var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
+    var delBtn    = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
-    var itemTypesBtn = plate ? '<button onclick="openItemTypesModal(\'' + plate + '\', \'' + esc(v.supported_item_types||'') + '\')" style="background:none;border:none;cursor:pointer;color:#8b5cf6;padding:3px 6px;border-radius:6px;" title="Manage Item Types"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">tune</span></button>' : '';
     var assignBtn = (plate && v.status === 'Available') ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
       '<td>' + esc(v.vehicle_type||'—') + '</td>' +
       '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
       '<td>' + (v.capacity_tons || '—') + '</td>' +
-      '<td style="max-width:160px;">' + typeBadges + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
       '<td>' + esc(v.assigned_driver_name||'—') + '</td>' +
-      '<td><div style="display:flex;gap:2px;">' + itemTypesBtn + assignBtn + updateBtn + delBtn + '</div></td></tr>';
+      '<td><div style="display:flex;gap:2px;">' + assignBtn + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
+}
+
+// ── Package Categories (global tenant-level) ──────────────────────────────────
+var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
+var _activePkgCats = [];
+function loadPackageCategories() {
+  apiFetch('/' + _SLUG + '/api/admin/package-categories').then(function(r){return r.json();}).then(function(d) {
+    _activePkgCats = d.categories || _ALL_PKG_CATS;
+    renderPackageCategories();
+  });
+}
+function renderPackageCategories() {
+  var el = document.getElementById('pkg-cat-list');
+  if(!el) return;
+  el.innerHTML = _ALL_PKG_CATS.map(function(cat) {
+    var on = _activePkgCats.includes(cat);
+    return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
+      'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
+      (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
+      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + cat +
+    '</button>';
+  }).join('');
+}
+async function togglePkgCat(cat) {
+  var idx = _activePkgCats.indexOf(cat);
+  if(idx > -1) { _activePkgCats.splice(idx, 1); }
+  else          { _activePkgCats.push(cat); }
+  renderPackageCategories();
+  var lbl = document.getElementById('pkg-cat-saving');
+  if(lbl) lbl.style.display = 'inline';
+  try {
+    await apiFetch('/' + _SLUG + '/api/admin/package-categories', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories: _activePkgCats })
+    });
+  } catch(e) { /* silent */ }
+  if(lbl) lbl.style.display = 'none';
 }
 
 // ── Vehicle Requests ─────────────────────────────────────────────────────────
@@ -2116,112 +2156,6 @@ function openAssignVehicleModal(plate) {
   modal.innerHTML = '<div style="background:'+bg+';border-radius:16px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">' + html + '</div>';
   modal.style.display = 'flex';
   modal.onclick = function(e){ if(e.target===modal) closeModal('assign-vehicle-modal'); };
-}
-
-// ── Item Types Modal ──────────────────────────────────────────────────────────
-var _itemTypesPlate = '';
-var _ALL_ITEM_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
-function openItemTypesModal(plate, currentTypes) {
-  _itemTypesPlate = plate;
-  var current = (currentTypes || '').split(',').filter(Boolean);
-  var bg  = getComputedStyle(document.body).getPropertyValue('--bg-1').trim()  || '#1e1b4b';
-  var bg2 = getComputedStyle(document.body).getPropertyValue('--bg-2').trim()  || '#2d2a5e';
-  var bdr = getComputedStyle(document.body).getPropertyValue('--border').trim()|| '#3b3880';
-  var txt = getComputedStyle(document.body).getPropertyValue('--text').trim()  || '#f8fafc';
-  var txtMuted = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#94a3b8';
-  var checkboxes = _ALL_ITEM_TYPES.map(function(t) {
-    var checked = current.includes(t) ? 'checked' : '';
-    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid '+bdr+';cursor:pointer;">' +
-      '<input type="checkbox" id="itype-'+t+'" value="'+t+'" '+checked+' style="width:16px;height:16px;accent-color:#ea580c;">' +
-      '<span style="font-weight:600;font-size:13px;color:'+txt+';">'+t+'</span>' +
-    '</label>';
-  }).join('');
-  var html = '<div style="padding:20px;">' +
-    '<h3 style="margin:0 0 4px;font-size:15px;color:'+txt+';">Item Types — <strong style="font-family:monospace;">' + plate + '</strong></h3>' +
-    '<p style="font-size:11px;color:'+txtMuted+';margin:0 0 14px;">Toggle which package categories this vehicle can handle.</p>' +
-    checkboxes +
-    '<div style="display:flex;gap:8px;margin-top:16px;">' +
-      '<button class="btn" style="flex:1;background:'+bg2+';color:'+txt+';" onclick="closeModal(\'item-types-modal\')">Cancel</button>' +
-      '<button class="btn btn-primary" style="flex:1;" onclick="saveItemTypes()">Save</button>' +
-    '</div>' +
-  '</div>';
-  var modal = document.getElementById('item-types-modal');
-  if(!modal) {
-    modal = document.createElement('div');
-    modal.id = 'item-types-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = '<div style="background:'+bg+';border-radius:16px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">' + html + '</div>';
-  modal.style.display = 'flex';
-  modal.onclick = function(e){ if(e.target===modal) closeModal('item-types-modal'); };
-}
-
-async function submitAssignVehicle() {
-  var driverId = document.getElementById('assign-driver-select')?.value;
-  if(!driverId) return;
-  try {
-    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + _assignVehiclePlate + '/assign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driver_id: parseInt(driverId) })
-    });
-    var d = await r.json();
-    closeModal('assign-vehicle-modal');
-    if(!r.ok) { alert(d.error || 'Failed'); return; }
-    alert('Assignment sent! Driver will receive a notification to accept or refuse.');
-    loadVehicles();
-  } catch(e) { alert('Network error.'); }
-}
-
-function closeModal(id) { var m = document.getElementById(id); if(m) m.style.display = 'none'; }
-
-// ── Item Types Modal ─────────────────────────────────────────────────────────
-var _itemTypesPlate = '';
-var _ALL_ITEM_TYPES = ['Package','Food','Document','Bulk','Vehicle'];
-function openItemTypesModal(plate, currentTypes) {
-  _itemTypesPlate = plate;
-  var current = (currentTypes || '').split(',').filter(Boolean);
-  var checkboxes = _ALL_ITEM_TYPES.map(function(t) {
-    var checked = current.includes(t) ? 'checked' : '';
-    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">' +
-      '<input type="checkbox" id="itype-'+t+'" value="'+t+'" '+checked+' style="width:16px;height:16px;accent-color:#ea580c;">' +
-      '<span style="font-weight:600;font-size:13px;">'+t+'</span>' +
-    '</label>';
-  }).join('');
-  var html = '<div style="padding:18px;">' +
-    '<h3 style="margin:0 0 4px;font-size:15px;">Item Types for <strong style=\'font-family:monospace;\'>' + plate + '</strong></h3>' +
-    '<p style="font-size:11px;color:var(--text-muted);margin:0 0 14px;">Only compatible jobs will be shown to drivers using this vehicle.</p>' +
-    checkboxes +
-    '<div style="display:flex;gap:8px;margin-top:16px;">' +
-      '<button class="btn" style="flex:1;background:var(--bg-2);" onclick="closeModal(\'item-types-modal\')">Cancel</button>' +
-      '<button class="btn btn-primary" style="flex:1;" onclick="saveItemTypes()">Save</button>' +
-    '</div>' +
-  '</div>';
-  var modal = document.getElementById('item-types-modal');
-  if(!modal) {
-    modal = document.createElement('div');
-    modal.id = 'item-types-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = '<div style="background:var(--bg-1);border-radius:16px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' + html + '</div>';
-  modal.style.display = 'flex';
-  modal.onclick = function(e){ if(e.target===modal) closeModal('item-types-modal'); };
-}
-
-async function saveItemTypes() {
-  var selected = _ALL_ITEM_TYPES.filter(function(t){ return document.getElementById('itype-'+t)?.checked; });
-  try {
-    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + _itemTypesPlate + '/item-types', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supported_item_types: selected.join(',') })
-    });
-    closeModal('item-types-modal');
-    if(r.ok) loadVehicles();
-    else alert('Failed to save item types.');
-  } catch(e) { alert('Network error.'); }
 }
 
 async function deleteStaff(id, btn) {

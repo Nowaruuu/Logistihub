@@ -695,16 +695,24 @@ router.post('/:slug/api/admin/vehicles/:plate/assign', requireAdmin, requireSlug
   }
 });
 
-// PUT update supported item types for a vehicle
-router.put('/:slug/api/admin/vehicles/:plate/item-types', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { supported_item_types } = req.body; // comma-separated string
+// GET global package categories for this tenant
+router.get('/:slug/api/admin/package-categories', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
-    await query('UPDATE vehicle SET supported_item_types = ? WHERE plate_number = ? AND tenant_id = ?',
-      [supported_item_types || '', req.params.plate, req.tenantId]);
-    res.json({ ok: true });
-  } catch(err) {
-    res.status(500).json({ error: err.message });
-  }
+    const [rows] = await query('SELECT supported_package_categories FROM TENANT WHERE tenant_id = ? LIMIT 1', [req.tenantId]);
+    const cats = (rows[0]?.supported_package_categories || 'Package,Food,Document,Bulk,Vehicle').split(',').filter(Boolean);
+    res.json({ categories: cats });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT update global package categories for this tenant
+router.put('/:slug/api/admin/package-categories', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { categories } = req.body; // array of strings
+  if (!Array.isArray(categories)) return res.status(400).json({ error: 'categories must be an array.' });
+  try {
+    await query('UPDATE TENANT SET supported_package_categories = ? WHERE tenant_id = ?',
+      [categories.join(','), req.tenantId]);
+    res.json({ ok: true, categories });
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

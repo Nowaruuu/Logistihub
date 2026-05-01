@@ -34,7 +34,7 @@ pool.getConnection()
       "ALTER TABLE STAFF ADD COLUMN vehicle_plate VARCHAR(20) DEFAULT NULL",
       "ALTER TABLE STAFF ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL",
       "ALTER TABLE vehicle ADD COLUMN model VARCHAR(100) DEFAULT NULL",
-      "ALTER TABLE vehicle ADD COLUMN supported_item_types VARCHAR(255) DEFAULT 'Package,Food,Document,Bulk,Vehicle'",
+      "ALTER TABLE TENANT ADD COLUMN supported_package_categories VARCHAR(255) DEFAULT 'Package,Food,Document,Bulk,Vehicle'",
       `CREATE TABLE IF NOT EXISTS VEHICLE_REQUEST (
         id INT AUTO_INCREMENT PRIMARY KEY,
         tenant_id INT NOT NULL,
