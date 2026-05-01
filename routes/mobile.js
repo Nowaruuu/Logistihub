@@ -57,63 +57,54 @@ router.get('/tenant-config', async (req, res) => {
   const { slug } = req.params;
   try {
     const [rows] = await query(
-      `SELECT company_name, logo_url, primary_color, available_vehicles, supported_package_categories
+      `SELECT company_name, logo_url, primary_color, available_vehicles, tenant_id
        FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
       [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
     const t = rows[0];
+    const tid = t.tenant_id;
 
     // Derive vehicle types from the actual vehicle table for this tenant
     // This ensures we ONLY show what the tenant actually owns
     let vehicleTypes = [];
     let capacityMap = {};
     try {
-      const [tenantRow] = await query(
-        'SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [slug]
+      const [vrows] = await query(
+        `SELECT DISTINCT LOWER(vehicle_type) AS vtype FROM vehicle
+         WHERE tenant_id = ? AND status != 'Retired'`,
+        [tid]
       );
-      if (tenantRow.length) {
-        const tid = tenantRow[0].tenant_id;
-        const [vrows] = await query(
-          `SELECT DISTINCT LOWER(vehicle_type) AS vtype FROM vehicle
-           WHERE tenant_id = ? AND status != 'Retired'`,
-          [tid]
-        );
-        // Map DB vehicle_type values to mobile app vehicle IDs
-        const typeMap = {
-          'motorcycle': 'motorcycle',
-          'sedan': 'sedan',
-          'suv': 'sedan',
-          'pickup': 'van',
-          'van': 'van',
-          'truck': 'truck',
-          'trailer': 'flatbed',
-          'flatbed': 'flatbed',
-        };
-        // Also get max capacity per mapped type
-        const seen = new Set();
-        vrows.forEach((r) => {
-          const mapped = typeMap[r.vtype];
-          if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
-        });
-        // Get max capacity_tons per mapped type from DB
-        const [capRows] = await query(
-          `SELECT LOWER(vehicle_type) AS vtype, MAX(capacity_tons) AS max_cap
-           FROM vehicle WHERE tenant_id = ? AND status != 'Retired'
-           GROUP BY LOWER(vehicle_type)`,
-          [tid]
-        );
-        capRows.forEach((r) => {
-          const mapped = typeMap[r.vtype];
-          if (mapped && r.max_cap) {
-            // Convert tons to kg, take max if multiple vehicles of same mapped type
-            const kg = parseFloat(r.max_cap) * 1000;
-            if (!capacityMap[mapped] || kg > capacityMap[mapped]) {
-              capacityMap[mapped] = kg;
-            }
-          }
-        });
-      }
+      // Map DB vehicle_type values to mobile app vehicle IDs
+      const typeMap = {
+        'motorcycle': 'motorcycle',
+        'sedan': 'sedan',
+        'suv': 'sedan',
+        'pickup': 'van',
+        'van': 'van',
+        'truck': 'truck',
+        'trailer': 'flatbed',
+        'flatbed': 'flatbed',
+      };
+      const seen = new Set();
+      vrows.forEach((r) => {
+        const mapped = typeMap[r.vtype];
+        if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
+      });
+      // Get max capacity_tons per mapped type from DB
+      const [capRows] = await query(
+        `SELECT LOWER(vehicle_type) AS vtype, MAX(capacity_tons) AS max_cap
+         FROM vehicle WHERE tenant_id = ? AND status != 'Retired'
+         GROUP BY LOWER(vehicle_type)`,
+        [tid]
+      );
+      capRows.forEach((r) => {
+        const mapped = typeMap[r.vtype];
+        if (mapped && r.max_cap) {
+          const kg = parseFloat(r.max_cap) * 1000;
+          if (!capacityMap[mapped] || kg > capacityMap[mapped]) capacityMap[mapped] = kg;
+        }
+      });
     } catch (e) { /* vehicle table may not exist yet */ }
 
     // Fallback: use static available_vehicles column
@@ -123,19 +114,29 @@ router.get('/tenant-config', async (req, res) => {
         : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
     }
 
-    // Parse supported package categories (global toggle)
+    // ── Package categories — separate query so a missing column can't break the whole route
     const allCats = ['Package', 'Food', 'Document', 'Bulk', 'Vehicle'];
-    const supportedCats = t.supported_package_categories
-      ? t.supported_package_categories.split(',').filter(Boolean)
-      : allCats;
+    let supportedCats = allCats;
+    try {
+      const [catRows] = await query(
+        'SELECT supported_package_categories FROM TENANT WHERE tenant_id = ? LIMIT 1',
+        [tid]
+      );
+      if (catRows[0]?.supported_package_categories) {
+        supportedCats = catRows[0].supported_package_categories.split(',').filter(Boolean);
+      }
+    } catch (e) {
+      // Column doesn't exist yet (migration pending) — default to all categories
+      console.warn('[tenant-config] supported_package_categories not available yet');
+    }
 
     res.json({
       company_name: t.company_name,
       logo_url: t.logo_url || null,
       primary_color: t.primary_color || '#ea580c',
       available_vehicles: vehicleTypes,
-      vehicle_capacities: capacityMap || {}, // { motorcycle: 20000, van: 500000, ... } in kg
-      supported_categories: supportedCats,   // ['Package','Food','Document','Bulk','Vehicle']
+      vehicle_capacities: capacityMap || {},
+      supported_categories: supportedCats,
     });
   } catch (err) {
     console.error('[GET /tenant-config]', err);
