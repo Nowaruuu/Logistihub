@@ -374,7 +374,13 @@ router.get('/deliveries/:dn', authMiddleware, async (req, res) => {
   const dn = req.params.dn;
   try {
     const [rows] = await query(
-      'SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      `SELECT s.*,
+              st.name AS driver_name, st.vehicle_plate AS driver_plate, st.vehicle_type AS driver_vehicle_type,
+              u.first_name, u.last_name
+       FROM shipment s
+       LEFT JOIN STAFF st ON st.staff_id = s.assigned_driver_id AND st.tenant_id = s.tenant_id
+       LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id AND u.tenant_id = s.tenant_id
+       WHERE s.delivery_number = ? AND s.tenant_id = ? LIMIT 1`,
       [dn, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
