@@ -520,11 +520,11 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   try {
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
 
-    const descriptions: Record<string, string> = {
-      'In-Transit':        `Package is in transit. Your package is on its way.`,
-      'Out for Delivery':  `Package is out for delivery. Your driver is heading to your address.`,
-      'Delivered':         `Parcel has been delivered. Thank you for using LogistiHub!`,
-      'Failed':            `Delivery attempt failed. Our team will contact you to reschedule.`,
+    const descriptions = {
+      'In-Transit':        'Package is in transit. Your package is on its way.',
+      'Out for Delivery':  'Package is out for delivery. Your driver is heading to your address.',
+      'Delivered':         'Parcel has been delivered. Thank you for using LogistiHub!',
+      'Failed':            'Delivery attempt failed. Our team will contact you to reschedule.',
     };
 
     await query(
