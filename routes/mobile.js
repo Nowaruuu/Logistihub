@@ -57,7 +57,7 @@ router.get('/tenant-config', async (req, res) => {
   const { slug } = req.params;
   try {
     const [rows] = await query(
-      `SELECT company_name, logo_url, primary_color, available_vehicles
+      `SELECT company_name, logo_url, primary_color, available_vehicles, supported_package_categories
        FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
       [slug]
     );
@@ -123,12 +123,19 @@ router.get('/tenant-config', async (req, res) => {
         : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
     }
 
+    // Parse supported package categories (global toggle)
+    const allCats = ['Package', 'Food', 'Document', 'Bulk', 'Vehicle'];
+    const supportedCats = t.supported_package_categories
+      ? t.supported_package_categories.split(',').filter(Boolean)
+      : allCats;
+
     res.json({
       company_name: t.company_name,
       logo_url: t.logo_url || null,
       primary_color: t.primary_color || '#ea580c',
       available_vehicles: vehicleTypes,
       vehicle_capacities: capacityMap || {}, // { motorcycle: 20000, van: 500000, ... } in kg
+      supported_categories: supportedCats,   // ['Package','Food','Document','Bulk','Vehicle']
     });
   } catch (err) {
     console.error('[GET /tenant-config]', err);

@@ -125,12 +125,25 @@ export default function SendPackage() {
   const [tenantVehicles, setTenantVehicles] = useState<string[]>(['motorcycle','sedan','van','truck','flatbed']);
   // Staff-managed vehicle capacities (kg) — overrides hardcoded maxKg
   const [tenantCapacities, setTenantCapacities] = useState<Record<string, number>>({});
+  // Globally enabled package categories (admin-controlled)
+  // Map: DB label → component id
+  const CAT_LABEL_TO_ID: Record<string, string> = {
+    Package: 'PACKAGE', Food: 'FOOD', Document: 'DOC', Bulk: 'BULK', Vehicle: 'VEHICLE',
+  };
+  const [enabledCatIds, setEnabledCatIds] = useState<string[]>(['PACKAGE','VEHICLE','FOOD','DOC','BULK']);
+
   useEffect(() => {
     getTenantConfig().then(cfg => {
       setTenantVehicles(cfg.available_vehicles);
       if (cfg.vehicle_capacities) setTenantCapacities(cfg.vehicle_capacities);
+      if (cfg.supported_categories) {
+        setEnabledCatIds(cfg.supported_categories.map((l: string) => CAT_LABEL_TO_ID[l]).filter(Boolean));
+      }
     });
   }, []);
+
+  // Filtered category list for UI
+  const visibleCategories = PACKAGE_CATEGORIES.filter(c => enabledCatIds.includes(c.id));
 
   // Extra safety / insurance toggle
   const [extraSafety, setExtraSafety] = useState(false);
@@ -594,29 +607,37 @@ export default function SendPackage() {
         </div>
       </section>
 
-      {/* ── Package Category (Issue #3) ── */}
       <section className="mt-8 px-5">
         <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Package Category</h3>
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-          {PACKAGE_CATEGORIES.map((cat) => {
-            const Icon = cat.icon;
-            const active = category === cat.id;
-            return (
-              <button key={cat.id} onClick={() => setCategory(cat.id)}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 transition-all min-w-[90px] flex-shrink-0",
-                  active ? "border-orange-600 bg-orange-600/5 text-orange-600" : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
-                )}
-              >
-                <Icon className="size-5" />
-                <span className="text-[10px] font-bold whitespace-nowrap">{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="text-[11px] text-slate-400 mt-2 ml-1">
-          {PACKAGE_CATEGORIES.find(c => c.id === category)?.desc}
-        </p>
+        {visibleCategories.length === 0 ? (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200">
+            <AlertTriangle className="size-5 text-amber-500 flex-shrink-0" />
+            <p className="text-[13px] text-amber-700 dark:text-amber-300">No package categories are currently enabled. Contact your admin.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {visibleCategories.map((cat) => {
+                const Icon = cat.icon;
+                const active = category === cat.id;
+                return (
+                  <button key={cat.id} onClick={() => setCategory(cat.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 transition-all min-w-[90px] flex-shrink-0",
+                      active ? "border-orange-600 bg-orange-600/5 text-orange-600" : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
+                    )}
+                  >
+                    <Icon className="size-5" />
+                    <span className="text-[10px] font-bold whitespace-nowrap">{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-2 ml-1">
+              {PACKAGE_CATEGORIES.find(c => c.id === category)?.desc}
+            </p>
+          </>
+        )}
       </section>
 
       {/* ── Vehicle Recommendation ── */}
