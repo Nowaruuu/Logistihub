@@ -381,7 +381,14 @@ router.put('/:slug/api/admin/staff/:id/suspend', requireAdmin, requireSlugMatch,
 });
 
 router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-  const [rows] = await query('SELECT * FROM vehicle WHERE tenant_id = ? ORDER BY plate_number ASC', [req.tenantId]);
+  const tid = req.tenantId;
+  const [rows] = await query(
+    `SELECT v.*, st.name AS assigned_driver_name
+     FROM vehicle v
+     LEFT JOIN STAFF st ON st.vehicle_plate = v.plate_number AND st.tenant_id = v.tenant_id
+     WHERE v.tenant_id = ? ORDER BY v.plate_number ASC`,
+    [tid]
+  );
   res.json(rows);
 });
 

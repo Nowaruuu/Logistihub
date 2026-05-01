@@ -422,7 +422,7 @@ textarea{resize:vertical;}
 
     <!-- â•â• VEHICLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Route</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
     </div>
 
     <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
@@ -2009,7 +2009,7 @@ function renderVehicles(list) {
       '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
       '<td>' + (v.capacity_tons || '—') + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
-      '<td>' + esc(v.assigned_route||'—') + '</td>' +
+      '<td>' + esc(v.assigned_driver_name||'—') + '</td>' +
       '<td><div style="display:flex;gap:4px;">' + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }
