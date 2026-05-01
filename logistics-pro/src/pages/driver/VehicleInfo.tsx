@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2, ChevronRight, ShieldAlert, Clock, XCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const API_BASE = 'https://logistichub.ddns.net';
@@ -21,6 +21,7 @@ export default function VehicleInfo() {
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
+  const [licenseStatus, setLicenseStatus] = useState<string>('not_uploaded');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -33,8 +34,9 @@ export default function VehicleInfo() {
         if (d.vehicle_plate) setVehiclePlate(d.vehicle_plate);
         if (d.vehicle_type)  setVehicleType(d.vehicle_type);
         if (d.model)         setVehicleModel(d.model);
+        if (d.license_status) setLicenseStatus(d.license_status);
       })
-      .catch(() => { /* no vehicle set yet, show empty form */ })
+      .catch(() => { /* no vehicle yet */ })
       .finally(() => setLoading(false));
   }, []);
 
@@ -75,6 +77,60 @@ export default function VehicleInfo() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="size-8 animate-spin text-orange-600" />
+      </div>
+    );
+  }
+
+  // ── License gate ────────────────────────────────────────────────────────
+  if (licenseStatus !== 'verified') {
+    const configs: Record<string, { icon: any; color: string; bg: string; title: string; msg: string }> = {
+      not_uploaded: {
+        icon: ShieldAlert, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30',
+        title: 'License Required',
+        msg: 'You must upload your driver\'s license before you can register or request a vehicle. Go to Documents to upload it.',
+      },
+      pending_review: {
+        icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30',
+        title: 'License Under Review',
+        msg: 'Your license has been submitted and is waiting for admin approval. You\'ll be able to register a vehicle once it\'s verified.',
+      },
+      expired: {
+        icon: XCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30',
+        title: 'License Expired',
+        msg: 'Your driver\'s license has expired. Please upload a renewed license and wait for admin verification.',
+      },
+    };
+    const cfg = configs[licenseStatus] || configs.not_uploaded;
+    const Icon = cfg.icon;
+    return (
+      <div className="pb-28 space-y-5">
+        <div className="flex items-center gap-4 px-5 pt-4">
+          <button onClick={() => navigate(-1)} className="size-10 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+            <ChevronLeft className="size-5 text-slate-600 dark:text-slate-400" />
+          </button>
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Vehicle Information</h1>
+            <p className="text-xs text-slate-500">License verification required</p>
+          </div>
+        </div>
+        <div className={cn('mx-5 rounded-2xl border p-5 space-y-4', cfg.bg)}>
+          <div className="flex items-center gap-3">
+            <Icon className={cn('size-8 flex-shrink-0', cfg.color)} />
+            <div>
+              <p className={cn('font-extrabold text-base', cfg.color)}>{cfg.title}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">{cfg.msg}</p>
+            </div>
+          </div>
+          {licenseStatus === 'not_uploaded' || licenseStatus === 'expired' ? (
+            <button
+              onClick={() => navigate('/driver/documents')}
+              className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            >
+              <ShieldAlert className="size-4" />
+              Go to Documents → Upload License
+            </button>
+          ) : null}
+        </div>
       </div>
     );
   }

@@ -186,12 +186,13 @@ router.put('/driver/documents', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-// GET /driver/vehicle — get driver's registered vehicle info
+// GET /driver/vehicle — get driver's registered vehicle info (includes license_status)
 router.get('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   try {
     const [rows] = await query(
-      `SELECT s.vehicle_plate, s.vehicle_type, v.model
+      `SELECT s.vehicle_plate, s.vehicle_type, s.license_status, s.license_expiry,
+              v.model
        FROM STAFF s
        LEFT JOIN vehicle v ON v.plate_number = s.vehicle_plate AND v.tenant_id = s.tenant_id
        WHERE s.staff_id = ? LIMIT 1`,
@@ -216,6 +217,21 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   const tid   = req.tenantId;
 
   try {
+    // 0. License gate — driver must have a verified license
+    const [licRows] = await query(
+      'SELECT license_status FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1',
+      [req.staff.staff_id, tid]
+    );
+    const licStatus = licRows[0]?.license_status || 'not_uploaded';
+    if (licStatus !== 'verified') {
+      const msgs = {
+        not_uploaded:   'You must upload your driver\'s license before registering a vehicle.',
+        pending_review: 'Your license is under review. Please wait for admin approval before registering a vehicle.',
+        expired:        'Your driver\'s license has expired. Please upload a valid license.',
+      };
+      return res.status(403).json({ error: msgs[licStatus] || 'License not verified.', license_status: licStatus });
+    }
+
     // 1. Save to STAFF record (for auto-assignment when accepting jobs)
     await query(
       'UPDATE STAFF SET vehicle_plate = ?, vehicle_type = ? WHERE staff_id = ? AND tenant_id = ?',
@@ -288,6 +304,21 @@ router.post('/driver/vehicle-request', authMiddleware, async (req, res) => {
   const tid = req.tenantId;
   const driverId = req.staff.staff_id;
   try {
+    // 0. License gate
+    const [licRows] = await query(
+      'SELECT license_status FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1',
+      [driverId, tid]
+    );
+    const licStatus = licRows[0]?.license_status || 'not_uploaded';
+    if (licStatus !== 'verified') {
+      const msgs = {
+        not_uploaded:   'You must upload and have your driver\'s license verified before requesting a vehicle.',
+        pending_review: 'Your license is under review. Please wait for admin approval.',
+        expired:        'Your driver\'s license has expired. Please upload a valid license.',
+      };
+      return res.status(403).json({ error: msgs[licStatus] || 'License not verified.', license_status: licStatus });
+    }
+
     // Check vehicle exists and is available
     const [veh] = await query(
       "SELECT plate_number FROM vehicle WHERE plate_number = ? AND tenant_id = ? AND status = 'Available' LIMIT 1",
@@ -301,6 +332,7 @@ router.post('/driver/vehicle-request', authMiddleware, async (req, res) => {
       [driverId, tid]
     );
     if (existing.length) return res.status(400).json({ error: 'You already have a pending request.' });
+
 
     await query(
       `INSERT INTO VEHICLE_REQUEST (tenant_id, vehicle_plate, driver_id, request_type, status, initiated_by)
