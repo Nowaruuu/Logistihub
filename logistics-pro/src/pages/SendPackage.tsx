@@ -132,14 +132,32 @@ export default function SendPackage() {
   };
   const [enabledCatIds, setEnabledCatIds] = useState<string[]>(['PACKAGE','VEHICLE','FOOD','DOC','BULK']);
 
+  // Live-refresh tenant config: on mount, on visibility change, and every 30s
   useEffect(() => {
-    getTenantConfig().then(cfg => {
-      setTenantVehicles(cfg.available_vehicles);
-      if (cfg.vehicle_capacities) setTenantCapacities(cfg.vehicle_capacities);
-      if (cfg.supported_categories) {
-        setEnabledCatIds(cfg.supported_categories.map((l: string) => CAT_LABEL_TO_ID[l]).filter(Boolean));
-      }
-    });
+    const refreshConfig = () => {
+      getTenantConfig().then(cfg => {
+        setTenantVehicles(cfg.available_vehicles);
+        if (cfg.vehicle_capacities) setTenantCapacities(cfg.vehicle_capacities);
+        if (cfg.supported_categories) {
+          setEnabledCatIds(cfg.supported_categories.map((l: string) => CAT_LABEL_TO_ID[l]).filter(Boolean));
+        }
+      }).catch(() => {});
+    };
+
+    // Fetch immediately
+    refreshConfig();
+
+    // Re-fetch when page/app becomes visible (tab switch, app foreground)
+    const onVisibility = () => { if (document.visibilityState === 'visible') refreshConfig(); };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    // Poll every 30 seconds for near-real-time updates
+    const interval = setInterval(refreshConfig, 30_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      clearInterval(interval);
+    };
   }, []);
 
   // Filtered category list for UI
