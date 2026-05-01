@@ -17,15 +17,19 @@ function apiUrl(path: string): string {
   return `${API_BASE_URL}/${getSlug()}/api${path}`; 
 }
 
-export async function getTenantConfig(): Promise<{ available_vehicles: string[]; vehicle_capacities: Record<string, number>; company_name: string; logo_url: string | null; primary_color: string }> {
+export async function getTenantConfig(): Promise<{ available_vehicles: string[]; vehicle_capacities: Record<string, number>; company_name: string; logo_url: string | null; primary_color: string; supported_categories: string[] }> {
   const slug = localStorage.getItem('auth_slug') || '';
-  if (!slug) return { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], vehicle_capacities: {}, company_name: '', logo_url: null, primary_color: '#ea580c' };
+  const fallback = { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], vehicle_capacities: {}, company_name: '', logo_url: null, primary_color: '#ea580c', supported_categories: ['Package','Food','Document','Bulk','Vehicle'] };
+  if (!slug) return fallback;
   try {
     const res = await fetch(`${API_BASE_URL}/${slug}/api/mobile/tenant-config`);
     if (!res.ok) throw new Error('failed');
-    return res.json();
+    const data = await res.json();
+    // Ensure supported_categories always exists (older servers may not return it)
+    if (!data.supported_categories) data.supported_categories = fallback.supported_categories;
+    return data;
   } catch {
-    return { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], vehicle_capacities: {}, company_name: '', logo_url: null, primary_color: '#ea580c' };
+    return fallback;
   }
 }
 

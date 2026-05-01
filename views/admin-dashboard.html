@@ -2034,6 +2034,8 @@ function renderVehicles(list) {
 
 // ── Package Categories (global tenant-level) ──────────────────────────────────
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
+// Display labels — internal DB keys stay the same so mobile mapping works
+var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
 var _activePkgCats = [];
 function loadPackageCategories() {
   apiFetch('/' + _SLUG + '/api/admin/package-categories').then(function(r){return r.json();}).then(function(d) {
@@ -2046,10 +2048,11 @@ function renderPackageCategories() {
   if(!el) return;
   el.innerHTML = _ALL_PKG_CATS.map(function(cat) {
     var on = _activePkgCats.includes(cat);
+    var label = _PKG_CAT_LABELS[cat] || cat;
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + cat +
+      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + label +
     '</button>';
   }).join('');
 }
