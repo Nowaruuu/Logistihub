@@ -32,6 +32,7 @@ export default function VehicleInfo() {
       .then(d => {
         if (d.vehicle_plate) setVehiclePlate(d.vehicle_plate);
         if (d.vehicle_type)  setVehicleType(d.vehicle_type);
+        if (d.model)         setVehicleModel(d.model);
       })
       .catch(() => { /* no vehicle set yet, show empty form */ })
       .finally(() => setLoading(false));
@@ -57,6 +58,7 @@ export default function VehicleInfo() {
         const saved = await verify.json();
         if (saved.vehicle_plate) setVehiclePlate(saved.vehicle_plate);
         if (saved.vehicle_type)  setVehicleType(saved.vehicle_type);
+        if (saved.model)         setVehicleModel(saved.model);
       }
 
       setSuccess(true);

@@ -191,7 +191,10 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   try {
     const [rows] = await query(
-      'SELECT vehicle_plate, vehicle_type FROM STAFF WHERE staff_id = ? LIMIT 1',
+      `SELECT s.vehicle_plate, s.vehicle_type, v.model
+       FROM STAFF s
+       LEFT JOIN vehicle v ON v.plate_number = s.vehicle_plate AND v.tenant_id = s.tenant_id
+       WHERE s.staff_id = ? LIMIT 1`,
       [req.staff.staff_id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
