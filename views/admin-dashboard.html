@@ -414,7 +414,7 @@ textarea{resize:vertical;}
       <div class="card" style="margin-bottom:18px;">
         <div class="ph-row" style="padding:14px 18px 10px;border-bottom:1px solid var(--border);">
           <div><strong style="font-size:13px;">Package Categories</strong><p style="font-size:11px;color:var(--text-muted);margin:0;">Toggle which delivery types your fleet currently supports</p></div>
-          <span id="pkg-cat-saving" style="font-size:11px;color:var(--text-muted);display:none;">Saving…</span>
+          <button id="pkg-cat-save-btn" onclick="savePackageCategories()" class="btn btn-primary btn-sm" style="font-size:12px;padding:6px 16px;">Save Changes</button>
         </div>
         <div id="pkg-cat-list" style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:10px;">
           <p style="color:var(--text-muted);font-size:12px;">Loading…</p>
@@ -2053,21 +2053,29 @@ function renderPackageCategories() {
     '</button>';
   }).join('');
 }
-async function togglePkgCat(cat) {
+function togglePkgCat(cat) {
   var idx = _activePkgCats.indexOf(cat);
   if(idx > -1) { _activePkgCats.splice(idx, 1); }
   else          { _activePkgCats.push(cat); }
   renderPackageCategories();
-  var lbl = document.getElementById('pkg-cat-saving');
-  if(lbl) lbl.style.display = 'inline';
+}
+async function savePackageCategories() {
+  var btn = document.getElementById('pkg-cat-save-btn');
+  if(btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   try {
     await apiFetch('/' + _SLUG + '/api/admin/package-categories', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ categories: _activePkgCats })
     });
-  } catch(e) { /* silent */ }
-  if(lbl) lbl.style.display = 'none';
+    if(btn) { btn.textContent = '✓ Saved'; btn.style.background = '#16a34a'; }
+    setTimeout(function() {
+      if(btn) { btn.disabled = false; btn.textContent = 'Save Changes'; btn.style.background = ''; }
+    }, 2000);
+  } catch(e) {
+    if(btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    alert('Failed to save. Please try again.');
+  }
 }
 
 // ── Vehicle Requests ─────────────────────────────────────────────────────────
