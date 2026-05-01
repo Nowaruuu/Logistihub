@@ -56,17 +56,16 @@ async function createNotification(userId, userType, tenantId, title, message, ty
 router.get('/tenant-config', async (req, res) => {
   const { slug } = req.params;
   try {
+    // Only select columns guaranteed to exist — avoid crashing on missing columns
     const [rows] = await query(
-      `SELECT company_name, logo_url, primary_color, available_vehicles, tenant_id
-       FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
+      `SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
       [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
     const t = rows[0];
     const tid = t.tenant_id;
 
-    // Derive vehicle types from the actual vehicle table for this tenant
-    // This ensures we ONLY show what the tenant actually owns
+    // ── Vehicle types from fleet ──
     let vehicleTypes = [];
     let capacityMap = {};
     try {
@@ -75,23 +74,16 @@ router.get('/tenant-config', async (req, res) => {
          WHERE tenant_id = ? AND status != 'Retired'`,
         [tid]
       );
-      // Map DB vehicle_type values to mobile app vehicle IDs
       const typeMap = {
-        'motorcycle': 'motorcycle',
-        'sedan': 'sedan',
-        'suv': 'sedan',
-        'pickup': 'van',
-        'van': 'van',
-        'truck': 'truck',
-        'trailer': 'flatbed',
-        'flatbed': 'flatbed',
+        'motorcycle': 'motorcycle', 'sedan': 'sedan', 'suv': 'sedan',
+        'pickup': 'van', 'van': 'van', 'truck': 'truck',
+        'trailer': 'flatbed', 'flatbed': 'flatbed',
       };
       const seen = new Set();
       vrows.forEach((r) => {
         const mapped = typeMap[r.vtype];
         if (mapped && !seen.has(mapped)) { seen.add(mapped); vehicleTypes.push(mapped); }
       });
-      // Get max capacity_tons per mapped type from DB
       const [capRows] = await query(
         `SELECT LOWER(vehicle_type) AS vtype, MAX(capacity_tons) AS max_cap
          FROM vehicle WHERE tenant_id = ? AND status != 'Retired'
@@ -105,33 +97,27 @@ router.get('/tenant-config', async (req, res) => {
           if (!capacityMap[mapped] || kg > capacityMap[mapped]) capacityMap[mapped] = kg;
         }
       });
-    } catch (e) { /* vehicle table may not exist yet */ }
+    } catch (e) { console.warn('[tenant-config] vehicle query failed:', e.message); }
 
-    // Fallback: use static available_vehicles column
     if (vehicleTypes.length === 0) {
       vehicleTypes = t.available_vehicles
         ? t.available_vehicles.split(',').map(v => v.trim()).filter(Boolean)
         : ['motorcycle', 'sedan', 'van', 'truck', 'flatbed'];
     }
 
-    // ── Package categories — separate query so a missing column can't break the whole route
+    // ── Package categories — read from the row we already have ──
     const allCats = ['Package', 'Food', 'Document', 'Bulk', 'Vehicle'];
     let supportedCats = allCats;
     try {
-      const [catRows] = await query(
-        'SELECT supported_package_categories FROM TENANT WHERE tenant_id = ? LIMIT 1',
-        [tid]
-      );
-      if (catRows[0]?.supported_package_categories) {
-        supportedCats = catRows[0].supported_package_categories.split(',').filter(Boolean);
+      if (t.supported_package_categories) {
+        supportedCats = t.supported_package_categories.split(',').filter(Boolean);
       }
     } catch (e) {
-      // Column doesn't exist yet (migration pending) — default to all categories
-      console.warn('[tenant-config] supported_package_categories not available yet');
+      console.warn('[tenant-config] category parse failed:', e.message);
     }
 
     res.json({
-      company_name: t.company_name,
+      company_name: t.company_name || '',
       logo_url: t.logo_url || null,
       primary_color: t.primary_color || '#ea580c',
       available_vehicles: vehicleTypes,
@@ -139,7 +125,7 @@ router.get('/tenant-config', async (req, res) => {
       supported_categories: supportedCats,
     });
   } catch (err) {
-    console.error('[GET /tenant-config]', err);
+    console.error('[GET /tenant-config] FATAL:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
