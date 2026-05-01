@@ -479,8 +479,19 @@ router.get('/app-download-v2', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/direct-apk', (req, res) => {
   const path = require('path');
-  const apkPath = path.join(__dirname, '../public/LogistiHub-v6.apk');
-  res.download(apkPath, 'LogistiHub-Mobile-v6.apk');
+  const fs   = require('fs');
+  const pubDir = path.join(__dirname, '../public');
+  // Auto-pick the highest-versioned LogistiHub-vN.apk
+  const apks = fs.readdirSync(pubDir)
+    .filter(f => /^LogistiHub-v\d+\.apk$/i.test(f))
+    .sort((a, b) => {
+      const vA = parseInt(a.match(/v(\d+)/i)[1]);
+      const vB = parseInt(b.match(/v(\d+)/i)[1]);
+      return vB - vA; // descending — highest first
+    });
+  if (!apks.length) return res.status(404).json({ error: 'APK not found.' });
+  const latest = apks[0];
+  res.download(path.join(pubDir, latest), latest);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
