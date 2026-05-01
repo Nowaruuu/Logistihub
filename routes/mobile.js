@@ -346,10 +346,10 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
       } catch (_) { /* sub table may not exist */ }
     }
 
-    // Create shipment history entry
+    // Create shipment history entry — Order placed checkpoint
     await query(
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
-       VALUES (?, ?, 'Pending', ?, 'Shipment created via mobile app', ?)`,
+       VALUES (?, ?, 'Pending', ?, 'Order placed. Your shipment is being prepared for pickup.', ?)`,
       [deliveryNumber, tid, pickup_location, req.user.name || 'Customer']
     );
 
@@ -475,7 +475,18 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     await query(
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
        VALUES (?, ?, 'In-Transit', ?, ?, ?)`,
-      [dn, tid, rows[0].pickup_location || 'Origin', 'Driver accepted the delivery', staffName]
+      [dn, tid, rows[0].pickup_location || 'Origin',
+       `Delivery driver has been assigned. ${staffName} is on the way to pick up your package.`,
+       staffName]
+    );
+
+    // Second checkpoint: out for delivery (when driver accepts = going to pick up)
+    await query(
+      `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
+       VALUES (?, ?, 'Out for Delivery', ?, ?, ?)`,
+      [dn, tid, rows[0].pickup_location || 'Origin',
+       `Package is out for delivery. Your package is with ${staffName} and is on its way to you.`,
+       staffName]
     );
 
     // Notify the customer
@@ -509,10 +520,17 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   try {
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
 
+    const descriptions: Record<string, string> = {
+      'In-Transit':        `Package is in transit. Your package is on its way.`,
+      'Out for Delivery':  `Package is out for delivery. Your driver is heading to your address.`,
+      'Delivered':         `Parcel has been delivered. Thank you for using LogistiHub!`,
+      'Failed':            `Delivery attempt failed. Our team will contact you to reschedule.`,
+    };
+
     await query(
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [dn, tid, status, location || '', `Status updated to ${status}`, staffName]
+      [dn, tid, status, location || '', descriptions[status] || `Status updated to ${status}`, staffName]
     );
 
     // Notify customer
