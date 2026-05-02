@@ -350,12 +350,25 @@ router.get('/me', async (req, res) => {
       let totalDeliveries = 0;
       if (roleLower === 'driver') {
         try {
+          // Auto-create table if missing
+          await query(`CREATE TABLE IF NOT EXISTS DELIVERY_RATING (
+            rating_id INT AUTO_INCREMENT PRIMARY KEY,
+            delivery_number VARCHAR(50) NOT NULL,
+            tenant_id INT NOT NULL,
+            user_id INT NOT NULL,
+            driver_staff_id INT DEFAULT NULL,
+            rating TINYINT NOT NULL,
+            comment TEXT DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_delivery_rating (delivery_number, tenant_id)
+          )`);
           const [rr] = await query(
             'SELECT AVG(rating) AS avg_rating, COUNT(*) AS cnt FROM DELIVERY_RATING WHERE driver_staff_id = ? AND tenant_id = ?',
             [payload.staff_id, payload.tenant_id]
           );
+          console.log('[/me] driver rating query:', { staff_id: payload.staff_id, tenant_id: payload.tenant_id, result: rr[0] });
           if (rr.length && rr[0].avg_rating) avgRating = parseFloat(Number(rr[0].avg_rating).toFixed(1));
-        } catch { /* table may not exist */ }
+        } catch (err) { console.error('[/me] rating query error:', err.message); }
         try {
           const [dr] = await query(
             "SELECT COUNT(*) AS cnt FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'",

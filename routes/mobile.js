@@ -610,6 +610,7 @@ router.post('/deliveries/:dn/rate', authMiddleware, async (req, res) => {
       [dn, tid, req.user.user_id, ship[0].assigned_driver_id || null, Math.round(rating), comment || null]
     );
 
+    console.log('[RATE] Saved rating:', { dn, tid, driver_staff_id: ship[0].assigned_driver_id, rating: Math.round(rating) });
     res.json({ ok: true, message: 'Thank you for your rating!' });
   } catch (err) {
     console.error('[POST /deliveries/:dn/rate]', err);
