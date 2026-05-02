@@ -58,15 +58,16 @@ function LiveDriverMap({ driverGPS, pickupGPS, destGPS }: {
   );
 }
 
-class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
-  constructor(props: any) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
+class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean; errorMsg: string}> {
+  constructor(props: any) { super(props); this.state = { hasError: false, errorMsg: '' }; }
+  static getDerivedStateFromError(error: any) { return { hasError: true, errorMsg: String(error?.message || error) }; }
   componentDidCatch(error: any) { console.error('TrackShipment render error:', error); }
   render() {
     if (this.state.hasError) return (
       <div className="flex flex-col items-center justify-center min-h-full bg-white dark:bg-slate-900 p-8">
         <PackageIcon className="size-16 text-slate-300 mb-4" />
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Something went wrong</h2>
+        <p className="text-xs text-red-400 mt-2 text-center max-w-xs break-all">{this.state.errorMsg}</p>
         <button onClick={() => window.history.back()} className="mt-6 text-orange-600 font-bold">Go Back</button>
       </div>
     );
@@ -141,10 +142,12 @@ function TrackShipmentInner() {
         };
         setDelivery(mapped);
 
-        // Extract GPS positions
-        if (s.driver_lat && s.driver_lng) setDriverGPS([parseFloat(s.driver_lat), parseFloat(s.driver_lng)]);
-        if (s.pickup_lat && s.pickup_lng) setPickupGPS([parseFloat(s.pickup_lat), parseFloat(s.pickup_lng)]);
-        if (s.dropoff_lat && s.dropoff_lng) setDestGPS([parseFloat(s.dropoff_lat), parseFloat(s.dropoff_lng)]);
+        // Extract GPS positions (safely — columns may not exist yet)
+        try {
+          if (s.driver_lat && s.driver_lng) setDriverGPS([parseFloat(s.driver_lat), parseFloat(s.driver_lng)]);
+          if (s.pickup_lat && s.pickup_lng) setPickupGPS([parseFloat(s.pickup_lat), parseFloat(s.pickup_lng)]);
+          if (s.dropoff_lat && s.dropoff_lng) setDestGPS([parseFloat(s.dropoff_lat), parseFloat(s.dropoff_lng)]);
+        } catch { /* GPS columns may not exist in DB yet */ }
 
         const raw: CheckpointItem[] = (result.history || []).map((h: any) => ({
           status: h.status || '',
