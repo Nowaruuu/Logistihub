@@ -578,7 +578,8 @@ router.get('/track/:dn', async (req, res) => {
       `SELECT delivery_number, status, pickup_location, dropoff_location,
               pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
               estimated_arrival, created_at,
-              driver_lat, driver_lng, driver_location_updated_at
+              driver_lat, driver_lng, driver_location_updated_at,
+              proof_photo_url
        FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1`,
       [dn, tid]
     );

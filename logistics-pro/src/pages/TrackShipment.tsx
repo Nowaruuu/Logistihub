@@ -102,6 +102,7 @@ function TrackShipmentInner() {
   const [driverGPS, setDriverGPS] = useState<[number, number] | null>(null);
   const [pickupGPS, setPickupGPS] = useState<[number, number] | null>(null);
   const [destGPS, setDestGPS] = useState<[number, number] | null>(null);
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
 
   const fetchDelivery = async (silent = false) => {
     if (!trackingNumber) return;
@@ -148,6 +149,10 @@ function TrackShipmentInner() {
           if (s.pickup_lat && s.pickup_lng) setPickupGPS([parseFloat(s.pickup_lat), parseFloat(s.pickup_lng)]);
           if (s.dropoff_lat && s.dropoff_lng) setDestGPS([parseFloat(s.dropoff_lat), parseFloat(s.dropoff_lng)]);
         } catch { /* GPS columns may not exist in DB yet */ }
+
+        // Proof of delivery photo
+        if (s.proof_photo_url) setProofPhoto(s.proof_photo_url);
+        else setProofPhoto(null);
 
         const raw: CheckpointItem[] = (result.history || []).map((h: any) => ({
           status: h.status || '',
@@ -324,6 +329,24 @@ function TrackShipmentInner() {
           </div>
         </div>
       </div>
+
+      {/* ── Proof of Delivery ── */}
+      {isDelivered && proofPhoto && (
+        <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+            <CheckCircle2 className="size-3.5 text-green-500" />
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Proof of Delivery</p>
+          </div>
+          <div className="px-4 pb-4">
+            <img
+              src={proofPhoto}
+              alt="Proof of delivery"
+              className="w-full h-52 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+            />
+            <p className="text-[10px] text-slate-400 mt-2 text-center">Photo taken by driver upon delivery</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Tracking Timeline ── */}
       <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
