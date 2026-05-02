@@ -577,6 +577,19 @@ router.post('/deliveries/:dn/rate', authMiddleware, async (req, res) => {
   }
 
   try {
+    // Auto-create table if missing
+    await query(`CREATE TABLE IF NOT EXISTS DELIVERY_RATING (
+      rating_id INT AUTO_INCREMENT PRIMARY KEY,
+      delivery_number VARCHAR(50) NOT NULL,
+      tenant_id INT NOT NULL,
+      user_id INT NOT NULL,
+      driver_staff_id INT DEFAULT NULL,
+      rating TINYINT NOT NULL,
+      comment TEXT DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_delivery_rating (delivery_number, tenant_id)
+    )`);
+
     // Verify the shipment exists and belongs to this user
     const [ship] = await query(
       "SELECT assigned_driver_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND sender_user_id = ? AND status = 'Delivered' LIMIT 1",
@@ -600,7 +613,7 @@ router.post('/deliveries/:dn/rate', authMiddleware, async (req, res) => {
     res.json({ ok: true, message: 'Thank you for your rating!' });
   } catch (err) {
     console.error('[POST /deliveries/:dn/rate]', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
@@ -615,7 +628,8 @@ router.get('/deliveries/:dn/rating', authMiddleware, async (req, res) => {
     );
     res.json({ rating: rows[0] || null });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    // Table may not exist yet — return null
+    res.json({ rating: null });
   }
 });
 
