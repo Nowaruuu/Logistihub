@@ -43,7 +43,8 @@ class AppErrorBoundary extends React.Component<{children: React.ReactNode}, {has
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'#0f172a', color:'white', padding:'2rem', textAlign:'center' }}>
           <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>📦</div>
           <h2 style={{ fontSize:'1.5rem', fontWeight:'bold', marginBottom:'0.5rem' }}>Something went wrong</h2>
-          <p style={{ color:'#94a3b8', fontSize:'0.875rem', marginBottom:'1.5rem' }}>The page encountered an error. Please try again.</p>
+          <p style={{ color:'#94a3b8', fontSize:'0.875rem', marginBottom:'0.75rem' }}>The page encountered an error. Please try again.</p>
+          <p style={{ color:'#f87171', fontSize:'0.7rem', marginBottom:'1.5rem', maxWidth:'300px', wordBreak:'break-all' }}>{this.state.error}</p>
           <button
             onClick={() => { this.setState({ hasError: false, error: '' }); window.location.href = '/dashboard'; }}
             style={{ background:'#ea580c', color:'white', padding:'0.75rem 2rem', borderRadius:'0.75rem', border:'none', fontWeight:'bold', fontSize:'0.875rem', cursor:'pointer' }}
