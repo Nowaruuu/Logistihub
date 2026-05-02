@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { deliveryService } from '../services/deliveryService';
 import { userService } from '../services/userService';
 import { seedService } from '../services/seedService';
-import { MapPin, CreditCard, Bell, HelpCircle, LogOut, Edit2, ChevronRight, Award, Plus, Trash2, Database, Truck, Star, Wallet, FileText, Activity, Save, X } from 'lucide-react';
+import { MapPin, CreditCard, Bell, HelpCircle, LogOut, Edit2, ChevronRight, Award, Plus, Trash2, Database, Truck, Star, Wallet, FileText, Activity, Save, X, Settings } from 'lucide-react';
 import { Driver } from '../types';
 import { cn } from '../lib/utils';
 
@@ -432,6 +432,20 @@ export default function Profile() {
                 </button>
               </>
             )}
+
+            <button 
+              onClick={() => navigate('/settings')}
+              className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 size-12 group-hover:scale-110 transition-transform">
+                <Settings className="size-6" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-slate-900 dark:text-slate-100 font-bold text-[15px]">Settings</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">Dark mode, password, language</p>
+              </div>
+              <ChevronRight className="text-slate-300 dark:text-slate-600 size-5" />
+            </button>
 
             <button 
               onClick={() => navigate('/notifications')}

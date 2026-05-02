@@ -31,7 +31,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: HelpCircle, label: 'Help Center', path: '/help' },
   ] : [
-    { icon: Calculator, label: 'Rate Calculator', path: '/calculator' },
     { icon: MapPin, label: 'Address Book', path: '/address-book' },
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: HelpCircle, label: 'Help Center', path: '/help' },

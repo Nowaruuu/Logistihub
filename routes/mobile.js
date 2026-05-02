@@ -634,6 +634,40 @@ router.get('/deliveries/:dn/rating', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /change-password — change password for user or staff
+router.put('/change-password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required.' });
+  if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+
+  const bcrypt = require('bcryptjs');
+
+  try {
+    if (req.user) {
+      // APP_USER
+      const [rows] = await query('SELECT password_hash FROM APP_USER WHERE user_id = ? AND tenant_id = ?', [req.user.user_id, req.tenantId]);
+      if (!rows.length) return res.status(404).json({ error: 'User not found.' });
+      if (!await bcrypt.compare(currentPassword, rows[0].password_hash)) return res.status(401).json({ error: 'Current password is incorrect.' });
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await query('UPDATE APP_USER SET password_hash = ? WHERE user_id = ? AND tenant_id = ?', [newHash, req.user.user_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Password changed successfully.' });
+    }
+    if (req.staff) {
+      // STAFF (driver, document controller)
+      const [rows] = await query('SELECT password_hash FROM STAFF WHERE staff_id = ? AND tenant_id = ?', [req.staff.staff_id, req.tenantId]);
+      if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
+      if (!await bcrypt.compare(currentPassword, rows[0].password_hash)) return res.status(401).json({ error: 'Current password is incorrect.' });
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await query('UPDATE STAFF SET password_hash = ? WHERE staff_id = ? AND tenant_id = ?', [newHash, req.staff.staff_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Password changed successfully.' });
+    }
+    res.status(403).json({ error: 'Forbidden.' });
+  } catch (err) {
+    console.error('[PUT /change-password]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // GET /notifications — generate notifications from shipment history
 router.get('/notifications', authMiddleware, async (req, res) => {
   const tid = req.tenantId;
