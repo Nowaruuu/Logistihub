@@ -336,13 +336,35 @@ router.get('/me', async (req, res) => {
     // STAFF (drivers, document controllers)
     if (payload.staff_id) {
       const [rows] = await query(
-        `SELECT staff_id, tenant_id, name, first_name, last_name, username, role, status, phone, created_at
+        `SELECT staff_id, tenant_id, name, first_name, last_name, username, role, status, phone, created_at,
+                vehicle_type, vehicle_plate
          FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1`,
         [payload.staff_id, payload.tenant_id]
       );
       if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
       const s = rows[0];
       const roleLower = (s.role || payload.role || 'driver').toLowerCase();
+
+      // Fetch real rating + delivery count for drivers
+      let avgRating = 0;
+      let totalDeliveries = 0;
+      if (roleLower === 'driver') {
+        try {
+          const [rr] = await query(
+            'SELECT AVG(rating) AS avg_rating, COUNT(*) AS cnt FROM DELIVERY_RATING WHERE driver_staff_id = ? AND tenant_id = ?',
+            [payload.staff_id, payload.tenant_id]
+          );
+          if (rr.length && rr[0].avg_rating) avgRating = parseFloat(Number(rr[0].avg_rating).toFixed(1));
+        } catch { /* table may not exist */ }
+        try {
+          const [dr] = await query(
+            "SELECT COUNT(*) AS cnt FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'",
+            [payload.staff_id, payload.tenant_id]
+          );
+          if (dr.length) totalDeliveries = dr[0].cnt || 0;
+        } catch {}
+      }
+
       return res.json({
         user: {
           uid:       s.staff_id,
@@ -354,6 +376,10 @@ router.get('/me', async (req, res) => {
           status:    s.status,
           tenant_id: s.tenant_id,
           createdAt: s.created_at,
+          vehicle_type:  s.vehicle_type || null,
+          plate_number:  s.vehicle_plate || null,
+          rating:           avgRating,
+          total_deliveries: totalDeliveries,
         }
       });
     }

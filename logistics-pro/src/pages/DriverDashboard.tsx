@@ -64,8 +64,8 @@ export default function DriverDashboard() {
           status: 'Available',
           vehicleType: prof.vehicle_type || 'Van',
           plateNumber: prof.plate_number || '',
-          rating: prof.rating || 4.8,
-          totalDeliveries: prof.total_deliveries || 0,
+          rating: prof.rating ?? 0,
+          totalDeliveries: prof.total_deliveries ?? 0,
           verificationStatus: 'Verified'
         } as Driver);
       }
@@ -169,7 +169,7 @@ export default function DriverDashboard() {
               <p className="text-[9px] text-slate-400 uppercase font-bold mb-1">Rating</p>
               <div className="flex items-center justify-center gap-1">
                 <Star className="size-3 text-yellow-400 fill-yellow-400" />
-                <span className="font-bold text-sm">{driverInfo?.rating || '—'}</span>
+                <span className="font-bold text-sm">{driverInfo?.rating ? driverInfo.rating.toFixed(1) : 'New'}</span>
               </div>
             </div>
             <div className="text-center border-r border-white/10">
