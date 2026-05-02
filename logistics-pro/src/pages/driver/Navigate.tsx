@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   ArrowLeft, Navigation, MapPin, Package, CheckCircle2,
-  Loader2, RefreshCw, User, Phone
+  Loader2, RefreshCw, User, Phone, Camera, X, ImageIcon
 } from 'lucide-react';
 
 // ── OSRM road-following route ──
@@ -111,6 +111,9 @@ export default function DriverNavigate() {
   const [locError, setLocError] = useState('');
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const watchRef = useRef<number | null>(null);
 
   // Default to destination if we can't get location yet
@@ -159,14 +162,40 @@ export default function DriverNavigate() {
     };
   }, []);
 
+  const handleCapturePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Compress to max ~800px wide for smaller upload
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = (h * MAX) / w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        setProofPhoto(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCompleteDelivery = async () => {
     if (!job) return;
     setCompleting(true);
+    setShowProofModal(false);
     try {
       await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ status: 'Delivered', location: job.destination }),
+        body: JSON.stringify({
+          status: 'Delivered',
+          location: job.destination,
+          proof_photo: proofPhoto || undefined,
+        }),
       });
       setCompleted(true);
       setTimeout(() => navigate('/dashboard'), 1800);
@@ -321,7 +350,7 @@ export default function DriverNavigate() {
           {/* Action button */}
           <div className="px-5 py-4">
             <button
-              onClick={handleCompleteDelivery}
+              onClick={() => setShowProofModal(true)}
               disabled={completing || completed}
               className="w-full flex items-center justify-center gap-2.5 py-4 bg-green-600 text-white font-extrabold text-base rounded-2xl shadow-xl shadow-green-600/30 active:scale-[0.98] transition-all disabled:opacity-60"
             >
@@ -332,6 +361,71 @@ export default function DriverNavigate() {
               )}
             </button>
           </div>
+
+      {/* ── Proof of Delivery Modal ── */}
+      {showProofModal && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 rounded-t-3xl border-t border-slate-700/50 p-6 pb-8 animate-slide-up">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-white font-extrabold text-lg">Proof of Delivery</h3>
+              <button onClick={() => setShowProofModal(false)} className="size-8 rounded-full bg-white/10 flex items-center justify-center">
+                <X className="size-4 text-white" />
+              </button>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCapturePhoto}
+              className="hidden"
+            />
+
+            {proofPhoto ? (
+              <div className="relative mb-4">
+                <img src={proofPhoto} alt="Proof" className="w-full h-48 object-cover rounded-2xl border border-slate-700" />
+                <button
+                  onClick={() => { setProofPhoto(null); fileInputRef.current?.click(); }}
+                  className="absolute top-2 right-2 px-3 py-1.5 bg-black/60 backdrop-blur text-white text-xs font-bold rounded-full flex items-center gap-1"
+                >
+                  <Camera className="size-3" /> Retake
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-48 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center gap-3 mb-4 active:bg-slate-800 transition-colors"
+              >
+                <div className="size-14 rounded-full bg-orange-600/15 flex items-center justify-center">
+                  <Camera className="size-7 text-orange-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-white font-bold text-sm">Take Photo</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Capture proof of delivery</p>
+                </div>
+              </button>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCompleteDelivery}
+                disabled={!proofPhoto}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold text-sm rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
+              >
+                <CheckCircle2 className="size-4" /> Confirm Delivery
+              </button>
+              <button
+                onClick={() => { setProofPhoto(null); handleCompleteDelivery(); }}
+                className="px-4 py-3.5 bg-slate-800 text-slate-400 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
+              >
+                Skip
+              </button>
+            </div>
+            <p className="text-slate-600 text-[10px] text-center mt-3">Photo helps verify delivery was completed successfully</p>
+          </div>
+        </div>
+      )}
         </div>
       </div>
     </div>

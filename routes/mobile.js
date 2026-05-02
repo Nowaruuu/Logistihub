@@ -684,7 +684,7 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   const tid = req.tenantId;
   const dn = req.params.dn;
-  const { status, location } = req.body;
+  const { status, location, proof_photo } = req.body;
   const staffName = req.staff.name || 'Driver';
 
   const VALID = ['In-Transit', 'Out for Delivery', 'Delivered', 'Failed'];
@@ -692,6 +692,13 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
 
   try {
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
+
+    // Save proof of delivery photo if provided
+    if (status === 'Delivered' && proof_photo) {
+      try {
+        await query('UPDATE shipment SET proof_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [proof_photo, dn, tid]);
+      } catch(_) { /* column may not exist yet */ }
+    }
 
     const descriptions = {
       'In-Transit':        'Package is in transit. Your package is on its way.',
