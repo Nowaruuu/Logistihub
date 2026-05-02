@@ -58,8 +58,8 @@ export const deliveryService = {
   /**
    * Update delivery status (driver only)
    */
-  async updateStatus(deliveryNumber: string, status: string, location?: string): Promise<void> {
-    await updateDeliveryStatus(deliveryNumber, status);
+  async updateStatus(deliveryNumber: string, status: string, location?: string, proof_photo?: string): Promise<void> {
+    await updateDeliveryStatus(deliveryNumber, status, location, proof_photo);
   },
 
   /**

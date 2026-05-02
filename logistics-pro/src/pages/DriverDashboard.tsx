@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Delivery, Driver } from '../types';
@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
+  Camera,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -32,6 +35,9 @@ export default function DriverDashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [accepting, setAccepting] = useState<string | null>(null);
   const [completing, setCompleting] = useState<string | null>(null);
+  const [showProofModal, setShowProofModal] = useState<string | null>(null);
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasActiveJob = activeAssignments.length > 0;
 
@@ -88,15 +94,37 @@ export default function DriverDashboard() {
     }
   };
 
-  const handleCompleteDelivery = async (deliveryId: string) => {
+  const handleCapturePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = (h * MAX) / w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        setProofPhoto(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCompleteDelivery = async (deliveryId: string, photo?: string | null) => {
     setCompleting(deliveryId);
+    setShowProofModal(null);
     try {
-      await deliveryService.updateStatus(deliveryId, 'Delivered', 'Recipient Location');
+      await deliveryService.updateStatus(deliveryId, 'Delivered', 'Recipient Location', photo || undefined);
       await fetchData();
     } catch (err) {
       console.error('Error completing delivery:', err);
     } finally {
       setCompleting(null);
+      setProofPhoto(null);
     }
   };
 
@@ -353,12 +381,15 @@ export default function DriverDashboard() {
                       Navigate
                     </button>
                     <button
-                      onClick={() => handleCompleteDelivery(assignment.id)}
+                      onClick={() => { setProofPhoto(null); setShowProofModal(assignment.id); }}
                       disabled={completing === assignment.id}
                       className="flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 active:scale-[0.98] transition-all disabled:opacity-60"
                     >
-                      <CheckCircle2 className="size-4" />
-                      {completing === assignment.id ? 'Updating...' : 'Delivered'}
+                      {completing === assignment.id ? (
+                        <><Loader2 className="size-4 animate-spin" /> Updating...</>
+                      ) : (
+                        <><CheckCircle2 className="size-4" /> Delivered</>
+                      )}
                     </button>
                   </div>
                 </motion.div>
@@ -367,6 +398,71 @@ export default function DriverDashboard() {
           </>
         )}
       </div>
+
+      {/* ── Proof of Delivery Modal ── */}
+      {showProofModal && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-700/50 p-6 pb-8">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-slate-900 dark:text-white font-extrabold text-lg">Proof of Delivery</h3>
+              <button onClick={() => setShowProofModal(null)} className="size-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                <X className="size-4 text-slate-500 dark:text-white" />
+              </button>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCapturePhoto}
+              className="hidden"
+            />
+
+            {proofPhoto ? (
+              <div className="relative mb-4">
+                <img src={proofPhoto} alt="Proof" className="w-full h-48 object-cover rounded-2xl border border-slate-200 dark:border-slate-700" />
+                <button
+                  onClick={() => { setProofPhoto(null); fileInputRef.current?.click(); }}
+                  className="absolute top-2 right-2 px-3 py-1.5 bg-black/60 backdrop-blur text-white text-xs font-bold rounded-full flex items-center gap-1"
+                >
+                  <Camera className="size-3" /> Retake
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-48 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center gap-3 mb-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
+              >
+                <div className="size-14 rounded-full bg-orange-600/10 flex items-center justify-center">
+                  <Camera className="size-7 text-orange-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-900 dark:text-white font-bold text-sm">Take Photo</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Capture proof of delivery</p>
+                </div>
+              </button>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleCompleteDelivery(showProofModal, proofPhoto)}
+                disabled={!proofPhoto}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold text-sm rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
+              >
+                <CheckCircle2 className="size-4" /> Confirm Delivery
+              </button>
+              <button
+                onClick={() => { setProofPhoto(null); handleCompleteDelivery(showProofModal); }}
+                className="px-4 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
+              >
+                Skip
+              </button>
+            </div>
+            <p className="text-slate-400 text-[10px] text-center mt-3">Photo helps verify delivery was completed successfully</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -131,11 +131,11 @@ export async function getDeliveryDetail(deliveryNumber: string) {
   return res.json();
 }
 
-export async function updateDeliveryStatus(id: string, status: string) {
+export async function updateDeliveryStatus(id: string, status: string, location?: string, proof_photo?: string) {
   const res = await fetch(mobileUrl(`/driver/status/${id}`), {
     method: 'PUT',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ status })
+    body: JSON.stringify({ status, location, proof_photo })
   });
   if (!res.ok) throw new Error('Failed to update status');
   return res.json();
