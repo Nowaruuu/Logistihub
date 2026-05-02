@@ -588,7 +588,7 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     if (tenant && tenant.plan === 'startup') {
       const [[vc]] = await query('SELECT COUNT(*) AS n FROM vehicle WHERE tenant_id = ?', [tid]);
       if (vc.n >= 10) {
-        return res.status(402).json({ error: 'Startup plan is limited to 10 vehicles. Upgrade to Enterprise or Global to add more.' });
+        return res.status(402).json({ error: 'Padala plan is limited to 10 vehicles. Upgrade to Negosyo for unlimited vehicles.' });
       }
     }
 

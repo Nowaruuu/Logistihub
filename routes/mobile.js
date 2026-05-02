@@ -248,6 +248,15 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
     );
 
     if (existing.length === 0) {
+      // ── Enforce Padala (startup) plan vehicle limit ──
+      const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+      if (tenantPlan[0]?.plan === 'startup') {
+        const [vehCount] = await query('SELECT COUNT(*) AS cnt FROM vehicle WHERE tenant_id = ?', [tid]);
+        if (vehCount[0].cnt >= 10) {
+          return res.status(403).json({ error: 'Padala plan is limited to 10 vehicles. Contact your admin to upgrade.' });
+        }
+      }
+
       // New plate — insert into fleet
       await query(
         `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc)
