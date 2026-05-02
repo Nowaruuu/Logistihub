@@ -404,7 +404,7 @@ function DeliveryCard({
               <span className="text-xs font-bold">Successfully Delivered</span>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); }}
+              onClick={e => { e.stopPropagation(); onClick(); }}
               className="text-[11px] font-bold text-orange-600 border border-orange-200 dark:border-orange-800 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
             >
               ★ Rate
