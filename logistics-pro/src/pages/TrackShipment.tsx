@@ -274,26 +274,7 @@ function TrackShipmentInner() {
         </div>
       </div>
 
-      {/* ── Live Map ── */}
-      {(delivery.status === 'In Transit' || delivery.status === 'Out for Delivery') && (
-        <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Navigation className="size-3.5 text-orange-500" />
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Live Driver Location</p>
-            </div>
-            {driverGPS && (
-              <div className="flex items-center gap-1.5">
-                <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[9px] font-bold text-green-600">Live</span>
-              </div>
-            )}
-          </div>
-          <div className="h-[220px] w-full">
-            <LiveDriverMap driverGPS={driverGPS} pickupGPS={pickupGPS} destGPS={destGPS} />
-          </div>
-        </div>
-      )}
+      {/* Live map temporarily disabled for debugging */}
 
       {/* ── Route ── */}
       <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5">
