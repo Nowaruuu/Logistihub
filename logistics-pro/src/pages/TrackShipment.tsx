@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
@@ -67,26 +67,29 @@ function RoadRoute({ waypoints }: { waypoints: [number, number][] }) {
   const [roadCoords, setRoadCoords] = useState<[number, number][]>([]);
   const prevKey = useRef('');
 
+  // Stable key from waypoints
+  const waypointKey = useMemo(
+    () => waypoints.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join('|'),
+    [JSON.stringify(waypoints)]
+  );
+
   useEffect(() => {
     if (waypoints.length < 2) return;
-    // Build OSRM URL: lng,lat format
-    const coords = waypoints.map(p => `${p[1]},${p[0]}`).join(';');
-    const key = coords;
-    if (key === prevKey.current) return; // don't re-fetch same route
-    prevKey.current = key;
+    if (waypointKey === prevKey.current) return;
+    prevKey.current = waypointKey;
 
+    const coords = waypoints.map(p => `${p[1]},${p[0]}`).join(';');
     fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
       .then(r => r.json())
       .then(data => {
         if (data.routes?.[0]?.geometry?.coordinates) {
-          // OSRM returns [lng, lat] — flip to [lat, lng] for Leaflet
           setRoadCoords(data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]));
         } else {
-          setRoadCoords(waypoints); // fallback to straight line
+          setRoadCoords(waypoints);
         }
       })
       .catch(() => setRoadCoords(waypoints));
-  }, [waypoints.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join('|')]);
+  }, [waypointKey]);
 
   if (roadCoords.length < 2) return null;
   return (
@@ -95,6 +98,21 @@ function RoadRoute({ waypoints }: { waypoints: [number, number][] }) {
       pathOptions={{ color: '#ea580c', weight: 4, opacity: 0.85 }}
     />
   );
+}
+
+// Safe wrapper — if map crashes, show fallback instead of killing the page
+class MapErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: any) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return (
+      <div className="flex flex-col items-center justify-center h-full gap-2 bg-slate-50 dark:bg-slate-900">
+        <MapPin className="size-6 text-slate-300" />
+        <p className="text-xs text-slate-400">Map unavailable</p>
+      </div>
+    );
+    return this.props.children;
+  }
 }
 
 class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
@@ -326,42 +344,44 @@ function TrackShipmentInner() {
             )}
           </div>
           <div className="h-[220px] w-full">
-            {(driverGPS || pickupGPS || destGPS) ? (
-              <MapContainer
-                center={driverGPS || destGPS || pickupGPS || [14.5995, 120.9842]}
-                zoom={14}
-                style={{ width: '100%', height: '100%' }}
-                zoomControl={false}
-                attributionControl={false}
-              >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapErrorBoundary>
+              {(driverGPS || pickupGPS || destGPS) ? (
+                <MapContainer
+                  center={driverGPS || destGPS || pickupGPS || [14.5995, 120.9842]}
+                  zoom={14}
+                  style={{ width: '100%', height: '100%' }}
+                  zoomControl={false}
+                  attributionControl={false}
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                {/* Auto-fit bounds */}
-                <FitBounds points={[pickupGPS, destGPS, driverGPS].filter(Boolean) as [number,number][]} />
+                  {/* Auto-fit bounds */}
+                  <FitBounds points={[pickupGPS, destGPS, driverGPS].filter(Boolean) as [number,number][]} />
 
-                {/* Follow driver position */}
-                {driverGPS && <FollowDriver pos={driverGPS} />}
+                  {/* Follow driver position */}
+                  {driverGPS && <FollowDriver pos={driverGPS} />}
 
-                {/* Pickup marker */}
-                {pickupGPS && <Marker position={pickupGPS} icon={PickupMapIcon} />}
+                  {/* Pickup marker */}
+                  {pickupGPS && <Marker position={pickupGPS} icon={PickupMapIcon} />}
 
-                {/* Destination marker */}
-                {destGPS && <Marker position={destGPS} icon={DestMapIcon} />}
+                  {/* Destination marker */}
+                  {destGPS && <Marker position={destGPS} icon={DestMapIcon} />}
 
-                {/* Driver marker */}
-                {driverGPS && <Marker position={driverGPS} icon={DriverMapIcon} />}
+                  {/* Driver marker */}
+                  {driverGPS && <Marker position={driverGPS} icon={DriverMapIcon} />}
 
-                {/* Road-following route: pickup → driver → destination */}
-                {pickupGPS && destGPS && (
-                  <RoadRoute waypoints={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]} />
-                )}
-              </MapContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-2">
-                <Truck className="size-8 text-slate-300 dark:text-slate-600" />
-                <p className="text-xs text-slate-400 font-medium">Waiting for driver GPS signal...</p>
-              </div>
-            )}
+                  {/* Road-following route: pickup → driver → destination */}
+                  {pickupGPS && destGPS && (
+                    <RoadRoute waypoints={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]} />
+                  )}
+                </MapContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <Truck className="size-8 text-slate-300 dark:text-slate-600" />
+                  <p className="text-xs text-slate-400 font-medium">Waiting for driver GPS signal...</p>
+                </div>
+              )}
+            </MapErrorBoundary>
           </div>
         </div>
       )}
