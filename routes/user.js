@@ -336,9 +336,7 @@ router.get('/me', async (req, res) => {
     // STAFF (drivers, document controllers)
     if (payload.staff_id) {
       const [rows] = await query(
-        `SELECT staff_id, tenant_id, name, first_name, last_name, username, role, status, phone, created_at,
-                vehicle_type, vehicle_plate
-         FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1`,
+        `SELECT * FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1`,
         [payload.staff_id, payload.tenant_id]
       );
       if (!rows.length) return res.status(404).json({ error: 'Staff not found.' });
@@ -388,9 +386,9 @@ router.get('/me', async (req, res) => {
           tier:      'Bronze',
           status:    s.status,
           tenant_id: s.tenant_id,
-          createdAt: s.created_at,
+          createdAt: s.created_at || s.createdAt || null,
           vehicle_type:  s.vehicle_type || null,
-          plate_number:  s.vehicle_plate || null,
+          plate_number:  s.vehicle_plate || s.plate_number || null,
           rating:           avgRating,
           total_deliveries: totalDeliveries,
         }
