@@ -514,6 +514,17 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
   const loginUsername = gmailPrefix + '@' + slug + '.com';
 
   try {
+    // ── Enforce Padala (startup) plan driver limit ──
+    if (role === 'Driver') {
+      const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+      if (tenantPlan[0]?.plan === 'startup') {
+        const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver' AND status = 'active'", [tid]);
+        if (driverCount[0].cnt >= 10) {
+          return res.status(403).json({ error: 'Padala plan is limited to 10 drivers. Upgrade to Negosyo for unlimited riders.' });
+        }
+      }
+    }
+
     // Check login username not already taken in this tenant
     const [existing] = await query('SELECT 1 FROM STAFF WHERE username = ? AND tenant_id = ?', [loginUsername, tid]);
     if (existing.length) return res.status(409).json({ error: 'A staff member with username ' + loginUsername + ' already exists.' });
@@ -784,6 +795,17 @@ router.post('/:slug/api/manager/staff', requireManager, requireSlugMatch, async 
   const MANAGER_ALLOWED = ['Driver', 'Document Controller'];
   if (!name || !email || !role) return res.status(400).json({ error: 'name, email and role are required.' });
   if (!MANAGER_ALLOWED.includes(role)) return res.status(403).json({ error: 'Managers can only add Driver or Document Controller roles.' });
+
+  // ── Enforce Padala (startup) plan driver limit ──
+  if (role === 'Driver') {
+    const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+    if (tenantPlan[0]?.plan === 'startup') {
+      const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver' AND status = 'active'", [tid]);
+      if (driverCount[0].cnt >= 10) {
+        return res.status(403).json({ error: 'Padala plan is limited to 10 drivers. Upgrade to Negosyo for unlimited riders.' });
+      }
+    }
+  }
 
   const [existing] = await query('SELECT staff_id FROM STAFF WHERE username = ? AND tenant_id = ?', [email, tid]);
   if (existing.length) return res.status(409).json({ error: 'A staff member with that username already exists.' });
