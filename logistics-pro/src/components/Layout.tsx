@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Package, Plus, MapPin, User, Bell, Menu, Settings, HelpCircle, LogOut, X, ChevronRight, Calculator } from 'lucide-react';
+import { Home, Package, Plus, MapPin, User, Bell, Menu, Settings, HelpCircle, LogOut, X, ChevronRight, Calculator, Radar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { icon: Home, label: 'Home', path: '/dashboard' },
     { icon: Package, label: 'Packages', path: '/packages' },
     { icon: Plus, label: 'Send', path: '/send', isAction: true },
-    { icon: MapPin, label: 'Stations', path: '/stations' },
+    { icon: Radar, label: 'Tracking', path: '/stations' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
 
@@ -149,7 +149,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
              location.pathname === '/packages' ? 'My Packages' :
              location.pathname === '/driver/jobs' ? 'Available Jobs' :
              location.pathname === '/send' ? 'Send Package' :
-             location.pathname === '/stations' ? 'Nearby Stations' :
+             location.pathname === '/stations' ? (isDriver ? 'Nearby Pickups' : 'Live Tracking') :
              location.pathname === '/calculator' ? 'Rate Calculator' :
              location.pathname === '/address-book' ? 'Address Book' :
              location.pathname === '/settings' ? 'Settings' :

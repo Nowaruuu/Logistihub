@@ -1,189 +1,254 @@
-import React, { useState } from 'react';
-import { MapPin, Phone, Clock, Navigation, Search, X } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, Package, Clock, Navigation, Truck, ChevronRight, RefreshCw, MapPinOff } from 'lucide-react';
 import Map from '../components/Map';
+import { useAuth } from '../hooks/useAuth';
+import { deliveryService } from '../services/deliveryService';
+import { cn } from '../lib/utils';
+import { Delivery } from '../types';
 
-const STATIONS = [
-  {
-    id: '1',
-    name: 'Manila Central Hub',
-    address: 'Intramuros, Manila, Metro Manila',
-    distance: '1.2 km',
-    hours: '8:00 AM - 9:00 PM',
-    phone: '(02) 8123-4567',
-    status: 'Open',
-    position: [14.5906, 120.9758] as [number, number]
-  },
-  {
-    id: '2',
-    name: 'Cebu Logistics Center',
-    address: 'Mandaue City, Cebu',
-    distance: '580 km',
-    hours: '24 Hours',
-    phone: '(032) 234-5678',
-    status: 'Open',
-    position: [10.3333, 123.9333] as [number, number]
-  },
-  {
-    id: '3',
-    name: 'Davao Gateway',
-    address: 'Buhangin, Davao City, Davao del Sur',
-    distance: '960 km',
-    hours: '9:00 AM - 6:00 PM',
-    phone: '(082) 345-6789',
-    status: 'Closed',
-    position: [7.1283, 125.6308] as [number, number]
-  },
-  {
-    id: '4',
-    name: 'Quezon City Drop-off',
-    address: 'Cubao, Quezon City, Metro Manila',
-    distance: '8.5 km',
-    hours: '8:00 AM - 8:00 PM',
-    phone: '(02) 8987-6543',
-    status: 'Open',
-    position: [14.6178, 121.0572] as [number, number]
-  }
-];
+// ── Driver View: Nearby Available Pickups ──────────────────────────────────────
+function DriverNearbyView() {
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Delivery | null>(null);
+  const [driverPos, setDriverPos] = useState<[number, number]>([14.5995, 120.9842]);
+  const navigate = useNavigate();
 
-export default function Stations() {
-  const [location, setLocation] = useState('Manila, Philippines');
-  const [isChangingLocation, setIsChangingLocation] = useState(false);
-  const [tempLocation, setTempLocation] = useState(location);
-  const [selectedStation, setSelectedStation] = useState(STATIONS[0]);
+  const fetchJobs = useCallback(async () => {
+    try {
+      const data = await deliveryService.getAvailableDeliveries();
+      setDeliveries(data || []);
+      if (data?.length && !selected) setSelected(data[0]);
+    } catch { setDeliveries([]); }
+    finally { setLoading(false); }
+  }, []);
 
-  const handleSaveLocation = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (tempLocation.trim()) {
-      setLocation(tempLocation);
-      setIsChangingLocation(false);
-    }
-  };
+  useEffect(() => {
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 30000);
+    // Try to get driver's real position
+    navigator.geolocation?.getCurrentPosition(
+      pos => setDriverPos([pos.coords.latitude, pos.coords.longitude]),
+      () => {}
+    );
+    return () => clearInterval(interval);
+  }, [fetchJobs]);
+
+  const markers = deliveries.slice(0, 20).map(d => {
+    const lat = d.currentLat || d.pickupLat;
+    const lng = d.currentLng || d.pickupLng;
+    if (!lat || !lng) return null;
+    return { position: [lat, lng] as [number, number], label: d.trackingNumber || 'Pickup' };
+  }).filter(Boolean) as { position: [number, number]; label: string }[];
+
+  // Add driver position marker
+  markers.unshift({ position: driverPos, label: '📍 You' });
+
+  const mapCenter = selected?.pickupLat && selected?.pickupLng
+    ? [selected.pickupLat, selected.pickupLng] as [number, number]
+    : driverPos;
 
   return (
-    <div className="px-6 py-4 space-y-6 relative">
-      <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full bg-orange-600/10 flex items-center justify-center text-orange-600">
-            <Navigation className="size-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Your Location</p>
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{location}</p>
-          </div>
-        </div>
-        <button 
-          onClick={() => {
-            setTempLocation(location);
-            setIsChangingLocation(true);
-          }}
-          className="text-xs font-bold text-orange-600 hover:bg-orange-600/10 px-3 py-1.5 rounded-lg transition-colors"
+    <div className="px-4 py-4 space-y-4">
+      {/* Map */}
+      <div className="relative w-full h-56 rounded-2xl overflow-hidden shadow-lg border border-slate-100 dark:border-slate-800">
+        <Map center={mapCenter} zoom={12} markers={markers} />
+        <button
+          onClick={() => { setLoading(true); fetchJobs(); }}
+          className="absolute top-3 right-3 size-9 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center"
         >
-          Change
+          <RefreshCw className={cn("size-4 text-slate-600 dark:text-slate-300", loading && "animate-spin")} />
         </button>
       </div>
 
-      {/* Map Section */}
-      <div className="relative w-full h-64 rounded-3xl overflow-hidden shadow-lg border border-slate-100 dark:border-slate-800">
-        <Map 
-          center={selectedStation.position} 
-          zoom={12}
-          markers={STATIONS.map(s => ({
-            position: s.position,
-            label: s.name
-          }))}
-        />
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-black text-orange-600">{deliveries.length}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/70 mt-1">Available Pickups</p>
+        </div>
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-black text-blue-600">{markers.length - 1}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70 mt-1">On Map</p>
+        </div>
       </div>
 
-      {/* Change Location Modal */}
-      {isChangingLocation && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Change Location</h3>
-              <button 
-                onClick={() => setIsChangingLocation(false)}
-                className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X className="size-5 text-slate-500" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveLocation} className="p-6 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400" />
-                <input 
-                  type="text"
-                  value={tempLocation}
-                  onChange={(e) => setTempLocation(e.target.value)}
-                  placeholder="Enter city or zip code"
-                  autoFocus
-                  className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600 transition-all"
-                />
-              </div>
-              <button 
-                type="submit"
-                className="w-full h-14 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition-all"
-              >
-                Update Location
-              </button>
-            </form>
+      {/* Job list */}
+      <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 mt-2">Nearby Pickups</h2>
+      {deliveries.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="size-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <MapPinOff className="size-7 text-slate-400" />
           </div>
+          <p className="text-slate-400 text-sm font-medium">No available pickups nearby</p>
+          <p className="text-slate-400/60 text-xs">Check back later for new deliveries</p>
         </div>
       )}
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Nearby Stations</h2>
-        <div className="space-y-4">
-          {STATIONS.map((station) => (
-            <div 
-              key={station.id}
-              onClick={() => setSelectedStation(station)}
-              className={`bg-white dark:bg-slate-800 border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
-                selectedStation.id === station.id ? 'border-orange-600 ring-1 ring-orange-600' : 'border-slate-100 dark:border-slate-700'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex gap-3">
-                  <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
-                    selectedStation.id === station.id ? 'bg-orange-600 text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-400 group-hover:text-orange-600'
-                  }`}>
-                    <MapPin className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{station.name}</h3>
-                    <p className="text-xs text-slate-500">{station.address}</p>
-                  </div>
+      <div className="space-y-3 pb-8">
+        {deliveries.slice(0, 15).map((d, i) => (
+          <button
+            key={d.id || i}
+            onClick={() => { setSelected(d); navigate('/driver/jobs'); }}
+            className={cn(
+              "w-full text-left bg-white dark:bg-slate-800/60 rounded-2xl border p-4 active:scale-[0.99] transition-all",
+              selected?.id === d.id
+                ? "border-orange-500 ring-1 ring-orange-500/30"
+                : "border-slate-100 dark:border-slate-800"
+            )}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="size-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                  <Package className="size-4 text-orange-600" />
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
-                  station.status === 'Open' 
-                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                    : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
-                }`}>
-                  {station.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Clock className="size-4" />
-                  <span className="text-xs">{station.hours}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Phone className="size-4" />
-                  <span className="text-xs">{station.phone}</span>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">#{d.trackingNumber || 'N/A'}</p>
+                  <p className="text-[10px] text-slate-400">{d.packageType || 'Standard'} • {d.weight || '—'}kg</p>
                 </div>
               </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs font-bold text-orange-600">{station.distance} away</span>
-                <button className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors">
-                  Get Directions
-                </button>
-              </div>
+              <ChevronRight className="size-4 text-slate-300" />
             </div>
-          ))}
-        </div>
+            <div className="flex items-start gap-2 mt-2">
+              <MapPin className="size-3 text-green-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug truncate">{d.origin || 'Pickup location'}</p>
+            </div>
+            <div className="flex items-start gap-2 mt-1">
+              <MapPin className="size-3 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug truncate">{d.destination || 'Drop-off location'}</p>
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50 dark:border-slate-700">
+              <span className="text-xs font-extrabold text-orange-600">₱{Number(d.totalFee || 0).toFixed(0)}</span>
+              <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">View Details →</span>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
+// ── Customer View: Live Delivery Map ───────────────────────────────────────────
+function CustomerTrackingView() {
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Delivery | null>(null);
+  const navigate = useNavigate();
+
+  const fetchDeliveries = useCallback(async () => {
+    try {
+      const data = await deliveryService.getAllDeliveries();
+      const active = (data || []).filter((d: Delivery) =>
+        ['In Transit', 'Out for Delivery', 'Processing'].includes(d.status || '')
+      );
+      setDeliveries(active);
+      if (active.length && !selected) setSelected(active[0]);
+    } catch { setDeliveries([]); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    fetchDeliveries();
+    const interval = setInterval(fetchDeliveries, 15000);
+    return () => clearInterval(interval);
+  }, [fetchDeliveries]);
+
+  const markers = deliveries.map(d => {
+    const lat = d.currentLat || d.pickupLat;
+    const lng = d.currentLng || d.pickupLng;
+    if (!lat || !lng) return null;
+    return { position: [lat, lng] as [number, number], label: `#${d.trackingNumber}` };
+  }).filter(Boolean) as { position: [number, number]; label: string }[];
+
+  const mapCenter = markers.length > 0 ? markers[0].position : [14.5995, 120.9842] as [number, number];
+
+  const statusColor: Record<string, string> = {
+    'Processing': 'bg-slate-100 dark:bg-slate-700 text-slate-500',
+    'In Transit': 'bg-blue-50 dark:bg-blue-900/30 text-blue-600',
+    'Out for Delivery': 'bg-amber-50 dark:bg-amber-900/30 text-amber-600',
+  };
+
+  return (
+    <div className="px-4 py-4 space-y-4">
+      {/* Map */}
+      <div className="relative w-full h-56 rounded-2xl overflow-hidden shadow-lg border border-slate-100 dark:border-slate-800">
+        <Map center={mapCenter} zoom={11} markers={markers} />
+        <button
+          onClick={() => { setLoading(true); fetchDeliveries(); }}
+          className="absolute top-3 right-3 size-9 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center"
+        >
+          <RefreshCw className={cn("size-4 text-slate-600 dark:text-slate-300", loading && "animate-spin")} />
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-black text-blue-600">{deliveries.filter(d => d.status === 'In Transit').length}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70 mt-1">In Transit</p>
+        </div>
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-black text-amber-600">{deliveries.filter(d => d.status === 'Out for Delivery').length}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/70 mt-1">Out for Delivery</p>
+        </div>
+      </div>
+
+      {/* Active shipments list */}
+      <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 mt-2">Active Shipments</h2>
+      {deliveries.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="size-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <Truck className="size-7 text-slate-400" />
+          </div>
+          <p className="text-slate-400 text-sm font-medium">No active shipments</p>
+          <p className="text-slate-400/60 text-xs">Send a package to see it tracked here</p>
+        </div>
+      )}
+      <div className="space-y-3 pb-8">
+        {deliveries.map((d, i) => (
+          <button
+            key={d.id || i}
+            onClick={() => d.trackingNumber && navigate(`/track/${d.trackingNumber}`)}
+            className={cn(
+              "w-full text-left bg-white dark:bg-slate-800/60 rounded-2xl border p-4 active:scale-[0.99] transition-all",
+              selected?.id === d.id
+                ? "border-blue-500 ring-1 ring-blue-500/30"
+                : "border-slate-100 dark:border-slate-800"
+            )}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="size-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                  <Truck className="size-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">#{d.trackingNumber || 'N/A'}</p>
+                  <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full', statusColor[d.status || ''] || statusColor['Processing'])}>
+                    {d.status}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="size-4 text-slate-300" />
+            </div>
+            <div className="flex items-start gap-2 mt-2">
+              <MapPin className="size-3 text-green-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug truncate">{d.origin || 'Origin'}</p>
+            </div>
+            <div className="flex items-start gap-2 mt-1">
+              <MapPin className="size-3 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug truncate">{d.destination || 'Destination'}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main export: switches by role ──────────────────────────────────────────────
+export default function Stations() {
+  const { profile } = useAuth();
+  const isDriver = profile?.role === 'driver';
+
+  return isDriver ? <DriverNearbyView /> : <CustomerTrackingView />;
+}
