@@ -183,7 +183,7 @@ export default function DriverNavigate() {
     reader.readAsDataURL(file);
   };
 
-  const handleCompleteDelivery = async () => {
+  const handleCompleteDelivery = async (photo?: string | null) => {
     if (!job) return;
     setCompleting(true);
     setShowProofModal(false);
@@ -194,7 +194,7 @@ export default function DriverNavigate() {
         body: JSON.stringify({
           status: 'Delivered',
           location: job.destination,
-          proof_photo: proofPhoto || undefined,
+          proof_photo: photo || undefined,
         }),
       });
       setCompleted(true);
@@ -409,14 +409,14 @@ export default function DriverNavigate() {
 
             <div className="flex gap-3">
               <button
-                onClick={handleCompleteDelivery}
+                onClick={() => handleCompleteDelivery(proofPhoto)}
                 disabled={!proofPhoto}
                 className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold text-sm rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
               >
                 <CheckCircle2 className="size-4" /> Confirm Delivery
               </button>
               <button
-                onClick={() => { setProofPhoto(null); handleCompleteDelivery(); }}
+                onClick={() => handleCompleteDelivery(null)}
                 className="px-4 py-3.5 bg-slate-800 text-slate-400 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
               >
                 Skip

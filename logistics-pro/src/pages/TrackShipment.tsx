@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
+import { rateDelivery, getDeliveryRating } from '../lib/api';
 import {
   Truck, Package as PackageIcon, Check, ArrowLeft,
   MapPin, CheckCircle2, Circle, Clock,
-  MessageSquare, RefreshCw, User, Phone, Navigation
+  MessageSquare, RefreshCw, User, Phone, Navigation,
+  X, ZoomIn, Star
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -103,6 +105,13 @@ function TrackShipmentInner() {
   const [pickupGPS, setPickupGPS] = useState<[number, number] | null>(null);
   const [destGPS, setDestGPS] = useState<[number, number] | null>(null);
   const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const [showPhotoZoom, setShowPhotoZoom] = useState(false);
+  // Rating
+  const [userRating, setUserRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
+  const [existingRating, setExistingRating] = useState<number | null>(null);
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [ratingMsg, setRatingMsg] = useState('');
 
   const fetchDelivery = async (silent = false) => {
     if (!trackingNumber) return;
@@ -178,6 +187,28 @@ function TrackShipmentInner() {
     const interval = setInterval(() => fetchDelivery(true), 10000);
     return () => clearInterval(interval);
   }, [trackingNumber]);
+
+  // Fetch existing rating
+  useEffect(() => {
+    if (!trackingNumber) return;
+    getDeliveryRating(trackingNumber).then(r => {
+      if (r) { setExistingRating(r.rating); setUserRating(r.rating); }
+    }).catch(() => {});
+  }, [trackingNumber]);
+
+  const handleSubmitRating = async () => {
+    if (!trackingNumber || userRating < 1) return;
+    setSubmittingRating(true);
+    try {
+      await rateDelivery(trackingNumber, userRating, ratingComment || undefined);
+      setExistingRating(userRating);
+      setRatingMsg('Thank you for your rating!');
+    } catch (err: any) {
+      setRatingMsg(err.message || 'Failed to submit');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-full bg-white dark:bg-slate-900 p-8">
@@ -338,12 +369,104 @@ function TrackShipmentInner() {
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Proof of Delivery</p>
           </div>
           <div className="px-4 pb-4">
+            <button onClick={() => setShowPhotoZoom(true)} className="relative w-full group">
+              <img
+                src={proofPhoto}
+                alt="Proof of delivery"
+                className="w-full h-52 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+              />
+              <div className="absolute inset-0 bg-black/0 group-active:bg-black/20 rounded-xl flex items-center justify-center transition-all">
+                <div className="bg-black/50 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5 opacity-80">
+                  <ZoomIn className="size-3 text-white" />
+                  <span className="text-white text-[10px] font-bold">Tap to zoom</span>
+                </div>
+              </div>
+            </button>
+            <p className="text-[10px] text-slate-400 mt-2 text-center">Photo taken by driver upon delivery</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Fullscreen Photo Zoom ── */}
+      {showPhotoZoom && proofPhoto && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+          onClick={() => setShowPhotoZoom(false)}
+        >
+          <button
+            onClick={() => setShowPhotoZoom(false)}
+            className="absolute top-12 right-4 z-10 size-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center"
+          >
+            <X className="size-5 text-white" />
+          </button>
+          <div
+            className="w-full h-full flex items-center justify-center p-4 overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={proofPhoto}
-              alt="Proof of delivery"
-              className="w-full h-52 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+              alt="Proof of delivery - zoomed"
+              className="max-w-none w-full object-contain"
+              style={{ touchAction: 'pinch-zoom', maxHeight: '85vh' }}
             />
-            <p className="text-[10px] text-slate-400 mt-2 text-center">Photo taken by driver upon delivery</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Rate Delivery ── */}
+      {isDelivered && (
+        <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+            <Star className="size-3.5 text-orange-500" />
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+              {existingRating ? 'Your Rating' : 'Rate This Delivery'}
+            </p>
+          </div>
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-center gap-2 py-2">
+              {[1, 2, 3, 4, 5].map(s => (
+                <button
+                  key={s}
+                  onClick={() => { if (!existingRating) setUserRating(s); }}
+                  disabled={!!existingRating}
+                  className="transition-transform active:scale-90"
+                >
+                  <Star
+                    className={cn(
+                      'size-9 transition-colors',
+                      s <= userRating
+                        ? 'text-orange-500 fill-orange-500'
+                        : 'text-slate-200 dark:text-slate-700'
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            {existingRating ? (
+              <p className="text-center text-green-500 text-xs font-bold mt-2">Thank you for your feedback!</p>
+            ) : (
+              <>
+                {userRating > 0 && (
+                  <>
+                    <textarea
+                      value={ratingComment}
+                      onChange={e => setRatingComment(e.target.value)}
+                      placeholder="Leave a comment (optional)"
+                      rows={2}
+                      className="w-full mt-2 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
+                    />
+                    <button
+                      onClick={handleSubmitRating}
+                      disabled={submittingRating}
+                      className="w-full mt-2 py-3 bg-orange-600 text-white font-bold text-sm rounded-xl active:scale-[0.98] transition-all disabled:opacity-60"
+                    >
+                      {submittingRating ? 'Submitting...' : 'Submit Rating'}
+                    </button>
+                  </>
+                )}
+                {ratingMsg && <p className="text-center text-green-500 text-xs font-bold mt-2">{ratingMsg}</p>}
+              </>
+            )}
           </div>
         </div>
       )}

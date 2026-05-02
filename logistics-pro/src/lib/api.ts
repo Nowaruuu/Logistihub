@@ -141,6 +141,26 @@ export async function updateDeliveryStatus(id: string, status: string, location?
   return res.json();
 }
 
+export async function rateDelivery(deliveryNumber: string, rating: number, comment?: string) {
+  const res = await fetch(mobileUrl(`/deliveries/${deliveryNumber}/rate`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ rating, comment })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to submit rating');
+  }
+  return res.json();
+}
+
+export async function getDeliveryRating(deliveryNumber: string) {
+  const res = await fetch(mobileUrl(`/deliveries/${deliveryNumber}/rating`), { headers: getAuthHeaders() });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.rating;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DRIVER
 // ═══════════════════════════════════════════════════════════════════════════════

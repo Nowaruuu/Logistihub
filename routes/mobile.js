@@ -565,6 +565,60 @@ router.get('/deliveries/:dn', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /deliveries/:dn/rate — rate a completed delivery (user only)
+router.post('/deliveries/:dn/rate', authMiddleware, async (req, res) => {
+  if (!req.user) return res.status(403).json({ error: 'Users only.' });
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  const { rating, comment } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be between 1 and 5.' });
+  }
+
+  try {
+    // Verify the shipment exists and belongs to this user
+    const [ship] = await query(
+      "SELECT assigned_driver_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND sender_user_id = ? AND status = 'Delivered' LIMIT 1",
+      [dn, tid, req.user.user_id]
+    );
+    if (!ship.length) return res.status(404).json({ error: 'Delivered shipment not found.' });
+
+    // Check if already rated
+    const [existing] = await query(
+      'SELECT rating_id FROM DELIVERY_RATING WHERE delivery_number = ? AND tenant_id = ?',
+      [dn, tid]
+    );
+    if (existing.length) return res.status(409).json({ error: 'You have already rated this delivery.' });
+
+    await query(
+      `INSERT INTO DELIVERY_RATING (delivery_number, tenant_id, user_id, driver_staff_id, rating, comment)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [dn, tid, req.user.user_id, ship[0].assigned_driver_id || null, Math.round(rating), comment || null]
+    );
+
+    res.json({ ok: true, message: 'Thank you for your rating!' });
+  } catch (err) {
+    console.error('[POST /deliveries/:dn/rate]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /deliveries/:dn/rating — get rating for a delivery
+router.get('/deliveries/:dn/rating', authMiddleware, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  try {
+    const [rows] = await query(
+      'SELECT rating, comment, created_at FROM DELIVERY_RATING WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      [dn, tid]
+    );
+    res.json({ rating: rows[0] || null });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /track/:dn — public tracking with live driver GPS (no auth)
 router.get('/track/:dn', async (req, res) => {
   const { slug } = req.params;
