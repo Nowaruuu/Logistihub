@@ -634,6 +634,94 @@ router.get('/deliveries/:dn/rating', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /notifications — generate notifications from shipment history
+router.get('/notifications', authMiddleware, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    let notifications = [];
+
+    if (req.user) {
+      // CUSTOMER: notifications from their shipments' history
+      const [rows] = await query(
+        `SELECT sh.id, sh.shipment_id, sh.status, sh.note, sh.changed_at,
+                s.delivery_number, s.destination
+         FROM shipment_history sh
+         JOIN shipment s ON s.id = sh.shipment_id
+         WHERE s.sender_user_id = ? AND s.tenant_id = ?
+         ORDER BY sh.changed_at DESC
+         LIMIT 50`,
+        [req.user.user_id, tid]
+      );
+      notifications = rows.map(r => {
+        let title = 'Shipment Update';
+        let message = `Your package #${r.delivery_number} status changed to ${r.status}.`;
+        if (r.status === 'Delivered') {
+          title = 'Successfully Delivered!';
+          message = `Your package #${r.delivery_number} has been delivered to ${r.destination || 'the destination'}.`;
+        } else if (r.status === 'In Transit') {
+          title = 'Package In Transit';
+          message = `Your package #${r.delivery_number} is on its way!`;
+        } else if (r.status === 'Out for Delivery') {
+          title = 'Out for Delivery';
+          message = `Your package #${r.delivery_number} is nearby and will arrive soon.`;
+        } else if (r.status === 'Processing') {
+          title = 'Package Received';
+          message = `Your shipment #${r.delivery_number} has been received and is being processed.`;
+        }
+        return {
+          id: `sh-${r.id}`,
+          title,
+          message,
+          type: 'Shipments',
+          read: false,
+          createdAt: r.changed_at,
+          relatedTrackingNumber: r.delivery_number
+        };
+      });
+    } else if (req.staff) {
+      // DRIVER: notifications from assigned shipments
+      const [rows] = await query(
+        `SELECT sh.id, sh.shipment_id, sh.status, sh.note, sh.changed_at,
+                s.delivery_number, s.origin, s.destination
+         FROM shipment_history sh
+         JOIN shipment s ON s.id = sh.shipment_id
+         WHERE s.assigned_driver_id = ? AND s.tenant_id = ?
+         ORDER BY sh.changed_at DESC
+         LIMIT 50`,
+        [req.staff.staff_id, tid]
+      );
+      notifications = rows.map(r => {
+        let title = 'Job Update';
+        let message = `Delivery #${r.delivery_number} status: ${r.status}.`;
+        if (r.status === 'In Transit') {
+          title = 'New Pickup Assigned';
+          message = `Pick up #${r.delivery_number} from ${r.origin || 'the sender'}.`;
+        } else if (r.status === 'Delivered') {
+          title = 'Delivery Completed';
+          message = `You completed delivery #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
+        } else if (r.status === 'Out for Delivery') {
+          title = 'En Route';
+          message = `You're delivering #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
+        }
+        return {
+          id: `sh-${r.id}`,
+          title,
+          message,
+          type: 'Shipments',
+          read: false,
+          createdAt: r.changed_at,
+          relatedTrackingNumber: r.delivery_number
+        };
+      });
+    }
+
+    res.json({ notifications });
+  } catch (err) {
+    console.error('[GET /notifications]', err);
+    res.json({ notifications: [] });
+  }
+});
+
 // GET /track/:dn — public tracking with live driver GPS (no auth)
 router.get('/track/:dn', async (req, res) => {
   const { slug } = req.params;
