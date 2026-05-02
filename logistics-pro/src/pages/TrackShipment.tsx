@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
@@ -8,111 +8,54 @@ import {
   MessageSquare, RefreshCw, User, Phone, Navigation
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
-// ── Map icons ──
-const DriverMapIcon = L.divIcon({
-  html: `<div style="background:#ea580c;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(234,88,12,0.5);border:3px solid white;animation:pulse 2s infinite">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="1" y="3" width="15" height="13" rx="2" ry="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-    </svg>
-  </div>`,
-  className: '',
-  iconSize: [38, 38],
-  iconAnchor: [19, 19],
-});
-
-const PickupMapIcon = L.divIcon({
-  html: `<div style="background:#f97316;border-radius:50% 50% 50% 0;width:32px;height:32px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(249,115,22,0.5);border:2px solid white;display:flex;align-items:center;justify-content:center;">
-    <div style="transform:rotate(45deg);width:8px;height:8px;background:white;border-radius:50%"></div>
-  </div>`,
-  className: '',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-});
-
-const DestMapIcon = L.divIcon({
-  html: `<div style="background:#22c55e;border-radius:50% 50% 50% 0;width:32px;height:32px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(34,197,94,0.5);border:2px solid white;display:flex;align-items:center;justify-content:center;">
-    <div style="transform:rotate(45deg);width:8px;height:8px;background:white;border-radius:50%"></div>
-  </div>`,
-  className: '',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-});
-
-// Auto-fit map bounds to show all markers
-function FitBounds({ points }: { points: [number, number][] }) {
-  const map = useMap();
-  const fitted = useRef(false);
-  useEffect(() => {
-    if (points.length >= 2 && !fitted.current) {
-      map.fitBounds(L.latLngBounds(points.map(p => L.latLng(p[0], p[1]))), { padding: [40, 40] });
-      fitted.current = true;
+// Google Maps embed — zero dependencies, always works, follows roads automatically
+function LiveDriverMap({ driverGPS, pickupGPS, destGPS }: {
+  driverGPS: [number, number] | null;
+  pickupGPS: [number, number] | null;
+  destGPS: [number, number] | null;
+}) {
+  // Build Google Maps embed URL showing the route
+  const buildMapUrl = () => {
+    // If we have driver position, center on driver with destination direction
+    if (driverGPS && destGPS) {
+      const origin = `${driverGPS[0]},${driverGPS[1]}`;
+      const dest = `${destGPS[0]},${destGPS[1]}`;
+      return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${origin}&destination=${dest}&mode=driving&zoom=14`;
     }
-  }, [points, map]);
-  return null;
-}
+    // If we have pickup + destination, show the full route
+    if (pickupGPS && destGPS) {
+      const origin = `${pickupGPS[0]},${pickupGPS[1]}`;
+      const dest = `${destGPS[0]},${destGPS[1]}`;
+      return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${origin}&destination=${dest}&mode=driving&zoom=13`;
+    }
+    // Fallback — just show the destination
+    if (destGPS) {
+      return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${destGPS[0]},${destGPS[1]}&zoom=14`;
+    }
+    return null;
+  };
 
-// Smoothly re-center on driver position updates
-function FollowDriver({ pos }: { pos: [number, number] }) {
-  const map = useMap();
-  useEffect(() => { map.panTo(pos, { animate: true, duration: 1 }); }, [pos, map]);
-  return null;
-}
-
-// Fetch road-following route from OSRM and render as polyline
-function RoadRoute({ waypoints }: { waypoints: [number, number][] }) {
-  const [roadCoords, setRoadCoords] = useState<[number, number][]>([]);
-  const prevKey = useRef('');
-
-  // Stable key from waypoints
-  const waypointKey = useMemo(
-    () => waypoints.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join('|'),
-    [JSON.stringify(waypoints)]
-  );
-
-  useEffect(() => {
-    if (waypoints.length < 2) return;
-    if (waypointKey === prevKey.current) return;
-    prevKey.current = waypointKey;
-
-    const coords = waypoints.map(p => `${p[1]},${p[0]}`).join(';');
-    fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.routes?.[0]?.geometry?.coordinates) {
-          setRoadCoords(data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]));
-        } else {
-          setRoadCoords(waypoints);
-        }
-      })
-      .catch(() => setRoadCoords(waypoints));
-  }, [waypointKey]);
-
-  if (roadCoords.length < 2) return null;
-  return (
-    <Polyline
-      positions={roadCoords}
-      pathOptions={{ color: '#ea580c', weight: 4, opacity: 0.85 }}
-    />
-  );
-}
-
-// Safe wrapper — if map crashes, show fallback instead of killing the page
-class MapErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
-  constructor(props: any) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() {
-    if (this.state.hasError) return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 bg-slate-50 dark:bg-slate-900">
-        <MapPin className="size-6 text-slate-300" />
-        <p className="text-xs text-slate-400">Map unavailable</p>
+  const mapUrl = buildMapUrl();
+  if (!mapUrl) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-2">
+        <Truck className="size-8 text-slate-300 dark:text-slate-600" />
+        <p className="text-xs text-slate-400 font-medium">Waiting for driver GPS signal...</p>
       </div>
     );
-    return this.props.children;
   }
+
+  return (
+    <iframe
+      src={mapUrl}
+      className="w-full h-full border-0"
+      allowFullScreen
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      title="Live Delivery Map"
+    />
+  );
 }
 
 class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
@@ -344,44 +287,7 @@ function TrackShipmentInner() {
             )}
           </div>
           <div className="h-[220px] w-full">
-            <MapErrorBoundary>
-              {(driverGPS || pickupGPS || destGPS) ? (
-                <MapContainer
-                  center={driverGPS || destGPS || pickupGPS || [14.5995, 120.9842]}
-                  zoom={14}
-                  style={{ width: '100%', height: '100%' }}
-                  zoomControl={false}
-                  attributionControl={false}
-                >
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-                  {/* Auto-fit bounds */}
-                  <FitBounds points={[pickupGPS, destGPS, driverGPS].filter(Boolean) as [number,number][]} />
-
-                  {/* Follow driver position */}
-                  {driverGPS && <FollowDriver pos={driverGPS} />}
-
-                  {/* Pickup marker */}
-                  {pickupGPS && <Marker position={pickupGPS} icon={PickupMapIcon} />}
-
-                  {/* Destination marker */}
-                  {destGPS && <Marker position={destGPS} icon={DestMapIcon} />}
-
-                  {/* Driver marker */}
-                  {driverGPS && <Marker position={driverGPS} icon={DriverMapIcon} />}
-
-                  {/* Road-following route: pickup → driver → destination */}
-                  {pickupGPS && destGPS && (
-                    <RoadRoute waypoints={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]} />
-                  )}
-                </MapContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Truck className="size-8 text-slate-300 dark:text-slate-600" />
-                  <p className="text-xs text-slate-400 font-medium">Waiting for driver GPS signal...</p>
-                </div>
-              )}
-            </MapErrorBoundary>
+            <LiveDriverMap driverGPS={driverGPS} pickupGPS={pickupGPS} destGPS={destGPS} />
           </div>
         </div>
       )}
