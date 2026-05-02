@@ -14,8 +14,8 @@ function RoadRoute({ from, to }: { from: [number, number]; to: [number, number] 
   const prevKey = useRef('');
 
   useEffect(() => {
-    // Round to ~55m precision to avoid refetching on tiny GPS jitter
-    const key = `${from[0].toFixed(4)},${from[1].toFixed(4)}|${to[0].toFixed(4)},${to[1].toFixed(4)}`;
+    const f0 = Number(from[0]), f1 = Number(from[1]), t0 = Number(to[0]), t1 = Number(to[1]);
+    const key = `${f0.toFixed(4)},${f1.toFixed(4)}|${t0.toFixed(4)},${t1.toFixed(4)}`;
     if (key === prevKey.current) return;
     prevKey.current = key;
 
@@ -115,7 +115,7 @@ export default function DriverNavigate() {
 
   // Default to destination if we can't get location yet
   const destPos: [number, number] | null =
-    job?.destLat && job?.destLng ? [job.destLat, job.destLng] : null;
+    job?.destLat && job?.destLng ? [Number(job.destLat), Number(job.destLng)] : null;
 
   const mapCenter: [number, number] = driverPos || destPos || [14.5995, 120.9842];
 
