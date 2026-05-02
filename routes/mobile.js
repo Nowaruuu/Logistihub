@@ -556,7 +556,7 @@ router.get('/deliveries/:dn', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /deliveries/:dn/track — public tracking (no auth)
+// GET /track/:dn — public tracking with live driver GPS (no auth)
 router.get('/track/:dn', async (req, res) => {
   const { slug } = req.params;
   const dn = req.params.dn;
@@ -566,7 +566,11 @@ router.get('/track/:dn', async (req, res) => {
     const tid = tenants[0].tenant_id;
 
     const [rows] = await query(
-      'SELECT delivery_number, status, pickup_location, dropoff_location, estimated_arrival, created_at FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      `SELECT delivery_number, status, pickup_location, dropoff_location,
+              pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
+              estimated_arrival, created_at,
+              driver_lat, driver_lng, driver_location_updated_at
+       FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1`,
       [dn, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
@@ -706,6 +710,26 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /driver/location/:dn — driver sends live GPS coordinates (called every 10s)
+router.put('/driver/location/:dn', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  const { lat, lng } = req.body;
+  if (lat == null || lng == null) return res.status(400).json({ error: 'lat and lng required.' });
+  try {
+    await query(
+      `UPDATE shipment SET driver_lat = ?, driver_lng = ?, driver_location_updated_at = NOW()
+       WHERE delivery_number = ? AND tenant_id = ? AND assigned_driver_id = ?`,
+      [lat, lng, dn, tid, req.staff.staff_id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PUT /driver/location]', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

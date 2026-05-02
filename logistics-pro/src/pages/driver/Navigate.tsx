@@ -87,7 +87,10 @@ export default function DriverNavigate() {
 
   const mapCenter: [number, number] = driverPos || destPos || [14.5995, 120.9842];
 
-  // Start live GPS tracking
+  // Keep a ref to latest position for the upload interval
+  const latestPos = useRef<[number, number] | null>(null);
+
+  // Start live GPS tracking + upload to server every 10s
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocError('GPS not available on this device.');
@@ -95,7 +98,9 @@ export default function DriverNavigate() {
     }
     watchRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        setDriverPos([pos.coords.latitude, pos.coords.longitude]);
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setDriverPos(coords);
+        latestPos.current = coords;
         setLocError('');
       },
       (err) => {
@@ -104,8 +109,21 @@ export default function DriverNavigate() {
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
+
+    // Upload GPS to server every 10 seconds so customers can track the driver
+    const uploadInterval = setInterval(() => {
+      if (latestPos.current && job?.trackingNumber) {
+        fetch(mobileUrl(`/driver/location/${job.trackingNumber}`), {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ lat: latestPos.current[0], lng: latestPos.current[1] }),
+        }).catch(() => {}); // silent — don't block navigation
+      }
+    }, 10_000);
+
     return () => {
       if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+      clearInterval(uploadInterval);
     };
   }, []);
 

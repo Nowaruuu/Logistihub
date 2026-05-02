@@ -1,13 +1,66 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
 import {
   Truck, Package as PackageIcon, Check, ArrowLeft,
   MapPin, CheckCircle2, Circle, Clock,
-  MessageSquare, RefreshCw, User, Phone
+  MessageSquare, RefreshCw, User, Phone, Navigation
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// ── Map icons ──
+const DriverMapIcon = L.divIcon({
+  html: `<div style="background:#ea580c;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(234,88,12,0.5);border:3px solid white;animation:pulse 2s infinite">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="3" width="15" height="13" rx="2" ry="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+  </div>`,
+  className: '',
+  iconSize: [38, 38],
+  iconAnchor: [19, 19],
+});
+
+const PickupMapIcon = L.divIcon({
+  html: `<div style="background:#f97316;border-radius:50% 50% 50% 0;width:32px;height:32px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(249,115,22,0.5);border:2px solid white;display:flex;align-items:center;justify-content:center;">
+    <div style="transform:rotate(45deg);width:8px;height:8px;background:white;border-radius:50%"></div>
+  </div>`,
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+});
+
+const DestMapIcon = L.divIcon({
+  html: `<div style="background:#22c55e;border-radius:50% 50% 50% 0;width:32px;height:32px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(34,197,94,0.5);border:2px solid white;display:flex;align-items:center;justify-content:center;">
+    <div style="transform:rotate(45deg);width:8px;height:8px;background:white;border-radius:50%"></div>
+  </div>`,
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+});
+
+// Auto-fit map bounds to show all markers
+function FitBounds({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  const fitted = useRef(false);
+  useEffect(() => {
+    if (points.length >= 2 && !fitted.current) {
+      map.fitBounds(L.latLngBounds(points.map(p => L.latLng(p[0], p[1]))), { padding: [40, 40] });
+      fitted.current = true;
+    }
+  }, [points, map]);
+  return null;
+}
+
+// Smoothly re-center on driver position updates
+function FollowDriver({ pos }: { pos: [number, number] }) {
+  const map = useMap();
+  useEffect(() => { map.panTo(pos, { animate: true, duration: 1 }); }, [pos, map]);
+  return null;
+}
 
 class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   constructor(props: any) { super(props); this.state = { hasError: false }; }
@@ -48,6 +101,10 @@ function TrackShipmentInner() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  // Live driver GPS
+  const [driverGPS, setDriverGPS] = useState<[number, number] | null>(null);
+  const [pickupGPS, setPickupGPS] = useState<[number, number] | null>(null);
+  const [destGPS, setDestGPS] = useState<[number, number] | null>(null);
 
   const fetchDelivery = async (silent = false) => {
     if (!trackingNumber) return;
@@ -88,6 +145,11 @@ function TrackShipmentInner() {
         };
         setDelivery(mapped);
 
+        // Extract GPS positions
+        if (s.driver_lat && s.driver_lng) setDriverGPS([parseFloat(s.driver_lat), parseFloat(s.driver_lng)]);
+        if (s.pickup_lat && s.pickup_lng) setPickupGPS([parseFloat(s.pickup_lat), parseFloat(s.pickup_lng)]);
+        if (s.dropoff_lat && s.dropoff_lng) setDestGPS([parseFloat(s.dropoff_lat), parseFloat(s.dropoff_lng)]);
+
         const raw: CheckpointItem[] = (result.history || []).map((h: any) => ({
           status: h.status || '',
           location: h.location || '',
@@ -108,7 +170,8 @@ function TrackShipmentInner() {
 
   useEffect(() => {
     fetchDelivery();
-    const interval = setInterval(() => fetchDelivery(true), 15000);
+    // Poll every 10 seconds for live driver position updates
+    const interval = setInterval(() => fetchDelivery(true), 10000);
     return () => clearInterval(interval);
   }, [trackingNumber]);
 
@@ -211,6 +274,65 @@ function TrackShipmentInner() {
           })}
         </div>
       </div>
+
+      {/* ── Live Map ── */}
+      {(delivery.status === 'In Transit' || delivery.status === 'Out for Delivery') && (
+        <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Navigation className="size-3.5 text-orange-500" />
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Live Driver Location</p>
+            </div>
+            {driverGPS && (
+              <div className="flex items-center gap-1.5">
+                <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] font-bold text-green-600">Live</span>
+              </div>
+            )}
+          </div>
+          <div className="h-[220px] w-full">
+            {(driverGPS || pickupGPS || destGPS) ? (
+              <MapContainer
+                center={driverGPS || destGPS || pickupGPS || [14.5995, 120.9842]}
+                zoom={14}
+                style={{ width: '100%', height: '100%' }}
+                zoomControl={false}
+                attributionControl={false}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+                {/* Auto-fit bounds */}
+                <FitBounds points={[pickupGPS, destGPS, driverGPS].filter(Boolean) as [number,number][]} />
+
+                {/* Follow driver position */}
+                {driverGPS && <FollowDriver pos={driverGPS} />}
+
+                {/* Pickup marker */}
+                {pickupGPS && <Marker position={pickupGPS} icon={PickupMapIcon} />}
+
+                {/* Destination marker */}
+                {destGPS && <Marker position={destGPS} icon={DestMapIcon} />}
+
+                {/* Driver marker */}
+                {driverGPS && <Marker position={driverGPS} icon={DriverMapIcon} />}
+
+                {/* Route line: pickup → driver → destination */}
+                {pickupGPS && destGPS && (
+                  <Polyline
+                    positions={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]}
+                    pathOptions={{ color: '#ea580c', weight: 3, dashArray: '8, 6', opacity: 0.7 }}
+                  />
+                )}
+              </MapContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2">
+                <Truck className="size-8 text-slate-300 dark:text-slate-600" />
+                <p className="text-xs text-slate-400 font-medium">Waiting for driver GPS signal...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Route ── */}
       <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5">
