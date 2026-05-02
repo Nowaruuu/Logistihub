@@ -62,6 +62,41 @@ function FollowDriver({ pos }: { pos: [number, number] }) {
   return null;
 }
 
+// Fetch road-following route from OSRM and render as polyline
+function RoadRoute({ waypoints }: { waypoints: [number, number][] }) {
+  const [roadCoords, setRoadCoords] = useState<[number, number][]>([]);
+  const prevKey = useRef('');
+
+  useEffect(() => {
+    if (waypoints.length < 2) return;
+    // Build OSRM URL: lng,lat format
+    const coords = waypoints.map(p => `${p[1]},${p[0]}`).join(';');
+    const key = coords;
+    if (key === prevKey.current) return; // don't re-fetch same route
+    prevKey.current = key;
+
+    fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.routes?.[0]?.geometry?.coordinates) {
+          // OSRM returns [lng, lat] — flip to [lat, lng] for Leaflet
+          setRoadCoords(data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]));
+        } else {
+          setRoadCoords(waypoints); // fallback to straight line
+        }
+      })
+      .catch(() => setRoadCoords(waypoints));
+  }, [waypoints.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join('|')]);
+
+  if (roadCoords.length < 2) return null;
+  return (
+    <Polyline
+      positions={roadCoords}
+      pathOptions={{ color: '#ea580c', weight: 4, opacity: 0.85 }}
+    />
+  );
+}
+
 class DetailErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   constructor(props: any) { super(props); this.state = { hasError: false }; }
   static getDerivedStateFromError() { return { hasError: true }; }
@@ -316,12 +351,9 @@ function TrackShipmentInner() {
                 {/* Driver marker */}
                 {driverGPS && <Marker position={driverGPS} icon={DriverMapIcon} />}
 
-                {/* Route line: pickup → driver → destination */}
+                {/* Road-following route: pickup → driver → destination */}
                 {pickupGPS && destGPS && (
-                  <Polyline
-                    positions={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]}
-                    pathOptions={{ color: '#ea580c', weight: 3, dashArray: '8, 6', opacity: 0.7 }}
-                  />
+                  <RoadRoute waypoints={driverGPS ? [pickupGPS, driverGPS, destGPS] : [pickupGPS, destGPS]} />
                 )}
               </MapContainer>
             ) : (

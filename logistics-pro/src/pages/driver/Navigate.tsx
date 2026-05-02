@@ -8,6 +8,38 @@ import {
   Loader2, RefreshCw, User, Phone
 } from 'lucide-react';
 
+// ── OSRM road-following route ──
+function RoadRoute({ from, to }: { from: [number, number]; to: [number, number] }) {
+  const [roadCoords, setRoadCoords] = useState<[number, number][]>([from, to]);
+  const prevKey = useRef('');
+
+  useEffect(() => {
+    // Round to ~55m precision to avoid refetching on tiny GPS jitter
+    const key = `${from[0].toFixed(4)},${from[1].toFixed(4)}|${to[0].toFixed(4)},${to[1].toFixed(4)}`;
+    if (key === prevKey.current) return;
+    prevKey.current = key;
+
+    const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
+    fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.routes?.[0]?.geometry?.coordinates) {
+          setRoadCoords(data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]));
+        } else {
+          setRoadCoords([from, to]);
+        }
+      })
+      .catch(() => setRoadCoords([from, to]));
+  }, [from[0], from[1], to[0], to[1]]);
+
+  return (
+    <Polyline
+      positions={roadCoords}
+      pathOptions={{ color: '#ea580c', weight: 4, opacity: 0.85 }}
+    />
+  );
+}
+
 // ── Icons ──────────────────────────────────────────────────────────────────
 const DriverIcon = L.divIcon({
   html: `<div style="background:#ea580c;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(234,88,12,0.5);border:3px solid white;">
@@ -193,12 +225,9 @@ export default function DriverNavigate() {
             </Marker>
           )}
 
-          {/* Route line driver → destination */}
+          {/* Road-following route: driver → destination */}
           {driverPos && destPos && (
-            <Polyline
-              positions={[driverPos, destPos]}
-              pathOptions={{ color: '#ea580c', weight: 4, dashArray: '8, 6', opacity: 0.85 }}
-            />
+            <RoadRoute from={driverPos} to={destPos} />
           )}
         </MapContainer>
       </div>
