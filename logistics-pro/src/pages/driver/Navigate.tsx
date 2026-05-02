@@ -361,11 +361,13 @@ export default function DriverNavigate() {
               )}
             </button>
           </div>
+        </div>
+      </div>
 
       {/* ── Proof of Delivery Modal ── */}
       {showProofModal && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 rounded-t-3xl border-t border-slate-700/50 p-6 pb-8 animate-slide-up">
+          <div className="w-full max-w-md bg-slate-900 rounded-t-3xl border-t border-slate-700/50 p-6 pb-8">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-white font-extrabold text-lg">Proof of Delivery</h3>
               <button onClick={() => setShowProofModal(false)} className="size-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -426,8 +428,6 @@ export default function DriverNavigate() {
           </div>
         </div>
       )}
-        </div>
-      </div>
     </div>
   );
 }
