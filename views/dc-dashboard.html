@@ -220,7 +220,7 @@ textarea{resize:vertical;}
       <div class="page-sub" id="page-sub">Welcome back</div>
     </div>
     <div class="tb-right">
-      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
+      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspace…"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
     </div>
@@ -251,7 +251,7 @@ textarea{resize:vertical;}
         <div class="card">
           <div class="card-head">
             <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all â†’</button>
+            <button class="card-action" onclick="go('shipments',null)">View all →</button>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -276,12 +276,12 @@ textarea{resize:vertical;}
 
       <div class="grid-2">
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage â†’</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →</button></div>
+          <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage â†’</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →</button></div>
+          <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
 
@@ -393,7 +393,7 @@ textarea{resize:vertical;}
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">â‚±0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
@@ -656,7 +656,57 @@ function filterAppUsers(){
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 var _origGo=go;
-go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();};
+go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='dashboard'){loadDashFleet();loadDashStaff();}};
+
+// Dashboard Fleet Status
+function loadDashFleet(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/vehicles')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var vehicles=Array.isArray(data)?data:Array.isArray(data.vehicles)?data.vehicles:[];
+      var el=document.getElementById('dash-fleet-body');
+      if(!el)return;
+      if(!vehicles.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>';return;}
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      vehicles.slice(0,5).forEach(function(v){
+        var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' \u00b7 '+esc(v.model):'')+'</div></div></div>';
+        html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span></div>';
+      });
+      if(vehicles.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(vehicles.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+
+// Dashboard Staff On Duty
+function loadDashStaff(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/staff')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
+      var el=document.getElementById('dash-staff-body');
+      if(!el)return;
+      if(!staff.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>';return;}
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      staff.slice(0,5).forEach(function(s){
+        var statusBc=s.status==='active'||s.status==='Available'?'b-available':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:14px;color:#64748b;">person</span></div><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(s.full_name||s.name||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(s.role||'Staff')+'</div></div></div>';
+        html+='<span class="badge '+statusBc+'">'+esc(s.status||'Active')+'</span></div>';
+      });
+      if(staff.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(staff.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+loadDashFleet();
+loadDashStaff();
 </script>
 
 <script>
