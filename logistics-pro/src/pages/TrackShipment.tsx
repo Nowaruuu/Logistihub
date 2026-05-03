@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { rateDelivery, getDeliveryRating } from '../lib/api';
+import { rateDelivery, getDeliveryRating, getChatContact } from '../lib/api';
+import DeliveryChat from '../components/DeliveryChat';
 import {
   Truck, Package as PackageIcon, Check, ArrowLeft,
   MapPin, CheckCircle2, Circle, Clock,
   MessageSquare, RefreshCw, User, Phone, Navigation,
-  X, ZoomIn, Star
+  X, ZoomIn, Star, MessageCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -112,6 +113,7 @@ function TrackShipmentInner() {
   const [existingRating, setExistingRating] = useState<number | null>(null);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratingMsg, setRatingMsg] = useState('');
+  const [showChat, setShowChat] = useState(false);
 
   const fetchDelivery = async (silent = false) => {
     if (!trackingNumber) return;
@@ -617,11 +619,41 @@ function TrackShipmentInner() {
           </div>
         </div>
 
-        <button className="mt-5 w-full py-3 bg-white/10 hover:bg-white/20 active:scale-[0.98] transition-all rounded-xl text-xs font-bold border border-white/5 flex items-center justify-center gap-2 text-white">
-          <MessageSquare className="size-4" />
-          Contact Support
-        </button>
+        {/* Chat & Call buttons — only during active delivery with assigned driver */}
+        {(delivery.status === 'In Transit' || delivery.status === 'Out for Delivery') && extra.driverName ? (
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowChat(true)}
+              className="py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] transition-all rounded-xl text-xs font-bold flex items-center justify-center gap-2 text-white shadow-lg shadow-orange-600/20"
+            >
+              <MessageCircle className="size-4" />
+              Chat Driver
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const c = await getChatContact(trackingNumber!);
+                  if (c.phone) window.location.href = `tel:${c.phone}`;
+                  else alert('Driver phone number is not available.');
+                } catch { alert('Unable to get contact info.'); }
+              }}
+              className="py-3 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all rounded-xl text-xs font-bold flex items-center justify-center gap-2 text-white shadow-lg shadow-emerald-500/20"
+            >
+              <Phone className="size-4" />
+              Call Driver
+            </button>
+          </div>
+        ) : (
+          <button className="mt-5 w-full py-3 bg-white/10 hover:bg-white/20 active:scale-[0.98] transition-all rounded-xl text-xs font-bold border border-white/5 flex items-center justify-center gap-2 text-white">
+            <MessageSquare className="size-4" />
+            Contact Support
+          </button>
+        )}
       </div>
+      {/* Chat overlay */}
+      {showChat && trackingNumber && (
+        <DeliveryChat deliveryNumber={trackingNumber} onClose={() => setShowChat(false)} />
+      )}
     </div>
   );
 }

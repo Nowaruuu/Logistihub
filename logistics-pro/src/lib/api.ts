@@ -194,6 +194,32 @@ export async function getDriverStats() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DELIVERY CHAT & CALL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function getChatMessages(deliveryNumber: string) {
+  const res = await fetch(mobileUrl(`/chat/${deliveryNumber}`), { headers: getAuthHeaders() });
+  if (!res.ok) return { chat_enabled: false, messages: [] };
+  return res.json();
+}
+
+export async function sendChatMessage(deliveryNumber: string, message: string) {
+  const res = await fetch(mobileUrl(`/chat/${deliveryNumber}`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ message })
+  });
+  if (!res.ok) throw new Error('Failed to send message');
+  return res.json();
+}
+
+export async function getChatContact(deliveryNumber: string) {
+  const res = await fetch(mobileUrl(`/chat/${deliveryNumber}/contact`), { headers: getAuthHeaders() });
+  if (!res.ok) return { phone: null, name: null };
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ADDRESS BOOK
 // ═══════════════════════════════════════════════════════════════════════════════
 

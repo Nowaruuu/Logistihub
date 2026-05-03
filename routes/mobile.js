@@ -765,6 +765,138 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// ─── DELIVERY CHAT & CALL ────────────────────────────────────────────────────
+
+// Helper: ensure DELIVERY_CHAT table exists
+async function ensureChatTable() {
+  await query(`CREATE TABLE IF NOT EXISTS DELIVERY_CHAT (
+    chat_id INT AUTO_INCREMENT PRIMARY KEY,
+    delivery_number VARCHAR(50) NOT NULL,
+    tenant_id INT NOT NULL,
+    sender_type ENUM('user','driver') NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dn_tid (delivery_number, tenant_id)
+  )`);
+}
+
+// Helper: verify shipment is in chat-eligible status and user is a party
+async function getChatShipment(deliveryNumber, tenantId) {
+  const [rows] = await query(
+    `SELECT id, delivery_number, sender_user_id, assigned_driver_id, status
+     FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1`,
+    [deliveryNumber, tenantId]
+  );
+  return rows.length ? rows[0] : null;
+}
+
+// GET /chat/:dn — get chat messages for a delivery
+router.get('/chat/:dn', authMiddleware, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  try {
+    await ensureChatTable();
+    const shipment = await getChatShipment(dn, tid);
+    if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Verify caller is either the sender or driver
+    const userId = req.user?.user_id || null;
+    const staffId = req.staff?.staff_id || null;
+    if (userId && shipment.sender_user_id !== userId) return res.status(403).json({ error: 'Not authorized.' });
+    if (staffId && shipment.assigned_driver_id !== staffId) return res.status(403).json({ error: 'Not authorized.' });
+
+    // Chat only available for In-Transit / Out for Delivery
+    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    const chatEnabled = chatStatuses.includes(shipment.status);
+
+    const [messages] = await query(
+      `SELECT chat_id, sender_type, sender_id, message, created_at
+       FROM DELIVERY_CHAT WHERE delivery_number = ? AND tenant_id = ?
+       ORDER BY created_at ASC`,
+      [dn, tid]
+    );
+
+    res.json({ ok: true, chat_enabled: chatEnabled, status: shipment.status, messages: messages || [] });
+  } catch (err) {
+    console.error('[GET /chat/:dn]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// POST /chat/:dn — send a chat message
+router.post('/chat/:dn', authMiddleware, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  const { message } = req.body;
+  if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required.' });
+
+  try {
+    await ensureChatTable();
+    const shipment = await getChatShipment(dn, tid);
+    if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Verify caller is either the sender or driver
+    const userId = req.user?.user_id || null;
+    const staffId = req.staff?.staff_id || null;
+    if (userId && shipment.sender_user_id !== userId) return res.status(403).json({ error: 'Not authorized.' });
+    if (staffId && shipment.assigned_driver_id !== staffId) return res.status(403).json({ error: 'Not authorized.' });
+
+    // Chat only during active delivery
+    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    if (!chatStatuses.includes(shipment.status)) return res.status(400).json({ error: 'Chat is only available during active delivery.' });
+
+    const senderType = req.user ? 'user' : 'driver';
+    const senderId = userId || staffId;
+
+    await query(
+      `INSERT INTO DELIVERY_CHAT (delivery_number, tenant_id, sender_type, sender_id, message)
+       VALUES (?, ?, ?, ?, ?)`,
+      [dn, tid, senderType, senderId, message.trim()]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[POST /chat/:dn]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// GET /chat/:dn/contact — get the other party's phone for calling
+router.get('/chat/:dn/contact', authMiddleware, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.dn;
+  try {
+    const shipment = await getChatShipment(dn, tid);
+    if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Only during active delivery
+    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    if (!chatStatuses.includes(shipment.status)) return res.status(400).json({ error: 'Contact only available during active delivery.' });
+
+    const userId = req.user?.user_id || null;
+    const staffId = req.staff?.staff_id || null;
+
+    if (userId) {
+      // User wants driver's phone
+      if (!shipment.assigned_driver_id) return res.json({ ok: true, phone: null, name: null, role: 'driver' });
+      const [rows] = await query('SELECT name, phone FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1', [shipment.assigned_driver_id, tid]);
+      const driver = rows[0] || {};
+      return res.json({ ok: true, phone: driver.phone || null, name: driver.name || 'Driver', role: 'driver' });
+    } else if (staffId) {
+      // Driver wants user's phone
+      if (!shipment.sender_user_id) return res.json({ ok: true, phone: null, name: null, role: 'user' });
+      const [rows] = await query('SELECT first_name, last_name, phone FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1', [shipment.sender_user_id, tid]);
+      const user = rows[0] || {};
+      return res.json({ ok: true, phone: user.phone || null, name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Customer', role: 'user' });
+    }
+    res.status(403).json({ error: 'Not authorized.' });
+  } catch (err) {
+    console.error('[GET /chat/:dn/contact]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // GET /driver/earnings — driver's earnings and transaction history
 router.get('/driver/earnings', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });

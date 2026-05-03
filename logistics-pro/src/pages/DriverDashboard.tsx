@@ -3,7 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Delivery, Driver } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { getProfile } from '../lib/api';
+import { getProfile, getChatContact } from '../lib/api';
+import DeliveryChat from '../components/DeliveryChat';
 import { 
   Truck, 
   MapPin, 
@@ -19,6 +20,8 @@ import {
   Camera,
   X,
   Loader2,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -38,6 +41,7 @@ export default function DriverDashboard() {
   const [showProofModal, setShowProofModal] = useState<string | null>(null);
   const [proofPhoto, setProofPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showChat, setShowChat] = useState<string | null>(null);
 
   const hasActiveJob = activeAssignments.length > 0;
 
@@ -358,7 +362,7 @@ export default function DriverDashboard() {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="grid grid-cols-2 gap-3 px-5 pb-5">
+                  <div className="grid grid-cols-2 gap-3 px-5 pb-3">
                     <button
                       onClick={() => navigate('/driver/navigate', {
                         state: {
@@ -390,6 +394,29 @@ export default function DriverDashboard() {
                       ) : (
                         <><CheckCircle2 className="size-4" /> Delivered</>
                       )}
+                    </button>
+                  </div>
+                  {/* Chat & Call customer */}
+                  <div className="grid grid-cols-2 gap-3 px-5 pb-5">
+                    <button
+                      onClick={() => setShowChat(assignment.trackingNumber)}
+                      className="flex items-center justify-center gap-2 py-3 bg-orange-50 dark:bg-orange-950/20 text-orange-600 border border-orange-200 dark:border-orange-900/40 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
+                    >
+                      <MessageCircle className="size-4" />
+                      Chat Customer
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const c = await getChatContact(assignment.trackingNumber);
+                          if (c.phone) window.location.href = `tel:${c.phone}`;
+                          else alert('Customer phone number is not available.');
+                        } catch { alert('Unable to get contact info.'); }
+                      }}
+                      className="flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 border border-emerald-200 dark:border-emerald-900/40 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
+                    >
+                      <Phone className="size-4" />
+                      Call Customer
                     </button>
                   </div>
                 </motion.div>
@@ -462,6 +489,11 @@ export default function DriverDashboard() {
             <p className="text-slate-400 text-[10px] text-center mt-3">Photo helps verify delivery was completed successfully</p>
           </div>
         </div>
+      )}
+
+      {/* Chat overlay */}
+      {showChat && (
+        <DeliveryChat deliveryNumber={showChat} onClose={() => setShowChat(null)} />
       )}
     </div>
   );
