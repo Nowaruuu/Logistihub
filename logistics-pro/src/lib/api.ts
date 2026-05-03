@@ -219,6 +219,19 @@ export async function getChatContact(deliveryNumber: string) {
   return res.json();
 }
 
+export async function declineDelivery(deliveryNumber: string, reason?: string) {
+  const res = await fetch(mobileUrl('/driver/decline'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ delivery_number: deliveryNumber, reason: reason || '' })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: 'Failed to decline' }));
+    throw new Error(data.error || 'Failed to decline');
+  }
+  return res.json();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADDRESS BOOK
 // ═══════════════════════════════════════════════════════════════════════════════

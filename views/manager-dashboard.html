@@ -306,18 +306,19 @@ textarea{resize:vertical;}
       <div class="card">
         <div class="card-head">
           <div class="tabs-bar" style="border:none;margin:0;">
-            <button class="tab active" onclick="setTab(this)">All</button>
-            <button class="tab" onclick="setTab(this)">Pending</button>
-            <button class="tab" onclick="setTab(this)">In Transit</button>
-            <button class="tab" onclick="setTab(this)">Delivered</button>
-            <button class="tab" onclick="setTab(this)">Declined</button>
+            <button class="tab active" onclick="filterShipments('All',this)">All</button>
+            <button class="tab" onclick="filterShipments('Pending',this)">Pending</button>
+            <button class="tab" onclick="filterShipments('In-Transit',this)">In Transit</button>
+            <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
+            <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
+            <button class="tab" onclick="filterShipments('Failed',this)">Failed</button>
           </div>
-          <select class="f-select"><option>All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
+          <select class="f-select" id="shipment-type-filter" onchange="filterShipments(null)"><option value="">All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Created</th><th></th></tr></thead>
-            <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
+            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody id="shipments-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1278,6 +1279,132 @@ async function submitUpdateVehicle() {
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
 }
+</script>
+
+<script>
+// ═══ SHIPMENTS LOADING & FILTERING ═══════════════════════════════════════════
+var _allShipments = [];
+var _shipStatusFilter = 'All';
+
+function loadShipments() {
+  if (!_SLUG) return;
+  apiFetch('/' + _SLUG + '/api/manager/shipments')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _allShipments = Array.isArray(data.shipments) ? data.shipments : [];
+      renderShipments();
+      updateDashboardStats();
+    })
+    .catch(function() {
+      var tb = document.getElementById('shipments-tbody');
+      if (tb) tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load shipments</p></div></td></tr>';
+    });
+}
+
+function filterShipments(status, tabEl) {
+  if (status !== null) _shipStatusFilter = status;
+  if (tabEl) {
+    var bar = tabEl.closest('.tabs-bar') || tabEl.parentElement;
+    bar.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    tabEl.classList.add('active');
+  }
+  renderShipments();
+}
+
+function renderShipments() {
+  var tbody = document.getElementById('shipments-tbody');
+  if (!tbody) return;
+  var typeFilter = (document.getElementById('shipment-type-filter') || {}).value || '';
+
+  var filtered = _allShipments;
+  if (_shipStatusFilter !== 'All') {
+    filtered = filtered.filter(function(s) {
+      if (_shipStatusFilter === 'In-Transit') return s.status === 'In-Transit' || s.status === 'In Transit';
+      return s.status === _shipStatusFilter;
+    });
+  }
+  if (typeFilter) {
+    filtered = filtered.filter(function(s) { return (s.item_type || s.package_type || '').toLowerCase() === typeFilter.toLowerCase(); });
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>';
+    return;
+  }
+
+  var statusBadge = function(st) {
+    var map = {
+      'Pending': 'b-pending', 'In-Transit': 'b-transit', 'In Transit': 'b-transit',
+      'Out for Delivery': 'b-transit', 'Delivered': 'b-delivered',
+      'Failed': 'b-declined', 'Declined': 'b-declined'
+    };
+    return '<span class="badge ' + (map[st] || 'b-pending') + '">' + esc(st || 'Unknown') + '</span>';
+  };
+
+  tbody.innerHTML = filtered.map(function(s) {
+    var date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    return '<tr>' +
+      '<td><strong style="font-family:DM Mono,monospace;font-size:11px;">' + esc(s.delivery_number || '—') + '</strong></td>' +
+      '<td>' + esc(s.client_name || s.sender_name || '—') + '</td>' +
+      '<td>' + esc(s.item_type || s.package_type || '—') + '</td>' +
+      '<td>' + esc(s.driver_name || 'Unassigned') + '</td>' +
+      '<td>' + statusBadge(s.status) + '</td>' +
+      '<td style="font-size:11px;color:#94a3b8;">' + date + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function updateDashboardStats() {
+  var stats = document.querySelectorAll('#s-dashboard .stat-card');
+  if (stats.length < 4) return;
+  var total = _allShipments.length;
+  var transit = _allShipments.filter(function(s) { return s.status === 'In-Transit' || s.status === 'In Transit' || s.status === 'Out for Delivery'; }).length;
+  var delivered = _allShipments.filter(function(s) { return s.status === 'Delivered'; }).length;
+  var pending = _allShipments.filter(function(s) { return s.status === 'Pending'; }).length;
+
+  stats[0].querySelector('.stat-value').textContent = total;
+  stats[0].querySelector('.stat-note').textContent = total ? total + ' total shipments' : 'No data yet';
+  stats[1].querySelector('.stat-value').textContent = transit;
+  stats[1].querySelector('.stat-note').textContent = transit ? transit + ' active deliveries' : 'No data yet';
+  stats[2].querySelector('.stat-value').textContent = delivered;
+  stats[2].querySelector('.stat-note').textContent = delivered ? delivered + ' completed' : 'No data yet';
+  stats[3].querySelector('.stat-value').textContent = pending;
+  stats[3].querySelector('.stat-note').textContent = pending ? pending + ' awaiting driver' : 'No data yet';
+
+  // Update nav badge
+  var badge = document.querySelector('.nav-badge');
+  if (badge) badge.textContent = pending;
+
+  // Update recent shipments table on dashboard
+  var recentTbody = document.querySelector('#s-dashboard .tbl-wrap tbody');
+  if (recentTbody && _allShipments.length) {
+    var recent = _allShipments.slice(0, 5);
+    var statusBadge = function(st) {
+      var map = { 'Pending': 'b-pending', 'In-Transit': 'b-transit', 'In Transit': 'b-transit', 'Out for Delivery': 'b-transit', 'Delivered': 'b-delivered', 'Failed': 'b-declined' };
+      return '<span class="badge ' + (map[st] || 'b-pending') + '">' + esc(st || 'Unknown') + '</span>';
+    };
+    recentTbody.innerHTML = recent.map(function(s) {
+      return '<tr><td style="font-family:DM Mono,monospace;font-size:11px;">' + esc(s.delivery_number || '') + '</td>' +
+        '<td>' + esc(s.client_name || '—') + '</td>' +
+        '<td>' + esc(s.item_type || s.package_type || '—') + '</td>' +
+        '<td>' + esc(s.driver_name || 'Unassigned') + '</td>' +
+        '<td>' + statusBadge(s.status) + '</td></tr>';
+    }).join('');
+  }
+}
+
+var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+
+// Load shipments on page load and when navigating to shipments
+(function() {
+  var _origGo2 = go;
+  go = function(id, navBtn) {
+    _origGo2(id, navBtn);
+    if (id === 'shipments') loadShipments();
+  };
+  // Also load on initial page load
+  loadShipments();
+})();
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Delivery, Driver } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { getProfile, getChatContact } from '../lib/api';
+import { getProfile, getChatContact, declineDelivery } from '../lib/api';
 import DeliveryChat from '../components/DeliveryChat';
 import { 
   Truck, 
@@ -95,6 +95,17 @@ export default function DriverDashboard() {
       console.error('Error accepting job:', err);
     } finally {
       setAccepting(null);
+    }
+  };
+
+  const handleDeclineJob = async (trackingNumber: string) => {
+    const reason = prompt('Reason for declining (optional):');
+    if (reason === null) return; // user cancelled the prompt
+    try {
+      await declineDelivery(trackingNumber, reason);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to decline');
     }
   };
 
@@ -301,18 +312,27 @@ export default function DriverDashboard() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleAcceptJob(job.id)}
-                    disabled={!isOnline || hasActiveJob || accepting === job.id}
-                    className={cn(
-                      'w-full py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
-                      hasActiveJob
-                        ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
-                    )}
-                  >
-                    {accepting === job.id ? 'Accepting...' : hasActiveJob ? 'Complete current job first' : 'Accept Job'}
-                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleDeclineJob(job.trackingNumber)}
+                      disabled={!isOnline || hasActiveJob || accepting === job.id}
+                      className="py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-950/20 dark:hover:text-red-400 dark:hover:border-red-900/40 disabled:opacity-40"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => handleAcceptJob(job.id)}
+                      disabled={!isOnline || hasActiveJob || accepting === job.id}
+                      className={cn(
+                        'py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
+                        hasActiveJob
+                          ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
+                      )}
+                    >
+                      {accepting === job.id ? 'Accepting...' : hasActiveJob ? 'Busy' : 'Accept'}
+                    </button>
+                  </div>
                 </motion.div>
               ))
             )}

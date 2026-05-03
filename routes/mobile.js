@@ -1357,6 +1357,51 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /driver/decline — decline a delivery job
+router.post('/driver/decline', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const tid = req.tenantId;
+  const { delivery_number, reason } = req.body;
+  if (!delivery_number) return res.status(400).json({ error: 'delivery_number is required.' });
+  const staffName = req.staff.name || 'Driver';
+
+  try {
+    const [rows] = await query(
+      'SELECT id, status, sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      [delivery_number, tid]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
+    if (rows[0].status !== 'Pending') return res.status(400).json({ error: 'Only pending shipments can be declined.' });
+
+    // Mark as Failed (declined by driver)
+    await query(
+      'UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?',
+      ['Failed', delivery_number, tid]
+    );
+
+    await query(
+      `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
+       VALUES (?, ?, 'Failed', '', ?, ?)`,
+      [delivery_number, tid, `Driver ${staffName} declined this delivery.${reason ? ' Reason: ' + reason : ''}`, staffName]
+    );
+
+    // Notify the customer
+    if (rows[0].sender_user_id) {
+      await createNotification(
+        rows[0].sender_user_id, 'app_user', tid,
+        'Delivery Declined',
+        `A driver has declined your shipment ${delivery_number}. We are looking for another driver.`,
+        'Shipments', delivery_number
+      );
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[POST /driver/decline]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // PUT /driver/status/:dn — update delivery status
 router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
