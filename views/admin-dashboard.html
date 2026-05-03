@@ -360,6 +360,7 @@ textarea{resize:vertical;}
           <div class="tabs-bar" style="border:none;margin:0;">
             <button class="tab active" onclick="filterShipments('All',this)">All</button>
             <button class="tab" onclick="filterShipments('Pending',this)">Pending</button>
+            <button class="tab" onclick="filterShipments('Queued',this)">Queued</button>
             <button class="tab" onclick="filterShipments('In Transit',this)">In Transit</button>
             <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
             <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
@@ -1274,7 +1275,7 @@ function updateStatCards(){
   if(navBadge)navBadge.textContent=total;
 }
 var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
-var statusCls={'Pending':'b-pending','Processing':'b-pending','In Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined'};
+var statusCls={'Pending':'b-pending','Processing':'b-pending','Queued':'b-awaiting','In Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
 function renderDashboardShipments(){
   // Recent shipments on dashboard (first 5)
   var tbody=document.querySelector('#s-dashboard .tbl-wrap tbody');

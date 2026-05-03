@@ -436,7 +436,7 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
         `SELECT s.*, d.name AS driver_name
          FROM shipment s LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
          WHERE s.tenant_id = ? AND (s.assigned_driver_id = ? OR s.status = 'Pending')
-         ORDER BY s.created_at DESC LIMIT 50`,
+         ORDER BY FIELD(s.status, 'In-Transit', 'Out for Delivery', 'Queued', 'Pending', 'Delivered', 'Failed'), s.created_at DESC LIMIT 50`,
         [tid, staffId]
       );
     } else {
@@ -1270,7 +1270,7 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
   try {
     // Check shipment is still available
     const [rows] = await query(
-      "SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending' LIMIT 1",
+      "SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND status IN ('Pending', 'Queued') LIMIT 1",
       [dn, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not available or already taken.' });
@@ -1383,18 +1383,18 @@ router.post('/driver/decline', authMiddleware, async (req, res) => {
       [delivery_number, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
-    if (rows[0].status !== 'Pending') return res.status(400).json({ error: 'Only pending shipments can be declined.' });
+    if (rows[0].status !== 'Pending' && rows[0].status !== 'Queued') return res.status(400).json({ error: 'Only pending or queued shipments can be declined.' });
 
-    // Mark as Failed (declined by driver)
+    // Unassign driver and set back to Pending for reassignment
     await query(
-      'UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?',
-      ['Failed', delivery_number, tid]
+      `UPDATE shipment SET status = 'Pending', assigned_driver_id = NULL WHERE delivery_number = ? AND tenant_id = ?`,
+      [delivery_number, tid]
     );
 
     await query(
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
-       VALUES (?, ?, 'Failed', '', ?, ?)`,
-      [delivery_number, tid, `Driver ${staffName} declined this delivery.${reason ? ' Reason: ' + reason : ''}`, staffName]
+       VALUES (?, ?, 'Pending', '', ?, ?)`,
+      [delivery_number, tid, `Driver ${staffName} declined this delivery. Shipment returned to pending for reassignment.${reason ? ' Reason: ' + reason : ''}`, staffName]
     );
 
     // Notify the customer
@@ -1457,6 +1457,42 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
         `Your shipment ${dn} is now ${status}.`,
         'Shipments', dn
       );
+    }
+
+    // ── Auto-activate queued job when driver completes a delivery ──
+    if (status === 'Delivered' || status === 'Failed') {
+      try {
+        const staffId = req.staff.staff_id;
+        const [queued] = await query(
+          `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Queued' LIMIT 1`,
+          [staffId, tid]
+        );
+        if (queued.length) {
+          const qdn = queued[0].delivery_number;
+          // Move queued → Pending so driver can accept it
+          await query(
+            `UPDATE shipment SET status = 'Pending' WHERE delivery_number = ? AND tenant_id = ?`,
+            [qdn, tid]
+          );
+          await query(
+            `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name) VALUES (?, ?, 'Pending', '', ?, ?)`,
+            [qdn, tid, `Previous delivery completed. Shipment is now ready for ${staffName} to accept.`, staffName]
+          );
+          // Notify the driver about the queued job becoming active
+          const [driverUser] = await query(
+            'SELECT user_id FROM APP_USER WHERE email = (SELECT username FROM STAFF WHERE staff_id = ? LIMIT 1) AND tenant_id = ? LIMIT 1',
+            [staffId, tid]
+          );
+          if (driverUser.length) {
+            await createNotification(
+              driverUser[0].user_id, 'app_user', tid,
+              'Queued Delivery Ready',
+              `Your queued shipment ${qdn} is now ready for you to accept.`,
+              'Shipments', qdn
+            );
+          }
+        }
+      } catch (qErr) { console.error('[Queue auto-activate]', qErr); }
     }
 
     res.json({ ok: true });

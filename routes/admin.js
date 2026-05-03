@@ -428,20 +428,66 @@ router.delete('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requi
   }
 });
 
-// PUT assign/reassign driver + vehicle to a shipment
+// PUT assign/reassign driver + vehicle to a shipment (with queue support)
 router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const dn = req.params.delivery_number;
   const { assigned_driver_id, assigned_vehicle_plate } = req.body;
   try {
-    const updates = [];
-    const vals = [];
-    if (assigned_driver_id !== undefined) { updates.push('assigned_driver_id = ?'); vals.push(assigned_driver_id || null); }
-    if (assigned_vehicle_plate !== undefined) { updates.push('assigned_vehicle_plate = ?'); vals.push(assigned_vehicle_plate || null); }
-    if (!updates.length) return res.status(400).json({ error: 'Nothing to update.' });
-    vals.push(dn, tid);
-    await query(`UPDATE shipment SET ${updates.join(', ')} WHERE delivery_number = ? AND tenant_id = ?`, vals);
-    res.json({ ok: true });
+    if (!assigned_driver_id) {
+      // Unassign: clear driver and set back to Pending
+      await query(
+        `UPDATE shipment SET assigned_driver_id = NULL, assigned_vehicle_plate = ?, status = 'Pending' WHERE delivery_number = ? AND tenant_id = ?`,
+        [assigned_vehicle_plate || null, dn, tid]
+      );
+      return res.json({ ok: true, queued: false, message: 'Driver unassigned.' });
+    }
+
+    // Check if this driver is currently busy (has an active delivery)
+    const [activeJobs] = await query(
+      `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery') LIMIT 1`,
+      [assigned_driver_id, tid]
+    );
+    const driverBusy = activeJobs.length > 0;
+
+    // If driver is busy, check they don't already have a queued job (limit: 1)
+    if (driverBusy) {
+      const [queuedJobs] = await query(
+        `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Queued' LIMIT 1`,
+        [assigned_driver_id, tid]
+      );
+      if (queuedJobs.length > 0) {
+        return res.status(400).json({ error: 'This driver already has a queued job. A driver can only have 1 queued shipment at a time.' });
+      }
+    }
+
+    const newStatus = driverBusy ? 'Queued' : 'Pending';
+    await query(
+      `UPDATE shipment SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = ? WHERE delivery_number = ? AND tenant_id = ?`,
+      [assigned_driver_id, assigned_vehicle_plate || null, newStatus, dn, tid]
+    );
+
+    // Get driver name for history
+    const [driverInfo] = await query('SELECT name FROM STAFF WHERE staff_id = ? LIMIT 1', [assigned_driver_id]);
+    const driverName = driverInfo[0]?.name || 'Driver';
+
+    // Log to shipment history
+    await query(
+      `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name) VALUES (?, ?, ?, '', ?, ?)`,
+      [dn, tid, newStatus,
+       driverBusy
+         ? `Shipment queued for driver ${driverName}. Awaiting driver acceptance after current delivery.`
+         : `Driver ${driverName} assigned. Awaiting driver acceptance.`,
+       req.admin?.name || 'Manager']
+    );
+
+    res.json({
+      ok: true,
+      queued: driverBusy,
+      message: driverBusy
+        ? `Driver is currently busy. Shipment queued — ${driverName} will be prompted to accept after their current delivery.`
+        : `Driver ${driverName} assigned. Awaiting acceptance.`
+    });
   } catch (err) {
     console.error('[PUT /admin/shipments/assign]', err);
     res.status(500).json({ error: err.message || 'Failed to assign driver.' });

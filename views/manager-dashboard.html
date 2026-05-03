@@ -306,6 +306,7 @@ textarea{resize:vertical;}
           <div class="tabs-bar" style="border:none;margin:0;">
             <button class="tab active" onclick="filterShipments('All',this)">All</button>
             <button class="tab" onclick="filterShipments('Pending',this)">Pending</button>
+            <button class="tab" onclick="filterShipments('Queued',this)">Queued</button>
             <button class="tab" onclick="filterShipments('In-Transit',this)">In Transit</button>
             <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
             <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
@@ -1319,7 +1320,7 @@ function filterShipments(status, tabEl) {
 }
 
 var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
-var statusCls={'Pending':'b-pending','Processing':'b-pending','In Transit':'b-transit','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
+var statusCls={'Pending':'b-pending','Processing':'b-pending','Queued':'b-awaiting','In Transit':'b-transit','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
 
 function renderShipments() {
   var tbody = document.getElementById('shipments-tbody');
@@ -1510,15 +1511,27 @@ function openAssignModal(dn, currentDriverId, currentPlate) {
   if (!_staffData.length) loadStaff();
   if (!_vehicleData.length) loadVehicles();
 
-  // Populate driver dropdown from cached staff data
+  // Populate driver dropdown from cached staff data with availability
   var driverSel = document.getElementById('assign-driver');
   driverSel.innerHTML = '<option value="">Unassigned</option>';
   var drivers = (_staffData || []).filter(function(s) { return s.role === 'Driver' && s.status === 'active'; });
+  // Build driver availability map from shipments data
+  var driverActiveMap = {};
+  var driverQueuedMap = {};
+  (_allShipments || []).forEach(function(s) {
+    if (!s.assigned_driver_id) return;
+    if (s.status === 'In-Transit' || s.status === 'In Transit' || s.status === 'Out for Delivery') driverActiveMap[s.assigned_driver_id] = true;
+    if (s.status === 'Queued') driverQueuedMap[s.assigned_driver_id] = true;
+  });
   drivers.forEach(function(d) {
     var opt = document.createElement('option');
-    opt.value = d.staff_id || d.id;
-    opt.textContent = d.name;
-    if ((d.staff_id || d.id) == currentDriverId) opt.selected = true;
+    var did = d.staff_id || d.id;
+    opt.value = did;
+    var indicator = driverQueuedMap[did] ? '\u{1F534} ' : (driverActiveMap[did] ? '\u{1F7E1} ' : '\u{1F7E2} ');
+    var statusLabel = driverQueuedMap[did] ? ' (has queue)' : (driverActiveMap[did] ? ' (busy)' : ' (available)');
+    opt.textContent = indicator + d.name + statusLabel;
+    if (driverQueuedMap[did]) opt.disabled = true;
+    if (did == currentDriverId) opt.selected = true;
     driverSel.appendChild(opt);
   });
 
@@ -1559,12 +1572,28 @@ async function submitAssignDriver() {
     if (!r.ok) throw new Error(d.error || 'Failed to assign driver.');
     closeAssignModal();
     loadShipments();
+    // Show feedback toast
+    showAssignToast(d.message || 'Driver assigned.', d.queued);
   } catch (e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
   }
   btn.disabled = false;
   btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Assign';
+}
+
+function showAssignToast(msg, queued) {
+  var existing = document.getElementById('assign-toast');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.id = 'assign-toast';
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;max-width:380px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;animation:slideUp 0.3s ease;';
+  toast.style.background = queued ? '#fef3c7' : '#dcfce7';
+  toast.style.color = queued ? '#92400e' : '#166534';
+  toast.style.border = queued ? '1.5px solid #fcd34d' : '1.5px solid #86efac';
+  toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + (queued ? 'schedule' : 'check_circle') + '</span>' + msg;
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(function() { toast.remove(); }, 500); }, 4000);
 }
 </script>
 </body>
