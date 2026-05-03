@@ -1387,7 +1387,7 @@ function loadSalesReport(){
     var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var labels=(data.monthly||[]).map(function(m){
       var parts=m.month.split('-');
-      return monthNames[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
+      return monthNames[parseInt(parts[1],10)-1]+" '"+parts[0].slice(2);
     });
     var paidVals=(data.monthly||[]).map(function(m){return Number(m.paid_total)||0;});
     var pendingVals=(data.monthly||[]).map(function(m){return Number(m.pending_total)||0;});
