@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
@@ -107,6 +107,7 @@ export default function SendPackage() {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'ton'>('kg');
   const [category, setCategory] = useState('PACKAGE');
   const [method, setMethod] = useState<'standard' | 'express'>('standard');
+  const [scheduledDate, setScheduledDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -253,19 +254,27 @@ export default function SendPackage() {
   // Express = 1.8× base (consistent in both display & totalFee)
   const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
 
-  // Estimate delivery time from OSRM duration
-  function estimateDelivery(durationMin: number, km: number, express: boolean): string {
-    if (km <= 0) return express ? 'Within 1-2 hours' : '2-4 hours';
-    const mins = express ? durationMin * 0.8 : durationMin * 1.3;
-    const hours = Math.ceil(mins / 60);
-    if (hours <= 1) return express ? 'Within 1 hour' : '1-2 hours';
-    if (hours <= 3) return express ? `${hours} hour${hours > 1 ? 's' : ''}` : `${hours}-${hours + 1} hours`;
-    if (hours <= 8) return express ? `${hours} hours` : `${hours}-${hours + 2} hours`;
-    const days = Math.ceil(hours / 10);
-    return express ? `${days} day${days > 1 ? 's' : ''}` : `${days}-${days + 1} days`;
-  }
-  const stdEta = estimateDelivery(routeDurationMin, distKm, false);
-  const expEta = estimateDelivery(routeDurationMin, distKm, true);
+  // Check if a date is Sunday
+  const isSunday = (dateStr: string) => {
+    if (!dateStr) return new Date().getDay() === 0;
+    return new Date(dateStr).getDay() === 0;
+  };
+
+  // Auto-switch to standard if user picks Sunday while on express
+  useEffect(() => {
+    if (method === 'express' && scheduledDate && isSunday(scheduledDate)) {
+      setMethod('standard');
+    }
+  }, [scheduledDate]);
+
+  // Today's date for min picker
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isTodaySunday = new Date().getDay() === 0;
+  const isSelectedSunday = scheduledDate ? isSunday(scheduledDate) : isTodaySunday;
+
+  // Delivery ETA descriptions
+  const stdEta = '3-7 business days';
+  const expEta = 'Same day delivery';
 
   // Debounced address search for pickup — ALWAYS updates coords, no guard
   const handlePickupChange = (val: string) => {
@@ -398,6 +407,7 @@ export default function SendPackage() {
         destLat: finalDestLat,
         destLng: finalDestLng,
         item_type_flag: category,
+        scheduled_date: scheduledDate || todayStr,
       });
 
       // Success — show success screen, then navigate to packages so user can pay via Pay Now button
@@ -856,7 +866,7 @@ export default function SendPackage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-slate-400">{stdEta} · {distKm > 0 ? `${distKm.toFixed(1)} km` : 'Enter addresses'}</p>
+                  <p className="text-xs text-slate-400">3-7 business days</p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600">Best Value</span>
                 </div>
                 {distKm > 0 && method === 'standard' && (
@@ -876,12 +886,15 @@ export default function SendPackage() {
 
           {/* Express */}
           <button
-            onClick={() => setMethod('express')}
+            onClick={() => !isSelectedSunday && setMethod('express')}
+            disabled={isSelectedSunday}
             className={cn(
               "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
-              method === 'express'
-                ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
-                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
+              isSelectedSunday
+                ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
+                : method === 'express'
+                  ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
+                  : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
             )}
           >
             <div className="flex items-start gap-3">
@@ -898,9 +911,12 @@ export default function SendPackage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-slate-400">{expEta} · Priority handling</p>
+                  <p className="text-xs text-slate-400">Same day · Priority handling</p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600">1.8× rate</span>
                 </div>
+                {isSelectedSunday && (
+                  <p className="text-[10px] text-red-500 font-semibold mt-1">⚠ Not available on Sundays</p>
+                )}
                 {distKm > 0 && method === 'express' && (
                   <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
                     <span className="text-[10px] text-slate-400">Fuel + Priority</span>
@@ -915,6 +931,30 @@ export default function SendPackage() {
               </div>
             </div>
           </button>
+        </div>
+
+        {/* Schedule Date */}
+        <div className="mt-4">
+          <label className="flex items-center gap-2 text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-2 ml-1">
+            <CalendarDays className="size-4" />
+            Schedule Delivery <span className="text-[10px] font-medium text-slate-400 normal-case">(optional — defaults to today)</span>
+          </label>
+          <input
+            type="date"
+            value={scheduledDate}
+            onChange={e => setScheduledDate(e.target.value)}
+            min={todayStr}
+            className="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm font-medium focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all"
+          />
+          {scheduledDate && (
+            <div className="flex items-center justify-between mt-2 ml-1">
+              <p className="text-[11px] text-slate-400">
+                {new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                {isSunday(scheduledDate) && <span className="text-red-500 font-semibold ml-1">· Sunday (Express unavailable)</span>}
+              </p>
+              <button onClick={() => setScheduledDate('')} className="text-[10px] font-bold text-orange-600">Clear</button>
+            </div>
+          )}
         </div>
 
         {/* Route info pill — only when route is loaded */}
