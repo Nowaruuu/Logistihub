@@ -1,12 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays, NotebookPen, X } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays, NotebookPen, X, CreditCard } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
-import { getTenantConfig } from '../lib/api';
+import { getTenantConfig, createCheckout } from '../lib/api';
 import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 // Category types matching database item_type_flag
 const PACKAGE_CATEGORIES = [
@@ -424,9 +426,51 @@ export default function SendPackage() {
         scheduled_date: scheduledDate || todayStr,
       });
 
-      // Success — show success screen, then navigate to packages so user can pay via Pay Now button
+      // Success — auto-open PayMongo for payment
       setSubmitted(true);
-      setTimeout(() => navigate('/packages'), 2000);
+      try {
+        const payResult = await createCheckout(deliveryNumber, totalFee, `Shipment ${deliveryNumber}`);
+        if (payResult?.checkout_url) {
+          // Open PayMongo checkout
+          if (Capacitor.isNativePlatform()) {
+            await Browser.open({ url: payResult.checkout_url, presentationStyle: 'popover' });
+            // Poll for payment completion
+            const slug = localStorage.getItem('auth_slug') || '';
+            const token = localStorage.getItem('auth_token') || '';
+            const statusUrl = `https://logistichub.ddns.net/${slug}/api/mobile/pay/status/${deliveryNumber}`;
+            let pollCount = 0;
+            const pollId = setInterval(async () => {
+              pollCount++;
+              if (pollCount > 60) { clearInterval(pollId); navigate('/packages'); return; }
+              try {
+                const r = await fetch(statusUrl, { headers: { Authorization: `Bearer ${token}` } });
+                const d = await r.json();
+                if (d.status === 'Paid' || d.status === 'paid') {
+                  clearInterval(pollId);
+                  Browser.close().catch(() => {});
+                  navigate('/packages');
+                }
+              } catch { /* ignore */ }
+            }, 3000);
+            const listener = await Browser.addListener('browserFinished', () => {
+              clearInterval(pollId);
+              listener.remove();
+              navigate('/packages');
+            });
+          } else {
+            // Web fallback
+            window.location.href = payResult.checkout_url;
+          }
+        } else if (payResult?.already_paid) {
+          navigate('/packages');
+        } else {
+          // Fallback: go to packages if payment unavailable
+          setTimeout(() => navigate('/packages'), 1500);
+        }
+      } catch (payErr) {
+        console.warn('Auto-payment failed, redirecting to packages:', payErr);
+        setTimeout(() => navigate('/packages'), 1500);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to create shipment');
