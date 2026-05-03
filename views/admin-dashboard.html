@@ -1374,7 +1374,7 @@ function loadDashMap(){
 var _srMonthlyChart=null, _srTypeChart=null;
 function loadSalesReport(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
-  apiFetch('/'+slug+'/api/admin/sales-report').then(function(data){
+  apiFetch('/'+slug+'/api/admin/sales-report').then(function(r){return r.json();}).then(function(data){
     // Stat cards
     document.getElementById('sr-rev-ytd').textContent='\u20b1'+Number(data.revenue_paid||0).toLocaleString();
     document.getElementById('sr-rev-all').textContent='\u20b1'+Number(data.revenue_total||0).toLocaleString();
