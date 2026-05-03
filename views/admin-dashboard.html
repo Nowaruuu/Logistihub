@@ -1378,20 +1378,30 @@ function loadDashMap(){
 
 // ── Sales Report ─────────────────────────────────────────────────────────────
 var _srMonthlyChart=null, _srTypeChart=null;
-var _srMonthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function _formatChartLabel(item, period){
-  // item has period_label and period_start
-  var d=item.period_start?new Date(item.period_start):null;
-  if(period==='daily' && d){
-    return _srMonthNames[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
-  } else if(period==='weekly' && d){
-    return 'Week of '+_srMonthNames[d.getMonth()]+' '+d.getDate();
+  if(period==='daily'){
+    // item.hr = 0-23
+    var h=Number(item.hr);
+    if(h===0) return '12 AM';
+    if(h===12) return '12 PM';
+    return h<12?(h+' AM'):((h-12)+' PM');
+  } else if(period==='weekly'){
+    // item.week_num = 0,1,2,3,4 and item.week_start = '2026-05-01'
+    var wn=Number(item.week_num);
+    var now=new Date();
+    var year=now.getFullYear();
+    var month=now.getMonth();
+    var startDay=wn*7+1;
+    var endDay=Math.min(startDay+6, new Date(year,month+1,0).getDate());
+    return _srMonthShort[month]+' '+startDay+'-'+endDay;
   } else if(period==='yearly'){
-    return item.period_label; // just "2026"
-  } else if(d) {
-    return _srMonthNames[d.getMonth()]+' '+d.getFullYear();
+    return String(item.yr);
+  } else {
+    // Monthly: item.mo = 1-12
+    return _srMonthNames[Number(item.mo)-1]||'';
   }
-  return item.period_label||'';
 }
 function _renderSalesChart(chartData, period){
   var labels=chartData.map(function(m){return _formatChartLabel(m, period);});

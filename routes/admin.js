@@ -148,22 +148,52 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
     );
     // Revenue grouped by period (daily/weekly/monthly/yearly)
     const period = req.query.period || 'monthly';
-    let dateFmt, dateInterval;
-    if (period === 'daily')        { dateFmt = '%Y-%m-%d'; dateInterval = 'INTERVAL 30 DAY'; }
-    else if (period === 'weekly')  { dateFmt = '%x-W%v';   dateInterval = 'INTERVAL 12 WEEK'; }
-    else if (period === 'yearly')  { dateFmt = '%Y';       dateInterval = 'INTERVAL 5 YEAR'; }
-    else                           { dateFmt = '%Y-%m';    dateInterval = 'INTERVAL 12 MONTH'; }
-    const [chartData] = await query(
-      `SELECT DATE_FORMAT(paid_at, '${dateFmt}') AS period_label,
-              MIN(paid_at) AS period_start,
-              SUM(total_amount) AS total,
-              SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
-              SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
-              COUNT(*) AS count
-       FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), ${dateInterval})
-       GROUP BY period_label ORDER BY period_label ASC`,
-      [tid]
-    );
+    let chartSql, chartParams;
+    if (period === 'daily') {
+      // Hourly breakdown for today
+      chartSql = `SELECT HOUR(paid_at) AS hr,
+                         SUM(total_amount) AS total,
+                         SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
+                         SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
+                         COUNT(*) AS count
+                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND DATE(paid_at) = CURDATE()
+                  GROUP BY hr ORDER BY hr ASC`;
+      chartParams = [tid];
+    } else if (period === 'weekly') {
+      // Weekly breakdown for current month with week start date
+      chartSql = `SELECT FLOOR((DAY(paid_at)-1)/7) AS week_num,
+                         MIN(paid_at) AS period_start,
+                         MAX(paid_at) AS period_end,
+                         DATE_FORMAT(MIN(paid_at), '%Y-%m-%d') AS week_start,
+                         SUM(total_amount) AS total,
+                         SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
+                         SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
+                         COUNT(*) AS count
+                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL
+                    AND YEAR(paid_at) = YEAR(NOW()) AND MONTH(paid_at) = MONTH(NOW())
+                  GROUP BY week_num ORDER BY week_num ASC`;
+      chartParams = [tid];
+    } else if (period === 'yearly') {
+      chartSql = `SELECT YEAR(paid_at) AS yr,
+                         SUM(total_amount) AS total,
+                         SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
+                         SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
+                         COUNT(*) AS count
+                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), INTERVAL 5 YEAR)
+                  GROUP BY yr ORDER BY yr ASC`;
+      chartParams = [tid];
+    } else {
+      // Monthly: all 12 months of current year
+      chartSql = `SELECT MONTH(paid_at) AS mo,
+                         SUM(total_amount) AS total,
+                         SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
+                         SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
+                         COUNT(*) AS count
+                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND YEAR(paid_at) = YEAR(NOW())
+                  GROUP BY mo ORDER BY mo ASC`;
+      chartParams = [tid];
+    }
+    const [chartData] = await query(chartSql, chartParams);
     // Revenue by shipment type (all payments)
     const [byType] = await query(
       `SELECT COALESCE(s.item_type_flag, 'OTHER') AS type, COALESCE(SUM(p.total_amount),0) AS total, COUNT(*) AS count
