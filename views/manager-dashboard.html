@@ -315,8 +315,8 @@ textarea{resize:vertical;}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th><th>Created</th></tr></thead>
-            <tbody id="shipments-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup → Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
+            <tbody id="shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -400,18 +400,18 @@ textarea{resize:vertical;}
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card" id="pay-stat-revenue"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card" id="pay-stat-pending"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+        <div class="stat-card" id="pay-stat-overdue"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Invoices</span>
           <div style="display:flex;gap:8px;">
-            <select class="f-select"><option>All Methods</option><option>Cash</option><option>GCash</option><option>Check</option><option>COD</option></select>
-            <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
+            <select class="f-select" id="pay-method-filter" onchange="renderPayments()"><option value="">All Methods</option><option>Cash</option><option>GCash</option><option>Check</option><option>COD</option></select>
+            <select class="f-select" id="pay-status-filter" onchange="renderPayments()"><option value="">All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th></tr></thead><tbody id="payments-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">payments</span><p>Loading invoices…</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -419,8 +419,8 @@ textarea{resize:vertical;}
     <div id="s-pod" class="screen">
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
-        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Geolocation</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Delivery #</th><th>Status</th><th>Receiver</th><th>Signature</th><th>Photo</th><th>Timestamp</th></tr></thead><tbody id="pods-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>Loading PODs…</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -1285,6 +1285,9 @@ function filterShipments(status, tabEl) {
   renderShipments();
 }
 
+var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
+var statusCls={'Pending':'b-pending','Processing':'b-pending','In Transit':'b-transit','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
+
 function renderShipments() {
   var tbody = document.getElementById('shipments-tbody');
   if (!tbody) return;
@@ -1293,38 +1296,35 @@ function renderShipments() {
   var filtered = _allShipments;
   if (_shipStatusFilter !== 'All') {
     filtered = filtered.filter(function(s) {
-      if (_shipStatusFilter === 'In-Transit') return s.status === 'In-Transit' || s.status === 'In Transit';
+      if (_shipStatusFilter === 'In-Transit' || _shipStatusFilter === 'In Transit') return s.status === 'In-Transit' || s.status === 'In Transit';
+      if (_shipStatusFilter === 'Failed') return s.status === 'Failed' || s.status === 'Declined';
       return s.status === _shipStatusFilter;
     });
   }
   if (typeFilter) {
-    filtered = filtered.filter(function(s) { return (s.item_type || s.package_type || '').toLowerCase() === typeFilter.toLowerCase(); });
+    filtered = filtered.filter(function(s) {
+      var t = (s.item_type || s.package_type || s.item_type_flag || '').toLowerCase();
+      return t === typeFilter.toLowerCase() || (s.item_type_flag || '').toLowerCase() === typeFilter.toLowerCase();
+    });
   }
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>';
     return;
   }
 
-  var statusBadge = function(st) {
-    var map = {
-      'Pending': 'b-pending', 'In-Transit': 'b-transit', 'In Transit': 'b-transit',
-      'Out for Delivery': 'b-transit', 'Delivered': 'b-delivered',
-      'Failed': 'b-declined', 'Declined': 'b-declined'
-    };
-    return '<span class="badge ' + (map[st] || 'b-pending') + '">' + esc(st || 'Unknown') + '</span>';
-  };
-
   tbody.innerHTML = filtered.map(function(s) {
-    var date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-    return '<tr>' +
-      '<td><strong style="font-family:DM Mono,monospace;font-size:11px;">' + esc(s.delivery_number || '—') + '</strong></td>' +
-      '<td>' + esc(s.client_name || s.sender_name || '—') + '</td>' +
-      '<td>' + esc(s.item_type || s.package_type || '—') + '</td>' +
-      '<td>' + esc(s.driver_name || 'Unassigned') + '</td>' +
-      '<td>' + statusBadge(s.status) + '</td>' +
-      '<td style="font-size:11px;color:#94a3b8;">' + date + '</td>' +
-      '</tr>';
+    var tc = typeCls[s.item_type_flag] || 't-pkg';
+    var sc = statusCls[s.status] || 'b-pending';
+    var route = esc(s.pickup_location || 'N/A') + ' \u2192 ' + esc(s.dropoff_location || 'N/A');
+    function fmtDateTime(v) { if (!v) return '\u2014'; var d = new Date(v); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+    var dateOrdered = fmtDateTime(s.created_at);
+    var dateDelivered = fmtDateTime(s.delivered_at);
+    var veh = s.vehicle_type ? esc(s.vehicle_type.charAt(0).toUpperCase() + s.vehicle_type.slice(1)) : '\u2014';
+    var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
+    var sender = s.sender_name ? esc(s.sender_name) : esc(s.client_name || 'N/A');
+    var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
+    return '<tr><td><strong>' + esc(s.delivery_number || '') + '</strong></td><td>' + esc(s.awb || '\u2014') + '</td><td>' + sender + '</td><td>' + receiver + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag || 'PKG') + '</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">' + route + '</td><td>' + esc(s.driver_name || 'Unassigned') + '</td><td>' + veh + '</td><td>' + plate + '</td><td><span class="badge ' + sc + '">' + esc(s.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + dateOrdered + '</td><td style="white-space:nowrap;font-size:11px;">' + dateDelivered + '</td><td></td></tr>';
   }).join('');
 }
 
@@ -1375,10 +1375,94 @@ var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.sl
   go = function(id, navBtn) {
     _origGo2(id, navBtn);
     if (id === 'shipments' || id === 'dashboard') loadShipments();
+    if (id === 'payments') loadPayments();
+    if (id === 'pod') loadPods();
   };
   // Load on initial page load
   loadShipments();
 })();
+
+// ═══ PAYMENTS LOADING ════════════════════════════════════════════════════════
+var _allPayments = [];
+function loadPayments() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  apiFetch('/' + slug + '/api/admin/payments')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _allPayments = Array.isArray(data.payments) ? data.payments : [];
+      // Update stat cards
+      var revEl = document.querySelector('#pay-stat-revenue .stat-value');
+      var penEl = document.querySelector('#pay-stat-pending .stat-value');
+      var overdueEl = document.querySelector('#pay-stat-overdue .stat-value');
+      if (revEl) revEl.textContent = '\u20B1' + (data.total_revenue || 0).toLocaleString();
+      if (penEl) penEl.textContent = data.pending_count || 0;
+      var overdue = _allPayments.filter(function(p) { return p.status === 'Overdue'; }).length;
+      if (overdueEl) overdueEl.textContent = overdue;
+      var revNote = document.querySelector('#pay-stat-revenue .stat-note');
+      var penNote = document.querySelector('#pay-stat-pending .stat-note');
+      var overdueNote = document.querySelector('#pay-stat-overdue .stat-note');
+      if (revNote) revNote.textContent = _allPayments.length ? _allPayments.length + ' invoices' : 'No data yet';
+      if (penNote) penNote.textContent = (data.pending_count || 0) ? (data.pending_count || 0) + ' awaiting' : 'No data yet';
+      if (overdueNote) overdueNote.textContent = overdue ? overdue + ' overdue' : 'No data yet';
+      renderPayments();
+    })
+    .catch(function(err) {
+      console.error('[Manager] Failed to load payments:', err);
+      var tb = document.getElementById('payments-tbody');
+      if (tb) tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load payments</p></div></td></tr>';
+    });
+}
+function renderPayments() {
+  var tbody = document.getElementById('payments-tbody');
+  if (!tbody) return;
+  var methodFilter = (document.getElementById('pay-method-filter') || {}).value || '';
+  var statusFilter = (document.getElementById('pay-status-filter') || {}).value || '';
+  var filtered = _allPayments;
+  if (methodFilter) filtered = filtered.filter(function(p) { return (p.payment_method || '').toLowerCase() === methodFilter.toLowerCase(); });
+  if (statusFilter) filtered = filtered.filter(function(p) { return p.status === statusFilter; });
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices found</p></div></td></tr>';
+    return;
+  }
+  var payStatusCls = { 'Paid': 'b-delivered', 'Pending': 'b-pending', 'Overdue': 'b-declined', 'AwaitingAdmin': 'b-transit' };
+  tbody.innerHTML = filtered.map(function(p) {
+    var sc = payStatusCls[p.status] || 'b-pending';
+    var amt = '\u20B1' + (p.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    var paidAt = p.paid_at ? new Date(p.paid_at).toLocaleDateString() + ' ' + new Date(p.paid_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '\u2014';
+    var confirmed = p.admin_confirmed ? '<span class="badge b-delivered">Yes</span>' : '<span class="badge b-pending">No</span>';
+    return '<tr><td><strong>' + esc(p.invoice_number || ('INV-' + p.invoice_id)) + '</strong></td><td>' + esc(p.delivery_number || '\u2014') + '</td><td>' + amt + '</td><td>' + esc(p.payment_method || '\u2014') + '</td><td style="font-size:11px;">' + esc(p.reference_number || p.paymongo_payment_id || '\u2014') + '</td><td>' + confirmed + '</td><td><span class="badge ' + sc + '">' + esc(p.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + paidAt + '</td></tr>';
+  }).join('');
+}
+
+// ═══ POD LOADING ═════════════════════════════════════════════════════════════
+function loadPods() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  apiFetch('/' + slug + '/api/admin/pods')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var pods = Array.isArray(data.pods) ? data.pods : [];
+      var tbody = document.getElementById('pods-tbody');
+      if (!tbody) return;
+      if (!pods.length) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No proof of delivery records yet</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = pods.map(function(p) {
+        var ts = p.created_at ? new Date(p.created_at).toLocaleDateString() + ' ' + new Date(p.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '\u2014';
+        var sig = p.signature_url ? '<a href="' + esc(p.signature_url) + '" target="_blank" style="color:#3b82f6;">View</a>' : '\u2014';
+        var photo = p.photo_url ? '<a href="' + esc(p.photo_url) + '" target="_blank" style="color:#3b82f6;">View</a>' : '\u2014';
+        var stBadge = p.shipment_status ? '<span class="badge ' + (statusCls[p.shipment_status] || 'b-pending') + '">' + esc(p.shipment_status) + '</span>' : '\u2014';
+        return '<tr><td><strong>' + esc(p.delivery_number || '') + '</strong></td><td>' + stBadge + '</td><td>' + esc(p.receiver_name || '\u2014') + '</td><td>' + sig + '</td><td>' + photo + '</td><td style="white-space:nowrap;font-size:11px;">' + ts + '</td></tr>';
+      }).join('');
+    })
+    .catch(function(err) {
+      console.error('[Manager] Failed to load PODs:', err);
+      var tb = document.getElementById('pods-tbody');
+      if (tb) tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
+    });
+}
 </script>
 </body>
 </html>
