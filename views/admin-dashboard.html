@@ -314,17 +314,17 @@ textarea{resize:vertical;}
       <div class="grid-2">
         <div class="card">
           <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>
+          <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
           <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>
+          <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">map</span>Live Shipment Map</span></div>
-        <div class="card-body"><div class="map-ph"><span class="material-symbols-outlined">map</span><p>Map activates once shipments are in transit</p></div></div>
+        <div class="card-body" style="padding:8px;"><div id="dash-live-map" style="height:300px;border-radius:10px;overflow:hidden;background:#e2e8f0;"></div></div>
       </div>
     </div>
 
@@ -943,6 +943,12 @@ function go(id,navBtn){
   if(navBtn){
     document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});
     navBtn.classList.add('active');
+  } else {
+    // Auto-find matching nav link by screen id
+    document.querySelectorAll('.nav-link').forEach(function(l){
+      l.classList.remove('active');
+      if(l.getAttribute('onclick') && l.getAttribute('onclick').indexOf("'"+id+"'")!==-1) l.classList.add('active');
+    });
   }
   var m=pageMeta[id]||[id,''];
   document.getElementById('page-title').textContent=m[0];
