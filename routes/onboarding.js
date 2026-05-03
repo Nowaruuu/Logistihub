@@ -8,7 +8,7 @@ const { sendWelcomeEmail } = require('../config/mailer');
 
 const router = express.Router();
 
-const PLAN_PRICES = { startup: 99, enterprise: 499, global: 999 };
+const PLAN_PRICES = { startup: 1499, enterprise: 4999, global: 14999 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/onboarding/verify-invite?invite=<token>

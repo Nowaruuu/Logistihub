@@ -1153,9 +1153,9 @@ router.get('/:slug/api/admin/audit-logs', requireAdmin, requireSlugMatch, async 
 // UPGRADE PLAN — PayMongo Checkout
 // ─────────────────────────────────────────────────────────────────────────────
 const PLAN_PRICES = {
-  startup:    { amount: 9900,  label: 'Startup Plan'    },   // ₱99 in centavos
-  enterprise: { amount: 49900, label: 'Enterprise Plan' },   // ₱499
-  global:     { amount: 99900, label: 'Global Plan'     },   // ₱999
+  startup:    { amount: 149900,  label: 'Startup Plan'    },   // ₱1,499 in centavos
+  enterprise: { amount: 499900, label: 'Enterprise Plan' },   // ₱4,999
+  global:     { amount: 1499900, label: 'Global Plan'     },   // ₱14,999
 };
 const PLAN_ORDER = ['startup', 'enterprise', 'global'];
 
