@@ -160,11 +160,29 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`\n🚀  Logistics OS backend running`);
   console.log(`   Local:   http://localhost:${PORT}`);
   console.log(`   Env:     ${process.env.NODE_ENV || 'development'}`);
   console.log(`   DB:      ${process.env.DB_NAME}@${process.env.DB_HOST}\n`);
+
+  // One-time cleanup: remove erroneous shipments created without suitable vehicles
+  try {
+    const { query } = require('./config/db');
+    const badDNs = ['DLV-MOPBWQTR-7D1D'];
+    for (const dn of badDNs) {
+      const [rows] = await query('SELECT delivery_number FROM shipment WHERE delivery_number = ? LIMIT 1', [dn]);
+      if (rows.length) {
+        await query('DELETE FROM SHIPMENT_HISTORY WHERE delivery_number = ?', [dn]).catch(() => {});
+        await query('DELETE FROM payment WHERE delivery_number = ?', [dn]).catch(() => {});
+        await query('DELETE FROM proof_of_delivery WHERE delivery_number = ?', [dn]).catch(() => {});
+        await query('DELETE FROM sub_package WHERE delivery_number = ?', [dn]).catch(() => {});
+        await query('DELETE FROM sub_bulk WHERE delivery_number = ?', [dn]).catch(() => {});
+        await query('DELETE FROM shipment WHERE delivery_number = ?', [dn]);
+        console.log(`   🗑️  Cleaned up erroneous shipment: ${dn}`);
+      }
+    }
+  } catch (e) { console.error('Cleanup error:', e.message); }
 });
 
 module.exports = app;
