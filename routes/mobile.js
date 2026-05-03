@@ -668,6 +668,27 @@ router.put('/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /update-phone — update phone number for user or staff
+router.put('/update-phone', authMiddleware, async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Phone number is required.' });
+
+  try {
+    if (req.user) {
+      await query('UPDATE APP_USER SET phone = ? WHERE user_id = ? AND tenant_id = ?', [phone, req.user.user_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Phone updated.' });
+    }
+    if (req.staff) {
+      await query('UPDATE STAFF SET phone = ? WHERE staff_id = ? AND tenant_id = ?', [phone, req.staff.staff_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Phone updated.' });
+    }
+    res.status(403).json({ error: 'Forbidden.' });
+  } catch (err) {
+    console.error('[PUT /update-phone]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // GET /notifications — generate notifications from shipment history
 router.get('/notifications', authMiddleware, async (req, res) => {
   const tid = req.tenantId;

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Moon, Sun, ChevronRight, Mail, Phone, Lock, Check, Eye, EyeOff, X } from 'lucide-react';
+import { Bell, Moon, Sun, ChevronRight, Mail, Phone, Lock, Eye, EyeOff, X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
@@ -9,7 +8,6 @@ import { cn } from '../lib/utils';
 export default function Settings() {
   const { darkMode, toggleDarkMode } = useTheme();
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(() => {
     return localStorage.getItem('notif_enabled') !== 'false';
   });
@@ -20,6 +18,12 @@ export default function Settings() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showPw, setShowPw] = useState(false);
+
+  // Phone edit modal
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneValue, setPhoneValue] = useState(profile?.phone || '');
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneMsg, setPhoneMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleNotificationToggle = () => {
     const newVal = !notifications;
@@ -59,6 +63,37 @@ export default function Settings() {
       setPwMsg({ type: 'error', text: err.message || 'Failed to change password.' });
     } finally {
       setPwLoading(false);
+    }
+  };
+
+  const handleSavePhone = async () => {
+    const cleaned = phoneValue.replace(/\s/g, '');
+    if (!cleaned) {
+      setPhoneMsg({ type: 'error', text: 'Phone number is required.' });
+      return;
+    }
+    if (!/^(09|\+639)\d{9}$/.test(cleaned) && !/^\d{7,15}$/.test(cleaned)) {
+      setPhoneMsg({ type: 'error', text: 'Enter a valid phone number.' });
+      return;
+    }
+    setPhoneLoading(true);
+    setPhoneMsg(null);
+    try {
+      const slug = localStorage.getItem('auth_slug') || '';
+      const token = localStorage.getItem('auth_token') || '';
+      const res = await fetch(`https://logistichub.ddns.net/${slug}/api/mobile/update-phone`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ phone: cleaned })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update phone');
+      setPhoneMsg({ type: 'success', text: 'Phone updated!' });
+      setTimeout(() => { setShowPhoneModal(false); setPhoneMsg(null); }, 1200);
+    } catch (err: any) {
+      setPhoneMsg({ type: 'error', text: err.message || 'Failed to update phone.' });
+    } finally {
+      setPhoneLoading(false);
     }
   };
 
@@ -169,7 +204,7 @@ export default function Settings() {
             </div>
           </div>
           <div
-            onClick={() => navigate('/profile')}
+            onClick={() => { setPhoneValue(profile?.phone || ''); setPhoneMsg(null); setShowPhoneModal(true); }}
             className="flex items-center justify-between p-4 cursor-pointer active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
           >
             <div className="flex items-center gap-4">
@@ -251,7 +286,7 @@ export default function Settings() {
                   />
                 </div>
                 {pwMsg && (
-                  <div className={cn("text-xs font-bold px-3 py-2 rounded-xl", pwMsg.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500')}>
+                  <div className={cn("text-xs font-bold px-3 py-2 rounded-xl", pwMsg.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-600' : 'bg-red-50 dark:bg-red-900/20 text-red-500')}>
                     {pwMsg.text}
                   </div>
                 )}
@@ -261,6 +296,60 @@ export default function Settings() {
                   className="w-full h-12 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {pwLoading ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Update Password'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phone Edit Modal ── */}
+      <AnimatePresence>
+        {showPhoneModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Edit Phone Number</h3>
+                <button onClick={() => setShowPhoneModal(false)} className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <X className="size-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                    <input
+                      type="tel"
+                      value={phoneValue}
+                      onChange={e => setPhoneValue(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 pl-10 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 text-lg font-medium tracking-wide"
+                      placeholder="09xxxxxxxxx"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                {phoneMsg && (
+                  <div className={cn("text-xs font-bold px-3 py-2 rounded-xl", phoneMsg.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-600' : 'bg-red-50 dark:bg-red-900/20 text-red-500')}>
+                    {phoneMsg.text}
+                  </div>
+                )}
+                <button
+                  onClick={handleSavePhone}
+                  disabled={phoneLoading}
+                  className="w-full h-12 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {phoneLoading ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="size-4" /> Save Phone Number</>}
                 </button>
               </div>
             </motion.div>

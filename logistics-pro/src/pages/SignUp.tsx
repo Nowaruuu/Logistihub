@@ -30,6 +30,7 @@ export default function SignUp() {
     setError('');
 
     if (!slug) { setError('Workspace ID is required.'); return; }
+    if (!phone || phone.replace(/\s/g, '').length < 10) { setError('A valid phone number is required.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
 
@@ -183,12 +184,12 @@ export default function SignUp() {
 
           {/* Phone */}
           <div className="flex flex-col w-full">
-            <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Phone <span className="text-slate-400 normal-case">(optional)</span></p>
+            <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider leading-normal pb-2 px-1">Phone Number <span className="text-red-500 normal-case">*</span></p>
             <div className="relative flex items-center">
               <Phone className="absolute left-4 text-slate-400 size-5" />
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
                 className="flex w-full rounded-xl text-slate-900 dark:text-slate-100 focus:outline-0 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 h-14 placeholder:text-slate-400 pl-12 pr-4 text-[15px] transition-all"
-                placeholder="09xxxxxxxxx" />
+                placeholder="09xxxxxxxxx" required />
             </div>
           </div>
 
