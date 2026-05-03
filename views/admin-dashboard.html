@@ -528,10 +528,16 @@ textarea{resize:vertical;}
           <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
         </div>
       </div>
-      <!-- Monthly Revenue Chart -->
+      <!-- Revenue Chart -->
       <div class="card" style="padding:0;margin-bottom:24px;">
         <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
-          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#3b82f6;">monitoring</span>Monthly Revenue</h3>
+          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#3b82f6;">monitoring</span>Revenue Overview</h3>
+          <select id="sr-period-select" onchange="loadSalesReportChart(this.value)" style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;color:#334155;background:#fff;cursor:pointer;">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
         </div>
         <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
       </div>
@@ -1372,6 +1378,57 @@ function loadDashMap(){
 
 // ── Sales Report ─────────────────────────────────────────────────────────────
 var _srMonthlyChart=null, _srTypeChart=null;
+var _srMonthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function _formatChartLabel(item, period){
+  // item has period_label and period_start
+  var d=item.period_start?new Date(item.period_start):null;
+  if(period==='daily' && d){
+    return _srMonthNames[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+  } else if(period==='weekly' && d){
+    return 'Week of '+_srMonthNames[d.getMonth()]+' '+d.getDate();
+  } else if(period==='yearly'){
+    return item.period_label; // just "2026"
+  } else if(d) {
+    return _srMonthNames[d.getMonth()]+' '+d.getFullYear();
+  }
+  return item.period_label||'';
+}
+function _renderSalesChart(chartData, period){
+  var labels=chartData.map(function(m){return _formatChartLabel(m, period);});
+  var paidVals=chartData.map(function(m){return Number(m.paid_total)||0;});
+  var pendingVals=chartData.map(function(m){return Number(m.pending_total)||0;});
+  var counts=chartData.map(function(m){return Number(m.count)||0;});
+  if(_srMonthlyChart)_srMonthlyChart.destroy();
+  var ctx1=document.getElementById('sr-monthly-chart');
+  if(ctx1){
+    _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:labels,
+        datasets:[
+          {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
+          {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
+          {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom'}},
+        scales:{
+          y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
+          y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1}},
+          x:{stacked:true,grid:{display:false}}
+        }
+      }
+    });
+  }
+}
+function loadSalesReportChart(period){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  apiFetch('/'+slug+'/api/admin/sales-report?period='+period).then(function(r){return r.json();}).then(function(data){
+    _renderSalesChart(data.chart_data||[], period);
+  }).catch(function(e){console.error('Chart refresh error:',e);});
+}
 function loadSalesReport(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   apiFetch('/'+slug+'/api/admin/sales-report').then(function(r){return r.json();}).then(function(data){
@@ -1383,39 +1440,13 @@ function loadSalesReport(){
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
 
-    // Monthly Revenue Chart (stacked: paid + pending)
-    var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var labels=(data.monthly||[]).map(function(m){
-      var parts=m.month.split('-');
-      return monthNames[parseInt(parts[1],10)-1]+" '"+parts[0].slice(2);
-    });
-    var paidVals=(data.monthly||[]).map(function(m){return Number(m.paid_total)||0;});
-    var pendingVals=(data.monthly||[]).map(function(m){return Number(m.pending_total)||0;});
-    var counts=(data.monthly||[]).map(function(m){return Number(m.count)||0;});
-    if(_srMonthlyChart)_srMonthlyChart.destroy();
-    var ctx1=document.getElementById('sr-monthly-chart');
-    if(ctx1){
-      _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
-        type:'bar',
-        data:{
-          labels:labels,
-          datasets:[
-            {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-            {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-            {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
-          ]
-        },
-        options:{
-          responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{position:'bottom'}},
-          scales:{
-            y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
-            y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1}},
-            x:{stacked:true,grid:{display:false}}
-          }
-        }
-      });
-    }
+    // Render chart with current period selection
+    var periodSel=document.getElementById('sr-period-select');
+    var curPeriod=periodSel?periodSel.value:'monthly';
+    _renderSalesChart(data.chart_data||[], curPeriod);
+
+    // Store data globally for chart-only refresh
+    window._srLastData=data;
 
     // Revenue by Type Doughnut
     var typeLabels=(data.by_type||[]).map(function(t){return t.type||'Other';});

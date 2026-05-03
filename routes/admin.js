@@ -146,15 +146,22 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
       "SELECT COUNT(*) AS shipment_count FROM shipment WHERE tenant_id = ?",
       [tid]
     );
-    // Monthly revenue for last 12 months
-    const [monthly] = await query(
-      `SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month,
+    // Revenue grouped by period (daily/weekly/monthly/yearly)
+    const period = req.query.period || 'monthly';
+    let dateFmt, dateInterval;
+    if (period === 'daily')        { dateFmt = '%Y-%m-%d'; dateInterval = 'INTERVAL 30 DAY'; }
+    else if (period === 'weekly')  { dateFmt = '%x-W%v';   dateInterval = 'INTERVAL 12 WEEK'; }
+    else if (period === 'yearly')  { dateFmt = '%Y';       dateInterval = 'INTERVAL 5 YEAR'; }
+    else                           { dateFmt = '%Y-%m';    dateInterval = 'INTERVAL 12 MONTH'; }
+    const [chartData] = await query(
+      `SELECT DATE_FORMAT(paid_at, '${dateFmt}') AS period_label,
+              MIN(paid_at) AS period_start,
               SUM(total_amount) AS total,
               SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
               SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
               COUNT(*) AS count
-       FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-       GROUP BY month ORDER BY month ASC`,
+       FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), ${dateInterval})
+       GROUP BY period_label ORDER BY period_label ASC`,
       [tid]
     );
     // Revenue by shipment type (all payments)
@@ -198,7 +205,7 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
       pending_amount: Number(pending_amount),
       pending_count: Number(pending_count),
       shipment_count: Number(shipment_count),
-      monthly,
+      chart_data: chartData,
       by_type: byType,
       top_clients: topClients,
       recent_transactions: recentTx
