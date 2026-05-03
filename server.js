@@ -189,15 +189,16 @@ app.listen(PORT, async () => {
       console.log('   ✅ Added vehicle_type column to shipment table');
     } catch(_) { /* column already exists */ }
 
-    // Backfill vehicle_type for old shipments that have an assigned driver
+    // Backfill vehicle_type for old shipments that have an assigned driver with a vehicle
     try {
       await query(`
         UPDATE shipment s
         JOIN STAFF st ON s.assigned_driver_id = st.staff_id
-        SET s.vehicle_type = LOWER(st.vehicle_type)
-        WHERE s.vehicle_type IS NULL AND st.vehicle_type IS NOT NULL AND st.vehicle_type != ''
+        JOIN vehicle v ON st.vehicle_plate = v.plate_number AND v.tenant_id = s.tenant_id
+        SET s.vehicle_type = LOWER(v.vehicle_type)
+        WHERE s.vehicle_type IS NULL AND v.vehicle_type IS NOT NULL AND v.vehicle_type != ''
       `);
-      console.log('   ✅ Backfilled vehicle_type from assigned drivers');
+      console.log('   ✅ Backfilled vehicle_type from fleet vehicles');
     } catch(_) {}
 
   } catch (e) { console.error('Cleanup error:', e.message); }
