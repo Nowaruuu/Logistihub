@@ -117,7 +117,91 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAYMENTS
+// SALES REPORT
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    // Total revenue YTD
+    const [[{ revenue_ytd }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS revenue_ytd FROM payment WHERE tenant_id = ? AND status = 'Paid' AND YEAR(paid_at) = YEAR(NOW())",
+      [tid]
+    );
+    // Total revenue all time
+    const [[{ revenue_all }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS revenue_all FROM payment WHERE tenant_id = ? AND status = 'Paid'",
+      [tid]
+    );
+    // Pending amount
+    const [[{ pending_amount }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS pending_amount FROM payment WHERE tenant_id = ? AND status IN ('Pending','AwaitingAdmin')",
+      [tid]
+    );
+    const [[{ pending_count }]] = await query(
+      "SELECT COUNT(*) AS pending_count FROM payment WHERE tenant_id = ? AND status IN ('Pending','AwaitingAdmin')",
+      [tid]
+    );
+    // Monthly revenue for last 12 months
+    const [monthly] = await query(
+      `SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month, SUM(total_amount) AS total, COUNT(*) AS count
+       FROM payment WHERE tenant_id = ? AND status = 'Paid' AND paid_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+       GROUP BY month ORDER BY month ASC`,
+      [tid]
+    );
+    // Revenue by shipment type
+    const [byType] = await query(
+      `SELECT s.item_type_flag AS type, COALESCE(SUM(p.total_amount),0) AS total, COUNT(*) AS count
+       FROM payment p
+       JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       WHERE p.tenant_id = ? AND p.status = 'Paid'
+       GROUP BY s.item_type_flag ORDER BY total DESC`,
+      [tid]
+    );
+    // Top clients by revenue
+    const [topClients] = await query(
+      `SELECT COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
+              SUM(p.total_amount) AS total, COUNT(*) AS orders
+       FROM payment p
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
+       WHERE p.tenant_id = ? AND p.status = 'Paid'
+       GROUP BY client_name ORDER BY total DESC LIMIT 10`,
+      [tid]
+    );
+    // Recent paid transactions
+    const [recentTx] = await query(
+      `SELECT p.invoice_id, p.delivery_number, p.total_amount, p.payment_method, p.paid_at, p.status,
+              COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name
+       FROM payment p
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
+       WHERE p.tenant_id = ? AND p.status = 'Paid'
+       ORDER BY p.paid_at DESC LIMIT 20`,
+      [tid]
+    );
+    // Delivered shipments count (for avg per delivery calc)
+    const [[{ delivered_count }]] = await query(
+      "SELECT COUNT(*) AS delivered_count FROM shipment WHERE tenant_id = ? AND status = 'Delivered'",
+      [tid]
+    );
+
+    res.json({
+      revenue_ytd: Number(revenue_ytd),
+      revenue_all: Number(revenue_all),
+      pending_amount: Number(pending_amount),
+      pending_count: Number(pending_count),
+      delivered_count: Number(delivered_count),
+      monthly,
+      by_type: byType,
+      top_clients: topClients,
+      recent_transactions: recentTx
+    });
+  } catch (err) {
+    console.error('[GET /admin/sales-report]', err);
+    res.status(500).json({ error: err.message || 'Failed to load sales report.' });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;

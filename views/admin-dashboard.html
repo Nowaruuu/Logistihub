@@ -6,6 +6,7 @@
 <title>Admin Dashboard — Logistics OS</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
@@ -257,6 +258,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
+    <button class="nav-link" onclick="go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
     <button class="nav-link" onclick="go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
@@ -494,6 +496,66 @@ textarea{resize:vertical;}
           </div>
         </div>
         <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══ SALES REPORT ══════════════════ -->
+    <div id="s-sales-report" class="screen">
+      <div class="ph-row" style="display:flex;justify-content:space-between;align-items:center;">
+        <div><h2>Sales &amp; Revenue Report</h2><p>Revenue analytics and transaction history.</p></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn" onclick="exportSalesReportCSV()" style="background:#fff;border:1.5px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:16px;">download</span>Export CSV</button>
+          <button class="btn" onclick="exportSalesReportPDF()" style="background:#fff;border:1.5px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:16px;">picture_as_pdf</span>Export PDF</button>
+        </div>
+      </div>
+      <!-- Stat Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="card" style="padding:20px;border-left:4px solid #10b981;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Revenue (YTD)</div>
+          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+        </div>
+        <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">All-Time Revenue</div>
+          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+        </div>
+        <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Avg Per Delivery</div>
+          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+        </div>
+        <div class="card" style="padding:20px;border-left:4px solid #f59e0b;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Pending</div>
+          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">₱0</div>
+          <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
+        </div>
+      </div>
+      <!-- Monthly Revenue Chart -->
+      <div class="card" style="padding:0;margin-bottom:24px;">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#3b82f6;">monitoring</span>Monthly Revenue</h3>
+        </div>
+        <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
+      </div>
+      <!-- Two columns: Revenue by Type + Top Clients -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div class="card" style="padding:0;">
+          <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+            <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
+          </div>
+          <div style="padding:20px;"><canvas id="sr-type-chart" height="220"></canvas></div>
+        </div>
+        <div class="card" style="padding:0;">
+          <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+            <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#10b981;">group</span>Top Clients</h3>
+          </div>
+          <div class="tbl-wrap"><table><thead><tr><th>Client</th><th>Orders</th><th>Revenue</th></tr></thead><tbody id="sr-top-clients-tbody"><tr><td colspan="3"><div class="empty"><p>No data</p></div></td></tr></tbody></table></div>
+        </div>
+      </div>
+      <!-- Recent Transactions -->
+      <div class="card" style="padding:0;">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b;">receipt_long</span>Recent Transactions</h3>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Delivery #</th><th>Client</th><th>Method</th><th>Amount</th><th>Date</th></tr></thead><tbody id="sr-transactions-tbody"><tr><td colspan="6"><div class="empty"><p>No paid transactions yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -986,6 +1048,7 @@ var pageMeta={
   'vehicles':['Vehicles','Your fleet'],
   'app-users':['App Users','Registered users for your company'],
   'payments':['Payments','Invoices and billing'],
+  'sales-report':['Sales & Revenue Report','Revenue analytics and transaction history'],
   'subscription':['Subscription','Plan billing and upcoming payments'],
   'pod':['Proof of Delivery','Capture records'],
   'user-reg':['User Registration','Your private registration page'],
@@ -1035,6 +1098,7 @@ function go(id,navBtn){
   if(id==='payments') loadPayments();
   if(id==='pod') loadPODs();
   if(id==='subscription') loadSubscription();
+  if(id==='sales-report') loadSalesReport();
   // Always refresh text contrast after navigation
   if(typeof updateAppTextContrast==='function') setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
 }
@@ -1305,6 +1369,121 @@ function loadDashMap(){
   }
 }
 
+
+// ── Sales Report ─────────────────────────────────────────────────────────────
+var _srMonthlyChart=null, _srTypeChart=null;
+function loadSalesReport(){
+  apiFetch('/api/admin/sales-report').then(function(data){
+    // Stat cards
+    document.getElementById('sr-rev-ytd').textContent='\u20b1'+Number(data.revenue_ytd||0).toLocaleString();
+    document.getElementById('sr-rev-all').textContent='\u20b1'+Number(data.revenue_all||0).toLocaleString();
+    var avgDel=data.delivered_count>0?Math.round(data.revenue_all/data.delivered_count):0;
+    document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
+    document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
+    document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
+
+    // Monthly Revenue Chart
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var labels=(data.monthly||[]).map(function(m){
+      var parts=m.month.split('-');
+      return months[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
+    });
+    var values=(data.monthly||[]).map(function(m){return Number(m.total)||0;});
+    var counts=(data.monthly||[]).map(function(m){return Number(m.count)||0;});
+    if(_srMonthlyChart)_srMonthlyChart.destroy();
+    var ctx1=document.getElementById('sr-monthly-chart');
+    if(ctx1){
+      _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
+        type:'bar',
+        data:{
+          labels:labels,
+          datasets:[
+            {label:'Revenue',data:values,backgroundColor:'rgba(37,99,235,0.7)',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2},
+            {label:'Transactions',data:counts,type:'line',borderColor:'#10b981',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#10b981',yAxisID:'y1',order:1}
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{position:'bottom'}},
+          scales:{
+            y:{beginAtZero:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
+            y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1}},
+            x:{grid:{display:false}}
+          }
+        }
+      });
+    }
+
+    // Revenue by Type Doughnut
+    var typeLabels=(data.by_type||[]).map(function(t){return t.type||'Other';});
+    var typeValues=(data.by_type||[]).map(function(t){return Number(t.total)||0;});
+    var typeColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899'];
+    if(_srTypeChart)_srTypeChart.destroy();
+    var ctx2=document.getElementById('sr-type-chart');
+    if(ctx2){
+      _srTypeChart=new Chart(ctx2.getContext('2d'),{
+        type:'doughnut',
+        data:{
+          labels:typeLabels,
+          datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
+        },
+        options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+      });
+    }
+
+    // Top Clients Table
+    var tcTb=document.getElementById('sr-top-clients-tbody');
+    if(tcTb){
+      if(!data.top_clients||!data.top_clients.length){
+        tcTb.innerHTML='<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:20px;">No paid orders yet</td></tr>';
+      } else {
+        tcTb.innerHTML=data.top_clients.map(function(c){
+          return '<tr><td>'+esc(c.client_name)+'</td><td>'+c.orders+'</td><td style="font-weight:700;">\u20b1'+Number(c.total||0).toLocaleString()+'</td></tr>';
+        }).join('');
+      }
+    }
+
+    // Recent Transactions Table
+    var txTb=document.getElementById('sr-transactions-tbody');
+    if(txTb){
+      if(!data.recent_transactions||!data.recent_transactions.length){
+        txTb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No paid transactions yet</td></tr>';
+      } else {
+        txTb.innerHTML=data.recent_transactions.map(function(t){
+          var d=t.paid_at?new Date(t.paid_at).toLocaleDateString():'—';
+          var method=t.payment_method||'—';
+          return '<tr><td style="font-family:monospace;font-size:11px;">'+esc(String(t.invoice_id))+'</td><td>'+esc(t.delivery_number||'')+'</td><td>'+esc(t.client_name||'Walk-in')+'</td><td><span style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">'+esc(method)+'</span></td><td style="font-weight:700;">\u20b1'+Number(t.total_amount||0).toLocaleString()+'</td><td style="font-size:12px;color:#64748b;">'+d+'</td></tr>';
+        }).join('');
+      }
+    }
+  }).catch(function(e){console.error('Sales report error:',e);});
+}
+function exportSalesReportCSV(){
+  var rows=document.querySelectorAll('#sr-transactions-tbody tr');
+  if(!rows.length)return;
+  var csv='Invoice,Delivery,Client,Method,Amount,Date\n';
+  rows.forEach(function(tr){
+    var cells=tr.querySelectorAll('td');
+    if(cells.length>=6){
+      csv+='"'+cells[0].textContent+'","'+cells[1].textContent+'","'+cells[2].textContent+'","'+cells[3].textContent+'","'+cells[4].textContent+'","'+cells[5].textContent+'"\n';
+    }
+  });
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='sales_report_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+function exportSalesReportPDF(){
+  var content=document.getElementById('s-sales-report').innerHTML;
+  var win=window.open('','_blank');
+  win.document.write('<html><head><title>Sales Report</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;}th{background:#f1f5f9;font-weight:700;}canvas{display:none;}</style></head><body>');
+  win.document.write('<h1 style="font-size:18px;">Sales & Revenue Report - '+new Date().toLocaleDateString()+'</h1>');
+  win.document.write(content);
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();},500);
+}
 
 // Auto-load dashboard widgets
 loadDashFleet();
