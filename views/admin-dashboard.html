@@ -76,7 +76,15 @@ nav::-webkit-scrollbar{display:none;}
 .uemail{font-size:10px;color:rgba(255,255,255,.3);}
 
 /* ── MAIN ────────────────────────────────────────────── */
-.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;}
+html,body{overflow:hidden;height:100%;}
+.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3b4f6b transparent;}
+.main::-webkit-scrollbar{width:6px;}
+.main::-webkit-scrollbar-track{background:transparent;}
+.main::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
+.main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a6382,#2d3f56);}
+[data-theme="dark"] .main{scrollbar-color:#4a6382 transparent;}
+[data-theme="dark"] .main::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#4a6382,#64748b);}
+[data-theme="dark"] .main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#5b7a9e,#7c8fa3);}
 .topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
 .page-title{font-weight:700;font-size:15px;color:#0f2235;}
 .page-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
