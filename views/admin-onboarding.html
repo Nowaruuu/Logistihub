@@ -517,17 +517,19 @@ function goStep(n){
 }
 
 function updateDots(cur){
+  // When step 1 is hidden (normal flow), offset display numbers: dot-2 shows "1", etc.
+  var offset = (!isApprovedFlow && document.getElementById('step1') && document.getElementById('step1').style.display === 'none') ? 1 : 0;
   for(var i=1;i<=4;i++){
     var dot=document.getElementById('dot-'+i);
     var lbl=document.getElementById('lbl-'+i);
-    if(!dot)continue;
+    if(!dot || dot.style.display === 'none')continue;
     var st=i<cur?'done':i===cur?'active':'idle';
     dot.className='step-dot '+st;
     lbl.className='step-lbl '+st;
     if(i<cur) dot.innerHTML='<span class="material-symbols-outlined" style="font-size:13px;">check</span>';
-    else dot.textContent=i;
+    else dot.textContent=i - offset;
     var line=document.getElementById('line-'+i);
-    if(line)line.className='step-line'+(i<cur?' done':'');
+    if(line && line.style.display !== 'none') line.className='step-line'+(i<cur?' done':'');
   }
 }
 
