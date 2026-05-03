@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Delivery } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { Search, Calendar, Truck, Package as PackageIcon, ChevronRight, MapPin, Calculator, Book } from 'lucide-react';
+import { Search, Calendar, Truck, Package as PackageIcon, ChevronRight, MapPin, Send, Book } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import Map, { RiderIcon, DestinationIcon } from '../components/Map';
@@ -96,15 +96,15 @@ export default function Dashboard() {
       <div className="px-6 py-2">
         <div className="grid grid-cols-2 gap-4">
           <button 
-            onClick={() => navigate('/calculator')}
+            onClick={() => navigate('/send')}
             className="p-5 flex flex-col items-start gap-4 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 active:scale-95 transition-all group"
           >
             <div className="size-12 rounded-2xl bg-orange-600/10 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all">
-              <Calculator className="size-6" />
+              <Send className="size-6" />
             </div>
             <div className="text-left">
-              <p className="font-bold text-slate-900 dark:text-slate-100">Rate Calc</p>
-              <p className="text-[10px] text-slate-500">Estimate fees</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100">Send Package</p>
+              <p className="text-[10px] text-slate-500">Ship & get rates</p>
             </div>
           </button>
           <button 
