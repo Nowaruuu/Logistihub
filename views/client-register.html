@@ -86,6 +86,10 @@
         <input type="email" id="email" placeholder="john@example.com" required>
       </div>
       <div class="form-group">
+        <label class="label">Phone Number <span style="color:#dc2626;">*</span></label>
+        <input type="tel" id="phone" placeholder="09xxxxxxxxx" required>
+      </div>
+      <div class="form-group">
         <label class="label">Username</label>
         <div style="display: flex; align-items: stretch; border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; transition: all 0.2s;" id="user-input-wrap">
           <input type="text" id="user" placeholder="Choose a unique username" required style="border: none; border-radius: 0; outline: none; box-shadow: none; flex: 1;">
@@ -155,12 +159,14 @@
       const fname = document.getElementById('fname').value.trim();
       const lname = document.getElementById('lname').value.trim();
       const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
       const user  = document.getElementById('user').value.trim();
       const pw    = document.getElementById('pw').value;
       const pwc   = document.getElementById('pw-confirm').value;
       const otp   = document.getElementById('otp') ? document.getElementById('otp').value.trim() : '';
 
-      if (!fname || !lname || !email || !user || !pw) return alert('Please fill all fields.');
+      if (!fname || !lname || !email || !phone || !user || !pw) return alert('Please fill all fields.');
+      if (phone.replace(/\s/g,'').length < 10) return alert('Please enter a valid phone number.');
       if (!isOtpStep && pw.length < 8) return alert('Password must be at least 8 characters.');
       if (!isOtpStep && pw !== pwc) return alert('Passwords do not match. Please check and try again.');
       if (isOtpStep && !otp) return alert('Please enter the verification code sent to your email.');
@@ -170,7 +176,7 @@
       err.style.display = 'none';
 
       try {
-        const payload = { first_name: fname, last_name: lname, email, username: user, password: pw, role: 'Other' };
+        const payload = { first_name: fname, last_name: lname, email, phone, username: user, password: pw, role: 'Other' };
         if (isOtpStep) payload.otp = otp;
 
         const res = await fetch('/' + SLUG + '/api/register', {
@@ -193,6 +199,7 @@
           document.getElementById('fname').disabled = true;
           document.getElementById('lname').disabled = true;
           document.getElementById('email').disabled = true;
+          document.getElementById('phone').disabled = true;
           document.getElementById('user').disabled = true;
           document.getElementById('pw').disabled = true;
 
