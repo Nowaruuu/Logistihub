@@ -124,6 +124,7 @@ export default function SendPackage() {
   const [error, setError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [showPickupMap, setShowPickupMap] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   // Address search state
   const [pickupResults, setPickupResults] = useState<any[]>([]);
@@ -381,8 +382,9 @@ export default function SendPackage() {
     setShowMap(true);
   };
 
-  const handleConfirm = async () => {
-    // Validate ALL required fields
+  // Open review modal (validation only)
+  const handleReview = () => {
+    setError('');
     if (!user) return;
     if (!pickup.trim()) { setError('Pickup address is required'); return; }
     if (!destination.trim()) { setError('Destination is required'); return; }
@@ -396,6 +398,12 @@ export default function SendPackage() {
     if (!PH_PHONE_REGEX.test(receiverPhone.trim())) { setError('Receiver phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
     if (compatibleVehicles.length === 0) { setError('No suitable vehicle available for this package category. Please choose a different category or contact your admin.'); return; }
+    setShowReview(true);
+  };
+
+  // Actual submission (called from review modal)
+  const handleConfirm = async () => {
+    if (!user) return;
     setLoading(true);
     setError('');
     try {
@@ -477,6 +485,12 @@ export default function SendPackage() {
       setLoading(false);
     }
   };
+
+  // ── Review Overlay ──
+  const categoryLabel = PACKAGE_CATEGORIES.find(c => c.id === category)?.label || category;
+  const vehicleLabel = selectedVehicle?.label || vehicle;
+  const etaLabel = method === 'standard' ? stdEta : expEta;
+  const methodLabel = method === 'standard' ? 'Standard Delivery' : 'Express Delivery';
 
   const handleMapClick = (lat: number, lng: number) => {
     setDestCoords([lat, lng]);
@@ -1098,7 +1112,7 @@ export default function SendPackage() {
           </div>
         </div>
         <button 
-          onClick={handleConfirm}
+          onClick={handleReview}
           disabled={loading || !destination.trim() || !pickup.trim() || !senderName.trim() || !senderPhone.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0 || compatibleVehicles.length === 0}
           className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
         >
@@ -1115,6 +1129,126 @@ export default function SendPackage() {
           )}
         </button>
       </footer>
+
+      {/* ═══ Review Modal ═══ */}
+      {showReview && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={() => !loading && setShowReview(false)}>
+          <div
+            className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-100 dark:border-slate-800 shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Review Shipment</h2>
+              <button onClick={() => setShowReview(false)} className="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <X className="size-4 text-slate-500" />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Route */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Route</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center gap-1 pt-1 flex-shrink-0">
+                    <div className="size-2.5 rounded-full bg-orange-500 ring-2 ring-orange-500/30" />
+                    <div className="w-px h-6 bg-gradient-to-b from-orange-500 to-green-500" />
+                    <div className="size-2.5 rounded-full bg-green-500 ring-2 ring-green-500/30" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-orange-500 mb-0.5">Pickup</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">{pickupNotes ? `${pickup} — ${pickupNotes}` : pickup}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-green-600 mb-0.5">Destination</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">{destNotes ? `${destination} — ${destNotes}` : destination}</p>
+                    </div>
+                  </div>
+                </div>
+                {distKm > 0 && <p className="text-[10px] text-slate-400 mt-2 ml-6">📍 {distKm.toFixed(1)} km road distance</p>}
+              </div>
+
+              {/* People */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1.5 flex items-center gap-1"><User className="size-2.5" /> Sender</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">{senderName}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{senderPhone}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1.5 flex items-center gap-1"><User className="size-2.5" /> Receiver</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">{receiverName}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{receiverPhone}</p>
+                </div>
+              </div>
+
+              {/* Package details */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Package Details</p>
+                <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
+                  <div>
+                    <span className="text-slate-400">Category</span>
+                    <p className="font-bold text-slate-900 dark:text-white">{categoryLabel}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Weight</span>
+                    <p className="font-bold text-slate-900 dark:text-white">{weightKg.toLocaleString()} kg</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Vehicle</span>
+                    <p className="font-bold text-slate-900 dark:text-white">{vehicleLabel}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Method</span>
+                    <p className="font-bold text-slate-900 dark:text-white">{methodLabel}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400">Estimated Arrival</span>
+                    <p className="font-bold text-slate-900 dark:text-white">{etaLabel}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fee */}
+              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-100 dark:border-orange-800/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Total Fee</span>
+                  <span className="text-2xl font-black text-orange-600">₱{totalFee.toLocaleString()}.00</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <button
+                onClick={handleConfirm}
+                disabled={loading}
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <><Loader2 className="size-5 animate-spin" /><span>Processing...</span></>
+                ) : (
+                  <><CreditCard className="size-5" /><span>Confirm & Pay • ₱{totalFee.toLocaleString()}.00</span></>
+                )}
+              </button>
+              <button
+                onClick={() => setShowReview(false)}
+                disabled={loading}
+                className="w-full py-3 text-sm font-bold text-slate-500 dark:text-slate-400 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                Go Back & Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
