@@ -346,7 +346,7 @@ textarea{resize:vertical;}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Receiver</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Created</th><th></th></tr></thead>
             <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
           </table>
         </div>
@@ -1103,15 +1103,16 @@ function renderDashboardShipments(){
 function renderShipmentsTable(){
   var tbody=document.querySelector('#s-shipments .tbl-wrap tbody');
   if(!tbody)return;
-  if(!_allShipments.length){tbody.innerHTML='<tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr>';return;}
+  if(!_allShipments.length){tbody.innerHTML='<tr><td colspan="12"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr>';return;}
   tbody.innerHTML=_allShipments.map(function(s){
     var tc=typeCls[s.item_type_flag]||'t-pkg';
     var sc=statusCls[s.status]||'b-pending';
-    var route=esc((s.pickup_location||'').split(',')[0])+' → '+esc((s.dropoff_location||'').split(',')[0]);
+    var route=esc(s.pickup_location||'N/A')+' \u2192 '+esc(s.dropoff_location||'N/A');
     var date=s.created_at?new Date(s.created_at).toLocaleDateString():'N/A';
-    var veh = s.vehicle_type ? esc(s.vehicle_type.charAt(0).toUpperCase() + s.vehicle_type.slice(1)) : '—';
-    var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '—';
-    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'—')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td>'+date+'</td><td></td></tr>';
+    var veh = s.vehicle_type ? esc(s.vehicle_type.charAt(0).toUpperCase() + s.vehicle_type.slice(1)) : '\u2014';
+    var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
+    var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td>'+date+'</td><td></td></tr>';
   }).join('');
 }
 
