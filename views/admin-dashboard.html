@@ -343,7 +343,7 @@ textarea{resize:vertical;}
 
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">map</span>Live Shipment Map</span></div>
-        <div class="card-body" style="padding:8px;"><div id="dash-live-map" style="height:300px;border-radius:10px;overflow:hidden;background:#e2e8f0;"></div></div>
+        <div class="card-body" style="padding:8px;"><div id="dash-live-map" style="height:500px;border-radius:10px;overflow:hidden;background:#e2e8f0;"></div></div>
       </div>
     </div>
 
@@ -1241,25 +1241,44 @@ function _clearMapLayers(){
   _dashMapLayers.forEach(function(l){_dashMap.removeLayer(l);});
   _dashMapLayers=[];
 }
-function _icon(color){
-  return L.divIcon({className:'',iconSize:[12,12],iconAnchor:[6,6],
-    html:'<div style="width:12px;height:12px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>'});
+function _icon(color,size){
+  var s=size||16;
+  return L.divIcon({className:'',iconSize:[s,s],iconAnchor:[s/2,s/2],
+    html:'<div style="width:'+s+'px;height:'+s+'px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>'});
 }
 function _pulseIcon(color){
-  return L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],
-    html:'<div style="width:18px;height:18px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 0 0 4px '+color+'44,0 1px 6px rgba(0,0,0,.3);animation:pulse-ring 1.5s ease infinite;"></div>'});
+  return L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
+    html:'<div style="width:22px;height:22px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 0 0 5px '+color+'44,0 2px 8px rgba(0,0,0,.35);animation:pulse-ring 1.5s ease infinite;"></div>'});
+}
+// Fetch real road route from OSRM and draw it
+function _drawOSRMRoute(pLat,pLng,dLat,dLng,isActive){
+  var url='https://router.project-osrm.org/route/v1/driving/'+pLng+','+pLat+';'+dLng+','+dLat+'?overview=full&geometries=geojson';
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    if(!data.routes||!data.routes.length)return;
+    var coords=data.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+    // Draw route shadow for depth
+    var shadow=L.polyline(coords,{color:'#000',weight:isActive?6:4,opacity:0.1,lineCap:'round',lineJoin:'round'}).addTo(_dashMap);
+    _dashMapLayers.push(shadow);
+    // Draw actual route
+    var route=L.polyline(coords,{color:isActive?'#3b82f6':'#64748b',weight:isActive?4:3,opacity:isActive?0.85:0.45,lineCap:'round',lineJoin:'round',dashArray:isActive?'':'8 6'}).addTo(_dashMap);
+    _dashMapLayers.push(route);
+  }).catch(function(){
+    // Fallback to straight line if OSRM fails
+    var line=L.polyline([[pLat,pLng],[dLat,dLng]],{color:isActive?'#3b82f6':'#94a3b8',weight:2,opacity:isActive?0.7:0.3,dashArray:'6 4'}).addTo(_dashMap);
+    _dashMapLayers.push(line);
+  });
 }
 function loadDashMap(){
   var mapEl=document.getElementById('dash-live-map');
   if(!mapEl)return;
   if(!_dashMap){
     var phBounds=L.latLngBounds([4.5,116.0],[21.5,127.5]);
-    _dashMap=L.map(mapEl,{scrollWheelZoom:false,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:5,maxZoom:18}).setView([12.8797,121.7740],6);
+    _dashMap=L.map(mapEl,{scrollWheelZoom:true,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:5,maxZoom:18}).setView([12.8797,121.7740],6);
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(_dashMap);
     setTimeout(function(){_dashMap.invalidateSize();},200);
     // Pulse animation for in-transit markers
     var style=document.createElement('style');
-    style.textContent='@keyframes pulse-ring{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}';
+    style.textContent='@keyframes pulse-ring{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}';
     document.head.appendChild(style);
   }
   _clearMapLayers();
@@ -1278,26 +1297,25 @@ function loadDashMap(){
     var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
     // Pickup marker (green)
     if(hasPickup){
-      var pm=L.marker([pLat,pLng],{icon:_icon('#22c55e')}).addTo(_dashMap);
-      pm.bindPopup('<div style="font-size:12px;line-height:1.5;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;">● Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      var pm=L.marker([pLat,pLng],{icon:_icon('#22c55e',16)}).addTo(_dashMap);
+      pm.bindPopup('<div style="font-size:12px;line-height:1.5;min-width:160px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:600;">▲ Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
       _dashMapLayers.push(pm);
       allPts.push([pLat,pLng]);
     }
     // Dropoff marker (red / pulsing blue if in-transit)
     if(hasDrop){
-      var dm=L.marker([dLat,dLng],{icon:isActive?_pulseIcon('#3b82f6'):_icon('#ef4444')}).addTo(_dashMap);
-      dm.bindPopup('<div style="font-size:12px;line-height:1.5;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';">● '+(isActive?'In Transit → ':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      var dm=L.marker([dLat,dLng],{icon:isActive?_pulseIcon('#3b82f6'):_icon('#ef4444',16)}).addTo(_dashMap);
+      dm.bindPopup('<div style="font-size:12px;line-height:1.5;min-width:160px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:600;">▼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
       _dashMapLayers.push(dm);
       allPts.push([dLat,dLng]);
     }
-    // Draw line between pickup and dropoff
+    // Draw OSRM road-following route trace
     if(hasPickup&&hasDrop){
-      var line=L.polyline([[pLat,pLng],[dLat,dLng]],{color:isActive?'#3b82f6':'#94a3b8',weight:2,opacity:isActive?0.7:0.3,dashArray:isActive?'':'6 4'}).addTo(_dashMap);
-      _dashMapLayers.push(line);
+      _drawOSRMRoute(pLat,pLng,dLat,dLng,isActive);
     }
   });
   if(allPts.length>0){
-    _dashMap.fitBounds(L.latLngBounds(allPts),{padding:[30,30],maxZoom:14});
+    _dashMap.fitBounds(L.latLngBounds(allPts),{padding:[40,40],maxZoom:14});
   }
 }
 
