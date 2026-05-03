@@ -318,18 +318,16 @@ textarea{resize:vertical;}
         <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
       </div>
 
-      <div class="grid-3-1">
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all →</button>
-          </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
-              <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
-            </table>
-          </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
+          <button class="card-action" onclick="go('shipments',null)">View all →</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -835,6 +833,7 @@ textarea{resize:vertical;}
     </div>
 
     <script>
+    var _SLUG = _SLUG || ((window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '');
     var _upgradePlans = [
       {
         key: 'startup', label: 'Startup', price: '1,499', icon: 'speed', color: '#64748b', gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
