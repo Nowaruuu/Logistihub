@@ -1133,8 +1133,8 @@ router.get('/:slug/api/admin/upgrade/success', async (req, res) => {
   }
 });
 
-// ── GET /admin/subscription — subscription payment history ──────────────────
-router.get('/subscription', async (req, res) => {
+// ── GET /:slug/api/admin/subscription — subscription payment history ────────
+router.get('/:slug/api/admin/subscription', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
     const tid = req.tenantId;
     const [payments] = await query(
