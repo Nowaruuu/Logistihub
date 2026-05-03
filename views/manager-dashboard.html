@@ -1548,49 +1548,54 @@ async function openAssignModal(dn, currentDriverId, currentPlate) {
     driverSel.appendChild(opt);
   });
 
-  // Auto-select driver's own vehicle when driver changes
-  driverSel.onchange = function() {
-    var selectedDriverId = this.value;
-    if (!selectedDriverId) return;
-    var driver = drivers.find(function(d) { return (d.staff_id || d.id) == selectedDriverId; });
-    if (driver && driver.vehicle_plate) {
-      var vehSel = document.getElementById('assign-vehicle');
-      for (var j = 0; j < vehSel.options.length; j++) {
-        if (vehSel.options[j].value === driver.vehicle_plate) {
-          vehSel.selectedIndex = j;
-          break;
-        }
-      }
+  // Helper: rebuild vehicle dropdown based on selected driver
+  function populateVehicleDropdown(selectedDriverId) {
+    var vehSel = document.getElementById('assign-vehicle');
+    vehSel.innerHTML = '<option value="">None</option>';
+    vehSel.disabled = false;
+    vehSel.style.opacity = '1';
+
+    // Check if the selected driver has their own vehicle
+    var selectedDriver = null;
+    if (selectedDriverId) {
+      selectedDriver = drivers.find(function(d) { return (d.staff_id || d.id) == selectedDriverId; });
     }
+
+    if (selectedDriver && selectedDriver.vehicle_plate) {
+      // Driver has own vehicle — auto-select it and lock the dropdown
+      var dPlate = selectedDriver.vehicle_plate;
+      var dType = selectedDriver.vehicle_type || '';
+      var opt = document.createElement('option');
+      opt.value = dPlate;
+      opt.textContent = dPlate + (dType ? ' (' + dType + ')' : '') + ' — Own vehicle';
+      opt.selected = true;
+      vehSel.innerHTML = '';
+      vehSel.appendChild(opt);
+      vehSel.disabled = true;
+      vehSel.style.opacity = '0.7';
+      return;
+    }
+
+    // No own vehicle — show fleet vehicles only
+    (_vehicleData || []).forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v.plate_number;
+      var label = v.plate_number;
+      if (v.vehicle_type) label += ' (' + v.vehicle_type + ')';
+      if (v.status && v.status !== 'Available') label += ' [' + v.status + ']';
+      opt.textContent = label;
+      if (v.plate_number === currentPlate) opt.selected = true;
+      vehSel.appendChild(opt);
+    });
+  }
+
+  // Auto-update vehicle when driver changes
+  driverSel.onchange = function() {
+    populateVehicleDropdown(this.value);
   };
 
-  // Populate vehicle dropdown: fleet vehicles + driver-owned vehicles
-  var vehSel = document.getElementById('assign-vehicle');
-  vehSel.innerHTML = '<option value="">None</option>';
-
-  // Collect all vehicles: from fleet + from drivers' registered plates
-  var vehicleMap = {};
-  (_vehicleData || []).forEach(function(v) {
-    vehicleMap[v.plate_number] = { plate: v.plate_number, vtype: v.vehicle_type || '', status: v.status || 'Available', source: 'fleet' };
-  });
-  // Add driver-owned vehicles that aren't in the fleet
-  drivers.forEach(function(d) {
-    if (d.vehicle_plate && !vehicleMap[d.vehicle_plate]) {
-      vehicleMap[d.vehicle_plate] = { plate: d.vehicle_plate, vtype: d.vehicle_type || '', status: 'Available', source: 'driver', driverName: d.name };
-    }
-  });
-
-  Object.keys(vehicleMap).forEach(function(plate) {
-    var v = vehicleMap[plate];
-    var opt = document.createElement('option');
-    opt.value = v.plate;
-    var label = v.plate;
-    if (v.vtype) label += ' (' + v.vtype + ')';
-    if (v.source === 'driver') label += ' — ' + v.driverName + "'s";
-    opt.textContent = label;
-    if (v.plate === currentPlate) opt.selected = true;
-    vehSel.appendChild(opt);
-  });
+  // Initial populate based on current driver
+  populateVehicleDropdown(currentDriverId);
 
   modal.style.display = 'flex';
 }
