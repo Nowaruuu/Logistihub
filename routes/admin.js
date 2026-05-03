@@ -146,14 +146,14 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
       "SELECT COUNT(*) AS shipment_count FROM shipment WHERE tenant_id = ?",
       [tid]
     );
-    // Monthly revenue for last 12 months (ALL payments - grouped by created_at since pending ones have no paid_at)
+    // Monthly revenue for last 12 months
     const [monthly] = await query(
-      `SELECT DATE_FORMAT(COALESCE(paid_at, created_at), '%Y-%m') AS month,
+      `SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month,
               SUM(total_amount) AS total,
               SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
               SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
               COUNT(*) AS count
-       FROM payment WHERE tenant_id = ? AND COALESCE(paid_at, created_at) >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+       FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
        GROUP BY month ORDER BY month ASC`,
       [tid]
     );
@@ -181,14 +181,14 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
     // Recent transactions (ALL - not just paid)
     const [recentTx] = await query(
       `SELECT p.invoice_id, p.delivery_number, p.total_amount, p.payment_method, 
-              COALESCE(p.paid_at, p.created_at) AS tx_date, p.status,
+              p.paid_at AS tx_date, p.status,
               COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
               s.total_fee
        FROM payment p
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
        LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
        WHERE p.tenant_id = ?
-       ORDER BY COALESCE(p.paid_at, p.created_at) DESC LIMIT 20`,
+       ORDER BY p.invoice_id DESC LIMIT 20`,
       [tid]
     );
 
