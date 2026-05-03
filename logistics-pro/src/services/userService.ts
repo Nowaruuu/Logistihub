@@ -21,7 +21,16 @@ export const userService = {
   async getDriver(uid: string): Promise<any | null> {
     try {
       const profile = await getProfile();
-      if (profile?.role === 'driver') return profile;
+      if (profile?.role === 'driver') {
+        return {
+          ...profile,
+          totalDeliveries: profile.total_deliveries || 0,
+          rating: profile.rating || 0,
+          vehicleModel: profile.vehicleModel || profile.vehicle_model || '',
+          plateNumber: profile.plateNumber || profile.plate_number || '',
+          status: profile.status || 'Available',
+        };
+      }
       return null;
     } catch {
       return null;

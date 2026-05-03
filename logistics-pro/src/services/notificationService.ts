@@ -1,4 +1,4 @@
-import { getNotifications } from '../lib/api';
+import { getNotifications, markNotificationRead } from '../lib/api';
 import { Notification } from '../types';
 
 export const notificationService = {
@@ -21,8 +21,14 @@ export const notificationService = {
     }
   },
 
-  async markAsRead(_uid: string, _id: string): Promise<void> {
-    // Read status is handled client-side for now
+  async markAsRead(_uid: string, id: string): Promise<void> {
+    try {
+      // Extract numeric id from 'n-123' or 'sh-456' format
+      const numId = id.replace(/^[a-z]+-/, '');
+      await markNotificationRead(numId);
+    } catch {
+      // Fallback: read status handled client-side
+    }
   },
 
   async markAllAsRead(_uid: string): Promise<void> {

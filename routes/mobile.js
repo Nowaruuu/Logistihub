@@ -765,12 +765,160 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /notifications — generate notifications from shipment history
+// GET /driver/earnings — driver's earnings and transaction history
+router.get('/driver/earnings', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const tid = req.tenantId;
+  const staffId = req.staff.staff_id;
+
+  try {
+    // Total earnings from completed deliveries
+    const [totalRows] = await query(
+      "SELECT COALESCE(SUM(total_fee), 0) AS total_earnings, COUNT(*) AS completed_jobs FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'",
+      [staffId, tid]
+    );
+    const totalEarnings = parseFloat(totalRows[0]?.total_earnings || 0);
+    const completedJobs = totalRows[0]?.completed_jobs || 0;
+
+    // This week's earnings
+    const [weekRows] = await query(
+      "SELECT COALESCE(SUM(total_fee), 0) AS week_earnings FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered' AND updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
+      [staffId, tid]
+    );
+    const weekEarnings = parseFloat(weekRows[0]?.week_earnings || 0);
+
+    // Recent completed deliveries as transactions
+    const [transactions] = await query(
+      `SELECT delivery_number, total_fee, destination, updated_at, created_at
+       FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'
+       ORDER BY updated_at DESC LIMIT 20`,
+      [staffId, tid]
+    );
+
+    res.json({
+      ok: true,
+      total_earnings: totalEarnings,
+      week_earnings: weekEarnings,
+      completed_jobs: completedJobs,
+      transactions: (transactions || []).map(t => ({
+        id: t.delivery_number,
+        label: `Delivery #${t.delivery_number}`,
+        amount: parseFloat(t.total_fee || 0),
+        type: 'delivery',
+        date: t.updated_at || t.created_at
+      }))
+    });
+  } catch (err) {
+    console.error('[GET /driver/earnings]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// GET /driver/stats — driver performance statistics
+router.get('/driver/stats', authMiddleware, async (req, res) => {
+  if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
+  const tid = req.tenantId;
+  const staffId = req.staff.staff_id;
+
+  try {
+    // Delivery counts
+    const [deliveryCounts] = await query(
+      `SELECT 
+         COUNT(*) AS total_assigned,
+         SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) AS total_delivered,
+         SUM(CASE WHEN status = 'Failed' THEN 1 ELSE 0 END) AS total_failed
+       FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ?`,
+      [staffId, tid]
+    );
+    const stats = deliveryCounts[0] || {};
+    const totalAssigned = stats.total_assigned || 0;
+    const totalDelivered = stats.total_delivered || 0;
+    const totalFailed = stats.total_failed || 0;
+    const acceptanceRate = totalAssigned > 0 ? Math.round((totalDelivered / totalAssigned) * 100) : 0;
+    const onTimeRate = totalAssigned > 0 ? Math.round(((totalAssigned - totalFailed) / totalAssigned) * 100) : 0;
+
+    // Rating
+    let avgRating = 0;
+    let ratingCount = 0;
+    try {
+      const [rr] = await query(
+        'SELECT AVG(rating) AS avg_rating, COUNT(*) AS cnt FROM DELIVERY_RATING WHERE driver_staff_id = ? AND tenant_id = ?',
+        [staffId, tid]
+      );
+      if (rr.length && rr[0].avg_rating) {
+        avgRating = parseFloat(Number(rr[0].avg_rating).toFixed(1));
+        ratingCount = rr[0].cnt || 0;
+      }
+    } catch {}
+
+    // Recent feedback
+    let feedback = [];
+    try {
+      const [fb] = await query(
+        `SELECT dr.rating, dr.comment, dr.created_at, au.first_name
+         FROM DELIVERY_RATING dr
+         LEFT JOIN APP_USER au ON au.user_id = dr.user_id AND au.tenant_id = dr.tenant_id
+         WHERE dr.driver_staff_id = ? AND dr.tenant_id = ? AND dr.comment IS NOT NULL AND dr.comment != ''
+         ORDER BY dr.created_at DESC LIMIT 10`,
+        [staffId, tid]
+      );
+      feedback = fb || [];
+    } catch {}
+
+    res.json({
+      ok: true,
+      total_deliveries: totalDelivered,
+      total_assigned: totalAssigned,
+      total_failed: totalFailed,
+      acceptance_rate: acceptanceRate,
+      on_time_rate: onTimeRate,
+      rating: avgRating,
+      rating_count: ratingCount,
+      feedback: feedback.map(f => ({
+        rating: f.rating,
+        comment: f.comment,
+        date: f.created_at,
+        customer_name: f.first_name || 'Customer'
+      }))
+    });
+  } catch (err) {
+    console.error('[GET /driver/stats]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// GET /notifications — generate notifications from shipment history + NOTIFICATION table
 router.get('/notifications', authMiddleware, async (req, res) => {
   const tid = req.tenantId;
   try {
     let notifications = [];
 
+    // 1. Pull from NOTIFICATION table first
+    try {
+      const userId = req.user?.user_id || req.staff?.staff_id;
+      const userType = req.user ? 'user' : 'staff';
+      const [dbNotifs] = await query(
+        `SELECT id, title, message, type, is_read AS \`read\`, created_at, related_tracking
+         FROM NOTIFICATION 
+         WHERE user_id = ? AND user_type = ? AND tenant_id = ?
+         ORDER BY created_at DESC LIMIT 50`,
+        [userId, userType, tid]
+      );
+      notifications = (dbNotifs || []).map(r => ({
+        id: `n-${r.id}`,
+        title: r.title,
+        message: r.message,
+        type: r.type || 'Shipments',
+        read: !!r.read,
+        createdAt: r.created_at,
+        relatedTrackingNumber: r.related_tracking
+      }));
+    } catch (e) {
+      // NOTIFICATION table might not exist yet — fall through to shipment_history
+      console.warn('[notifications] NOTIFICATION table query failed:', e.message);
+    }
+
+    // 2. Also pull from shipment_history as fallback / supplement
     if (req.user) {
       // CUSTOMER: notifications from their shipments' history
       const [rows] = await query(
@@ -783,7 +931,7 @@ router.get('/notifications', authMiddleware, async (req, res) => {
          LIMIT 50`,
         [req.user.user_id, tid]
       );
-      notifications = rows.map(r => {
+      const historyNotifs = rows.map(r => {
         let title = 'Shipment Update';
         let message = `Your package #${r.delivery_number} status changed to ${r.status}.`;
         if (r.status === 'Delivered') {
@@ -809,6 +957,13 @@ router.get('/notifications', authMiddleware, async (req, res) => {
           relatedTrackingNumber: r.delivery_number
         };
       });
+      // Merge, avoiding duplicates by tracking number + status
+      const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
+      historyNotifs.forEach(n => {
+        if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
+          notifications.push(n);
+        }
+      });
     } else if (req.staff) {
       // DRIVER: notifications from assigned shipments
       const [rows] = await query(
@@ -821,7 +976,7 @@ router.get('/notifications', authMiddleware, async (req, res) => {
          LIMIT 50`,
         [req.staff.staff_id, tid]
       );
-      notifications = rows.map(r => {
+      const historyNotifs = rows.map(r => {
         let title = 'Job Update';
         let message = `Delivery #${r.delivery_number} status: ${r.status}.`;
         if (r.status === 'In Transit') {
@@ -844,9 +999,18 @@ router.get('/notifications', authMiddleware, async (req, res) => {
           relatedTrackingNumber: r.delivery_number
         };
       });
+      const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
+      historyNotifs.forEach(n => {
+        if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
+          notifications.push(n);
+        }
+      });
     }
 
-    res.json({ notifications });
+    // Sort by date descending
+    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    res.json({ notifications: notifications.slice(0, 50) });
   } catch (err) {
     console.error('[GET /notifications]', err);
     res.json({ notifications: [] });

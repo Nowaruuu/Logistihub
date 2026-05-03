@@ -181,6 +181,18 @@ export async function acceptJob(deliveryNumber: string) {
   return res.json();
 }
 
+export async function getDriverEarnings() {
+  const res = await fetch(mobileUrl('/driver/earnings'), { headers: getAuthHeaders() });
+  if (!res.ok) return { total_earnings: 0, week_earnings: 0, completed_jobs: 0, transactions: [] };
+  return res.json();
+}
+
+export async function getDriverStats() {
+  const res = await fetch(mobileUrl('/driver/stats'), { headers: getAuthHeaders() });
+  if (!res.ok) return { total_deliveries: 0, rating: 0, acceptance_rate: 0, on_time_rate: 0, feedback: [] };
+  return res.json();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADDRESS BOOK
 // ═══════════════════════════════════════════════════════════════════════════════
