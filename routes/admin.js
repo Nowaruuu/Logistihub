@@ -1133,5 +1133,28 @@ router.get('/:slug/api/admin/upgrade/success', async (req, res) => {
   }
 });
 
+// ── GET /admin/subscription — subscription payment history ──────────────────
+router.get('/subscription', async (req, res) => {
+  try {
+    const tid = req.tenantId;
+    const [payments] = await query(
+      `SELECT * FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 20`,
+      [tid]
+    );
+    const [tenantRows] = await query('SELECT plan, created_at FROM TENANT WHERE tenant_id = ? LIMIT 1', [tid]);
+    const tenant = tenantRows[0] || {};
+    res.json({
+      ok: true,
+      plan: tenant.plan || 'startup',
+      tenant_created_at: tenant.created_at,
+      payments: payments || []
+    });
+  } catch (err) {
+    console.error('[GET /admin/subscription]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
+
 

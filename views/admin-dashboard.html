@@ -2619,15 +2619,9 @@ async function loadSubscription() {
   var plans = {
     'startup':    { label: 'Startup',    price: 99,  desc: 'Up to 10 vehicles, 5 staff accounts' },
     'enterprise': { label: 'Enterprise', price: 499, desc: 'Unlimited vehicles & staff, AI dispatching' },
-    'global':     { label: 'Global',     price: 999, desc: 'Multi-region, dedicated manager, white-label' },
-    'free':       { label: 'Free Trial', price: 0,   desc: 'Basic features, limited usage' }
+    'global':     { label: 'Global',     price: 999, desc: 'Multi-region, dedicated manager, white-label' }
   };
 
-  var t = window.__TENANT__ || {};
-  var planKey = (t.plan || 'startup').toLowerCase();
-  var plan = plans[planKey] || plans['startup'];
-
-  // Populate plan info
   var nameEl = document.getElementById('sub-plan-name');
   var descEl = document.getElementById('sub-plan-desc');
   var priceEl = document.getElementById('sub-plan-price');
@@ -2635,19 +2629,25 @@ async function loadSubscription() {
   var daysEl = document.getElementById('sub-days-left');
   var statusEl = document.getElementById('sub-status');
   var sinceEl = document.getElementById('sub-since');
+  var tbody = document.getElementById('sub-billing-tbody');
 
-  if (nameEl) nameEl.textContent = plan.label;
-  if (descEl) descEl.textContent = plan.desc;
-  if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
+  try {
+    var res = await apiFetch('/' + _SLUG + '/api/admin/subscription');
+    var d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Failed');
 
-  // Calculate next billing: assume monthly from tenant created_at or today
-  var tenantCreated = t.created_at ? new Date(t.created_at) : new Date();
-  var now = new Date();
+    var planKey = (d.plan || 'startup').toLowerCase();
+    var plan = plans[planKey] || plans['startup'];
+    var tenantCreated = d.tenant_created_at ? new Date(d.tenant_created_at) : new Date();
+    var now = new Date();
 
-  if (plan.price > 0) {
+    // Populate plan info
+    if (nameEl) nameEl.textContent = plan.label;
+    if (descEl) descEl.textContent = plan.desc;
+    if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
+
     // Calculate next billing based on monthly cycle from creation
     var nextBilling = new Date(tenantCreated);
-    nextBilling.setDate(nextBilling.getDate()); // Start from created date
     while (nextBilling <= now) {
       nextBilling.setMonth(nextBilling.getMonth() + 1);
     }
@@ -2655,60 +2655,52 @@ async function loadSubscription() {
     var daysRemaining = Math.ceil((nextBilling - now) / (1000 * 60 * 60 * 24));
     if (daysEl) {
       if (daysRemaining <= 3) {
-        daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700;">' + daysRemaining + ' days remaining — payment due soon</span>';
+        daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700;">' + daysRemaining + ' days remaining \u2014 payment due soon</span>';
       } else {
         daysEl.textContent = daysRemaining + ' days remaining';
       }
     }
-  } else {
-    if (nextEl) nextEl.textContent = 'N/A';
-    if (daysEl) daysEl.textContent = 'Free plan — no billing';
-  }
 
-  if (statusEl) {
-    statusEl.textContent = 'Active';
-    statusEl.style.color = '#16a34a';
-  }
-  if (sinceEl && t.created_at) {
-    sinceEl.textContent = 'Since ' + new Date(t.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-
-  // Subscription billing history — only plan payments (not shipment payments)
-  // Since plan billing isn't processed in-app yet, show informational state
-  var tbody = document.getElementById('sub-billing-tbody');
-  if (!tbody) return;
-
-  // Calculate past billing periods for display
-  if (plan.price > 0 && t.created_at) {
-    var periods = [];
-    var periodStart = new Date(tenantCreated);
-    var today = new Date();
-    while (periodStart < today) {
-      var periodEnd = new Date(periodStart);
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-      periods.push({
-        date: new Date(periodStart),
-        amount: plan.price,
-        label: plan.label + ' Plan — Monthly'
-      });
-      periodStart = periodEnd;
+    if (statusEl) {
+      statusEl.textContent = 'Active';
+      statusEl.style.color = '#16a34a';
     }
-    periods.reverse(); // newest first
-    if (periods.length) {
-      tbody.innerHTML = periods.slice(0, 12).map(function(pr) {
-        var dateStr = pr.date.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-        return '<tr>' +
-          '<td>' + dateStr + '</td>' +
-          '<td>' + esc(pr.label) + '</td>' +
-          '<td><strong>\u20b1' + pr.amount.toLocaleString() + '.00</strong></td>' +
-          '<td><span class="badge b-delivered">Paid</span></td>' +
-        '</tr>';
-      }).join('');
-    } else {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing cycles completed yet</p></div></td></tr>';
+    if (sinceEl) {
+      sinceEl.textContent = 'Since ' + tenantCreated.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
-  } else {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>Free plan — no billing history</p></div></td></tr>';
+
+    // Billing history from SUBSCRIPTION_PAYMENT table
+    if (!tbody) return;
+    var payments = d.payments || [];
+    if (!payments.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No subscription payments recorded yet</p></div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = payments.map(function(p) {
+      var date = p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '\u2014';
+      var planLabel = (plans[p.plan] ? plans[p.plan].label : (p.plan || '').charAt(0).toUpperCase() + (p.plan || '').slice(1)) + ' Plan';
+      var amount = '\u20b1' + parseFloat(p.amount || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+      var st = (p.status || '').toLowerCase() === 'paid' ? 'Paid' : (p.status || 'Pending');
+      var stCl = st === 'Paid' ? 'b-delivered' : 'b-pending';
+      return '<tr>' +
+        '<td>' + date + '</td>' +
+        '<td>' + esc(planLabel) + '</td>' +
+        '<td><strong>' + amount + '</strong></td>' +
+        '<td><span class="badge ' + stCl + '">' + esc(st) + '</span></td>' +
+      '</tr>';
+    }).join('');
+
+  } catch(e) {
+    // Fallback to __TENANT__ data if API fails
+    var t = window.__TENANT__ || {};
+    var planKey = (t.plan || 'startup').toLowerCase();
+    var plan = plans[planKey] || plans['startup'];
+    if (nameEl) nameEl.textContent = plan.label;
+    if (descEl) descEl.textContent = plan.desc;
+    if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
+    if (statusEl) { statusEl.textContent = 'Active'; statusEl.style.color = '#16a34a'; }
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>Could not load billing history</p></div></td></tr>';
   }
 }
 
