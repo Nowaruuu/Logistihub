@@ -358,18 +358,19 @@ textarea{resize:vertical;}
       <div class="card">
         <div class="card-head">
           <div class="tabs-bar" style="border:none;margin:0;">
-            <button class="tab active" onclick="setTab(this)">All</button>
-            <button class="tab" onclick="setTab(this)">Pending</button>
-            <button class="tab" onclick="setTab(this)">In Transit</button>
-            <button class="tab" onclick="setTab(this)">Delivered</button>
-            <button class="tab" onclick="setTab(this)">Declined</button>
+            <button class="tab active" onclick="filterShipments('All',this)">All</button>
+            <button class="tab" onclick="filterShipments('Pending',this)">Pending</button>
+            <button class="tab" onclick="filterShipments('In Transit',this)">In Transit</button>
+            <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
+            <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
+            <button class="tab" onclick="filterShipments('Failed',this)">Failed</button>
           </div>
-          <select class="f-select"><option>All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
+          <select class="f-select" id="admin-ship-type-filter" onchange="filterShipments(null)"><option value="">All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
         </div>
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup → Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
-            <tbody><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
+            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1286,11 +1287,36 @@ function renderDashboardShipments(){
     return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td>'+esc(s.driver_name||'Unassigned')+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td></tr>';
   }).join('');
 }
+var _adminShipStatusFilter = 'All';
+function filterShipments(status, tabEl) {
+  if (status !== null) _adminShipStatusFilter = status;
+  if (tabEl) {
+    var bar = tabEl.closest('.tabs-bar') || tabEl.parentElement;
+    bar.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    tabEl.classList.add('active');
+  }
+  renderShipmentsTable();
+}
 function renderShipmentsTable(){
-  var tbody=document.querySelector('#s-shipments .tbl-wrap tbody');
+  var tbody=document.getElementById('admin-shipments-tbody');
   if(!tbody)return;
-  if(!_allShipments.length){tbody.innerHTML='<tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr>';return;}
-  tbody.innerHTML=_allShipments.map(function(s){
+  var typeFilter=(document.getElementById('admin-ship-type-filter')||{}).value||'';
+  var filtered=_allShipments;
+  if(_adminShipStatusFilter!=='All'){
+    filtered=filtered.filter(function(s){
+      if(_adminShipStatusFilter==='In Transit')return s.status==='In Transit'||s.status==='In-Transit';
+      if(_adminShipStatusFilter==='Failed')return s.status==='Failed'||s.status==='Declined';
+      return s.status===_adminShipStatusFilter;
+    });
+  }
+  if(typeFilter){
+    filtered=filtered.filter(function(s){
+      var t=(s.item_type||s.package_type||s.item_type_flag||'').toLowerCase();
+      return t===typeFilter.toLowerCase()||(s.item_type_flag||'').toLowerCase()===typeFilter.toLowerCase();
+    });
+  }
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>';return;}
+  tbody.innerHTML=filtered.map(function(s){
     var tc=typeCls[s.item_type_flag]||'t-pkg';
     var sc=statusCls[s.status]||'b-pending';
     var route=esc(s.pickup_location||'N/A')+' \u2192 '+esc(s.dropoff_location||'N/A');
