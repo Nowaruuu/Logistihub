@@ -4,11 +4,36 @@ const express = require('express');
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { query, logAudit } = require('../config/db');
-const { sendWelcomeEmail } = require('../config/mailer');
+const { sendWelcomeEmail, sendApplicationReceivedEmail } = require('../config/mailer');
 
 const router = express.Router();
 
 const PLAN_PRICES = { startup: 1499, enterprise: 4999, global: 14999 };
+
+// ── Auto-create TENANT_APPLICATION table ──────────────────────────────────────
+(async () => {
+  try {
+    await query(`CREATE TABLE IF NOT EXISTS TENANT_APPLICATION (
+      application_id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      company_name VARCHAR(255) NOT NULL,
+      slug VARCHAR(100) NOT NULL,
+      brand_color VARCHAR(20) DEFAULT '#3b82f6',
+      phone VARCHAR(50),
+      permit_file LONGTEXT,
+      permit_filename VARCHAR(255),
+      permit_mimetype VARCHAR(100),
+      status ENUM('pending','approved','rejected') DEFAULT 'pending',
+      rejection_reason TEXT,
+      reviewed_by VARCHAR(255),
+      reviewed_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_app_slug (slug, status)
+    )`);
+  } catch (e) { console.log('TENANT_APPLICATION table init:', e.message); }
+})();
 
 // Normalize Philippine phone to 10-digit local format (9XXXXXXXXX)
 // PayMongo adds its own +63 prefix, so we must NOT include it
@@ -62,6 +87,109 @@ router.post('/check-email', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Database check failed.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/onboarding/apply
+// Submit a new tenant application with business permit upload (base64)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/apply', async (req, res) => {
+  const { name, email, password, company_name, slug, brand_color, phone, permit_file, permit_filename, permit_mimetype } = req.body;
+
+  if (!name || !email || !password || !slug) return res.status(400).json({ error: 'name, email, password, and slug are required.' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  if (!permit_file || !permit_filename) return res.status(400).json({ error: 'Business permit file is required.' });
+
+  // Validate file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+  if (permit_mimetype && !allowedTypes.includes(permit_mimetype)) {
+    return res.status(400).json({ error: 'Invalid file type. Accepted: JPG, PNG, PDF.' });
+  }
+
+  // Check file size (base64 is ~33% larger than binary, 5MB binary = ~6.7MB base64)
+  if (permit_file.length > 7 * 1024 * 1024) {
+    return res.status(400).json({ error: 'File too large. Maximum 5MB.' });
+  }
+
+  const safeSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!safeSlug) return res.status(400).json({ error: 'Invalid slug.' });
+
+  try {
+    // Check slug uniqueness against existing tenants
+    const [slugCheck] = await query('SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [safeSlug]);
+    if (slugCheck.length > 0) return res.status(409).json({ error: 'Workspace URL is already taken.' });
+
+    // Check slug uniqueness against pending/approved applications
+    const [appCheck] = await query("SELECT application_id FROM TENANT_APPLICATION WHERE slug = ? AND status IN ('pending','approved') LIMIT 1", [safeSlug]);
+    if (appCheck.length > 0) return res.status(409).json({ error: 'This workspace URL already has a pending application.' });
+
+    // Check if email already has a pending application
+    const [emailCheck] = await query("SELECT application_id, status FROM TENANT_APPLICATION WHERE email = ? ORDER BY created_at DESC LIMIT 1", [email]);
+    if (emailCheck.length > 0 && emailCheck[0].status === 'pending') {
+      return res.status(409).json({ error: 'You already have a pending application. Please wait for review.' });
+    }
+
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    await query(
+      `INSERT INTO TENANT_APPLICATION (name, email, password_hash, company_name, slug, brand_color, phone, permit_file, permit_filename, permit_mimetype, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+      [name, email, passwordHash, company_name || name, safeSlug, brand_color || '#3b82f6', phone || null, permit_file, permit_filename, permit_mimetype || 'application/octet-stream']
+    );
+
+    // Send confirmation email (non-blocking)
+    sendApplicationReceivedEmail(email, name, company_name || name).catch(e => console.error('Application email error:', e.message));
+
+    logAudit({ actor: email, actor_type: 'applicant', action: 'APPLICATION_SUBMITTED', target: company_name || name, ip_address: req.ip, metadata: { slug: safeSlug } });
+
+    res.status(201).json({ ok: true, message: 'Application submitted successfully. We will review your business permit and notify you via email.' });
+  } catch (err) {
+    console.error('[POST /onboarding/apply]', err);
+    res.status(500).json({ error: 'Failed to submit application. ' + err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/onboarding/check-status?email=
+// Check application status by email
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/check-status', async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+  try {
+    const [rows] = await query(
+      "SELECT application_id, status, rejection_reason, company_name, slug, created_at FROM TENANT_APPLICATION WHERE email = ? ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+    if (rows.length === 0) {
+      return res.json({ ok: true, status: 'none' });
+    }
+    const app = rows[0];
+    const result = {
+      ok: true,
+      status: app.status,
+      company_name: app.company_name,
+      slug: app.slug,
+      submitted_at: app.created_at,
+      application_id: app.application_id
+    };
+    if (app.status === 'rejected') result.rejection_reason = app.rejection_reason;
+    if (app.status === 'approved') {
+      // Generate a payment token so the user can proceed to checkout
+      const paymentToken = jwt.sign({
+        type: 'approved_application',
+        application_id: app.application_id,
+        email: email
+      }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      result.payment_token = paymentToken;
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[GET /onboarding/check-status]', err);
+    res.status(500).json({ error: 'Failed to check status.' });
   }
 });
 

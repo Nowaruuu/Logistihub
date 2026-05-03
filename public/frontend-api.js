@@ -42,6 +42,10 @@ const SuperadminAPI = {
   setTenantStatus: (id, status)       => api('PATCH', `/api/superadmin/tenants/${id}/status`, { status }),
   deleteTenant:    (id)               => api('DELETE', `/api/superadmin/tenants/${id}`),
   getSubscriptions:()                 => api('GET',  '/api/superadmin/subscriptions'),
+  getApplications: ()                 => api('GET',  '/api/superadmin/applications'),
+  getPermit:       (id)               => api('GET',  `/api/superadmin/applications/${id}/permit`),
+  approveApp:      (id)               => api('PUT',  `/api/superadmin/applications/${id}/approve`),
+  rejectApp:       (id, reason)       => api('PUT',  `/api/superadmin/applications/${id}/reject`, { reason }),
 };
 
 // ─── Onboarding API ───────────────────────────────────────────────────────────
@@ -49,6 +53,8 @@ const OnboardingAPI = {
   verifyInvite: (token)   => api('GET', `/api/onboarding/verify-invite?invite=${encodeURIComponent(token)}`),
   createTenant: (payload) => api('POST', '/api/onboarding/create', payload),
   checkout:     (payload) => api('POST', '/api/onboarding/checkout', payload),
+  apply:        (payload) => api('POST', '/api/onboarding/apply', payload),
+  checkStatus:  (email)   => api('GET',  `/api/onboarding/check-status?email=${encodeURIComponent(email)}`),
 };
 
 // ─── Admin API (all scoped to current tenant slug) ────────────────────────────

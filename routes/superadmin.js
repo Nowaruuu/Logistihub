@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const { query, logAudit } = require('../config/db');
 const { requireSuperadmin } = require('../middleware/auth');
-const { sendInviteEmail }   = require('../config/mailer');
+const { sendInviteEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail } = require('../config/mailer');
 
 const PLATFORM_FILE = path.join(__dirname, '../config/platform.json');
 function readPlatform() {
@@ -479,6 +479,113 @@ router.post('/change-password', async (req, res) => {
     res.json({ ok: true, message: 'Password changed successfully. Please sign in again.' });
   } catch(e) {
     res.status(500).json({ error: 'Failed to change password.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/applications — list all tenant applications
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/applications', requireSuperadmin, async (req, res) => {
+  try {
+    const [rows] = await query(
+      `SELECT application_id, name, email, company_name, slug, phone, permit_filename, permit_mimetype, status, rejection_reason, reviewed_by, reviewed_at, created_at
+       FROM TENANT_APPLICATION ORDER BY FIELD(status, 'pending', 'approved', 'rejected'), created_at DESC`
+    );
+    res.json(rows);
+  } catch(e) {
+    console.error('Applications error:', e);
+    res.status(500).json({ error: 'Failed to load applications.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/superadmin/applications/:id/permit — view/download permit file
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/applications/:id/permit', requireSuperadmin, async (req, res) => {
+  try {
+    const [[app]] = await query(
+      'SELECT permit_file, permit_filename, permit_mimetype FROM TENANT_APPLICATION WHERE application_id = ?',
+      [req.params.id]
+    );
+    if (!app || !app.permit_file) return res.status(404).json({ error: 'Permit not found.' });
+    res.json({ ok: true, file: app.permit_file, filename: app.permit_filename, mimetype: app.permit_mimetype });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to load permit.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/superadmin/applications/:id/approve — approve application
+// ─────────────────────────────────────────────────────────────────────────────
+router.put('/applications/:id/approve', requireSuperadmin, async (req, res) => {
+  try {
+    const [[app]] = await query(
+      'SELECT * FROM TENANT_APPLICATION WHERE application_id = ?',
+      [req.params.id]
+    );
+    if (!app) return res.status(404).json({ error: 'Application not found.' });
+    if (app.status !== 'pending') return res.status(400).json({ error: 'Application is not pending.' });
+
+    await query(
+      'UPDATE TENANT_APPLICATION SET status = ?, reviewed_by = ?, reviewed_at = NOW() WHERE application_id = ?',
+      ['approved', req.superadmin.email, req.params.id]
+    );
+
+    // Generate payment link token
+    const paymentToken = jwt.sign({
+      type: 'approved_application',
+      application_id: app.application_id,
+      email: app.email,
+      slug: app.slug
+    }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    const baseUrl = process.env.BASE_URL || 'https://logistihub.ddns.net';
+    const paymentLink = `${baseUrl}/onboarding?approved=true&token=${paymentToken}`;
+
+    // Send approval email
+    sendApplicationApprovedEmail(app.email, app.name, app.company_name, paymentLink).catch(e => console.error('Approval email error:', e.message));
+
+    logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'APPLICATION_APPROVED', target: app.company_name, ip_address: req.ip, metadata: { application_id: app.application_id, slug: app.slug } });
+
+    res.json({ ok: true, message: `Application for "${app.company_name}" approved. Payment link sent to ${app.email}.` });
+  } catch(e) {
+    console.error('Approve error:', e);
+    res.status(500).json({ error: 'Failed to approve application.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/superadmin/applications/:id/reject — reject application
+// ─────────────────────────────────────────────────────────────────────────────
+router.put('/applications/:id/reject', requireSuperadmin, async (req, res) => {
+  const { reason } = req.body;
+  if (!reason) return res.status(400).json({ error: 'Rejection reason is required.' });
+
+  try {
+    const [[app]] = await query(
+      'SELECT * FROM TENANT_APPLICATION WHERE application_id = ?',
+      [req.params.id]
+    );
+    if (!app) return res.status(404).json({ error: 'Application not found.' });
+    if (app.status !== 'pending') return res.status(400).json({ error: 'Application is not pending.' });
+
+    await query(
+      'UPDATE TENANT_APPLICATION SET status = ?, rejection_reason = ?, reviewed_by = ?, reviewed_at = NOW() WHERE application_id = ?',
+      ['rejected', reason, req.superadmin.email, req.params.id]
+    );
+
+    const baseUrl = process.env.BASE_URL || 'https://logistihub.ddns.net';
+    const reapplyLink = `${baseUrl}/onboarding`;
+
+    // Send rejection email
+    sendApplicationRejectedEmail(app.email, app.name, app.company_name, reason, reapplyLink).catch(e => console.error('Rejection email error:', e.message));
+
+    logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'APPLICATION_REJECTED', target: app.company_name, ip_address: req.ip, metadata: { application_id: app.application_id, reason } });
+
+    res.json({ ok: true, message: `Application for "${app.company_name}" rejected.` });
+  } catch(e) {
+    console.error('Reject error:', e);
+    res.status(500).json({ error: 'Failed to reject application.' });
   }
 });
 

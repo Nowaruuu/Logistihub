@@ -326,5 +326,118 @@ async function sendStaffWelcomeEmail(toEmail, staffName, username, tempPassword,
   });
 }
 
-module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail, sendPasswordResetEmail, sendRegistrationOtpEmail, sendStaffWelcomeEmail };
+// ── Business Permit Application Emails ──────────────────────────────────────
 
+async function sendApplicationReceivedEmail(email, name, companyName) {
+  const subject = 'Application Received — Logistics OS';
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#0a1628;padding:32px;text-align:center;">
+        <div style="color:#fbbf24;font-size:11px;font-weight:700;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">Application Under Review</div>
+        <div style="color:#fff;font-size:22px;font-weight:800;">Logistics OS</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 16px;font-size:20px;">Hi ${name},</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Thank you for applying to create a workspace for <strong>${companyName}</strong> on Logistics OS. We have received your application and business permit.
+        </p>
+        <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:24px;display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:20px;">⏳</span>
+          <div>
+            <strong style="color:#92400e;font-size:13px;">What happens next?</strong>
+            <p style="color:#a16207;font-size:12px;margin:4px 0 0;line-height:1.5;">Our team will review your business permit. You'll receive an email once your application is approved — typically within 1-2 business days.</p>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#94a3b8;text-align:center;">You can check your application status anytime at the onboarding page.</p>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email, subject, html
+  });
+}
+
+async function sendApplicationApprovedEmail(email, name, companyName, paymentLink) {
+  const subject = '✅ Application Approved — Complete Your Setup';
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#0a1628;padding:32px;text-align:center;">
+        <div style="color:#22c55e;font-size:11px;font-weight:700;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">Application Approved</div>
+        <div style="color:#fff;font-size:22px;font-weight:800;">Logistics OS</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 16px;font-size:20px;">Great news, ${name}!</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Your business permit for <strong>${companyName}</strong> has been verified and approved. You're almost there — just choose a plan and complete payment to activate your workspace.
+        </p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${paymentLink}" style="background:#0a1628;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            Complete Setup & Pay →
+          </a>
+        </div>
+        <p style="font-size:12px;color:#94a3b8;text-align:center;word-break:break-all;">
+          If the button doesn't work, copy this link:<br/>
+          <a href="${paymentLink}" style="color:#0a1628;">${paymentLink}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+        <p style="font-size:12px;color:#94a3b8;">This link expires in <strong>7 days</strong>. If it expires, you may re-apply.</p>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email, subject, html
+  });
+}
+
+async function sendApplicationRejectedEmail(email, name, companyName, reason, reapplyLink) {
+  const subject = 'Application Update — Action Required';
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#0a1628;padding:32px;text-align:center;">
+        <div style="color:#f97316;font-size:11px;font-weight:700;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">Action Required</div>
+        <div style="color:#fff;font-size:22px;font-weight:800;">Logistics OS</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 16px;font-size:20px;">Hi ${name},</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Unfortunately, we were unable to approve your application for <strong>${companyName}</strong> at this time.
+        </p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:24px;">
+          <strong style="color:#991b1b;font-size:13px;display:block;margin-bottom:6px;">Reason:</strong>
+          <p style="color:#dc2626;font-size:13px;margin:0;line-height:1.5;">${reason}</p>
+        </div>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          You may re-apply with a corrected business permit by clicking the button below.
+        </p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${reapplyLink}" style="background:#0a1628;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            Re-Apply Now →
+          </a>
+        </div>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email, subject, html
+  });
+}
+
+module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail, sendPasswordResetEmail, sendRegistrationOtpEmail, sendStaffWelcomeEmail, sendApplicationReceivedEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail };

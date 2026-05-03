@@ -146,7 +146,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
 </div>
 
 <!-- Step indicator -->
-<div class="step-bar">
+<div class="step-bar" id="step-bar">
   <div class="step-item">
     <div class="step-dot active" id="dot-1">1</div>
     <div class="step-lbl active" id="lbl-1">Choose Plan</div>
@@ -160,6 +160,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
   <div class="step-item">
     <div class="step-dot idle" id="dot-3">3</div>
     <div class="step-lbl idle" id="lbl-3">Customize</div>
+  </div>
+  <div class="step-line" id="line-3"></div>
+  <div class="step-item">
+    <div class="step-dot idle" id="dot-4">4</div>
+    <div class="step-lbl idle" id="lbl-4">Business Permit</div>
   </div>
 </div>
 
@@ -323,13 +328,94 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
       <div id="err3" class="err-box" style="display:none;margin-top:14px;"><span class="material-symbols-outlined">error</span><span id="err3-msg"></span></div>
       <div style="display:flex;gap:9px;margin-top:16px;">
         <button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button>
-        <button class="btn btn-primary btn-full" id="btn-finish" onclick="finishSetup()">Launch My Workspace<span class="material-symbols-outlined">rocket_launch</span></button>
+        <button class="btn btn-primary btn-full" id="btn-step3-next" onclick="goStep(4)">Continue to Business Permit<span class="material-symbols-outlined">arrow_forward</span></button>
       </div>
     </div>
   </div>
 
-  <!-- SUCCESS -->
+  <!-- STEP 4: Business Permit Upload -->
   <div id="step4" class="screen">
+    <div class="form-card" style="max-width:520px;margin:0 auto;">
+      <div class="form-intro">
+        <h1>Upload Business Permit</h1>
+        <p>Upload your company's valid business permit for verification. We accept JPG, PNG, or PDF files (max 5MB).</p>
+      </div>
+
+      <div class="sub-required" style="background:#fefce8;border:1px solid #fde68a;">
+        <span class="material-symbols-outlined" style="color:#d97706;">verified</span>
+        <div class="sub-required-text" style="color:#92400e;">
+          <strong style="color:#78350f;">Why do we need this?</strong> To ensure all workspaces on our platform are operated by legitimate businesses, we require a valid business permit before activating your workspace.
+        </div>
+      </div>
+
+      <!-- Drop zone -->
+      <div id="permit-dropzone" style="border:2px dashed #cbd5e1;border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc;margin-bottom:16px;"
+           onclick="document.getElementById('permit-input').click()"
+           ondragover="event.preventDefault();this.style.borderColor='#3b82f6';this.style.background='#eff6ff';"
+           ondragleave="this.style.borderColor='#cbd5e1';this.style.background='#fafbfc';"
+           ondrop="event.preventDefault();this.style.borderColor='#cbd5e1';this.style.background='#fafbfc';handlePermitFile(event.dataTransfer.files[0]);">
+        <span class="material-symbols-outlined" style="font-size:40px;color:#94a3b8;display:block;margin-bottom:8px;">cloud_upload</span>
+        <div style="font-size:14px;font-weight:600;color:#475569;margin-bottom:4px;">Drag & drop your file here</div>
+        <div style="font-size:12px;color:#94a3b8;">or <span style="color:#3b82f6;font-weight:600;text-decoration:underline;">click to browse</span></div>
+        <div style="font-size:11px;color:#cbd5e1;margin-top:8px;">JPG, PNG, PDF — Max 5MB</div>
+      </div>
+      <input type="file" id="permit-input" accept=".jpg,.jpeg,.png,.pdf" style="display:none;" onchange="handlePermitFile(this.files[0])"/>
+
+      <!-- File preview -->
+      <div id="permit-preview" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-symbols-outlined" style="color:#16a34a;font-size:22px;">description</span>
+          <div style="flex:1;min-width:0;">
+            <div id="permit-fname" style="font-size:13px;font-weight:600;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+            <div id="permit-fsize" style="font-size:11px;color:#15803d;"></div>
+          </div>
+          <button onclick="clearPermit()" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:4px;" title="Remove">
+            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="err4" class="err-box" style="display:none;"><span class="material-symbols-outlined">error</span><span id="err4-msg"></span></div>
+      <div style="display:flex;gap:9px;margin-top:6px;">
+        <button class="btn btn-ghost" onclick="goStep(3)">&#8592; Back</button>
+        <button class="btn btn-primary btn-full" id="btn-submit-app" onclick="submitApplication()">Submit Application<span class="material-symbols-outlined">send</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Application Under Review -->
+  <div id="step5" class="screen">
+    <div class="form-card" style="max-width:520px;margin:0 auto;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:20px;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <span class="material-symbols-outlined" style="font-size:36px;color:#d97706;">hourglass_top</span>
+      </div>
+      <h1 style="font-size:22px;font-weight:800;color:#0a1628;margin-bottom:8px;">Application Under Review</h1>
+      <p style="font-size:13px;color:#64748b;line-height:1.6;max-width:380px;margin:0 auto 20px;">
+        Your application and business permit have been submitted. Our team will review it and notify you via email — typically within 1-2 business days.
+      </p>
+
+      <div id="review-status-box" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;text-align:left;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b;">schedule</span>
+          <span style="font-size:12px;font-weight:700;color:#92400e;">Status: Pending Review</span>
+        </div>
+        <div style="font-size:12px;color:#64748b;">Company: <strong id="review-company">—</strong></div>
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">Email: <strong id="review-email">—</strong></div>
+      </div>
+
+      <div class="form-group" style="max-width:340px;margin:0 auto 12px;">
+        <label class="form-label" style="text-align:left;">Check your application status:</label>
+        <div style="display:flex;gap:8px;">
+          <input id="check-email" type="email" placeholder="Enter your email" style="flex:1;"/>
+          <button class="btn btn-primary" onclick="checkAppStatus()">Check</button>
+        </div>
+      </div>
+      <div id="status-result" style="display:none;margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- SUCCESS (step6) -->
+  <div id="step6" class="screen">
     <div class="success-center">
       <div class="s-icon-big"><span class="material-symbols-outlined">rocket_launch</span></div>
       <h1 style="font-size:24px;color:#0a1628;margin-bottom:7px;">Workspace Created!</h1>
@@ -394,9 +480,12 @@ function selectPlan(id,name,price){
 }
 
 function goStep(n){
-  for(var i=1;i<=4;i++){var s=document.getElementById('step'+i);if(s)s.classList.remove('active');}
+  for(var i=1;i<=6;i++){var s=document.getElementById('step'+i);if(s)s.classList.remove('active');}
   var el=document.getElementById('step'+n);
   if(el)el.classList.add('active');
+  // Hide step bar on review (5) and success (6) screens
+  var bar=document.getElementById('step-bar');
+  if(bar) bar.style.display = (n>=5) ? 'none' : 'flex';
   updateDots(n);
   window.scrollTo(0,0);
   if(n===2){
@@ -405,7 +494,7 @@ function goStep(n){
 }
 
 function updateDots(cur){
-  for(var i=1;i<=3;i++){
+  for(var i=1;i<=4;i++){
     var dot=document.getElementById('dot-'+i);
     var lbl=document.getElementById('lbl-'+i);
     if(!dot)continue;
@@ -490,6 +579,96 @@ function showErr3(msg){
   document.getElementById('err3').style.display='flex';
 }
 
+// ── Permit file handling ─────────────────────────────────────────────────────
+var permitData = { file: null, filename: '', mimetype: '' };
+
+function handlePermitFile(file) {
+  if (!file) return;
+  var allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  if (!allowed.includes(file.type)) { showErr4('Invalid file type. Accepted: JPG, PNG, PDF.'); return; }
+  if (file.size > 5 * 1024 * 1024) { showErr4('File too large. Maximum 5MB.'); return; }
+  document.getElementById('err4').style.display = 'none';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    permitData.file = e.target.result;
+    permitData.filename = file.name;
+    permitData.mimetype = file.type;
+    document.getElementById('permit-fname').textContent = file.name;
+    document.getElementById('permit-fsize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    document.getElementById('permit-preview').style.display = 'block';
+    document.getElementById('permit-dropzone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+function clearPermit() {
+  permitData = { file: null, filename: '', mimetype: '' };
+  document.getElementById('permit-preview').style.display = 'none';
+  document.getElementById('permit-dropzone').style.display = 'block';
+  document.getElementById('permit-input').value = '';
+}
+function showErr4(msg) {
+  document.getElementById('err4-msg').textContent = msg;
+  document.getElementById('err4').style.display = 'flex';
+}
+
+// ── Submit application ───────────────────────────────────────────────────────
+async function submitApplication() {
+  document.getElementById('err4').style.display = 'none';
+  if (!permitData.file) { showErr4('Please upload your business permit.'); return; }
+  var name = document.getElementById('f-name').value;
+  var email = document.getElementById('f-email').value;
+  var company = document.getElementById('f-company').value;
+  var phone = document.getElementById('f-phone').value;
+  var pw = document.getElementById('f-pw').value;
+  var org = document.getElementById('c-org').value;
+  var slug = document.getElementById('c-slug').value;
+  var color = document.getElementById('c-color').value;
+
+  var btn = document.getElementById('btn-submit-app');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Submitting...';
+  try {
+    await OnboardingAPI.apply({
+      name: name, email: email, password: pw,
+      company_name: org || company, slug: slug, brand_color: color,
+      phone: '+63' + phone,
+      permit_file: permitData.file, permit_filename: permitData.filename, permit_mimetype: permitData.mimetype
+    });
+    document.getElementById('review-company').textContent = org || company;
+    document.getElementById('review-email').textContent = email;
+    document.getElementById('check-email').value = email;
+    goStep(5);
+  } catch (e) {
+    showErr4(e.message || 'Failed to submit application.');
+    btn.disabled = false;
+    btn.innerHTML = 'Submit Application<span class="material-symbols-outlined">send</span>';
+  }
+}
+
+// ── Check application status ─────────────────────────────────────────────────
+async function checkAppStatus() {
+  var email = document.getElementById('check-email').value.trim();
+  if (!email) return;
+  var box = document.getElementById('status-result');
+  box.style.display = 'block';
+  box.innerHTML = '<div style="font-size:12px;color:#64748b;">Checking...</div>';
+  try {
+    var data = await OnboardingAPI.checkStatus(email);
+    if (data.status === 'none') {
+      box.innerHTML = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:12px;color:#64748b;">No application found for this email.</div>';
+    } else if (data.status === 'pending') {
+      box.innerHTML = '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#92400e;"><strong>⏳ Pending Review</strong><br/>Your application is being reviewed.</div>';
+    } else if (data.status === 'approved') {
+      box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534;"><strong>✅ Approved!</strong><br/>Check your email for the payment link.</div>';
+    } else if (data.status === 'rejected') {
+      box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#991b1b;"><strong>❌ Rejected</strong><br/>Reason: ' + (data.rejection_reason || 'N/A') + '<br/><br/><button class="btn btn-primary btn-sm" onclick="goStep(1)" style="font-size:11px;">Re-Apply</button></div>';
+    }
+  } catch (e) {
+    box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#dc2626;">Error checking status.</div>';
+  }
+}
+
+// ── finishSetup (for invited users who skip permit) ──────────────────────────
 async function finishSetup(){
   document.getElementById('err3').style.display='none';
   var name=document.getElementById('f-name').value;
@@ -497,43 +676,20 @@ async function finishSetup(){
   var company=document.getElementById('f-company').value;
   var phone=document.getElementById('f-phone').value;
   var pw=document.getElementById('f-pw').value;
-  
   var org=document.getElementById('c-org').value;
   var slug=document.getElementById('c-slug').value;
   var tagline=document.getElementById('c-tagline').value;
   var color=document.getElementById('c-color').value;
-
-  if(!org || !slug) {
-    showErr3("Organization name and slug are required.");
-    return;
-  }
-
-  // Look for an invite token from the URL
+  if(!org || !slug) { showErr3("Organization name and slug are required."); return; }
   const urlParams = new URLSearchParams(window.location.search);
-  const inviteToken = urlParams.get('invite') || '';
-
-  const payload = {
-    plan: selectedPlan.id,
-    name: name,          // was admin_name
-    email: email,        // was admin_email
-    phone: '+63' + phone,        // Philippine format
-    password: pw,
-    company_name: company,
-    org_name: org,       // was workspace_name
-    slug: slug,          // was workspace_slug
-    brand_color: color,
-    tagline: tagline,
-    invite_token: inviteToken
-};
-
+  const invToken = urlParams.get('invite') || '';
+  const payload = { plan: selectedPlan.id, name, email, phone: '+63' + phone, password: pw, company_name: company, org_name: org, slug, brand_color: color, tagline, invite_token: invToken };
   var btn = document.getElementById('btn-finish');
+  if(!btn) return;
   btn.disabled = true;
   btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Provisioning...';
-
   try {
     const res = await OnboardingAPI.checkout(payload);
-    
-    // Redirect to PayMongo or Mock
     window.location.href = res.checkout_url;
   } catch (e) {
     showErr3(e.message || "Failed to initiate payment.");
@@ -542,18 +698,16 @@ async function finishSetup(){
   }
 }
 
-// Auto-verify invite token on load if present, or handle PayMongo success redirect
+// Auto-verify invite token on load if present, or handle PayMongo success/approval redirect
 window.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Handle successful PayMongo checkout
+  // Handle successful PayMongo checkout → step6 (success)
   if (urlParams.get('success') === 'true' && urlParams.get('token')) {
     try {
-      // Decode the JWT token (just the payload, no validation needed here as backend verified it)
       const base64Url = urlParams.get('token').split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const decodedData = JSON.parse(decodeURIComponent(escape(window.atob(base64))));
-      
       if (decodedData.type === 'setup_success') {
         document.getElementById('sum-name').textContent = decodedData.name;
         document.getElementById('sum-email').textContent = decodedData.email;
@@ -562,20 +716,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sum-admin-url').textContent = 'logistihub.ddns.net/' + decodedData.slug + '/admin';
         document.getElementById('sum-reg-url').textContent = 'logistihub.ddns.net/' + decodedData.slug + '/register';
         document.getElementById('sum-landing-url').textContent = 'logistihub.ddns.net/' + decodedData.slug;
-        
-        document.querySelector('.success-center .btn').onclick = () => {
-          window.location.href = '/' + decodedData.slug;
-        };
-        
-        goStep(4);
-        
-        // Clean URL
+        document.querySelector('.success-center .btn').onclick = () => { window.location.href = '/' + decodedData.slug; };
+        goStep(6);
         window.history.replaceState({}, document.title, '/onboarding');
         return;
       }
-    } catch(e) {
-      console.error("Success token invalid:", e);
-    }
+    } catch(e) { console.error("Success token invalid:", e); }
+  }
+
+  // Handle approved application link (from email)
+  if (urlParams.get('approved') === 'true' && urlParams.get('token')) {
+    // Approved users go straight to plan selection (step 1)
+    goStep(1);
+    return;
   }
 
   // Handle PayMongo error
@@ -588,16 +741,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (token && !urlParams.get('success')) {
     try {
       const invite = await OnboardingAPI.verifyInvite(token);
-      // Pre-fill email and company if provided by the invite
       if (invite.email) document.getElementById('f-email').value = invite.email;
       if (invite.company_name) {
         document.getElementById('f-company').value = invite.company_name;
         document.getElementById('c-org').value = invite.company_name;
         autoSlug(document.getElementById('c-org'));
       }
-    } catch(e) {
-      console.error("Invite token invalid:", e);
-    }
+    } catch(e) { console.error("Invite token invalid:", e); }
   }
 });
 </script>

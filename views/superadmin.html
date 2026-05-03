@@ -236,7 +236,8 @@
       
       <div class="nav-section">Management</div>
       <button class="nav-item" onclick="nav('tenants', this)"><span class="material-symbols-rounded">corporate_fare</span>Tenants</button>
-      
+      <button class="nav-item" onclick="nav('applications', this)"><span class="material-symbols-rounded">assignment</span>Applications<span id="app-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;min-width:18px;text-align:center;"></span></button>
+
       <div class="nav-section">System</div>
       <button class="nav-item" onclick="nav('audit', this)"><span class="material-symbols-rounded">history</span>Audit Logs</button>
       <button class="nav-item" onclick="nav('backup', this)"><span class="material-symbols-rounded">save</span>Backups</button>
@@ -448,6 +449,48 @@
         </div>
       </div>
 
+      <!-- ==================== APPLICATIONS (Review Queue) ==================== -->
+      <div id="screen-applications" class="screen">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="material-symbols-rounded">assignment</span>Tenant Applications</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadApplications()"><span class="material-symbols-rounded">refresh</span> Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Company</th><th>Applicant</th><th>Email</th><th>Slug</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="applications-tbody">
+                <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permit Viewer Modal -->
+      <div id="permit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:none;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:16px;max-width:700px;width:95%;max-height:85vh;overflow:auto;padding:24px;position:relative;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-weight:700;font-size:15px;">Business Permit</div>
+            <button onclick="closePermitModal()" style="background:none;border:none;cursor:pointer;"><span class="material-symbols-rounded">close</span></button>
+          </div>
+          <div id="permit-viewer" style="text-align:center;"></div>
+        </div>
+      </div>
+
+      <!-- Reject Reason Modal -->
+      <div id="reject-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:none;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:16px;max-width:440px;width:95%;padding:24px;">
+          <h3 style="font-size:16px;margin-bottom:12px;">Reject Application</h3>
+          <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Provide a reason for rejection. The applicant will receive this via email.</p>
+          <textarea id="reject-reason" class="form-control" rows="3" placeholder="e.g. Business permit is expired or unreadable..." style="resize:vertical;margin-bottom:12px;"></textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-secondary btn-sm" onclick="closeRejectModal()">Cancel</button>
+            <button class="btn btn-danger btn-sm" id="btn-confirm-reject" onclick="confirmReject()">Reject Application</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== AUDIT LOGS ==================== -->
       <div id="screen-audit" class="screen">
         <div class="card">
@@ -618,6 +661,7 @@
       reports:   'Activity Reports',
       sales:     'Sales & Revenue Report',
       tenants:   'Tenant Management',
+      applications: 'Tenant Applications',
       audit:     'System Audit Logs',
       backup:    'System Backups',
       settings:  'Global Settings'
@@ -631,6 +675,7 @@
       document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
       if (screenId === 'dashboard') loadDashboard();
       if (screenId === 'tenants')   loadAll();
+      if (screenId === 'applications') loadApplications();
       if (screenId === 'sales')     loadSales();
       if (screenId === 'audit')     loadAuditLogs();
       if (screenId === 'settings')  loadDevelopers();
@@ -1269,6 +1314,100 @@ async function sendInvite() {
     btn.textContent = "Send Invitation";
   }
 }
+
+// ── APPLICATION REVIEW QUEUE ──────────────────────────────────────────────────
+var _rejectAppId = null;
+
+async function loadApplications() {
+  var tbody = document.getElementById('applications-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+  try {
+    var apps = await SuperadminAPI.getApplications();
+    if (!apps.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No applications yet</td></tr>'; return; }
+    var pendingCount = apps.filter(function(a){ return a.status === 'pending'; }).length;
+    var badge = document.getElementById('app-badge');
+    if (pendingCount > 0) { badge.textContent = pendingCount; badge.style.display = 'inline-block'; }
+    else { badge.style.display = 'none'; }
+
+    tbody.innerHTML = apps.map(function(a) {
+      var statusBadge = a.status === 'pending' ? '<span class="badge bg-pending">Pending</span>'
+        : a.status === 'approved' ? '<span class="badge bg-active">Approved</span>'
+        : '<span class="badge bg-suspended">Rejected</span>';
+      var date = new Date(a.created_at).toLocaleDateString();
+      var actions = '';
+      if (a.status === 'pending') {
+        actions = '<button class="btn btn-secondary btn-sm" onclick="viewPermit(' + a.application_id + ')" style="margin-right:4px;" title="View Permit"><span class="material-symbols-rounded" style="font-size:14px;">visibility</span></button>' +
+          '<button class="btn btn-success btn-sm" onclick="approveApp(' + a.application_id + ')" style="margin-right:4px;" title="Approve"><span class="material-symbols-rounded" style="font-size:14px;">check</span></button>' +
+          '<button class="btn btn-danger btn-sm" onclick="openRejectModal(' + a.application_id + ')" title="Reject"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>';
+      } else {
+        actions = '<button class="btn btn-secondary btn-sm" onclick="viewPermit(' + a.application_id + ')" title="View Permit"><span class="material-symbols-rounded" style="font-size:14px;">visibility</span></button>';
+        if (a.status === 'rejected' && a.rejection_reason) {
+          actions += '<span style="display:block;font-size:10px;color:#dc2626;margin-top:4px;" title="' + a.rejection_reason + '">Reason: ' + a.rejection_reason.substring(0, 30) + (a.rejection_reason.length > 30 ? '...' : '') + '</span>';
+        }
+      }
+      return '<tr><td>' + (a.company_name||'—') + '</td><td>' + (a.name||'—') + '</td><td style="font-size:11px;">' + (a.email||'—') + '</td><td style="font-family:monospace;font-size:11px;">' + (a.slug||'—') + '</td><td>' + date + '</td><td>' + statusBadge + '</td><td>' + actions + '</td></tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Error loading applications</td></tr>';
+    console.error(e);
+  }
+}
+
+async function viewPermit(id) {
+  var modal = document.getElementById('permit-modal');
+  var viewer = document.getElementById('permit-viewer');
+  viewer.innerHTML = '<div style="padding:20px;color:#64748b;">Loading...</div>';
+  modal.style.display = 'flex';
+  try {
+    var data = await SuperadminAPI.getPermit(id);
+    if (data.mimetype && data.mimetype.startsWith('image/')) {
+      viewer.innerHTML = '<img src="' + data.file + '" style="max-width:100%;border-radius:8px;"/>';
+    } else {
+      viewer.innerHTML = '<iframe src="' + data.file + '" style="width:100%;height:60vh;border:1px solid #e2e8f0;border-radius:8px;"></iframe>';
+    }
+  } catch(e) {
+    viewer.innerHTML = '<div style="padding:20px;color:#ef4444;">Failed to load permit.</div>';
+  }
+}
+function closePermitModal() { document.getElementById('permit-modal').style.display = 'none'; }
+
+async function approveApp(id) {
+  if (!confirm('Approve this application? An email with the payment link will be sent to the applicant.')) return;
+  try {
+    var res = await SuperadminAPI.approveApp(id);
+    alert(res.message || 'Application approved!');
+    loadApplications();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function openRejectModal(id) {
+  _rejectAppId = id;
+  document.getElementById('reject-reason').value = '';
+  document.getElementById('reject-modal').style.display = 'flex';
+}
+function closeRejectModal() { document.getElementById('reject-modal').style.display = 'none'; _rejectAppId = null; }
+
+async function confirmReject() {
+  var reason = document.getElementById('reject-reason').value.trim();
+  if (!reason) { alert('Please provide a rejection reason.'); return; }
+  try {
+    var res = await SuperadminAPI.rejectApp(_rejectAppId, reason);
+    alert(res.message || 'Application rejected.');
+    closeRejectModal();
+    loadApplications();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Load pending count on dashboard init
+(async function() {
+  try {
+    var apps = await SuperadminAPI.getApplications();
+    var pending = apps.filter(function(a){ return a.status === 'pending'; }).length;
+    var badge = document.getElementById('app-badge');
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
+  } catch(e) {}
+})();
+
 </script>
 </body>
 </html>
