@@ -62,7 +62,7 @@ router.post('/check-email', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/checkout', async (req, res) => {
   const payload = req.body;
-  const { plan, name, email, password, slug } = payload;
+  const { plan, name, email, password, slug, phone } = payload;
 
   if (!PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
   if (!name || !email || !password || !slug) return res.status(400).json({ error: 'name, email, password, and slug are required.' });
@@ -98,7 +98,7 @@ router.post('/checkout', async (req, res) => {
       body: JSON.stringify({
         data: {
           attributes: {
-            billing: { email, name },
+            billing: { email, name, ...(phone && { phone: phone.replace(/\D/g, '') }) },
             line_items: [{
               amount: PLAN_PRICES[plan] * 100, // converted to cents
               currency: 'PHP',

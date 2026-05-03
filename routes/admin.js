@@ -1167,7 +1167,7 @@ router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (r
   if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
 
   // Check that the plan is actually an upgrade
-  const [[tenant]] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+  const [[tenant]] = await query('SELECT plan, company_name, admin_email, admin_phone FROM TENANT WHERE tenant_id = ?', [tid]);
   const currentIdx = PLAN_ORDER.indexOf(tenant?.plan?.toLowerCase() || 'startup');
   const targetIdx  = PLAN_ORDER.indexOf(plan);
   if (targetIdx <= currentIdx) return res.status(400).json({ error: 'You can only upgrade to a higher plan.' });
@@ -1192,6 +1192,11 @@ router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (r
       body: JSON.stringify({
         data: {
           attributes: {
+            billing: {
+              name: tenant?.company_name || slug,
+              ...(tenant?.admin_email && { email: tenant.admin_email }),
+              ...(tenant?.admin_phone && { phone: tenant.admin_phone.replace(/\D/g, '') })
+            },
             line_items: [{
               name: PLAN_PRICES[plan].label + ' — ' + (tenant?.company_name || slug),
               amount: PLAN_PRICES[plan].amount,

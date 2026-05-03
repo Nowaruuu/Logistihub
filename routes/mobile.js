@@ -1291,7 +1291,7 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
           billing: {
             name: billingName,
             ...(billingEmail && { email: billingEmail }),
-            ...(billingPhone && { phone: billingPhone })
+            phone: billingPhone || ''
           },
           send_email_receipt: true,
           show_description: true,
