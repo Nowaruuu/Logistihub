@@ -253,7 +253,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
           <label class="form-label">Phone Number</label>
           <div style="display:flex;align-items:center;gap:0;border:1.5px solid #e2e8f0;border-radius:9px;overflow:hidden;transition:all .15s;" onfocus="this.style.borderColor='#0a1628';this.style.boxShadow='0 0 0 3px rgba(10,22,40,.07)'" onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
             <div style="display:flex;align-items:center;gap:5px;padding:10px 10px;background:#f8fafc;border-right:1.5px solid #e2e8f0;white-space:nowrap;font-size:13px;font-weight:600;color:#475569;flex-shrink:0;">🇵🇭 +63</div>
-            <input id="f-phone" type="tel" placeholder="9XX XXX XXXX" maxlength="10" style="border:none;border-radius:0;box-shadow:none!important;padding-left:10px;font-size:13px;flex:1;"/>
+            <input id="f-phone" type="tel" placeholder="9XX XXX XXXX" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="border:none;border-radius:0;box-shadow:none!important;padding-left:10px;font-size:13px;flex:1;"/>
           </div>
           <span class="hint">Philippine mobile number (e.g. 9171234567)</span>
         </div>

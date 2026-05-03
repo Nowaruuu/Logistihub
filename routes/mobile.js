@@ -1242,6 +1242,16 @@ router.put('/notifications/:id/read', authMiddleware, async (req, res) => {
 // PAYMONGO PAYMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Normalize Philippine phone to 10-digit local format (9XXXXXXXXX)
+// PayMongo adds its own +63 prefix, so we must NOT include it
+function normalizePHPhone(raw) {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('63')) digits = digits.slice(2);
+  if (digits.startsWith('0'))  digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
+
 // POST /pay/checkout — create PayMongo checkout session
 router.post('/pay/checkout', authMiddleware, async (req, res) => {
   if (!req.user) return res.status(403).json({ error: 'Customers only.' });
@@ -1280,7 +1290,7 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     const userInfo = userRows[0] || {};
     const billingName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(' ') || 'Customer';
     const billingEmail = userInfo.email || null;
-    const billingPhone = userInfo.phone ? userInfo.phone.replace(/\D/g, '') : null;
+    const billingPhone = userInfo.phone ? normalizePHPhone(userInfo.phone) : '';
 
     const amountCentavos = Math.round(parseFloat(amount) * 100);
     const slug = req.params.slug;

@@ -1150,6 +1150,16 @@ router.get('/:slug/api/admin/audit-logs', requireAdmin, requireSlugMatch, async 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Normalize Philippine phone to 10-digit local format (9XXXXXXXXX)
+// PayMongo adds its own +63 prefix, so we must NOT include it
+function normalizePHPhone(raw) {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('63')) digits = digits.slice(2);
+  if (digits.startsWith('0'))  digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
+
 // UPGRADE PLAN — PayMongo Checkout
 // ─────────────────────────────────────────────────────────────────────────────
 const PLAN_PRICES = {
@@ -1195,7 +1205,7 @@ router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (r
             billing: {
               name: tenant?.company_name || slug,
               ...(tenant?.admin_email && { email: tenant.admin_email }),
-              ...(tenant?.admin_phone && { phone: tenant.admin_phone.replace(/\D/g, '') })
+              ...(tenant?.admin_phone && { phone: normalizePHPhone(tenant.admin_phone) })
             },
             line_items: [{
               name: PLAN_PRICES[plan].label + ' — ' + (tenant?.company_name || slug),

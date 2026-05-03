@@ -10,6 +10,16 @@ const router = express.Router();
 
 const PLAN_PRICES = { startup: 1499, enterprise: 4999, global: 14999 };
 
+// Normalize Philippine phone to 10-digit local format (9XXXXXXXXX)
+// PayMongo adds its own +63 prefix, so we must NOT include it
+function normalizePHPhone(raw) {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');        // strip non-digits
+  if (digits.startsWith('63')) digits = digits.slice(2);  // remove country code 63
+  if (digits.startsWith('0'))  digits = digits.slice(1);  // remove leading 0
+  return digits.slice(0, 10);                 // max 10 digits
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/onboarding/verify-invite?invite=<token>
 // Called by the frontend to validate the invite token before showing plans
@@ -98,7 +108,7 @@ router.post('/checkout', async (req, res) => {
       body: JSON.stringify({
         data: {
           attributes: {
-            billing: { email, name, ...(phone && { phone: phone.replace(/\D/g, '') }) },
+            billing: { email, name, ...(phone && { phone: normalizePHPhone(phone) }) },
             line_items: [{
               amount: PLAN_PRICES[plan] * 100, // converted to cents
               currency: 'PHP',
