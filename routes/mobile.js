@@ -469,7 +469,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
   const userId = req.user.user_id;
   const {
     pickup_location, dropoff_location, pickup_lat, pickup_lng,
-    dropoff_lat, dropoff_lng, receiver_name, receiver_phone,
+    dropoff_lat, dropoff_lng, sender_name, receiver_name, receiver_phone,
     receiver_address, item_type_flag, vehicle_type, weight, size,
     shipping_method, total_fee, content_description, estimated_arrival
   } = req.body;
@@ -505,19 +505,20 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
   }
 
    try {
-    // Auto-add vehicle_type column if it doesn't exist
+    // Auto-add columns if they don't exist
     try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
 
     await query(
       `INSERT INTO shipment (
-        delivery_number, tenant_id, sender_user_id, pickup_location, dropoff_location,
+        delivery_number, tenant_id, sender_user_id, sender_name, pickup_location, dropoff_location,
         pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
         receiver_name, receiver_phone, receiver_address,
         item_type_flag, vehicle_type, weight, size, shipping_method, total_fee,
         estimated_arrival, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
       [
-        deliveryNumber, tid, userId, pickup_location, dropoff_location,
+        deliveryNumber, tid, userId, sender_name || null, pickup_location, dropoff_location,
         pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
         itemType, vehicle_type || null, weight || null, size || null, shipping_method || 'Standard',

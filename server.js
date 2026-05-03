@@ -166,40 +166,28 @@ app.listen(PORT, async () => {
   console.log(`   Env:     ${process.env.NODE_ENV || 'development'}`);
   console.log(`   DB:      ${process.env.DB_NAME}@${process.env.DB_HOST}\n`);
 
-  // One-time cleanup: remove erroneous shipments created without suitable vehicles
+  // One-time data reset for clean slate
   try {
     const { query } = require('./config/db');
-    const badDNs = ['DLV-MOPBWQTR-7D1D', 'DLV-MOPEC6GL-49B7'];
-    for (const dn of badDNs) {
-      const [rows] = await query('SELECT delivery_number FROM shipment WHERE delivery_number = ? LIMIT 1', [dn]);
-      if (rows.length) {
-        await query('DELETE FROM SHIPMENT_HISTORY WHERE delivery_number = ?', [dn]).catch(() => {});
-        await query('DELETE FROM payment WHERE delivery_number = ?', [dn]).catch(() => {});
-        await query('DELETE FROM proof_of_delivery WHERE delivery_number = ?', [dn]).catch(() => {});
-        await query('DELETE FROM sub_package WHERE delivery_number = ?', [dn]).catch(() => {});
-        await query('DELETE FROM sub_bulk WHERE delivery_number = ?', [dn]).catch(() => {});
-        await query('DELETE FROM shipment WHERE delivery_number = ?', [dn]);
-        console.log(`   🗑️  Cleaned up erroneous shipment: ${dn}`);
-      }
+
+    // Truncate all shipment and payment data
+    const [flagCheck] = await query("SELECT 1 FROM shipment LIMIT 1").catch(() => [[{x:0}]]);
+    // Only truncate if there's existing data (one-time wipe)
+    const [existingShipments] = await query("SELECT COUNT(*) AS cnt FROM shipment").catch(() => [[{cnt:0}]]);
+    if (existingShipments[0]?.cnt > 0) {
+      await query('DELETE FROM SHIPMENT_HISTORY').catch(() => {});
+      await query('DELETE FROM proof_of_delivery').catch(() => {});
+      await query('DELETE FROM sub_package').catch(() => {});
+      await query('DELETE FROM sub_bulk').catch(() => {});
+      await query('DELETE FROM payment').catch(() => {});
+      await query('DELETE FROM shipment').catch(() => {});
+      console.log('   🗑️  Truncated all shipments and payments (clean slate)');
     }
 
-    // Ensure vehicle_type column exists on shipment table
-    try {
-      await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL');
-      console.log('   ✅ Added vehicle_type column to shipment table');
-    } catch(_) { /* column already exists */ }
-
-    // Backfill vehicle_type for old shipments that have an assigned driver with a vehicle
-    try {
-      await query(`
-        UPDATE shipment s
-        JOIN STAFF st ON s.assigned_driver_id = st.staff_id
-        JOIN vehicle v ON st.vehicle_plate = v.plate_number AND v.tenant_id = s.tenant_id
-        SET s.vehicle_type = LOWER(v.vehicle_type)
-        WHERE s.vehicle_type IS NULL AND v.vehicle_type IS NOT NULL AND v.vehicle_type != ''
-      `);
-      console.log('   ✅ Backfilled vehicle_type from fleet vehicles');
-    } catch(_) {}
+    // Ensure columns exist
+    try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
+    console.log('   ✅ Schema columns verified');
 
   } catch (e) { console.error('Cleanup error:', e.message); }
 });

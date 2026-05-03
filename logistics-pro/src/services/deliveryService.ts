@@ -30,6 +30,7 @@ export const deliveryService = {
       pickup_lng: deliveryData.originLng,
       dropoff_lat: deliveryData.destLat,
       dropoff_lng: deliveryData.destLng,
+      sender_name: deliveryData.senderName,
       receiver_name: deliveryData.receiverName,
       receiver_phone: deliveryData.receiverPhone,
       receiver_address: deliveryData.destination,
