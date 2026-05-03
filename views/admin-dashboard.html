@@ -1392,7 +1392,7 @@ function _buildFullChart(rawData, period){
       var h=i;
       var label=(h===0?'12 AM':h===12?'12 PM':h<12?h+' AM':(h-12)+' PM');
       var r=byHr[i]||{};
-      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:(r.count!==undefined&&r.count!==null)?Number(r.count):null});
+      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
     }
   } else if(period==='weekly'){
     // Individual days of the current week block (1-7, 8-14, 15-21, 22-28, 29-end)
@@ -1407,7 +1407,7 @@ function _buildFullChart(rawData, period){
     for(var d=startDay;d<=endDay;d++){
       var label=_srMonthShort[now.getMonth()]+' '+d;
       var r=byDay[d]||{};
-      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:(r.count!==undefined&&r.count!==null)?Number(r.count):null});
+      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
     }
   } else if(period==='yearly'){
     // Just use the raw data as-is
@@ -1423,7 +1423,7 @@ function _buildFullChart(rawData, period){
     (rawData||[]).forEach(function(d){byMo[Number(d.mo)]=d;});
     for(i=1;i<=12;i++){
       var r=byMo[i]||{};
-      slots.push({label:_srMonthNames[i-1],paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:(r.count!==undefined&&r.count!==null)?Number(r.count):null});
+      slots.push({label:_srMonthNames[i-1],paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
     }
   }
   return slots;
@@ -1445,7 +1445,7 @@ function _renderSalesChart(chartData, period){
         datasets:[
           {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
           {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-          {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1,spanGaps:true}
+          {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.3,pointRadius:function(ctx){return(ctx.raw>0)?5:0;},pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
         ]
       },
       options:{
