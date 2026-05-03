@@ -262,7 +262,7 @@ router.post('/checkout-approved', async (req, res) => {
             }],
             payment_method_types: ['card', 'gcash', 'paymaya'],
             success_url: successUrl,
-            cancel_url: `${baseUrl}/onboarding`
+            cancel_url: `${baseUrl}/onboarding?approved=true&token=${approval_token}`
           }
         }
       })
