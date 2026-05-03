@@ -403,6 +403,27 @@ router.delete('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PROOF OF DELIVERY
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/:slug/api/admin/pods', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const [rows] = await query(
+      `SELECT pod.*, s.status AS shipment_status
+       FROM proof_of_delivery pod
+       LEFT JOIN shipment s ON s.delivery_number = pod.delivery_number AND s.tenant_id = pod.tenant_id
+       WHERE pod.tenant_id = ?
+       ORDER BY pod.created_at DESC
+       LIMIT 200`,
+      [req.tenantId]
+    );
+    res.json({ pods: rows });
+  } catch (err) {
+    console.error('[GET /admin/pods]', err);
+    res.status(500).json({ error: err.message || 'Failed to load PODs.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLIENTS (Unified App Users)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/clients', requireAdmin, requireSlugMatch, async (req, res) => {

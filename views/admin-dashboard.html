@@ -975,6 +975,7 @@ function go(id,navBtn){
   }
   if(id==='audit') loadAuditLogs();
   if(id==='payments') loadPayments();
+  if(id==='pod') loadPODs();
   // Always refresh text contrast after navigation
   if(typeof updateAppTextContrast==='function') setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
 }
@@ -1175,7 +1176,8 @@ function loadDashMap(){
   var mapEl=document.getElementById('dash-live-map');
   if(!mapEl)return;
   if(!_dashMap){
-    _dashMap=L.map(mapEl,{scrollWheelZoom:false,zoomControl:true}).setView([12.8797,121.7740],6);
+    var phBounds=L.latLngBounds([4.5,116.0],[21.5,127.5]);
+    _dashMap=L.map(mapEl,{scrollWheelZoom:false,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:5,maxZoom:18}).setView([12.8797,121.7740],6);
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(_dashMap);
     setTimeout(function(){_dashMap.invalidateSize();},200);
   }
@@ -2506,12 +2508,15 @@ function renderPayments(list) {
       ? esc((p.customer_first + ' ' + p.customer_last).trim())
       : esc(p.receiver_name || '—');
     var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
-    var method = esc(p.payment_method || '—');
+    var method = p.payment_method || '';
+    if (!method && (p.paymongo_checkout_id || p.paymongo_payment_id || (p.reference_code && p.reference_code.indexOf('cs_')===0))) method = 'Online (Stripe)';
+    if (!method && p.status === 'Paid') method = 'Cash';
+    method = esc(method || '—');
     var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '—');
     var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">—</span>';
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
-    var date = p.billing_date ? new Date(p.billing_date).toLocaleDateString() : (p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—');
+    var date = p.billing_date ? new Date(p.billing_date).toLocaleDateString() : (p.paid_at ? new Date(p.paid_at).toLocaleDateString() : (p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'));
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
@@ -2540,6 +2545,39 @@ async function confirmPayment(invoiceId, btn) {
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
 }
+
+// ── Proof of Delivery ─────────────────────────────────────────────────────────
+async function loadPODs() {
+  var tb = document.querySelector('#s-pod .tbl-wrap tbody');
+  if(!tb) return;
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
+  try {
+    var res = await apiFetch('/' + _SLUG + '/api/admin/pods');
+    var d = await res.json();
+    var pods = d.pods || [];
+    if(!pods.length) {
+      tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">task</span><p>No PODs yet</p></div></td></tr>';
+      return;
+    }
+    tb.innerHTML = pods.map(function(p) {
+      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : '—';
+      var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '—';
+      var type = esc(p.capture_type || p.type || 'Photo');
+      var media = p.photo_url ? '<a href="' + esc(p.photo_url) + '" target="_blank" style="color:var(--primary);">View</a>' : (p.signature_url ? '<a href="' + esc(p.signature_url) + '" target="_blank" style="color:var(--primary);">View</a>' : '—');
+      return '<tr>' +
+        '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
+        '<td><strong>' + esc(p.delivery_number || '—') + '</strong></td>' +
+        '<td>' + type + '</td>' +
+        '<td style="font-family:monospace;font-size:11px;">' + geo + '</td>' +
+        '<td>' + ts + '</td>' +
+        '<td>' + media + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch(e) {
+    tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
+  }
+}
+loadPODs();
 </script>
 
 <script>
