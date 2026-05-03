@@ -1535,14 +1535,47 @@ function openAssignModal(dn, currentDriverId, currentPlate) {
     driverSel.appendChild(opt);
   });
 
-  // Populate vehicle dropdown from cached vehicle data
+  // Auto-select driver's own vehicle when driver changes
+  driverSel.onchange = function() {
+    var selectedDriverId = this.value;
+    if (!selectedDriverId) return;
+    var driver = drivers.find(function(d) { return (d.staff_id || d.id) == selectedDriverId; });
+    if (driver && driver.vehicle_plate) {
+      var vehSel = document.getElementById('assign-vehicle');
+      for (var j = 0; j < vehSel.options.length; j++) {
+        if (vehSel.options[j].value === driver.vehicle_plate) {
+          vehSel.selectedIndex = j;
+          break;
+        }
+      }
+    }
+  };
+
+  // Populate vehicle dropdown: fleet vehicles + driver-owned vehicles
   var vehSel = document.getElementById('assign-vehicle');
   vehSel.innerHTML = '<option value="">None</option>';
+
+  // Collect all vehicles: from fleet + from drivers' registered plates
+  var vehicleMap = {};
   (_vehicleData || []).forEach(function(v) {
+    vehicleMap[v.plate_number] = { plate: v.plate_number, vtype: v.vehicle_type || '', status: v.status || 'Available', source: 'fleet' };
+  });
+  // Add driver-owned vehicles that aren't in the fleet
+  drivers.forEach(function(d) {
+    if (d.vehicle_plate && !vehicleMap[d.vehicle_plate]) {
+      vehicleMap[d.vehicle_plate] = { plate: d.vehicle_plate, vtype: d.vehicle_type || '', status: 'Available', source: 'driver', driverName: d.name };
+    }
+  });
+
+  Object.keys(vehicleMap).forEach(function(plate) {
+    var v = vehicleMap[plate];
     var opt = document.createElement('option');
-    opt.value = v.plate_number;
-    opt.textContent = v.plate_number + ' (' + (v.type || 'N/A') + ')';
-    if (v.plate_number === currentPlate) opt.selected = true;
+    opt.value = v.plate;
+    var label = v.plate;
+    if (v.vtype) label += ' (' + v.vtype + ')';
+    if (v.source === 'driver') label += ' — ' + v.driverName + "'s";
+    opt.textContent = label;
+    if (v.plate === currentPlate) opt.selected = true;
     vehSel.appendChild(opt);
   });
 
