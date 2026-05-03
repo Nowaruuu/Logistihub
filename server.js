@@ -187,6 +187,7 @@ app.listen(PORT, async () => {
     // Ensure columns exist
     try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL'); } catch(_) {}
     console.log('   ✅ Schema columns verified');
 
   } catch (e) { console.error('Cleanup error:', e.message); }

@@ -364,7 +364,7 @@ textarea{resize:vertical;}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Receiver</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
             <tbody><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
           </table>
         </div>
@@ -1131,8 +1131,9 @@ function renderShipmentsTable(){
     var dateDelivered=fmtDateTime(s.delivered_at);
     var veh = s.vehicle_type ? esc(s.vehicle_type.charAt(0).toUpperCase() + s.vehicle_type.slice(1)) : '\u2014';
     var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
+    var sender = s.sender_name ? esc(s.sender_name) : esc(s.client_name||'N/A');
     var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
-    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td style="white-space:nowrap;font-size:11px;">'+dateOrdered+'</td><td style="white-space:nowrap;font-size:11px;">'+dateDelivered+'</td><td></td></tr>';
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+sender+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td style="white-space:nowrap;font-size:11px;">'+dateOrdered+'</td><td style="white-space:nowrap;font-size:11px;">'+dateDelivered+'</td><td></td></tr>';
   }).join('');
 }
 

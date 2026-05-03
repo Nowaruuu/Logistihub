@@ -101,8 +101,15 @@ export default function SendPackage() {
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>([14.5489, 121.0486]);
   const [destination, setDestination] = useState('');
   const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
+  const [senderName, setSenderName] = useState(profile?.fullName || '');
+  const [senderPhone, setSenderPhone] = useState('');
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
+
+  // Philippine phone regex: 09XXXXXXXXX or +639XXXXXXXXX
+  const PH_PHONE_REGEX = /^(09\d{9}|\+639\d{9})$/;
+  const NAME_MAX_LEN = 50;
+  const PHONE_MAX_LEN = 13;
   const [pickupNotes, setPickupNotes] = useState('');
   const [destNotes, setDestNotes] = useState('');
   const [weight, setWeight] = useState('');
@@ -376,9 +383,15 @@ export default function SendPackage() {
     // Validate ALL required fields
     if (!user) return;
     if (!pickup.trim()) { setError('Pickup address is required'); return; }
-    if (!destination.trim()) { setError('Destination address is required'); return; }
+    if (!destination.trim()) { setError('Destination is required'); return; }
+    if (!senderName.trim()) { setError('Sender name is required'); return; }
+    if (senderName.trim().length > NAME_MAX_LEN) { setError(`Sender name must be ${NAME_MAX_LEN} characters or less`); return; }
+    if (!senderPhone.trim()) { setError('Sender phone number is required'); return; }
+    if (!PH_PHONE_REGEX.test(senderPhone.trim())) { setError('Sender phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!receiverName.trim()) { setError('Receiver name is required'); return; }
+    if (receiverName.trim().length > NAME_MAX_LEN) { setError(`Receiver name must be ${NAME_MAX_LEN} characters or less`); return; }
     if (!receiverPhone.trim()) { setError('Receiver phone number is required'); return; }
+    if (!PH_PHONE_REGEX.test(receiverPhone.trim())) { setError('Receiver phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
     if (compatibleVehicles.length === 0) { setError('No suitable vehicle available for this package category. Please choose a different category or contact your admin.'); return; }
     setLoading(true);
@@ -391,8 +404,9 @@ export default function SendPackage() {
 
       const deliveryNumber = await deliveryService.createDelivery({
         senderUid: user.uid,
-        senderName: profile?.fullName || user.email,
-        receiverName,
+        senderName: senderName.trim(),
+        senderPhone: senderPhone.trim(),
+        receiverName: receiverName.trim(),
         receiverPhone,
         origin: pickupNotes ? `${pickup} — ${pickupNotes}` : pickup,
         destination: destNotes ? `${destination} — ${destNotes}` : destination,
@@ -567,6 +581,23 @@ export default function SendPackage() {
               placeholder="Exact address details (e.g. Blk 5 Lot 7)"
             />
           </div>
+
+          {/* ── Sender Info ── */}
+          <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-4 mb-2 ml-1">Sender Information</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+              <input type="text" value={senderName} onChange={e => setSenderName(e.target.value.slice(0, NAME_MAX_LEN))}
+                className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+                placeholder="Sender name" maxLength={NAME_MAX_LEN} />
+            </div>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+              <input type="tel" value={senderPhone} onChange={e => setSenderPhone(e.target.value.replace(/[^0-9+]/g, '').slice(0, PHONE_MAX_LEN))}
+                className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+                placeholder="09XXXXXXXXX" maxLength={PHONE_MAX_LEN} />
+            </div>
+          </div>
         </div>
 
         {/* ── Destination Address with Auto-search ── */}
@@ -668,15 +699,15 @@ export default function SendPackage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
-            <input type="text" value={receiverName} onChange={e => setReceiverName(e.target.value)}
+            <input type="text" value={receiverName} onChange={e => setReceiverName(e.target.value.slice(0, NAME_MAX_LEN))}
               className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="Receiver name" />
+              placeholder="Receiver name" maxLength={NAME_MAX_LEN} />
           </div>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
-            <input type="tel" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)}
+            <input type="tel" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value.replace(/[^0-9+]/g, '').slice(0, PHONE_MAX_LEN))}
               className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="Phone number" />
+              placeholder="09XXXXXXXXX" maxLength={PHONE_MAX_LEN} />
           </div>
         </div>
       </section>
@@ -1024,7 +1055,7 @@ export default function SendPackage() {
         </div>
         <button 
           onClick={handleConfirm}
-          disabled={loading || !destination.trim() || !pickup.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0 || compatibleVehicles.length === 0}
+          disabled={loading || !destination.trim() || !pickup.trim() || !senderName.trim() || !senderPhone.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0 || compatibleVehicles.length === 0}
           className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
         >
           {loading ? (
