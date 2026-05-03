@@ -222,7 +222,8 @@ router.get('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (
     SELECT s.*, 
            COALESCE(c.company_name, CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
            d.name AS driver_name,
-           h.name AS helper_name, r.route_name
+           h.name AS helper_name, r.route_name,
+           (SELECT MAX(sh.created_at) FROM SHIPMENT_HISTORY sh WHERE sh.delivery_number = s.delivery_number AND sh.status = 'Delivered') AS delivered_at
     FROM shipment s
     LEFT JOIN client c ON c.client_id = s.client_id
     LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
