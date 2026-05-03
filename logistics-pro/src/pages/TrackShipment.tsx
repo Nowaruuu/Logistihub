@@ -120,10 +120,10 @@ function TrackShipmentInner() {
       const result = await deliveryService.getDeliveryByTracking(trackingNumber);
       if (result?.shipment) {
         const s = result.shipment;
-        // Build sender display name
-        const senderFull = (s.first_name || s.last_name)
-          ? `${s.first_name || ''} ${s.last_name || ''}`.trim()
-          : (s.client_name || 'Sender');
+        // Use sender_name from shipment (what user typed), fallback to profile name
+        const senderFull = s.sender_name
+          || ((s.first_name || s.last_name) ? `${s.first_name || ''} ${s.last_name || ''}`.trim() : null)
+          || s.client_name || 'Sender';
 
         setExtra({
           driverName: s.driver_name || null,
