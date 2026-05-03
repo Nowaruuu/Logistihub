@@ -1444,8 +1444,7 @@ function _renderSalesChart(chartData, period){
         labels:labels,
         datasets:[
           {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-          {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-          {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0,pointRadius:function(ctx){return(ctx.raw>0)?5:0;},pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
+          {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60}
         ]
       },
       options:{
@@ -1453,7 +1452,6 @@ function _renderSalesChart(chartData, period){
         plugins:{legend:{position:'bottom'}},
         scales:{
           y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
-          y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1}},
           x:{stacked:true,grid:{display:false}}
         }
       }
