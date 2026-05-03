@@ -689,6 +689,49 @@ router.put('/update-phone', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /profile — update name and phone for user or staff
+router.put('/profile', authMiddleware, async (req, res) => {
+  const { first_name, last_name, phone } = req.body;
+
+  try {
+    if (req.user) {
+      const sets = [];
+      const vals = [];
+      if (first_name !== undefined) { sets.push('first_name = ?'); vals.push(first_name); }
+      if (last_name !== undefined)  { sets.push('last_name = ?');  vals.push(last_name);  }
+      if (phone !== undefined)      { sets.push('phone = ?');      vals.push(phone);      }
+      // Also update the combined "name" column if first/last changed
+      if (first_name !== undefined || last_name !== undefined) {
+        const fullName = `${first_name || ''} ${last_name || ''}`.trim();
+        sets.push('name = ?'); vals.push(fullName);
+      }
+      if (sets.length === 0) return res.json({ ok: true });
+      vals.push(req.user.user_id, req.tenantId);
+      await query(`UPDATE APP_USER SET ${sets.join(', ')} WHERE user_id = ? AND tenant_id = ?`, vals);
+      return res.json({ ok: true, message: 'Profile updated.' });
+    }
+    if (req.staff) {
+      const sets = [];
+      const vals = [];
+      if (first_name !== undefined) { sets.push('first_name = ?'); vals.push(first_name); }
+      if (last_name !== undefined)  { sets.push('last_name = ?');  vals.push(last_name);  }
+      if (phone !== undefined)      { sets.push('phone = ?');      vals.push(phone);      }
+      if (first_name !== undefined || last_name !== undefined) {
+        const fullName = `${first_name || ''} ${last_name || ''}`.trim();
+        sets.push('name = ?'); vals.push(fullName);
+      }
+      if (sets.length === 0) return res.json({ ok: true });
+      vals.push(req.staff.staff_id, req.tenantId);
+      await query(`UPDATE STAFF SET ${sets.join(', ')} WHERE staff_id = ? AND tenant_id = ?`, vals);
+      return res.json({ ok: true, message: 'Profile updated.' });
+    }
+    res.status(403).json({ error: 'Forbidden.' });
+  } catch (err) {
+    console.error('[PUT /profile]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // GET /notifications — generate notifications from shipment history
 router.get('/notifications', authMiddleware, async (req, res) => {
   const tid = req.tenantId;
