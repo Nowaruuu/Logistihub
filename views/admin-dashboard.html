@@ -1628,14 +1628,52 @@ function exportSalesReportCSV(){
   a.click();
 }
 function exportSalesReportPDF(){
-  var content=document.getElementById('s-sales-report').innerHTML;
-  var win=window.open('','_blank');
-  win.document.write('<html><head><title>Sales Report</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;}th{background:#f1f5f9;font-weight:700;}canvas{display:none;}</style></head><body>');
-  win.document.write('<h1 style="font-size:18px;">Sales & Revenue Report - '+new Date().toLocaleDateString()+'</h1>');
-  win.document.write(content);
+  // Clone the sales report section
+  var srcEl = document.getElementById('s-sales-report');
+  var clone = srcEl.cloneNode(true);
+
+  // Convert all canvas charts to <img> tags so they appear in print
+  var canvases = srcEl.querySelectorAll('canvas');
+  var cloneCanvases = clone.querySelectorAll('canvas');
+  for (var i = 0; i < canvases.length; i++) {
+    try {
+      var dataUrl = canvases[i].toDataURL('image/png', 1.0);
+      var img = document.createElement('img');
+      img.src = dataUrl;
+      img.style.cssText = 'width:100%;max-width:700px;height:auto;display:block;margin:0 auto;';
+      cloneCanvases[i].parentNode.replaceChild(img, cloneCanvases[i]);
+    } catch (e) { console.warn('Could not convert canvas to image:', e); }
+  }
+
+  // Remove the export buttons from the PDF
+  var btns = clone.querySelectorAll('.btn');
+  btns.forEach(function(b) { if (b.textContent.includes('Export')) b.remove(); });
+
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Sales Report</title>');
+  win.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">');
+  win.document.write('<style>');
+  win.document.write('body{font-family:Inter,sans-serif;padding:32px 40px;color:#0f172a;max-width:900px;margin:0 auto;}');
+  win.document.write('h1{font-size:20px;font-weight:800;margin-bottom:4px;}');
+  win.document.write('h2{font-size:18px;font-weight:700;}');
+  win.document.write('h3{font-size:15px;font-weight:700;}');
+  win.document.write('table{width:100%;border-collapse:collapse;margin-bottom:16px;}');
+  win.document.write('th,td{border:1px solid #e2e8f0;padding:8px 10px;text-align:left;font-size:12px;}');
+  win.document.write('th{background:#f1f5f9;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}');
+  win.document.write('.card{border:1px solid #e2e8f0;border-radius:12px;margin-bottom:16px;overflow:hidden;}');
+  win.document.write('.badge{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}');
+  win.document.write('.b-delivered{background:#dcfce7;color:#15803d;}');
+  win.document.write('.b-pending{background:#fef9c3;color:#a16207;}');
+  win.document.write('.b-declined{background:#fee2e2;color:#b91c1c;}');
+  win.document.write('.b-transit{background:#dbeafe;color:#1d4ed8;}');
+  win.document.write('select{display:none;}');
+  win.document.write('@media print{@page{size:A4;margin:15mm;}}');
+  win.document.write('</style></head><body>');
+  win.document.write('<h1>Sales & Revenue Report - ' + new Date().toLocaleDateString() + '</h1>');
+  win.document.write(clone.innerHTML);
   win.document.write('</body></html>');
   win.document.close();
-  setTimeout(function(){win.print();},500);
+  setTimeout(function(){ win.print(); }, 600);
 }
 
 // Auto-load dashboard widgets
