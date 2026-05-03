@@ -937,7 +937,7 @@ textarea{resize:vertical;}
         grid.appendChild(card);
       });
     }
-    renderPlansGrid();
+    // renderPlansGrid() is called via go('upgrade') handler — NOT here (apiFetch isn't defined yet)
 
     async function upgradeToPlan(planKey, btn) {
       if (!confirm('Upgrade to ' + planKey.toUpperCase() + '? You will be redirected to PayMongo to complete payment.')) return;
@@ -1162,6 +1162,7 @@ function go(id,navBtn){
   if(id==='payments') loadPayments();
   if(id==='pod') loadPODs();
   if(id==='subscription') loadSubscription();
+  if(id==='upgrade' && typeof renderPlansGrid === 'function') renderPlansGrid();
   if(id==='sales-report') loadSalesReport();
   // Always refresh text contrast after navigation
   if(typeof updateAppTextContrast==='function') setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
