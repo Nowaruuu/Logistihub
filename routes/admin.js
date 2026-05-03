@@ -272,6 +272,30 @@ router.get('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireS
   res.json({ shipment, sub_data: subData, pod, payments, declines });
 });
 
+// DELETE a shipment (admin only — removes shipment + related records)
+router.delete('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.delivery_number;
+  try {
+    // Delete related records first
+    await query('DELETE FROM SHIPMENT_HISTORY WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]).catch(() => {});
+    await query('DELETE FROM payment WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]).catch(() => {});
+    await query('DELETE FROM proof_of_delivery WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]).catch(() => {});
+    await query('DELETE FROM decline_reasons WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]).catch(() => {});
+    await query('DELETE FROM sub_package WHERE delivery_number = ?', [dn]).catch(() => {});
+    await query('DELETE FROM sub_vehicle WHERE delivery_number = ?', [dn]).catch(() => {});
+    await query('DELETE FROM sub_food WHERE delivery_number = ?', [dn]).catch(() => {});
+    await query('DELETE FROM sub_document WHERE delivery_number = ?', [dn]).catch(() => {});
+    await query('DELETE FROM sub_bulk WHERE delivery_number = ?', [dn]).catch(() => {});
+    // Delete the shipment itself
+    await query('DELETE FROM shipment WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
+    res.json({ ok: true, message: `Shipment ${dn} deleted.` });
+  } catch (err) {
+    console.error('[DELETE /admin/shipments]', err);
+    res.status(500).json({ error: err.message || 'Failed to delete shipment.' });
+  }
+});
+
 router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const {
