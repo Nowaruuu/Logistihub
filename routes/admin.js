@@ -1177,7 +1177,11 @@ router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (r
   if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
 
   // Check that the plan is actually an upgrade
-  const [[tenant]] = await query('SELECT plan, company_name, admin_email, admin_phone FROM TENANT WHERE tenant_id = ?', [tid]);
+  const [[tenant]] = await query(
+    `SELECT t.plan, t.company_name, s.username AS admin_email, s.phone AS admin_phone 
+     FROM TENANT t 
+     LEFT JOIN STAFF s ON s.tenant_id = t.tenant_id AND s.role = 'Admin' 
+     WHERE t.tenant_id = ? LIMIT 1`, [tid]);
   const currentIdx = PLAN_ORDER.indexOf(tenant?.plan?.toLowerCase() || 'startup');
   const targetIdx  = PLAN_ORDER.indexOf(plan);
   if (targetIdx <= currentIdx) return res.status(400).json({ error: 'You can only upgrade to a higher plan.' });
