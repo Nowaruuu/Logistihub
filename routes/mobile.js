@@ -855,7 +855,7 @@ router.get('/track/:dn', async (req, res) => {
 // DRIVER ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// GET /driver/jobs — available pending shipments
+// GET /driver/jobs — available pending shipments (filtered by vehicle compatibility)
 router.get('/driver/jobs', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   const tid = req.tenantId;
@@ -865,7 +865,44 @@ router.get('/driver/jobs', authMiddleware, async (req, res) => {
        ORDER BY created_at DESC LIMIT 30`,
       [tid]
     );
-    res.json({ jobs: rows });
+
+    // Get driver's vehicle type for filtering
+    const staffId = req.staff.staff_id;
+    const [driverRows] = await query(
+      'SELECT vehicle_plate, vehicle_type FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [staffId]
+    );
+    let driverVehicleType = (driverRows[0]?.vehicle_type || '').toLowerCase();
+    const driverPlate = driverRows[0]?.vehicle_plate || null;
+
+    // Fallback to fleet table
+    if (driverPlate && !driverVehicleType) {
+      const [vRows] = await query(
+        'SELECT vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+        [driverPlate, tid]
+      );
+      if (vRows.length) driverVehicleType = (vRows[0].vehicle_type || '').toLowerCase();
+    }
+
+    // Filter by vehicle compatibility if driver has a known vehicle
+    const VEHICLE_CATEGORIES = {
+      motorcycle: ['PACKAGE', 'FOOD', 'DOC'],
+      sedan: ['PACKAGE', 'FOOD', 'DOC'],
+      van: ['PACKAGE', 'FOOD', 'BULK'],
+      truck: ['BULK', 'VEHICLE', 'PACKAGE'],
+      flatbed: ['BULK', 'VEHICLE'],
+    };
+
+    let filteredJobs = rows;
+    if (driverVehicleType && VEHICLE_CATEGORIES[driverVehicleType]) {
+      const allowedCategories = VEHICLE_CATEGORIES[driverVehicleType];
+      filteredJobs = rows.filter(job => {
+        const cat = (job.item_type_flag || 'PACKAGE').toUpperCase();
+        return allowedCategories.includes(cat);
+      });
+    }
+
+    res.json({ jobs: filteredJobs });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -887,12 +924,41 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not available or already taken.' });
 
-    // Get driver's registered vehicle plate
+    // Get driver's registered vehicle plate + type
     const [driverRows] = await query(
       'SELECT vehicle_plate, vehicle_type, name FROM STAFF WHERE staff_id = ? LIMIT 1',
       [staffId]
     );
     const driverVehiclePlate = driverRows[0]?.vehicle_plate || null;
+    const driverVehicleType = (driverRows[0]?.vehicle_type || '').toLowerCase();
+
+    // Also check from fleet table if driver has a vehicle assigned
+    let effectiveVehicleType = driverVehicleType;
+    if (driverVehiclePlate && !effectiveVehicleType) {
+      const [vRows] = await query(
+        'SELECT vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+        [driverVehiclePlate, tid]
+      );
+      if (vRows.length) effectiveVehicleType = (vRows[0].vehicle_type || '').toLowerCase();
+    }
+
+    // Vehicle type → category compatibility (same rules as mobile app)
+    const CATEGORY_VEHICLES = {
+      PACKAGE: ['motorcycle', 'sedan', 'van'],
+      VEHICLE: ['flatbed', 'truck'],
+      FOOD: ['motorcycle', 'sedan', 'van'],
+      DOC: ['motorcycle', 'sedan'],
+      BULK: ['truck', 'flatbed'],
+    };
+    const shipCategory = (rows[0].item_type_flag || 'PACKAGE').toUpperCase();
+    const allowedVehicles = CATEGORY_VEHICLES[shipCategory] || ['motorcycle','sedan','van','truck','flatbed'];
+
+    // Only enforce if driver has a known vehicle type
+    if (effectiveVehicleType && allowedVehicles.length > 0 && !allowedVehicles.includes(effectiveVehicleType)) {
+      return res.status(400).json({
+        error: `Your vehicle (${effectiveVehicleType}) is not suitable for ${shipCategory.toLowerCase()} deliveries. Required: ${allowedVehicles.join(', ')}.`
+      });
+    }
 
     await query(
       `UPDATE shipment

@@ -380,6 +380,7 @@ export default function SendPackage() {
     if (!receiverName.trim()) { setError('Receiver name is required'); return; }
     if (!receiverPhone.trim()) { setError('Receiver phone number is required'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
+    if (compatibleVehicles.length === 0) { setError('No suitable vehicle available for this package category. Please choose a different category or contact your admin.'); return; }
     setLoading(true);
     setError('');
     try {
@@ -1022,7 +1023,7 @@ export default function SendPackage() {
         </div>
         <button 
           onClick={handleConfirm}
-          disabled={loading || !destination.trim() || !pickup.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0}
+          disabled={loading || !destination.trim() || !pickup.trim() || !receiverName.trim() || !receiverPhone.trim() || rawWeight <= 0 || compatibleVehicles.length === 0}
           className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-600/25 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group disabled:opacity-50"
         >
           {loading ? (
