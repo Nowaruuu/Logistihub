@@ -1384,11 +1384,40 @@ router.get('/pay/success', async (req, res) => {
   </body></html>`);
 });
 
-// GET /pay/cancel — redirect after cancelled payment
-router.get('/pay/cancel', (req, res) => {
-  res.send(`<html><body style="font-family:sans-serif;text-align:center;padding:60px;">
-    <h2 style="color:#dc2626;">Payment Cancelled</h2>
-    <p>Your payment was not completed. You can try again from the app.</p>
+// GET /pay/cancel — redirect after cancelled/failed/expired payment
+router.get('/pay/cancel', async (req, res) => {
+  const dn = req.query.dn || '';
+
+  // Mark payment as Failed so it doesn't stay Pending
+  if (dn) {
+    try {
+      await query(
+        "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND status = 'Pending'",
+        [dn]
+      );
+    } catch (_) {}
+  }
+
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Payment Cancelled</title>
+    <style>body{font-family:sans-serif;text-align:center;padding:60px 20px;background:#fef2f2;margin:0}
+    h2{color:#dc2626;font-size:22px;margin-bottom:12px}
+    p{color:#374151;font-size:15px;line-height:1.6;max-width:400px;margin:0 auto 20px}
+    .icon{font-size:48px;margin-bottom:16px}
+    .btn{display:inline-block;background:#0f172a;color:#fff;padding:14px 32px;border-radius:12px;
+    text-decoration:none;font-weight:700;font-size:15px;margin-top:8px}</style>
+  </head><body>
+    <div class="icon">&#x274C;</div>
+    <h2>Payment Not Completed</h2>
+    <p>Your payment${dn ? ' for shipment <b>' + dn + '</b>' : ''} was cancelled or could not be processed.</p>
+    <p style="color:#6b7280;font-size:13px;">You can try again from the app. No charges were made.</p>
+    <script>
+      // Auto-close after 3 seconds on mobile (Capacitor in-app browser)
+      setTimeout(function() {
+        try { window.close(); } catch(e) {}
+      }, 3000);
+    </script>
   </body></html>`);
 });
 
@@ -1458,6 +1487,17 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
             } catch (_) {}
 
             return res.json({ status: 'Paid', method, amount: payment.total_amount });
+          }
+
+          // If checkout expired or failed, mark payment as Failed
+          if (pmStatus === 'expired' || pmStatus === 'cancelled') {
+            try {
+              await query(
+                "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending'",
+                [req.params.dn, req.tenantId]
+              );
+            } catch (_) {}
+            return res.json({ status: 'Failed', amount: payment.total_amount });
           }
         } catch (e) {
           console.error('[PayMongo status check]', e.message);
