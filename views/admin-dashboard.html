@@ -833,64 +833,73 @@ textarea{resize:vertical;}
     </div>
 
     <script>
-    (function() {
-      var plans = [
-        {
-          key: 'startup', label: 'Startup', price: '1,499', icon: 'speed', color: '#64748b', gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
-          features: ['Up to 10 vehicles','5 staff accounts','Standard route optimization','Real-time GPS tracking','Basic analytics dashboard','Email support'],
-          noFeatures: ['AI dispatching','API & Webhooks','Multi-region deployment','Dedicated account manager']
-        },
-        {
-          key: 'enterprise', label: 'Enterprise', price: '4,999', icon: 'bolt', color: '#3b82f6', gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)', popular: true,
-          features: ['Unlimited vehicles & users','Unlimited staff accounts','AI-powered dispatching','Full API & Webhooks access','Advanced analytics & reports','Priority email & chat support'],
-          noFeatures: ['Multi-region deployment','Dedicated account manager']
-        },
-        {
-          key: 'global', label: 'Global', price: '14,999', icon: 'public', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
-          features: ['Everything in Enterprise','Multi-region deployment','Dedicated account manager','Custom integrations','SLA guarantee (99.9%)','24/7 phone support','White-label options'],
-          noFeatures: []
-        }
-      ];
+    var _upgradePlans = [
+      {
+        key: 'startup', label: 'Startup', price: '1,499', icon: 'speed', color: '#64748b', gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
+        features: ['Up to 10 vehicles','5 staff accounts','Standard route optimization','Real-time GPS tracking','Basic analytics dashboard','Email support'],
+        noFeatures: ['AI dispatching','API & Webhooks','Multi-region deployment','Dedicated account manager']
+      },
+      {
+        key: 'enterprise', label: 'Enterprise', price: '4,999', icon: 'bolt', color: '#3b82f6', gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)', popular: true,
+        features: ['Unlimited vehicles & users','Unlimited staff accounts','AI-powered dispatching','Full API & Webhooks access','Advanced analytics & reports','Priority email & chat support'],
+        noFeatures: ['Multi-region deployment','Dedicated account manager']
+      },
+      {
+        key: 'global', label: 'Global', price: '14,999', icon: 'public', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
+        features: ['Everything in Enterprise','Multi-region deployment','Dedicated account manager','Custom integrations','SLA guarantee (99.9%)','24/7 phone support','White-label options'],
+        noFeatures: []
+      }
+    ];
 
+    async function renderPlansGrid() {
       var currentPlan = (window.__TENANT__ && window.__TENANT__.plan) ? window.__TENANT__.plan.toLowerCase() : 'startup';
-      var currentIdx = plans.findIndex(function(p) { return p.key === currentPlan; });
+      var currentIdx = _upgradePlans.findIndex(function(p) { return p.key === currentPlan; });
       if (currentIdx < 0) currentIdx = 0;
 
+      var pendingDowngrade = null;
+      try {
+        var subRes = await apiFetch('/' + _SLUG + '/api/admin/subscription');
+        var subData = await subRes.json();
+        if (subData.ok && subData.pending_downgrade) {
+          pendingDowngrade = subData.pending_downgrade.toLowerCase();
+        }
+      } catch(e) {}
+
       var label = document.getElementById('upgrade-current-plan');
-      if (label) label.textContent = plans[currentIdx].label;
+      if (label) label.textContent = _upgradePlans[currentIdx].label;
 
       var grid = document.getElementById('upgrade-plans-grid');
       if (!grid) return;
 
-      // Show ALL plans (not just upgrades)
       grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
       grid.innerHTML = '';
 
-      plans.forEach(function(p, idx) {
+      _upgradePlans.forEach(function(p, idx) {
         var isCurrent = (p.key === currentPlan);
         var isUpgrade = (idx > currentIdx);
         var isDowngrade = (idx < currentIdx);
+        var isPendingTarget = (pendingDowngrade === p.key);
         var isPopular = p.popular && !isCurrent;
         var card = document.createElement('div');
 
-        var borderColor = isCurrent ? '#10b981' : isPopular ? p.color : '#e2e8f0';
+        var borderColor = isCurrent ? '#10b981' : isPendingTarget ? '#f97316' : isPopular ? p.color : '#e2e8f0';
         card.style.cssText = 'background:' + p.gradient + ';border:2px solid ' + borderColor +
           ';border-radius:16px;padding:28px 24px;position:relative;transition:all .25s ease;' +
           (isCurrent ? '' : 'cursor:pointer;');
 
         if (!isCurrent) {
           card.onmouseover = function() { this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 32px rgba(0,0,0,0.12)'; this.style.borderColor=p.color; };
-          card.onmouseout = function() { this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor=isPopular ? p.color : '#e2e8f0'; };
+          card.onmouseout = function() { this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor=borderColor; };
         }
 
         var badges = '';
         if (isCurrent) badges = '<div style="position:absolute;top:-10px;right:16px;background:#10b981;color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Current Plan</div>';
+        else if (isPendingTarget) badges = '<div style="position:absolute;top:-10px;right:16px;background:#f97316;color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Downgrade Scheduled</div>';
         else if (isPopular) badges = '<div style="position:absolute;top:-10px;right:16px;background:' + p.color + ';color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Recommended</div>';
 
         var featuresHtml = p.features.map(function(f) {
           return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#334155;padding:4px 0;"><span class=\'material-symbols-outlined\' style=\'font-size:15px;color:' + p.color + ';\'>check_circle</span>' + f + '</div>';
         }).join('');
-
         var noFeaturesHtml = p.noFeatures.map(function(f) {
           return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;padding:4px 0;text-decoration:line-through;"><span class=\'material-symbols-outlined\' style=\'font-size:15px;color:#e2e8f0;\'>cancel</span>' + f + '</div>';
         }).join('');
@@ -900,8 +909,14 @@ textarea{resize:vertical;}
           buttonHtml = '<div style="margin-top:20px;padding:12px;background:#d1fae5;border:1px solid #a7f3d0;border-radius:10px;text-align:center;font-size:13px;font-weight:700;color:#059669;display:flex;align-items:center;justify-content:center;gap:6px;"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>check_circle</span>Your Current Plan</div>';
         } else if (isUpgrade) {
           buttonHtml = '<button onclick="upgradeToPlan(\'' + p.key + '\', this)" style="margin-top:20px;width:100%;padding:13px;background:' + p.color + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;" onmouseover="this.style.opacity=\'0.9\'" onmouseout="this.style.opacity=\'1\'"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>upgrade</span>Upgrade to ' + p.label + '</button>';
+        } else if (isPendingTarget) {
+          buttonHtml = '<button onclick="cancelDowngradePlan(this)" style="margin-top:20px;width:100%;padding:13px;background:#fff7ed;color:#ea580c;border:1.5px solid #f97316;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background=\'#fef2f2\';this.style.borderColor=\'#ef4444\';this.style.color=\'#dc2626\';" onmouseout="this.style.background=\'#fff7ed\';this.style.borderColor=\'#f97316\';this.style.color=\'#ea580c\';"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>close</span>Cancel Downgrade</button>';
         } else if (isDowngrade) {
-          buttonHtml = '<button onclick="downgradeToPlan(\'' + p.key + '\', \'' + p.label + '\', this)" style="margin-top:20px;width:100%;padding:13px;background:transparent;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.borderColor=\'#f97316\';this.style.color=\'#f97316\';" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.color=\'#94a3b8\';"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>arrow_downward</span>Downgrade to ' + p.label + '</button>';
+          if (pendingDowngrade) {
+            buttonHtml = '<div style="margin-top:20px;padding:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#94a3b8;">Downgrade pending on another plan</div>';
+          } else {
+            buttonHtml = '<button onclick="downgradeToPlan(\'' + p.key + '\', \'' + p.label + '\', this)" style="margin-top:20px;width:100%;padding:13px;background:transparent;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.borderColor=\'#f97316\';this.style.color=\'#f97316\';" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.color=\'#94a3b8\';"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>arrow_downward</span>Downgrade to ' + p.label + '</button>';
+          }
         }
 
         card.innerHTML = badges +
@@ -920,7 +935,8 @@ textarea{resize:vertical;}
 
         grid.appendChild(card);
       });
-    })();
+    }
+    renderPlansGrid();
 
     async function upgradeToPlan(planKey, btn) {
       if (!confirm('Upgrade to ' + planKey.toUpperCase() + '? You will be redirected to PayMongo to complete payment.')) return;
@@ -959,14 +975,31 @@ textarea{resize:vertical;}
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to schedule downgrade.');
         alert('✓ ' + d.message);
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">check</span> Downgrade Scheduled';
-        btn.style.borderColor = '#f97316';
-        btn.style.color = '#f97316';
-        btn.style.background = '#fff7ed';
+        renderPlansGrid();
       } catch(e) {
         alert('Error: ' + e.message);
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">arrow_downward</span> Downgrade to ' + planLabel;
+      }
+    }
+
+    async function cancelDowngradePlan(btn) {
+      if (!confirm('Cancel the pending downgrade?\n\nYour current plan will remain active and you will continue to be billed at the current rate.')) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">progress_activity</span> Cancelling...';
+      try {
+        var r = await apiFetch('/' + _SLUG + '/api/admin/cancel-downgrade', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'}
+        });
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed to cancel downgrade.');
+        alert('✓ ' + d.message);
+        renderPlansGrid();
+      } catch(e) {
+        alert('Error: ' + e.message);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">close</span> Cancel Downgrade';
       }
     }
     </script>
