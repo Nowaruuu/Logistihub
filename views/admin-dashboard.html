@@ -1400,8 +1400,8 @@ function loadSalesReport(){
         data:{
           labels:labels,
           datasets:[
-            {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev'},
-            {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev'},
+            {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
+            {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
             {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
           ]
         },
