@@ -142,6 +142,41 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
        LIMIT 200`,
       [tid, tid]
     );
+
+    // Enrich payments missing method/date from PayMongo API
+    const pmKey = process.env.PAYMONGO_SECRET_KEY;
+    if (pmKey) {
+      for (const p of rows) {
+        if (p.paymongo_checkout_id && (!p.payment_method || !p.paid_at)) {
+          try {
+            const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${p.paymongo_checkout_id}`, {
+              headers: { 'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64') }
+            });
+            const pmData = await pmRes.json();
+            const attrs = pmData?.data?.attributes || {};
+            const pmPayments = attrs.payments || [];
+            const paidEntry = pmPayments.find(pp => pp?.attributes?.status === 'paid');
+            if (paidEntry) {
+              const method = paidEntry.attributes?.source?.type || '';
+              const pmId = paidEntry.id || null;
+              const paidAt = paidEntry.attributes?.paid_at ? new Date(paidEntry.attributes.paid_at * 1000) : null;
+              // Cache in DB for next time
+              const updates = [];
+              const vals = [];
+              if (method && !p.payment_method) { updates.push('payment_method = ?'); vals.push(method); p.payment_method = method; }
+              if (pmId && !p.paymongo_payment_id) { updates.push('paymongo_payment_id = ?'); vals.push(pmId); p.paymongo_payment_id = pmId; }
+              if (paidAt && !p.paid_at) { updates.push('paid_at = ?'); vals.push(paidAt); p.paid_at = paidAt; }
+              if (!p.status || p.status === 'Pending') { updates.push("status = 'Paid'"); p.status = 'Paid'; }
+              if (updates.length) {
+                vals.push(p.invoice_id);
+                await query(`UPDATE payment SET ${updates.join(', ')} WHERE invoice_id = ?`, vals).catch(() => {});
+              }
+            }
+          } catch (_) { /* PayMongo lookup failed — skip silently */ }
+        }
+      }
+    }
+
     const [[{ total_revenue }]] = await query(
       "SELECT COALESCE(SUM(total_amount),0) AS total_revenue FROM payment WHERE tenant_id = ? AND status = 'Paid'",
       [tid]

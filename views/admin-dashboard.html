@@ -2509,8 +2509,10 @@ function renderPayments(list) {
       : esc(p.receiver_name || '—');
     var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
     var method = p.payment_method || '';
-    if (!method && (p.paymongo_checkout_id || p.paymongo_payment_id || (p.reference_code && p.reference_code.indexOf('cs_')===0))) method = 'Online (Stripe)';
-    if (!method && p.status === 'Paid') method = 'Cash';
+    var methodLabels = {'gcash':'GCash','card':'Card','paymaya':'PayMaya','grab_pay':'GrabPay','billease':'BillEase','dob':'Online Banking'};
+    if (method && methodLabels[method.toLowerCase()]) method = methodLabels[method.toLowerCase()];
+    else if (method) method = method.charAt(0).toUpperCase() + method.slice(1);
+    if (!method && p.paymongo_checkout_id) method = 'PayMongo';
     method = esc(method || '—');
     var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '—');
     var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">—</span>';
