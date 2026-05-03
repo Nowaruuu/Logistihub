@@ -517,6 +517,8 @@ export default function SendPackage() {
               placeholder="Search address or type manually" 
             />
           </div>
+          {/* Search + suggestions wrapper - must be above map */}
+          <div className="relative z-50">
           {/* Pickup address suggestions */}
           {pickupResults.length > 0 && (
             <div className="absolute z-[9999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
@@ -527,9 +529,10 @@ export default function SendPackage() {
               ))}
             </div>
           )}
+          </div>
 
           {showPickupMap && (
-            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
+            <div className="relative z-0 w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
               <Map 
                 center={pickupCoords || [14.5489, 121.0486]} 
                 zoom={14}
@@ -609,9 +612,11 @@ export default function SendPackage() {
               placeholder="Search receiver's address" 
             />
           </div>
+          {/* Search + suggestions wrapper - must be above map */}
+          <div className="relative z-50">
           {/* Destination address suggestions */}
           {destResults.length > 0 && (
-            <div className="absolute z-[999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
+            <div className="absolute z-[9999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
               {destResults.map((r, i) => (
                 <button key={i} onClick={() => selectDest(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
@@ -619,9 +624,10 @@ export default function SendPackage() {
               ))}
             </div>
           )}
+          </div>
 
           {showMap && (
-            <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
+            <div className="relative z-0 w-full h-64 rounded-2xl overflow-hidden border-2 border-orange-600/20 shadow-inner mb-4 mt-2">
               <Map 
                 center={destCoords || [14.5489, 121.0486]} 
                 zoom={14}
