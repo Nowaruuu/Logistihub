@@ -798,17 +798,29 @@ router.get('/chat/:dn', authMiddleware, async (req, res) => {
   try {
     await ensureChatTable();
     const shipment = await getChatShipment(dn, tid);
-    if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
+    if (!shipment) {
+      console.log('[CHAT DEBUG] Shipment not found:', dn, 'tid:', tid);
+      return res.status(404).json({ error: 'Shipment not found.' });
+    }
 
     // Verify caller is either the sender or driver (use Number() to avoid type mismatch)
     const userId = req.user?.user_id ? Number(req.user.user_id) : null;
     const staffId = req.staff?.staff_id ? Number(req.staff.staff_id) : null;
-    if (userId && Number(shipment.sender_user_id) !== userId) return res.status(403).json({ error: 'Not authorized.' });
-    if (staffId && Number(shipment.assigned_driver_id) !== staffId) return res.status(403).json({ error: 'Not authorized.' });
+    console.log('[CHAT DEBUG] dn:', dn, 'userId:', userId, 'staffId:', staffId, 'sender_user_id:', shipment.sender_user_id, 'assigned_driver_id:', shipment.assigned_driver_id, 'status:', shipment.status);
+
+    if (userId && Number(shipment.sender_user_id) !== userId) {
+      console.log('[CHAT DEBUG] AUTH FAIL: user mismatch', Number(shipment.sender_user_id), '!==', userId);
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+    if (staffId && Number(shipment.assigned_driver_id) !== staffId) {
+      console.log('[CHAT DEBUG] AUTH FAIL: driver mismatch', Number(shipment.assigned_driver_id), '!==', staffId);
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
 
     // Chat only available for In-Transit / Out for Delivery
     const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
     const chatEnabled = chatStatuses.includes(shipment.status);
+    console.log('[CHAT DEBUG] chatEnabled:', chatEnabled, 'status:', JSON.stringify(shipment.status));
 
     const [messages] = await query(
       `SELECT chat_id, sender_type, sender_id, message, created_at
@@ -819,7 +831,7 @@ router.get('/chat/:dn', authMiddleware, async (req, res) => {
 
     res.json({ ok: true, chat_enabled: chatEnabled, status: shipment.status, messages: messages || [] });
   } catch (err) {
-    console.error('[GET /chat/:dn]', err);
+    console.error('[GET /chat/:dn] ERROR:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
