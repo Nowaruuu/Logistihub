@@ -800,11 +800,11 @@ router.get('/chat/:dn', authMiddleware, async (req, res) => {
     const shipment = await getChatShipment(dn, tid);
     if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
 
-    // Verify caller is either the sender or driver
-    const userId = req.user?.user_id || null;
-    const staffId = req.staff?.staff_id || null;
-    if (userId && shipment.sender_user_id !== userId) return res.status(403).json({ error: 'Not authorized.' });
-    if (staffId && shipment.assigned_driver_id !== staffId) return res.status(403).json({ error: 'Not authorized.' });
+    // Verify caller is either the sender or driver (use Number() to avoid type mismatch)
+    const userId = req.user?.user_id ? Number(req.user.user_id) : null;
+    const staffId = req.staff?.staff_id ? Number(req.staff.staff_id) : null;
+    if (userId && Number(shipment.sender_user_id) !== userId) return res.status(403).json({ error: 'Not authorized.' });
+    if (staffId && Number(shipment.assigned_driver_id) !== staffId) return res.status(403).json({ error: 'Not authorized.' });
 
     // Chat only available for In-Transit / Out for Delivery
     const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
@@ -836,11 +836,11 @@ router.post('/chat/:dn', authMiddleware, async (req, res) => {
     const shipment = await getChatShipment(dn, tid);
     if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
 
-    // Verify caller is either the sender or driver
-    const userId = req.user?.user_id || null;
-    const staffId = req.staff?.staff_id || null;
-    if (userId && shipment.sender_user_id !== userId) return res.status(403).json({ error: 'Not authorized.' });
-    if (staffId && shipment.assigned_driver_id !== staffId) return res.status(403).json({ error: 'Not authorized.' });
+    // Verify caller is either the sender or driver (use Number() to avoid type mismatch)
+    const userId = req.user?.user_id ? Number(req.user.user_id) : null;
+    const staffId = req.staff?.staff_id ? Number(req.staff.staff_id) : null;
+    if (userId && Number(shipment.sender_user_id) !== userId) return res.status(403).json({ error: 'Not authorized.' });
+    if (staffId && Number(shipment.assigned_driver_id) !== staffId) return res.status(403).json({ error: 'Not authorized.' });
 
     // Chat only during active delivery
     const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
