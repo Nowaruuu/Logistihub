@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (userData: any, loginResponse?: any) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -114,8 +115,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
+  const refreshProfile = async () => {
+    try {
+      const data = await getProfile();
+      const p = buildProfile(data);
+      setUser({ uid: p.uid, ...p });
+      setProfile(p);
+      localStorage.setItem('auth_profile', JSON.stringify(data));
+    } catch (err) {
+      console.warn('refreshProfile failed:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 
 export default function Settings() {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [notifications, setNotifications] = useState(() => {
     return localStorage.getItem('notif_enabled') !== 'false';
   });
@@ -89,6 +89,7 @@ export default function Settings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update phone');
       setPhoneMsg({ type: 'success', text: 'Phone updated!' });
+      await refreshProfile();
       setTimeout(() => { setShowPhoneModal(false); setPhoneMsg(null); }, 1200);
     } catch (err: any) {
       setPhoneMsg({ type: 'error', text: err.message || 'Failed to update phone.' });

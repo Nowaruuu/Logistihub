@@ -9,7 +9,7 @@ import { Driver } from '../types';
 import { cn } from '../lib/utils';
 
 export default function Profile() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [driverData, setDriverData] = useState<Driver | null>(null);
   const [vehicleInfo, setVehicleInfo] = useState<{ vehicle_plate: string; vehicle_type: string } | null>(null);
@@ -106,7 +106,7 @@ export default function Profile() {
       }
 
       setIsEditing(false);
-      // Note: useAuth listener will pick up profile changes
+      await refreshProfile();
     } catch (err) {
       console.error("Error saving profile:", err);
       alert('Failed to save profile changes.');
