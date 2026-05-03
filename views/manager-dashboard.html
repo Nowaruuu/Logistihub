@@ -1502,14 +1502,27 @@ function loadPods() {
 }
 
 // ═══ ASSIGN DRIVER FUNCTIONS ═════════════════════════════════════════════════
-function openAssignModal(dn, currentDriverId, currentPlate) {
+async function openAssignModal(dn, currentDriverId, currentPlate) {
   var modal = document.getElementById('modal-assign-driver');
   document.getElementById('assign-dn').value = dn;
   document.getElementById('assign-modal-err').style.display = 'none';
 
-  // Ensure staff and vehicle data is loaded
-  if (!_staffData.length) loadStaff();
-  if (!_vehicleData.length) loadVehicles();
+  // Fetch staff and vehicle data if not already loaded — AWAIT so dropdowns populate
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!_staffData.length && slug) {
+    try {
+      var sr = await apiFetch('/' + slug + '/api/manager/staff');
+      var sd = await sr.json();
+      _staffData = Array.isArray(sd) ? sd : [];
+    } catch(e) { console.error('Failed to load staff for assign modal', e); }
+  }
+  if (!_vehicleData.length && slug) {
+    try {
+      var vr = await apiFetch('/' + slug + '/api/admin/vehicles');
+      var vd = await vr.json();
+      _vehicleData = Array.isArray(vd) ? vd : [];
+    } catch(e) { console.error('Failed to load vehicles for assign modal', e); }
+  }
 
   // Populate driver dropdown from cached staff data with availability
   var driverSel = document.getElementById('assign-driver');
