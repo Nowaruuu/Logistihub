@@ -32,3 +32,13 @@ body {
   scrollbar-width: none;
 }
 
+/* Force Leaflet map to stay below overlays (sidebar z-[9999], chat z-[9998]) */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control {
+  z-index: 1 !important;
+}
+.leaflet-container {
+  z-index: 0 !important;
+}
