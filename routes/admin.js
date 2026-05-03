@@ -1217,7 +1217,7 @@ router.post('/:slug/api/admin/upgrade', requireAdmin, requireSlugMatch, async (r
               currency: 'PHP',
               quantity: 1,
             }],
-            payment_method_types: ['gcash', 'card', 'grab_pay', 'paymaya'],
+            payment_method_types: ['gcash', 'card', 'paymaya'],
             description: `Subscription upgrade to ${plan} for ${slug}`,
             success_url: `${baseUrl}/${slug}/api/admin/upgrade/success?plan=${plan}&token=${token}`,
             cancel_url: `${baseUrl}/${slug}/admin`,
@@ -1321,6 +1321,49 @@ router.get('/:slug/api/admin/subscription', requireAdmin, requireSlugMatch, asyn
   }
 });
 
+// ── POST /:slug/api/admin/downgrade — schedule a plan downgrade ─────────────
+router.post('/:slug/api/admin/downgrade', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { plan } = req.body;
+  const tid = req.tenantId;
+  const slug = req.params.slug;
+
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
+
+  try {
+    // Verify it's actually a downgrade
+    const [[tenant]] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
+    const currentIdx = PLAN_ORDER.indexOf(tenant?.plan?.toLowerCase() || 'startup');
+    const targetIdx  = PLAN_ORDER.indexOf(plan);
+    if (targetIdx >= currentIdx) return res.status(400).json({ error: 'You can only downgrade to a lower plan.' });
+    if (targetIdx < 0) return res.status(400).json({ error: 'Invalid target plan.' });
+
+    // Calculate next billing date (1 month from now) for display
+    const nextBilling = new Date();
+    nextBilling.setMonth(nextBilling.getMonth() + 1);
+    const effectiveDate = nextBilling.toISOString().split('T')[0];
+
+    // Store the pending downgrade
+    // Add column if it doesn't exist
+    try { await query('ALTER TABLE TENANT ADD COLUMN pending_downgrade VARCHAR(50) DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE TENANT ADD COLUMN downgrade_effective_date DATE DEFAULT NULL'); } catch(_) {}
+
+    await query(
+      'UPDATE TENANT SET pending_downgrade = ?, downgrade_effective_date = ? WHERE tenant_id = ?',
+      [plan, effectiveDate, tid]
+    );
+
+    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'DOWNGRADE_SCHEDULED', target: `${tenant.plan} → ${plan} (effective ${effectiveDate})`, tenant_slug: slug, ip_address: req.ip });
+
+    res.json({ 
+      ok: true, 
+      message: `Your plan will be downgraded to ${plan.toUpperCase()} on ${effectiveDate}.`,
+      effective_date: effectiveDate,
+      new_plan: plan
+    });
+  } catch(err) {
+    console.error('[POST /admin/downgrade]', err);
+    res.status(500).json({ error: 'Failed to schedule downgrade. ' + err.message });
+  }
+});
+
 module.exports = router;
-
-

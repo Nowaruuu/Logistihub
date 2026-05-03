@@ -263,7 +263,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
-    <button class="nav-link" onclick="go('upgrade',this)"><span class="material-symbols-outlined">upgrade</span>Upgrade Plan</button>
+    <button class="nav-link" onclick="go('upgrade',this)"><span class="material-symbols-outlined">swap_vert</span>Manage Plan</button>
     <button class="nav-link" onclick="go('audit',this)"><span class="material-symbols-outlined">history</span>Audit Logs</button>
   </nav>
   <div class="sidebar-bottom">
@@ -821,8 +821,8 @@ textarea{resize:vertical;}
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
           <span class="material-symbols-outlined" style="font-size:14px;">lock</span> Secured by PayMongo
         </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash · Card · GrabPay · Maya
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
+          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash · Card · Maya
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
           <span class="material-symbols-outlined" style="font-size:14px;">autorenew</span> Cancel anytime
@@ -860,25 +860,21 @@ textarea{resize:vertical;}
       var grid = document.getElementById('upgrade-plans-grid');
       if (!grid) return;
 
-      if (currentIdx >= plans.length - 1) {
-        grid.style.display = 'none';
-        var notice = document.getElementById('upgrade-max-notice');
-        if (notice) notice.style.display = 'block';
-        return;
-      }
-
-      var visiblePlans = plans.filter(function(_, i) { return i >= currentIdx; });
-      grid.style.gridTemplateColumns = 'repeat(' + Math.min(visiblePlans.length, 3) + ', 1fr)';
+      // Show ALL plans (not just upgrades)
+      grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
       grid.innerHTML = '';
 
-      visiblePlans.forEach(function(p, idx) {
+      plans.forEach(function(p, idx) {
         var isCurrent = (p.key === currentPlan);
+        var isUpgrade = (idx > currentIdx);
+        var isDowngrade = (idx < currentIdx);
         var isPopular = p.popular && !isCurrent;
         var card = document.createElement('div');
 
-        card.style.cssText = 'background:' + p.gradient + ';border:2px solid ' + (isPopular ? p.color : isCurrent ? '#cbd5e1' : '#e2e8f0') +
+        var borderColor = isCurrent ? '#10b981' : isPopular ? p.color : '#e2e8f0';
+        card.style.cssText = 'background:' + p.gradient + ';border:2px solid ' + borderColor +
           ';border-radius:16px;padding:28px 24px;position:relative;transition:all .25s ease;' +
-          (isCurrent ? 'opacity:0.7;' : 'cursor:pointer;');
+          (isCurrent ? '' : 'cursor:pointer;');
 
         if (!isCurrent) {
           card.onmouseover = function() { this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 32px rgba(0,0,0,0.12)'; this.style.borderColor=p.color; };
@@ -886,7 +882,7 @@ textarea{resize:vertical;}
         }
 
         var badges = '';
-        if (isCurrent) badges = '<div style="position:absolute;top:-10px;right:16px;background:#0f2235;color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Current Plan</div>';
+        if (isCurrent) badges = '<div style="position:absolute;top:-10px;right:16px;background:#10b981;color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Current Plan</div>';
         else if (isPopular) badges = '<div style="position:absolute;top:-10px;right:16px;background:' + p.color + ';color:#fff;font-size:9px;font-weight:800;padding:4px 14px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;">Recommended</div>';
 
         var featuresHtml = p.features.map(function(f) {
@@ -899,9 +895,11 @@ textarea{resize:vertical;}
 
         var buttonHtml = '';
         if (isCurrent) {
-          buttonHtml = '<div style="margin-top:20px;padding:12px;background:#e2e8f0;border-radius:10px;text-align:center;font-size:13px;font-weight:700;color:#94a3b8;">Your Current Plan</div>';
-        } else {
+          buttonHtml = '<div style="margin-top:20px;padding:12px;background:#d1fae5;border:1px solid #a7f3d0;border-radius:10px;text-align:center;font-size:13px;font-weight:700;color:#059669;display:flex;align-items:center;justify-content:center;gap:6px;"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>check_circle</span>Your Current Plan</div>';
+        } else if (isUpgrade) {
           buttonHtml = '<button onclick="upgradeToPlan(\'' + p.key + '\', this)" style="margin-top:20px;width:100%;padding:13px;background:' + p.color + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;" onmouseover="this.style.opacity=\'0.9\'" onmouseout="this.style.opacity=\'1\'"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>upgrade</span>Upgrade to ' + p.label + '</button>';
+        } else if (isDowngrade) {
+          buttonHtml = '<button onclick="downgradeToPlan(\'' + p.key + '\', \'' + p.label + '\', this)" style="margin-top:20px;width:100%;padding:13px;background:transparent;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.borderColor=\'#f97316\';this.style.color=\'#f97316\';" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.color=\'#94a3b8\';"><span class=\'material-symbols-outlined\' style=\'font-size:16px;\'>arrow_downward</span>Downgrade to ' + p.label + '</button>';
         }
 
         card.innerHTML = badges +
@@ -943,6 +941,30 @@ textarea{resize:vertical;}
         alert('Error: ' + e.message);
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">upgrade</span> Try Again';
+      }
+    }
+
+    async function downgradeToPlan(planKey, planLabel, btn) {
+      if (!confirm('Downgrade to ' + planLabel + '?\n\nYour current plan features will remain active until the next billing cycle. The downgrade takes effect on your next billing date.\n\nAre you sure?')) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">progress_activity</span> Processing...';
+      try {
+        var r = await apiFetch('/' + _SLUG + '/api/admin/downgrade', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ plan: planKey })
+        });
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed to schedule downgrade.');
+        alert('✓ ' + d.message);
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">check</span> Downgrade Scheduled';
+        btn.style.borderColor = '#f97316';
+        btn.style.color = '#f97316';
+        btn.style.background = '#fff7ed';
+      } catch(e) {
+        alert('Error: ' + e.message);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">arrow_downward</span> Downgrade to ' + planLabel;
       }
     }
     </script>
@@ -1059,7 +1081,7 @@ var pageMeta={
   'pod':['Proof of Delivery','Capture records'],
   'user-reg':['User Registration','Your private registration page'],
   'settings':['Settings','Workspace configuration'],
-  'upgrade':['Upgrade Plan','Change your subscription'],
+  'upgrade':['Manage Plan','Upgrade or downgrade your subscription'],
   'audit':['Audit Logs','System activity history']
 };
 
