@@ -206,7 +206,6 @@
                 <p>Designed for dispatchers, fleet managers, and drivers. <strong>Drivers:</strong> You must provision your team account on this web portal before using the app.</p>
                 <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
                     <a href="#" id="staff-join" class="btn btn-primary">Join Team</a>
-                    <a href="#" id="staff-login" class="btn btn-outline">Login</a>
                 </div>
             </div>
         </section>
@@ -259,14 +258,11 @@
                 logoBox.innerHTML = `<img src="${logoUrl}" alt="${name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;
             }
 
-            // "Login" top nav → CLIENT login (login.html), not staff
-            const clientLoginUrl = `/${SLUG}/login`;
-            document.getElementById('staff-login-top').textContent = 'Client Login →';
-            document.getElementById('staff-login-top').href = clientLoginUrl;
+            // Top nav → Staff login
+            document.getElementById('staff-login-top').textContent = 'Staff Login →';
+            document.getElementById('staff-login-top').href = `/${SLUG}/staff-login`;
 
             // Staff section buttons
-            document.getElementById('staff-login').href = `/${SLUG}/staff-login`;
-            document.getElementById('staff-login').textContent = 'Staff Login';
             document.getElementById('staff-join').href = `/${SLUG}/register`;
             document.getElementById('app-dl-link').href = `/${SLUG}/get-app`;
 
