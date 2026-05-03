@@ -1307,12 +1307,14 @@ router.get('/:slug/api/admin/subscription', requireAdmin, requireSlugMatch, asyn
       `SELECT * FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 20`,
       [tid]
     );
-    const [tenantRows] = await query('SELECT plan, created_at FROM TENANT WHERE tenant_id = ? LIMIT 1', [tid]);
+    const [tenantRows] = await query('SELECT plan, created_at, pending_downgrade, downgrade_effective_date FROM TENANT WHERE tenant_id = ? LIMIT 1', [tid]);
     const tenant = tenantRows[0] || {};
     res.json({
       ok: true,
       plan: tenant.plan || 'startup',
       tenant_created_at: tenant.created_at,
+      pending_downgrade: tenant.pending_downgrade || null,
+      downgrade_effective_date: tenant.downgrade_effective_date || null,
       payments: payments || []
     });
   } catch (err) {
@@ -1363,6 +1365,31 @@ router.post('/:slug/api/admin/downgrade', requireAdmin, requireSlugMatch, async 
   } catch(err) {
     console.error('[POST /admin/downgrade]', err);
     res.status(500).json({ error: 'Failed to schedule downgrade. ' + err.message });
+  }
+});
+
+// ── POST /:slug/api/admin/cancel-downgrade — cancel a pending downgrade ─────
+router.post('/:slug/api/admin/cancel-downgrade', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const slug = req.params.slug;
+
+  try {
+    const [[tenant]] = await query('SELECT pending_downgrade FROM TENANT WHERE tenant_id = ?', [tid]);
+    if (!tenant?.pending_downgrade) {
+      return res.status(400).json({ error: 'No pending downgrade to cancel.' });
+    }
+
+    await query(
+      'UPDATE TENANT SET pending_downgrade = NULL, downgrade_effective_date = NULL WHERE tenant_id = ?',
+      [tid]
+    );
+
+    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'DOWNGRADE_CANCELLED', target: `Cancelled pending downgrade to ${tenant.pending_downgrade}`, tenant_slug: slug, ip_address: req.ip });
+
+    res.json({ ok: true, message: 'Pending downgrade has been cancelled. Your current plan remains active.' });
+  } catch(err) {
+    console.error('[POST /admin/cancel-downgrade]', err);
+    res.status(500).json({ error: 'Failed to cancel downgrade. ' + err.message });
   }
 });
 

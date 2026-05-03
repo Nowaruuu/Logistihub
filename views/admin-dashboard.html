@@ -591,6 +591,8 @@ textarea{resize:vertical;}
           <div id="sub-since" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
         </div>
       </div>
+      <!-- Pending Downgrade Notice -->
+      <div id="sub-pending-downgrade" style="display:none;margin-bottom:16px;"></div>
       <!-- Billing History -->
       <div class="card" style="padding:0;">
         <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
@@ -2978,6 +2980,22 @@ async function loadSubscription() {
       sinceEl.textContent = 'Since ' + tenantCreated.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
+    // Show pending downgrade notice
+    var pendingContainer = document.getElementById('sub-pending-downgrade');
+    if (pendingContainer && d.pending_downgrade) {
+      var targetPlan = plans[d.pending_downgrade] ? plans[d.pending_downgrade].label : d.pending_downgrade;
+      var effDate = d.downgrade_effective_date ? new Date(d.downgrade_effective_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'next billing cycle';
+      pendingContainer.style.display = 'block';
+      pendingContainer.innerHTML = '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="material-symbols-outlined" style="font-size:20px;color:#f97316;">schedule</span>' +
+          '<div><div style="font-size:13px;font-weight:700;color:#9a3412;">Downgrade Scheduled</div>' +
+          '<div style="font-size:12px;color:#c2410c;">Your plan will change to <strong>' + esc(targetPlan) + '</strong> on ' + effDate + '</div></div>' +
+        '</div>' +
+        '<button onclick="cancelDowngrade(this)" style="padding:8px 16px;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:12px;font-weight:700;color:#ea580c;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;" onmouseover="this.style.background=\'#fef2f2\';this.style.borderColor=\'#ef4444\';this.style.color=\'#dc2626\';" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#fed7aa\';this.style.color=\'#ea580c\';">Cancel Downgrade</button>' +
+      '</div>';
+    }
+
     // Billing history from SUBSCRIPTION_PAYMENT table
     if (!tbody) return;
     var payments = d.payments || [];
@@ -3010,6 +3028,29 @@ async function loadSubscription() {
     if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
     if (statusEl) { statusEl.textContent = 'Active'; statusEl.style.color = '#16a34a'; }
     if (tbody) tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>Could not load billing history</p></div></td></tr>';
+  }
+}
+
+async function cancelDowngrade(btn) {
+  if (!confirm('Cancel the pending downgrade? Your current plan will remain active.')) return;
+  btn.disabled = true;
+  btn.textContent = 'Cancelling...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/cancel-downgrade', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'}
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed');
+    alert('✓ ' + d.message);
+    // Hide the notice and reload subscription
+    var container = document.getElementById('sub-pending-downgrade');
+    if (container) container.style.display = 'none';
+    loadSubscription();
+  } catch(e) {
+    alert('Error: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Cancel Downgrade';
   }
 }
 
