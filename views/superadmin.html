@@ -706,8 +706,8 @@
         document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
         document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants);
-        renderForecast(data);
+        try { renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants); } catch(ce) { console.error('Charts error:', ce); }
+        try { renderForecast(data); } catch(fe) { console.error('Forecast error:', fe); var fb=document.getElementById('forecast-body'); if(fb) fb.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:20px;">No forecast data available yet.</div>'; }
       } catch(e) { console.error('Dashboard error:', e); }
     }
 
@@ -735,6 +735,12 @@
       var revValues = (data.monthlyRevenue || []).map(function(r) { return Number(r.total) || 0; });
       var tenValues = (data.monthlyTenants || []).map(function(r) { return Number(r.total) || 0; });
       var shipValues = (data.monthlyShipments || []).map(function(r) { return Number(r.total) || 0; });
+
+      // If no data at all, show friendly empty state
+      if (!revValues.length && !tenValues.length && !shipValues.length) {
+        el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#94a3b8;"><span class="material-symbols-rounded" style="font-size:32px;display:block;margin-bottom:8px;">query_stats</span>Not enough historical data yet. Forecast will appear once there are at least 2 months of activity.</div>';
+        return;
+      }
 
       var revForecast = linearForecast(revValues);
       var tenForecast = linearForecast(tenValues);
