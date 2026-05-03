@@ -182,6 +182,24 @@ app.listen(PORT, async () => {
         console.log(`   🗑️  Cleaned up erroneous shipment: ${dn}`);
       }
     }
+
+    // Ensure vehicle_type column exists on shipment table
+    try {
+      await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL');
+      console.log('   ✅ Added vehicle_type column to shipment table');
+    } catch(_) { /* column already exists */ }
+
+    // Backfill vehicle_type for old shipments that have an assigned driver
+    try {
+      await query(`
+        UPDATE shipment s
+        JOIN STAFF st ON s.assigned_driver_id = st.staff_id
+        SET s.vehicle_type = LOWER(st.vehicle_type)
+        WHERE s.vehicle_type IS NULL AND st.vehicle_type IS NOT NULL AND st.vehicle_type != ''
+      `);
+      console.log('   ✅ Backfilled vehicle_type from assigned drivers');
+    } catch(_) {}
+
   } catch (e) { console.error('Cleanup error:', e.message); }
 });
 
