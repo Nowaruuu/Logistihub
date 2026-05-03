@@ -76,9 +76,10 @@ function MapController({ center, zoom, markers, autoBounds, onClick }: {
       const bounds = L.latLngBounds(markers.map(m => m.position));
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     } else {
-      map.setView(center, zoom);
+      // Only pan to center — preserve user's current zoom level
+      map.panTo(center, { animate: true });
     }
-  }, [center, zoom, markers, autoBounds, map]);
+  }, [center, markers, autoBounds, map]);
 
   useEffect(() => {
     if (!onClick) return;

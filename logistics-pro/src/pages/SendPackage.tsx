@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays, NotebookPen } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays, NotebookPen, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
@@ -263,16 +263,12 @@ export default function SendPackage() {
   };
 
   // Auto-switch to standard if user picks Sunday while on express
-  useEffect(() => {
-    if (method === 'express' && scheduledDate && isSunday(scheduledDate)) {
-      setMethod('standard');
-    }
-  }, [scheduledDate]);
+  // REMOVED: Express is still selectable on Sundays — orders will be delivered next business day
 
   // Today's date for min picker
   const todayStr = new Date().toISOString().split('T')[0];
   const isTodaySunday = new Date().getDay() === 0;
-  const isSelectedSunday = scheduledDate ? isSunday(scheduledDate) : isTodaySunday;
+  const isSelectedSunday = scheduledDate ? new Date(scheduledDate).getDay() === 0 : isTodaySunday;
 
   // Delivery ETA descriptions
   const stdEta = '3-7 business days';
@@ -505,21 +501,25 @@ export default function SendPackage() {
             </div>
           </div>
           <div className="relative flex items-center mb-1">
-            <MapPin className="absolute left-4 text-orange-600 size-5" />
-            {searchingPickup && <Loader2 className="absolute right-4 text-orange-600 size-4 animate-spin" />}
-            {!searchingPickup && pickup.length >= 3 && <Search className="absolute right-4 text-slate-300 size-4" />}
+            <MapPin className="absolute left-4 text-orange-600 size-5 z-10" />
+            {searchingPickup && <Loader2 className="absolute right-12 text-orange-600 size-4 animate-spin z-10" />}
+            {pickup.length > 0 && (
+              <button type="button" onClick={() => { setPickup(''); setPickupCoords(null); setPickupResults([]); }} className="absolute right-4 z-10 p-1 rounded-full bg-slate-200 dark:bg-slate-700 active:scale-90 transition-all">
+                <X className="size-3 text-slate-500" />
+              </button>
+            )}
             <input 
               type="text"
               value={pickup}
               onChange={(e) => handlePickupChange(e.target.value)}
               onBlur={() => setTimeout(() => setPickupResults([]), 200)}
-              className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
+              className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
               placeholder="Search address or type manually" 
             />
           </div>
           {/* Pickup address suggestions */}
           {pickupResults.length > 0 && (
-            <div className="absolute z-[999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
+            <div className="absolute z-[9999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
               {pickupResults.map((r, i) => (
                 <button key={i} onClick={() => selectPickup(r)} className="w-full text-left px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-b-0 transition-colors">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2">{r.display_name}</p>
@@ -559,7 +559,7 @@ export default function SendPackage() {
               value={pickupNotes}
               onChange={e => setPickupNotes(e.target.value)}
               className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="House/Bldg #, floor, unit, landmarks (e.g. 287 green gate)"
+              placeholder="Exact address details (e.g. Blk 5 Lot 7)"
             />
           </div>
         </div>
@@ -592,16 +592,20 @@ export default function SendPackage() {
             </div>
           </div>
           <div className="relative flex items-center mb-1">
-            <Navigation className="absolute left-4 text-slate-400 size-5" />
-            {searchingDest && <Loader2 className="absolute right-4 text-orange-600 size-4 animate-spin" />}
-            {!searchingDest && destination.length >= 3 && <Search className="absolute right-4 text-slate-300 size-4" />}
+            <Navigation className="absolute left-4 text-slate-400 size-5 z-10" />
+            {searchingDest && <Loader2 className="absolute right-12 text-orange-600 size-4 animate-spin z-10" />}
+            {destination.length > 0 && (
+              <button type="button" onClick={() => { setDestination(''); setDestCoords(null); setDestResults([]); }} className="absolute right-4 z-10 p-1 rounded-full bg-slate-200 dark:bg-slate-700 active:scale-90 transition-all">
+                <X className="size-3 text-slate-500" />
+              </button>
+            )}
             <input 
               type="text"
               required
               value={destination}
               onChange={(e) => handleDestChange(e.target.value)}
               onBlur={handleDestBlur}
-              className="w-full pl-12 pr-10 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
+              className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
               placeholder="Search receiver's address" 
             />
           </div>
@@ -647,7 +651,7 @@ export default function SendPackage() {
               value={destNotes}
               onChange={e => setDestNotes(e.target.value)}
               className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="House/Bldg #, floor, unit, landmarks (e.g. Unit 4B, near 7-Eleven)"
+              placeholder="Exact address details (e.g. Unit 4B, near 7-Eleven)"
             />
           </div>
         </div>
@@ -912,15 +916,12 @@ export default function SendPackage() {
 
           {/* Express */}
           <button
-            onClick={() => !isSelectedSunday && setMethod('express')}
-            disabled={isSelectedSunday}
+            onClick={() => setMethod('express')}
             className={cn(
               "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
-              isSelectedSunday
-                ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
-                : method === 'express'
-                  ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
-                  : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
+              method === 'express'
+                ? "border-orange-600 bg-orange-600/5 dark:bg-orange-600/10"
+                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-200"
             )}
           >
             <div className="flex items-start gap-3">
@@ -941,7 +942,7 @@ export default function SendPackage() {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600">1.8× rate</span>
                 </div>
                 {isSelectedSunday && (
-                  <p className="text-[10px] text-red-500 font-semibold mt-1">⚠ Not available on Sundays</p>
+                  <p className="text-[10px] text-amber-500 font-semibold mt-1">📌 Sunday order — will be delivered Monday</p>
                 )}
                 {distKm > 0 && method === 'express' && (
                   <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
@@ -976,7 +977,7 @@ export default function SendPackage() {
             <div className="flex items-center justify-between mt-2 ml-1">
               <p className="text-[11px] text-slate-400">
                 {new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                {isSunday(scheduledDate) && <span className="text-red-500 font-semibold ml-1">· Sunday (Express unavailable)</span>}
+                {isSunday(scheduledDate) && <span className="text-amber-500 font-semibold ml-1">· Sunday — Express will deliver Monday</span>}
               </p>
               <button onClick={() => setScheduledDate('')} className="text-[10px] font-bold text-orange-600">Clear</button>
             </div>
