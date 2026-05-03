@@ -1340,15 +1340,6 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
        staffName]
     );
 
-    // Second checkpoint: out for delivery (when driver accepts = going to pick up)
-    await query(
-      `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name)
-       VALUES (?, ?, 'Out for Delivery', ?, ?, ?)`,
-      [dn, tid, rows[0].pickup_location || 'Origin',
-       `Package is out for delivery. Your package is with ${staffName} and is on its way to you.`,
-       staffName]
-    );
-
     // Notify the customer
     if (rows[0].sender_user_id) {
       await createNotification(

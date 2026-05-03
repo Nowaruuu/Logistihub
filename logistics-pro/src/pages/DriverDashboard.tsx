@@ -384,17 +384,38 @@ export default function DriverDashboard() {
                       <ExternalLink className="size-4" />
                       Navigate
                     </button>
-                    <button
-                      onClick={() => { setProofPhoto(null); setShowProofModal(assignment.id); }}
-                      disabled={completing === assignment.id}
-                      className="flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 active:scale-[0.98] transition-all disabled:opacity-60"
-                    >
-                      {completing === assignment.id ? (
-                        <><Loader2 className="size-4 animate-spin" /> Updating...</>
-                      ) : (
-                        <><CheckCircle2 className="size-4" /> Delivered</>
-                      )}
-                    </button>
+                    {assignment.status === 'In Transit' ? (
+                      <button
+                        onClick={async () => {
+                          setCompleting(assignment.id);
+                          try {
+                            await deliveryService.updateStatus(assignment.trackingNumber, 'Out for Delivery', 'Pickup Location');
+                            await fetchData();
+                          } catch (err) { console.error(err); }
+                          finally { setCompleting(null); }
+                        }}
+                        disabled={completing === assignment.id}
+                        className="flex items-center justify-center gap-2 py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all disabled:opacity-60"
+                      >
+                        {completing === assignment.id ? (
+                          <><Loader2 className="size-4 animate-spin" /> Updating...</>
+                        ) : (
+                          <><Package className="size-4" /> Picked Up</>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { setProofPhoto(null); setShowProofModal(assignment.id); }}
+                        disabled={completing === assignment.id}
+                        className="flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 active:scale-[0.98] transition-all disabled:opacity-60"
+                      >
+                        {completing === assignment.id ? (
+                          <><Loader2 className="size-4 animate-spin" /> Updating...</>
+                        ) : (
+                          <><CheckCircle2 className="size-4" /> Delivered</>
+                        )}
+                      </button>
+                    )}
                   </div>
                   {/* Chat & Call customer */}
                   <div className="grid grid-cols-2 gap-3 px-5 pb-5">
