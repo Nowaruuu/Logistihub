@@ -55,6 +55,7 @@ const OnboardingAPI = {
   checkout:     (payload) => api('POST', '/api/onboarding/checkout', payload),
   apply:        (payload) => api('POST', '/api/onboarding/apply', payload),
   checkStatus:  (email)   => api('GET',  `/api/onboarding/check-status?email=${encodeURIComponent(email)}`),
+  checkoutApproved: (approval_token, plan) => api('POST', '/api/onboarding/checkout-approved', { approval_token, plan }),
 };
 
 // ─── Admin API (all scoped to current tenant slug) ────────────────────────────

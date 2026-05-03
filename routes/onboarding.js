@@ -194,6 +194,91 @@ router.get('/check-status', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/onboarding/checkout-approved
+// For approved applicants: uses the approval token + selected plan to go
+// straight to payment, pulling user data from TENANT_APPLICATION.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/checkout-approved', async (req, res) => {
+  const { approval_token, plan } = req.body;
+  if (!approval_token || !plan) return res.status(400).json({ error: 'approval_token and plan are required.' });
+  if (!PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan.' });
+
+  try {
+    // Verify the approval token
+    const decoded = jwt.verify(approval_token, process.env.JWT_SECRET);
+    if (decoded.type !== 'approved_application') return res.status(400).json({ error: 'Invalid token type.' });
+
+    // Fetch the application
+    const [[app]] = await query('SELECT * FROM TENANT_APPLICATION WHERE application_id = ? AND status = ?', [decoded.application_id, 'approved']);
+    if (!app) return res.status(404).json({ error: 'Application not found or not approved.' });
+
+    // Re-check slug availability
+    const [slugCheck] = await query('SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [app.slug]);
+    if (slugCheck.length > 0) return res.status(409).json({ error: 'Workspace URL is already taken.' });
+
+    // Build payload from application data (password is already hashed, so pass a marker)
+    const payload = {
+      plan: plan,
+      name: app.name,
+      email: app.email,
+      phone: app.phone || '',
+      password: '__HASHED__',   // marker — paymongo-success will detect this
+      password_hash: app.password_hash, // pass the hash directly
+      company_name: app.company_name,
+      org_name: app.company_name,
+      slug: app.slug,
+      brand_color: app.brand_color || '#3b82f6',
+      tagline: '',
+      application_id: app.application_id
+    };
+
+    const checkoutToken = jwt.sign({ type: 'checkout', payload }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const paymongoSecret = process.env.PAYMONGO_SECRET_KEY;
+    const baseUrl = process.env.BASE_URL || 'https://logistihub.ddns.net';
+    const successUrl = `${baseUrl}/api/onboarding/paymongo-success?token=${checkoutToken}`;
+
+    if (!paymongoSecret) {
+      return res.json({ checkout_url: `${baseUrl}/api/onboarding/mock-paymongo?token=${checkoutToken}` });
+    }
+
+    // Real PayMongo
+    const paymongoRes = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(paymongoSecret + ':').toString('base64')
+      },
+      body: JSON.stringify({
+        data: {
+          attributes: {
+            billing: { email: app.email, name: app.name, ...(app.phone && { phone: normalizePHPhone(app.phone) }) },
+            line_items: [{
+              amount: PLAN_PRICES[plan] * 100,
+              currency: 'PHP',
+              description: `Logistics OS - ${plan} Plan Subscription`,
+              name: `${plan.toUpperCase()} Plan`,
+              quantity: 1
+            }],
+            payment_method_types: ['card', 'gcash', 'paymaya'],
+            success_url: successUrl,
+            cancel_url: `${baseUrl}/onboarding`
+          }
+        }
+      })
+    });
+
+    const pmData = await paymongoRes.json();
+    if (!paymongoRes.ok) throw new Error(pmData.errors?.[0]?.detail || 'PayMongo API Error');
+    res.json({ checkout_url: pmData.data.attributes.checkout_url });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Your approval link has expired. Please contact support or re-apply.' });
+    console.error('[POST /onboarding/checkout-approved]', err);
+    res.status(500).json({ error: 'Failed to create checkout. ' + err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/onboarding/checkout
 // Step 2+3 combined: validates payload, creates PayMongo checkout session,
 // and returns the checkout URL.
@@ -311,7 +396,10 @@ router.get('/paymongo-success', async (req, res) => {
     }
 
     const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
-    const passwordHash = await bcrypt.hash(p.password, saltRounds);
+    // If password_hash is already provided (from approved application flow), use it directly
+    const passwordHash = p.password === '__HASHED__' && p.password_hash
+      ? p.password_hash
+      : await bcrypt.hash(p.password, saltRounds);
 
     // ── Insert tenant ──────────────────────────────────
     const [tenantResult] = await query(

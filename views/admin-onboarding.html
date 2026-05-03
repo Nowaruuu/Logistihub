@@ -224,7 +224,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
       </div>
     </div>
     <div class="step-actions">
-      <button class="btn btn-primary" id="btn-step1-next" disabled onclick="goStep(2)">
+      <button class="btn btn-primary" id="btn-step1-next" disabled onclick="handleStep1Next()">
         Continue<span class="material-symbols-outlined">arrow_forward</span>
       </button>
     </div>
@@ -453,6 +453,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
 <script>
 var selectedPlan = {id:'',name:'',price:''};
 var inviteToken = new URLSearchParams(window.location.search).get('invite') || '';
+var approvalToken = new URLSearchParams(window.location.search).get('token') || '';
+var isApprovedFlow = new URLSearchParams(window.location.search).get('approved') === 'true' && approvalToken;
 
 // Pre-fill email from invite token if possible
 if(inviteToken) {
@@ -477,6 +479,27 @@ function selectPlan(id,name,price){
   var btn=document.getElementById('btn-step1-next');
   btn.disabled=false;
   btn.innerHTML='Continue with '+name+' <span class="material-symbols-outlined">arrow_forward</span>';
+}
+
+// Handle Step 1 Continue — approved users go straight to payment
+async function handleStep1Next() {
+  if (isApprovedFlow && approvalToken) {
+    // Approved user → go directly to checkout
+    var btn = document.getElementById('btn-step1-next');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">progress_activity</span> Processing...';
+    try {
+      var res = await OnboardingAPI.checkoutApproved(approvalToken, selectedPlan.id);
+      window.location.href = res.checkout_url;
+    } catch (e) {
+      alert(e.message || 'Failed to initiate payment.');
+      btn.disabled = false;
+      btn.innerHTML = 'Continue with ' + selectedPlan.name + ' <span class="material-symbols-outlined">arrow_forward</span>';
+    }
+  } else {
+    // Normal flow → go to step 2
+    goStep(2);
+  }
 }
 
 function goStep(n){
@@ -726,7 +749,20 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Handle approved application link (from email)
   if (urlParams.get('approved') === 'true' && urlParams.get('token')) {
-    // Approved users go straight to plan selection (step 1)
+    // Approved users only need to pick plan → pay. Hide steps 2-4.
+    ['dot-2','lbl-2','line-1','dot-3','lbl-3','line-2','dot-4','lbl-4','line-3'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    // Change step 1 label to indicate approved flow
+    var lbl1 = document.getElementById('lbl-1');
+    if (lbl1) lbl1.textContent = 'Choose Plan & Pay';
+    // Update the intro text
+    var intro = document.querySelector('.plan-intro p');
+    if (intro) intro.innerHTML = '🎉 <strong>Your business permit has been approved!</strong> Select a plan below and proceed to payment to activate your workspace.';
+    // Hide the subscription required notice
+    var subReq = document.querySelector('.sub-required');
+    if (subReq) subReq.style.display = 'none';
     goStep(1);
     return;
   }
