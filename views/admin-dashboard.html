@@ -1121,7 +1121,7 @@ function loadDashFleet(){
       var vehicles=Array.isArray(data)?data:Array.isArray(data.vehicles)?data.vehicles:[];
       var el=document.getElementById('dash-fleet-body');
       if(!el)return;
-      if(!vehicles.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>';return;}
+      if(!vehicles.length){el.innerHTML='<div style="padding:28px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:#e2e8f0;display:block;margin-bottom:6px;">directions_car</span><p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">No vehicles registered yet</p><button class="btn btn-primary btn-sm" onclick="go(\'vehicles\',null)" style="margin:0 auto;"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>';return;}
       var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
       vehicles.slice(0,5).forEach(function(v){
         var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
@@ -1146,7 +1146,7 @@ function loadDashStaff(){
       var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
       var el=document.getElementById('dash-staff-body');
       if(!el)return;
-      if(!staff.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>';return;}
+      if(!staff.length){el.innerHTML='<div style="padding:28px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:#e2e8f0;display:block;margin-bottom:6px;">badge</span><p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">No staff members yet</p><button class="btn btn-primary btn-sm" onclick="go(\'staff\',null)" style="margin:0 auto;"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>';return;}
       var rc={'Driver':'b-transit','Document Controller':'b-delivered','Manager':'b-awaiting','Admin':'b-pending'};
       var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
       staff.slice(0,5).forEach(function(s){
