@@ -836,18 +836,18 @@ textarea{resize:vertical;}
     var _SLUG = _SLUG || ((window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '');
     var _upgradePlans = [
       {
-        key: 'startup', label: 'Startup', price: '1,499', icon: 'speed', color: '#64748b', gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
-        features: ['Up to 10 vehicles','5 staff accounts','Standard route optimization','Real-time GPS tracking','Basic analytics dashboard','Email support'],
-        noFeatures: ['AI dispatching','API & Webhooks','Multi-region deployment','Dedicated account manager']
+        key: 'startup', label: 'Padala', price: '1,499', icon: 'speed', color: '#64748b', gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
+        features: ['Up to 10 riders / drivers','Real-time GPS tracking','Proof of delivery (photo)','Delivery status updates','Email support'],
+        noFeatures: ['Live driver map tracking','Delivery history & reports','Priority support','Dedicated account manager']
       },
       {
-        key: 'enterprise', label: 'Enterprise', price: '4,999', icon: 'bolt', color: '#3b82f6', gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)', popular: true,
-        features: ['Unlimited vehicles & users','Unlimited staff accounts','AI-powered dispatching','Full API & Webhooks access','Advanced analytics & reports','Priority email & chat support'],
-        noFeatures: ['Multi-region deployment','Dedicated account manager']
+        key: 'enterprise', label: 'Negosyo', price: '4,999', icon: 'bolt', color: '#3b82f6', gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)', popular: true,
+        features: ['Unlimited riders & users','Live driver map tracking','Delivery history & reports','Priority support'],
+        noFeatures: ['Dedicated account manager']
       },
       {
-        key: 'global', label: 'Global', price: '14,999', icon: 'public', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
-        features: ['Everything in Enterprise','Multi-region deployment','Dedicated account manager','Custom integrations','SLA guarantee (99.9%)','24/7 phone support','White-label options'],
+        key: 'global', label: 'Korporasyon', price: '14,999', icon: 'public', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
+        features: ['Everything in Negosyo','Custom workspace branding','Dedicated account manager','Data export & analytics'],
         noFeatures: []
       }
     ];
@@ -3026,9 +3026,9 @@ async function confirmPayment(invoiceId, btn) {
 // ── Subscription ──────────────────────────────────────────────────────────────
 async function loadSubscription() {
   var plans = {
-    'startup':    { label: 'Startup',    price: 1499,  desc: 'Up to 10 vehicles, 5 staff accounts' },
-    'enterprise': { label: 'Enterprise', price: 4999, desc: 'Unlimited vehicles & staff, AI dispatching' },
-    'global':     { label: 'Global',     price: 14999, desc: 'Multi-region, dedicated manager, white-label' }
+    'startup':    { label: 'Padala',       price: 1499,  desc: 'Up to 10 riders / drivers, local deliveries' },
+    'enterprise': { label: 'Negosyo',      price: 4999,  desc: 'Unlimited riders & users, live tracking' },
+    'global':     { label: 'Korporasyon',  price: 14999, desc: 'Full platform, dedicated manager, data export' }
   };
 
   var nameEl = document.getElementById('sub-plan-name');
