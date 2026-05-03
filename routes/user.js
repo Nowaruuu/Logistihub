@@ -498,7 +498,7 @@ router.get('/app-download-v2', async (req, res) => {
     
     // Explicitly serve the real APK file using a custom backend route 
     // to bypass any Nginx proxy rules that might be hijacking /public/
-    const actualApkUrl = `${process.env.BASE_URL || 'https://logistichub.ddns.net'}/${slug}/api/direct-apk?v=6`;
+    const actualApkUrl = `${process.env.BASE_URL || 'https://logistichub.ddns.net'}/${slug}/api/direct-apk?v=7`;
 
     res.json({
       download_url: actualApkUrl,
