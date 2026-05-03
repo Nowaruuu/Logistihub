@@ -2673,35 +2673,42 @@ async function loadSubscription() {
     sinceEl.textContent = 'Since ' + new Date(t.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  // Load billing history from payment records (subscription-level)
+  // Subscription billing history — only plan payments (not shipment payments)
+  // Since plan billing isn't processed in-app yet, show informational state
   var tbody = document.getElementById('sub-billing-tbody');
   if (!tbody) return;
 
-  try {
-    // We'll reuse the payments API and filter for subscription-related or show all as billing history
-    var res = await apiFetch('/' + _SLUG + '/api/admin/payments');
-    var d = await res.json();
-    var payments = (d && d.payments) ? d.payments.filter(function(p) { return p.status === 'Paid'; }) : [];
-
-    if (!payments.length) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing history yet</p></div></td></tr>';
-      return;
+  // Calculate past billing periods for display
+  if (plan.price > 0 && t.created_at) {
+    var periods = [];
+    var periodStart = new Date(tenantCreated);
+    var today = new Date();
+    while (periodStart < today) {
+      var periodEnd = new Date(periodStart);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      periods.push({
+        date: new Date(periodStart),
+        amount: plan.price,
+        label: plan.label + ' Plan — Monthly'
+      });
+      periodStart = periodEnd;
     }
-
-    // Show last 10 paid transactions as billing history
-    tbody.innerHTML = payments.slice(0, 10).map(function(p) {
-      var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleDateString() : '\u2014');
-      var amount = p.total_amount ? '\u20b1' + parseFloat(p.total_amount).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : '\u2014';
-      var desc = 'Shipment ' + (p.delivery_number || '');
-      return '<tr>' +
-        '<td>' + date + '</td>' +
-        '<td>' + esc(desc) + '</td>' +
-        '<td><strong>' + amount + '</strong></td>' +
-        '<td><span class="badge b-delivered">' + esc(p.status) + '</span></td>' +
-      '</tr>';
-    }).join('');
-  } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>' + esc(e.message) + '</p></div></td></tr>';
+    periods.reverse(); // newest first
+    if (periods.length) {
+      tbody.innerHTML = periods.slice(0, 12).map(function(pr) {
+        var dateStr = pr.date.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+        return '<tr>' +
+          '<td>' + dateStr + '</td>' +
+          '<td>' + esc(pr.label) + '</td>' +
+          '<td><strong>\u20b1' + pr.amount.toLocaleString() + '.00</strong></td>' +
+          '<td><span class="badge b-delivered">Paid</span></td>' +
+        '</tr>';
+      }).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing cycles completed yet</p></div></td></tr>';
+    }
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>Free plan — no billing history</p></div></td></tr>';
   }
 }
 
