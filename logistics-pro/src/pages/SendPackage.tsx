@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays } from 'lucide-react';
+import { MapPin, Navigation, Truck, Bolt, ArrowRight, Map as MapIcon, User, Phone, Package, Car, UtensilsCrossed, FileText, Boxes, Search, Loader2, CheckCircle2, Crosshair, Bike, AlertTriangle, Fuel, Shield, ShieldCheck, CalendarDays, NotebookPen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Map, { DestinationIcon } from '../components/Map';
 import { deliveryService } from '../services/deliveryService';
@@ -103,6 +103,8 @@ export default function SendPackage() {
   const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
+  const [pickupNotes, setPickupNotes] = useState('');
+  const [destNotes, setDestNotes] = useState('');
   const [weight, setWeight] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'ton'>('kg');
   const [category, setCategory] = useState('PACKAGE');
@@ -395,8 +397,8 @@ export default function SendPackage() {
         senderName: profile?.fullName || user.email,
         receiverName,
         receiverPhone,
-        origin: pickup,
-        destination,
+        origin: pickupNotes ? `${pickup} — ${pickupNotes}` : pickup,
+        destination: destNotes ? `${destination} — ${destNotes}` : destination,
         estimatedArrival: method === 'standard' ? stdEta : expEta,
         weight: weightKg,
         size: PACKAGE_CATEGORIES.find(c => c.id === category)?.label || 'Standard Package',
@@ -548,6 +550,18 @@ export default function SendPackage() {
               </div>
             </div>
           )}
+
+          {/* Pickup address details */}
+          <div className="relative mt-2">
+            <NotebookPen className="absolute left-3 top-3 text-slate-400 size-4" />
+            <input
+              type="text"
+              value={pickupNotes}
+              onChange={e => setPickupNotes(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+              placeholder="House/Bldg #, floor, unit, landmarks (e.g. 287 green gate)"
+            />
+          </div>
         </div>
 
         {/* ── Destination Address with Auto-search ── */}
@@ -624,6 +638,18 @@ export default function SendPackage() {
               </div>
             </div>
           )}
+
+          {/* Destination address details */}
+          <div className="relative mt-2">
+            <NotebookPen className="absolute left-3 top-3 text-slate-400 size-4" />
+            <input
+              type="text"
+              value={destNotes}
+              onChange={e => setDestNotes(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
+              placeholder="House/Bldg #, floor, unit, landmarks (e.g. Unit 4B, near 7-Eleven)"
+            />
+          </div>
         </div>
 
         {/* ── Receiver Info ── */}
