@@ -1109,7 +1109,8 @@ function renderShipmentsTable(){
     var sc=statusCls[s.status]||'b-pending';
     var route=esc((s.pickup_location||'').split(',')[0])+' → '+esc((s.dropoff_location||'').split(',')[0]);
     var date=s.created_at?new Date(s.created_at).toLocaleDateString():'N/A';
-    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'—')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>—</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td>'+date+'</td><td></td></tr>';
+    var veh = s.vehicle_type ? esc(s.vehicle_type.charAt(0).toUpperCase() + s.vehicle_type.slice(1)) : (s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '—');
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'—')+'</td><td>'+esc(s.client_name||s.sender_name||'N/A')+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td>'+date+'</td><td></td></tr>';
   }).join('');
 }
 

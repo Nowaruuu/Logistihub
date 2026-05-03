@@ -406,6 +406,7 @@ export default function SendPackage() {
         destLat: finalDestLat,
         destLng: finalDestLng,
         item_type_flag: category,
+        vehicle_type: vehicle,
         scheduled_date: scheduledDate || todayStr,
       });
 

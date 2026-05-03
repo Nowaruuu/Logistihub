@@ -470,7 +470,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
   const {
     pickup_location, dropoff_location, pickup_lat, pickup_lng,
     dropoff_lat, dropoff_lng, receiver_name, receiver_phone,
-    receiver_address, item_type_flag, weight, size,
+    receiver_address, item_type_flag, vehicle_type, weight, size,
     shipping_method, total_fee, content_description, estimated_arrival
   } = req.body;
 
@@ -504,20 +504,23 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     }
   }
 
-  try {
+   try {
+    // Auto-add vehicle_type column if it doesn't exist
+    try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
+
     await query(
       `INSERT INTO shipment (
         delivery_number, tenant_id, sender_user_id, pickup_location, dropoff_location,
         pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
         receiver_name, receiver_phone, receiver_address,
-        item_type_flag, weight, size, shipping_method, total_fee,
+        item_type_flag, vehicle_type, weight, size, shipping_method, total_fee,
         estimated_arrival, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
       [
         deliveryNumber, tid, userId, pickup_location, dropoff_location,
         pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
-        itemType, weight || null, size || null, shipping_method || 'Standard',
+        itemType, vehicle_type || null, weight || null, size || null, shipping_method || 'Standard',
         total_fee || 0, estimated_arrival || '3-5 business days'
       ]
     );
@@ -907,28 +910,30 @@ router.get('/driver/jobs', authMiddleware, async (req, res) => {
       if (vRows.length) driverVehicleType = (vRows[0].vehicle_type || '').toLowerCase();
     }
 
-    // Filter by vehicle compatibility — drivers MUST have a vehicle type
-    const VEHICLE_CATEGORIES = {
-      motorcycle: ['PACKAGE', 'FOOD', 'DOC'],
-      sedan: ['PACKAGE', 'FOOD', 'DOC'],
-      van: ['PACKAGE', 'FOOD'],
-      truck: ['BULK', 'VEHICLE', 'PACKAGE'],
-      flatbed: ['BULK', 'VEHICLE'],
-    };
-
+    // Filter by vehicle compatibility — match the EXACT vehicle type the customer chose
     let filteredJobs = [];
     if (!driverVehicleType) {
       // No vehicle registered — show no jobs
       filteredJobs = [];
-    } else if (VEHICLE_CATEGORIES[driverVehicleType]) {
-      const allowedCategories = VEHICLE_CATEGORIES[driverVehicleType];
+    } else {
       filteredJobs = rows.filter(job => {
+        const jobVehicle = (job.vehicle_type || '').toLowerCase();
+        // If shipment has a specific vehicle_type set by customer, match exactly
+        if (jobVehicle) {
+          return jobVehicle === driverVehicleType;
+        }
+        // Legacy shipments without vehicle_type — use category-based filtering
+        const VEHICLE_CATEGORIES = {
+          motorcycle: ['PACKAGE', 'FOOD', 'DOC'],
+          sedan: ['PACKAGE', 'FOOD', 'DOC'],
+          van: ['PACKAGE', 'FOOD'],
+          truck: ['BULK', 'VEHICLE', 'PACKAGE'],
+          flatbed: ['BULK', 'VEHICLE'],
+        };
+        const allowedCategories = VEHICLE_CATEGORIES[driverVehicleType] || [];
         const cat = (job.item_type_flag || 'PACKAGE').toUpperCase();
         return allowedCategories.includes(cat);
       });
-    } else {
-      // Unknown vehicle type — show no jobs until vehicle is properly registered
-      filteredJobs = [];
     }
 
     res.json({ jobs: filteredJobs });
@@ -980,7 +985,7 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
       BULK: ['truck', 'flatbed'],
     };
     const shipCategory = (rows[0].item_type_flag || 'PACKAGE').toUpperCase();
-    const allowedVehicles = CATEGORY_VEHICLES[shipCategory] || ['motorcycle','sedan','van','truck','flatbed'];
+    const shipVehicleType = (rows[0].vehicle_type || '').toLowerCase();
 
     // Driver MUST have a registered vehicle type to accept any job
     if (!effectiveVehicleType) {
@@ -989,11 +994,21 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
       });
     }
 
-    // Enforce vehicle-type compatibility — no exceptions
-    if (!allowedVehicles.includes(effectiveVehicleType)) {
+    // If shipment specifies an exact vehicle type, enforce exact match
+    if (shipVehicleType && shipVehicleType !== effectiveVehicleType) {
       return res.status(400).json({
-        error: `Your vehicle (${effectiveVehicleType}) is not suitable for ${shipCategory.toLowerCase()} deliveries. Required: ${allowedVehicles.join(', ')}.`
+        error: `This shipment requires a ${shipVehicleType}. Your vehicle is a ${effectiveVehicleType}.`
       });
+    }
+
+    // Fallback: enforce category-based compatibility for legacy shipments
+    if (!shipVehicleType) {
+      const allowedVehicles = CATEGORY_VEHICLES[shipCategory] || ['motorcycle','sedan','van','truck','flatbed'];
+      if (!allowedVehicles.includes(effectiveVehicleType)) {
+        return res.status(400).json({
+          error: `Your vehicle (${effectiveVehicleType}) is not suitable for ${shipCategory.toLowerCase()} deliveries. Required: ${allowedVehicles.join(', ')}.`
+        });
+      }
     }
 
     await query(
