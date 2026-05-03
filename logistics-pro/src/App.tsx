@@ -15,7 +15,7 @@ import TrackShipment from './pages/TrackShipment';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import Stations from './pages/Stations';
-import RateCalculator from './pages/RateCalculator';
+
 import AddressBook from './pages/AddressBook';
 import PaymentMethods from './pages/PaymentMethods';
 import Settings from './pages/Settings';
@@ -129,13 +129,6 @@ export default function App() {
               </AuthGuard>
             } />
 
-            <Route path="/calculator" element={
-              <AuthGuard>
-                <Layout>
-                  <RateCalculator />
-                </Layout>
-              </AuthGuard>
-            } />
 
             <Route path="/address-book" element={
               <AuthGuard>
