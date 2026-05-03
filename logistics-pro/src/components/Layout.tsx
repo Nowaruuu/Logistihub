@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="size-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-black italic">
                     S
                   </div>
-                  <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-slate-100 italic">LOGISTICS PRO</span>
+                  <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-slate-100 italic">LOGISTICHUB</span>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
@@ -153,7 +153,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
              location.pathname === '/address-book' ? 'Address Book' :
              location.pathname === '/settings' ? 'Settings' :
              location.pathname === '/help' ? 'Help Center' :
-             location.pathname === '/profile' ? 'Account' : 'Logistics Pro'}
+             location.pathname === '/profile' ? 'Account' : 'LogisticHub'}
           </h1>
         </div>
         <div className="flex items-center gap-3">
