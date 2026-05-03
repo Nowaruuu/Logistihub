@@ -1380,34 +1380,60 @@ function loadDashMap(){
 var _srMonthlyChart=null, _srTypeChart=null;
 var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function _formatChartLabel(item, period){
+
+// Build full slot arrays so chart always shows complete range
+function _buildFullChart(rawData, period){
+  var slots=[], i;
   if(period==='daily'){
-    // item.hr = 0-23
-    var h=Number(item.hr);
-    if(h===0) return '12 AM';
-    if(h===12) return '12 PM';
-    return h<12?(h+' AM'):((h-12)+' PM');
+    // 24 hours: build lookup by hr
+    var byHr={};
+    (rawData||[]).forEach(function(d){byHr[Number(d.hr)]=d;});
+    for(i=0;i<24;i++){
+      var h=i;
+      var label=(h===0?'12 AM':h===12?'12 PM':h<12?h+' AM':(h-12)+' PM');
+      var r=byHr[i]||{};
+      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
+    }
   } else if(period==='weekly'){
-    // item.week_num = 0,1,2,3,4 and item.week_start = '2026-05-01'
-    var wn=Number(item.week_num);
+    // Weeks of current month
     var now=new Date();
-    var year=now.getFullYear();
-    var month=now.getMonth();
-    var startDay=wn*7+1;
-    var endDay=Math.min(startDay+6, new Date(year,month+1,0).getDate());
-    return _srMonthShort[month]+' '+startDay+'-'+endDay;
+    var daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    var byWk={};
+    (rawData||[]).forEach(function(d){byWk[Number(d.week_num)]=d;});
+    var weekIdx=0, day=1;
+    while(day<=daysInMonth){
+      var endDay=Math.min(day+6, daysInMonth);
+      var label=_srMonthShort[now.getMonth()]+' '+day+'-'+endDay;
+      var r=byWk[weekIdx]||{};
+      slots.push({label:label,paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
+      day+=7; weekIdx++;
+    }
   } else if(period==='yearly'){
-    return String(item.yr);
+    // Just use the raw data as-is
+    (rawData||[]).forEach(function(d){
+      slots.push({label:String(d.yr),paid:Number(d.paid_total)||0,pending:Number(d.pending_total)||0,count:Number(d.count)||0});
+    });
+    if(!slots.length){
+      slots.push({label:String(new Date().getFullYear()),paid:0,pending:0,count:0});
+    }
   } else {
-    // Monthly: item.mo = 1-12
-    return _srMonthNames[Number(item.mo)-1]||'';
+    // Monthly: all 12 months
+    var byMo={};
+    (rawData||[]).forEach(function(d){byMo[Number(d.mo)]=d;});
+    for(i=1;i<=12;i++){
+      var r=byMo[i]||{};
+      slots.push({label:_srMonthNames[i-1],paid:Number(r.paid_total)||0,pending:Number(r.pending_total)||0,count:Number(r.count)||0});
+    }
   }
+  return slots;
 }
+
 function _renderSalesChart(chartData, period){
-  var labels=chartData.map(function(m){return _formatChartLabel(m, period);});
-  var paidVals=chartData.map(function(m){return Number(m.paid_total)||0;});
-  var pendingVals=chartData.map(function(m){return Number(m.pending_total)||0;});
-  var counts=chartData.map(function(m){return Number(m.count)||0;});
+  var slots=_buildFullChart(chartData, period);
+  var labels=slots.map(function(s){return s.label;});
+  var paidVals=slots.map(function(s){return s.paid;});
+  var pendingVals=slots.map(function(s){return s.pending;});
+  var counts=slots.map(function(s){return s.count;});
   if(_srMonthlyChart)_srMonthlyChart.destroy();
   var ctx1=document.getElementById('sr-monthly-chart');
   if(ctx1){
@@ -1441,7 +1467,9 @@ function loadSalesReportChart(period){
 }
 function loadSalesReport(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
-  apiFetch('/'+slug+'/api/admin/sales-report').then(function(r){return r.json();}).then(function(data){
+  var periodSel=document.getElementById('sr-period-select');
+  var curPeriod=periodSel?periodSel.value:'monthly';
+  apiFetch('/'+slug+'/api/admin/sales-report?period='+curPeriod).then(function(r){return r.json();}).then(function(data){
     // Stat cards
     document.getElementById('sr-rev-ytd').textContent='\u20b1'+Number(data.revenue_paid||0).toLocaleString();
     document.getElementById('sr-rev-all').textContent='\u20b1'+Number(data.revenue_total||0).toLocaleString();
@@ -1451,8 +1479,6 @@ function loadSalesReport(){
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
 
     // Render chart with current period selection
-    var periodSel=document.getElementById('sr-period-select');
-    var curPeriod=periodSel?periodSel.value:'monthly';
     _renderSalesChart(data.chart_data||[], curPeriod);
 
     // Store data globally for chart-only refresh
