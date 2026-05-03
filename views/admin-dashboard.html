@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Dashboard â€” Logistics OS</title>
+<title>Admin Dashboard — Logistics OS</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
@@ -50,7 +52,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;min-height:100vh;display:flex;}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
 
-/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── SIDEBAR ────────────────────────────────────────── */
 .sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
 .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
 .tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
@@ -73,7 +75,7 @@ nav::-webkit-scrollbar{display:none;}
 .uname{font-size:12px;font-weight:600;color:#fff;}
 .uemail{font-size:10px;color:rgba(255,255,255,.3);}
 
-/* â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── MAIN ────────────────────────────────────────────── */
 .main{flex:1;display:flex;flex-direction:column;overflow-y:auto;}
 .topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
 .page-title{font-weight:700;font-size:15px;color:#0f2235;}
@@ -91,7 +93,7 @@ nav::-webkit-scrollbar{display:none;}
 .screen{display:none;}
 .screen.active{display:block;}
 
-/* â”€â”€ STAT GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── STAT GRID ───────────────────────────────────────── */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
 .stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;}
 .stat-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
@@ -105,7 +107,7 @@ nav::-webkit-scrollbar{display:none;}
 .stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
 .stat-note{font-size:10px;color:#94a3b8;margin-top:3px;}
 
-/* â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CARD ────────────────────────────────────────────── */
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px;}
 .card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
 .card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
@@ -116,7 +118,7 @@ nav::-webkit-scrollbar{display:none;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
 .grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
 
-/* â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── TABLE ───────────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
 th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
@@ -124,7 +126,7 @@ td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8faf
 tr:last-child td{border:none;}
 tr:hover td{background:#f8fafc;}
 
-/* â”€â”€ BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── BADGES ──────────────────────────────────────────── */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
 .b-pending{background:#fef9c3;color:#a16207;}
 .b-transit{background:#dbeafe;color:#1d4ed8;}
@@ -143,7 +145,7 @@ tr:hover td{background:#f8fafc;}
 .t-doc{background:#f0fdf4;color:#15803d;}
 .t-bulk{background:#f8fafc;color:#475569;}
 
-/* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── BUTTONS ─────────────────────────────────────────── */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
 .btn-primary{background:#0f2235;color:#fff;}
 .btn-primary:hover{opacity:.86;}
@@ -152,13 +154,13 @@ tr:hover td{background:#f8fafc;}
 .btn-sm{padding:5px 11px;font-size:11px;}
 .btn .material-symbols-outlined{font-size:14px;}
 
-/* â”€â”€ EMPTY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── EMPTY ───────────────────────────────────────────── */
 .empty{padding:44px 20px;text-align:center;}
 .empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:7px;}
 .empty p{font-size:12px;color:#94a3b8;}
 .empty .esub{font-size:11px;color:#cbd5e1;margin-top:3px;}
 
-/* â”€â”€ FORMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── FORMS ───────────────────────────────────────────── */
 .form-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:14px;}
 .form-sec{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #f1f5f9;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -266,7 +268,7 @@ textarea{resize:vertical;}
       <div class="page-sub" id="page-sub">Welcome back</div>
     </div>
     <div class="tb-right">
-      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceâ€¦"/></div>
+      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspace…"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
 
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
@@ -275,7 +277,7 @@ textarea{resize:vertical;}
 
   <div class="content">
 
-    <!-- â•â• DASHBOARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- DASHBOARD -->
     <div id="s-dashboard" class="screen active">
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
@@ -284,7 +286,7 @@ textarea{resize:vertical;}
         <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
 
-      <!-- User registration link box â€” TENANT SCOPED -->
+      <!-- User registration link box — TENANT SCOPED -->
       <div class="reg-link-box" style="margin-bottom:14px;">
         <div class="reg-link-text">
           <strong>Your User Registration Page</strong>
@@ -298,7 +300,7 @@ textarea{resize:vertical;}
         <div class="card">
           <div class="card-head">
             <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all â†’</button>
+            <button class="card-action" onclick="go('shipments',null)">View all →</button>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -1105,9 +1107,105 @@ function renderShipmentsTable(){
 }
 
 var _origGo=go;
-go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='shipments'||id==='dashboard')loadShipments();};
+go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}};
 // Auto-load on page load
 loadShipments();
+
+// ── Dashboard Fleet Status ────────────────────────────────────────────────────
+function loadDashFleet(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/vehicles')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var vehicles=Array.isArray(data)?data:Array.isArray(data.vehicles)?data.vehicles:[];
+      var el=document.getElementById('dash-fleet-body');
+      if(!el)return;
+      if(!vehicles.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>';return;}
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      vehicles.slice(0,5).forEach(function(v){
+        var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' · '+esc(v.model):'')+'</div></div></div>';
+        html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span>';
+        html+='</div>';
+      });
+      if(vehicles.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(vehicles.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+
+// ── Dashboard Staff On Duty ───────────────────────────────────────────────────
+function loadDashStaff(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/staff')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
+      var el=document.getElementById('dash-staff-body');
+      if(!el)return;
+      if(!staff.length){el.innerHTML='<div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>';return;}
+      var rc={'Driver':'b-transit','Document Controller':'b-delivered','Manager':'b-awaiting','Admin':'b-pending'};
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      staff.slice(0,5).forEach(function(s){
+        var bc=rc[s.role]||'b-pending';
+        var statusBc=s.status==='active'||s.status==='Available'?'b-available':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:14px;color:#64748b;">person</span></div><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(s.full_name||s.name||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(s.role||'Staff')+'</div></div></div>';
+        html+='<span class="badge '+statusBc+'">'+esc(s.status||'Active')+'</span>';
+        html+='</div>';
+      });
+      if(staff.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(staff.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+
+// ── Dashboard Live Map ────────────────────────────────────────────────────────
+var _dashMap=null;
+function loadDashMap(){
+  var mapEl=document.getElementById('dash-live-map');
+  if(!mapEl)return;
+  if(!_dashMap){
+    _dashMap=L.map(mapEl,{scrollWheelZoom:false,zoomControl:true}).setView([12.8797,121.7740],6);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(_dashMap);
+    setTimeout(function(){_dashMap.invalidateSize();},200);
+  }
+  // Place markers for in-transit shipments
+  var transit=_allShipments.filter(function(s){return s.status==='In Transit'||s.status==='Out for Delivery';});
+  // Clear existing markers
+  _dashMap.eachLayer(function(l){if(l instanceof L.Marker)_dashMap.removeLayer(l);});
+  if(!transit.length){
+    // Show all shipments with coords
+    var withCoords=_allShipments.filter(function(s){return s.origin_lat&&s.origin_lng;});
+    withCoords.forEach(function(s){
+      L.marker([s.origin_lat,s.origin_lng]).addTo(_dashMap).bindPopup('<strong>'+esc(s.delivery_number||'')+'</strong><br>'+esc(s.status||'Pending'));
+    });
+    if(withCoords.length>0){
+      var bounds=L.latLngBounds(withCoords.map(function(s){return[s.origin_lat,s.origin_lng];}));
+      _dashMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+    }
+  } else {
+    transit.forEach(function(s){
+      var lat=s.dest_lat||s.origin_lat;
+      var lng=s.dest_lng||s.origin_lng;
+      if(lat&&lng){
+        L.marker([lat,lng]).addTo(_dashMap).bindPopup('<strong>'+esc(s.delivery_number||'')+'</strong><br>In Transit<br>→ '+esc((s.dropoff_location||s.destination||'').split(',')[0]));
+      }
+    });
+    var pts=transit.filter(function(s){return(s.dest_lat||s.origin_lat)&&(s.dest_lng||s.origin_lng);}).map(function(s){return[s.dest_lat||s.origin_lat,s.dest_lng||s.origin_lng];});
+    if(pts.length>0){
+      _dashMap.fitBounds(L.latLngBounds(pts),{padding:[30,30],maxZoom:14});
+    }
+  }
+}
+
+// Auto-load dashboard widgets
+loadDashFleet();
+loadDashStaff();
+setTimeout(loadDashMap, 500);
 </script>
 
 <script>
