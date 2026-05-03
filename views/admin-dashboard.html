@@ -256,6 +256,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
+    <button class="nav-link" onclick="go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
@@ -494,7 +495,47 @@ textarea{resize:vertical;}
             <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Billing Date</th><th></th></tr></thead><tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══ SUBSCRIPTION ══════════════════ -->
+    <div id="s-subscription" class="screen">
+      <div class="ph-row"><div><h2>Subscription</h2><p>Monitor your plan billing and upcoming payments.</p></div></div>
+      <!-- Plan Summary Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="card" style="padding:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Current Plan</div>
+          <div id="sub-plan-name" style="font-size:22px;font-weight:800;color:#0f2235;">Free</div>
+          <div id="sub-plan-desc" style="font-size:12px;color:#64748b;margin-top:4px;">Basic features included</div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Monthly Cost</div>
+          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">₱0.00</div>
+          <div id="sub-plan-cycle" style="font-size:12px;color:#64748b;margin-top:4px;">per month</div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Next Billing Date</div>
+          <div id="sub-next-billing" style="font-size:22px;font-weight:800;color:#0f2235;">—</div>
+          <div id="sub-days-left" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Status</div>
+          <div id="sub-status" style="font-size:22px;font-weight:800;color:#16a34a;">Active</div>
+          <div id="sub-since" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
+        </div>
+      </div>
+      <!-- Billing History -->
+      <div class="card" style="padding:0;">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;">Billing History</h3>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody id="sub-billing-tbody">
+            <tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing history yet</p></div></td></tr>
+          </tbody></table>
+        </div>
       </div>
     </div>
 
@@ -947,6 +988,7 @@ var pageMeta={
   'vehicles':['Vehicles','Your fleet'],
   'app-users':['App Users','Registered users for your company'],
   'payments':['Payments','Invoices and billing'],
+  'subscription':['Subscription','Plan billing and upcoming payments'],
   'pod':['Proof of Delivery','Capture records'],
   'user-reg':['User Registration','Your private registration page'],
   'settings':['Settings','Workspace configuration'],
@@ -994,6 +1036,7 @@ function go(id,navBtn){
   if(id==='audit') loadAuditLogs();
   if(id==='payments') loadPayments();
   if(id==='pod') loadPODs();
+  if(id==='subscription') loadSubscription();
   // Always refresh text contrast after navigation
   if(typeof updateAppTextContrast==='function') setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 50);
 }
@@ -2542,7 +2585,7 @@ function renderPayments(list) {
     var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">—</span>';
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
-    var date = p.billing_date ? new Date(p.billing_date).toLocaleDateString() : (p.paid_at ? new Date(p.paid_at).toLocaleDateString() : (p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'));
+    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—');
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
@@ -2570,6 +2613,96 @@ async function confirmPayment(invoiceId, btn) {
     if(!r.ok) throw new Error(d.error || 'Failed');
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
+}
+// ── Subscription ──────────────────────────────────────────────────────────────
+async function loadSubscription() {
+  var plans = {
+    'startup':    { label: 'Startup',    price: 99,  desc: 'Up to 10 vehicles, 5 staff accounts' },
+    'enterprise': { label: 'Enterprise', price: 499, desc: 'Unlimited vehicles & staff, AI dispatching' },
+    'global':     { label: 'Global',     price: 999, desc: 'Multi-region, dedicated manager, white-label' },
+    'free':       { label: 'Free Trial', price: 0,   desc: 'Basic features, limited usage' }
+  };
+
+  var t = window.__TENANT__ || {};
+  var planKey = (t.plan || 'startup').toLowerCase();
+  var plan = plans[planKey] || plans['startup'];
+
+  // Populate plan info
+  var nameEl = document.getElementById('sub-plan-name');
+  var descEl = document.getElementById('sub-plan-desc');
+  var priceEl = document.getElementById('sub-plan-price');
+  var nextEl = document.getElementById('sub-next-billing');
+  var daysEl = document.getElementById('sub-days-left');
+  var statusEl = document.getElementById('sub-status');
+  var sinceEl = document.getElementById('sub-since');
+
+  if (nameEl) nameEl.textContent = plan.label;
+  if (descEl) descEl.textContent = plan.desc;
+  if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
+
+  // Calculate next billing: assume monthly from tenant created_at or today
+  var tenantCreated = t.created_at ? new Date(t.created_at) : new Date();
+  var now = new Date();
+
+  if (plan.price > 0) {
+    // Calculate next billing based on monthly cycle from creation
+    var nextBilling = new Date(tenantCreated);
+    nextBilling.setDate(nextBilling.getDate()); // Start from created date
+    while (nextBilling <= now) {
+      nextBilling.setMonth(nextBilling.getMonth() + 1);
+    }
+    if (nextEl) nextEl.textContent = nextBilling.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    var daysRemaining = Math.ceil((nextBilling - now) / (1000 * 60 * 60 * 24));
+    if (daysEl) {
+      if (daysRemaining <= 3) {
+        daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700;">' + daysRemaining + ' days remaining — payment due soon</span>';
+      } else {
+        daysEl.textContent = daysRemaining + ' days remaining';
+      }
+    }
+  } else {
+    if (nextEl) nextEl.textContent = 'N/A';
+    if (daysEl) daysEl.textContent = 'Free plan — no billing';
+  }
+
+  if (statusEl) {
+    statusEl.textContent = 'Active';
+    statusEl.style.color = '#16a34a';
+  }
+  if (sinceEl && t.created_at) {
+    sinceEl.textContent = 'Since ' + new Date(t.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // Load billing history from payment records (subscription-level)
+  var tbody = document.getElementById('sub-billing-tbody');
+  if (!tbody) return;
+
+  try {
+    // We'll reuse the payments API and filter for subscription-related or show all as billing history
+    var res = await apiFetch('/' + _SLUG + '/api/admin/payments');
+    var d = await res.json();
+    var payments = (d && d.payments) ? d.payments.filter(function(p) { return p.status === 'Paid'; }) : [];
+
+    if (!payments.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing history yet</p></div></td></tr>';
+      return;
+    }
+
+    // Show last 10 paid transactions as billing history
+    tbody.innerHTML = payments.slice(0, 10).map(function(p) {
+      var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleDateString() : '\u2014');
+      var amount = p.total_amount ? '\u20b1' + parseFloat(p.total_amount).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : '\u2014';
+      var desc = 'Shipment ' + (p.delivery_number || '');
+      return '<tr>' +
+        '<td>' + date + '</td>' +
+        '<td>' + esc(desc) + '</td>' +
+        '<td><strong>' + amount + '</strong></td>' +
+        '<td><span class="badge b-delivered">' + esc(p.status) + '</span></td>' +
+      '</tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>' + esc(e.message) + '</p></div></td></tr>';
+  }
 }
 
 // ── Proof of Delivery ─────────────────────────────────────────────────────────
