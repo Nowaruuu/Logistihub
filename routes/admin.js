@@ -421,10 +421,30 @@ router.delete('/:slug/api/admin/shipments/:delivery_number', requireAdmin, requi
     await query('DELETE FROM sub_bulk WHERE delivery_number = ?', [dn]).catch(() => {});
     // Delete the shipment itself
     await query('DELETE FROM shipment WHERE delivery_number = ? AND tenant_id = ?', [dn, tid]);
-    res.json({ ok: true, message: `Shipment ${dn} deleted.` });
+  res.json({ ok: true, message: `Shipment ${dn} deleted.` });
   } catch (err) {
     console.error('[DELETE /admin/shipments]', err);
     res.status(500).json({ error: err.message || 'Failed to delete shipment.' });
+  }
+});
+
+// PUT assign/reassign driver + vehicle to a shipment
+router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const dn = req.params.delivery_number;
+  const { assigned_driver_id, assigned_vehicle_plate } = req.body;
+  try {
+    const updates = [];
+    const vals = [];
+    if (assigned_driver_id !== undefined) { updates.push('assigned_driver_id = ?'); vals.push(assigned_driver_id || null); }
+    if (assigned_vehicle_plate !== undefined) { updates.push('assigned_vehicle_plate = ?'); vals.push(assigned_vehicle_plate || null); }
+    if (!updates.length) return res.status(400).json({ error: 'Nothing to update.' });
+    vals.push(dn, tid);
+    await query(`UPDATE shipment SET ${updates.join(', ')} WHERE delivery_number = ? AND tenant_id = ?`, vals);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PUT /admin/shipments/assign]', err);
+    res.status(500).json({ error: err.message || 'Failed to assign driver.' });
   }
 });
 

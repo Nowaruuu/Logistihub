@@ -1013,6 +1013,39 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
+<!-- ══ ASSIGN DRIVER MODAL ════════════════════════════════════════ -->
+<div id="modal-assign-driver" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:800;color:#0f172a;">Assign Driver</div>
+      <button onclick="closeAssignModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:22px;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="assign-modal-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px;"></div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Delivery Number</label>
+      <input id="assign-dn" type="text" disabled style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f8fafc;color:#64748b;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Driver *</label>
+        <select id="assign-driver" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">Unassigned</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle</label>
+        <select id="assign-vehicle" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">None</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeAssignModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
+      <button id="assign-submit-btn" onclick="submitAssignDriver()" style="flex:2;padding:12px;background:#0f2235;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Assign
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Staff & Vehicle Data Loading ───────────────────────────────────────────────
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
@@ -1324,7 +1357,10 @@ function renderShipments() {
     var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
     var sender = s.sender_name ? esc(s.sender_name) : esc(s.client_name || 'N/A');
     var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
-    return '<tr><td><strong>' + esc(s.delivery_number || '') + '</strong></td><td>' + esc(s.awb || '\u2014') + '</td><td>' + sender + '</td><td>' + receiver + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag || 'PKG') + '</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">' + route + '</td><td>' + esc(s.driver_name || 'Unassigned') + '</td><td>' + veh + '</td><td>' + plate + '</td><td><span class="badge ' + sc + '">' + esc(s.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + dateOrdered + '</td><td style="white-space:nowrap;font-size:11px;">' + dateDelivered + '</td><td></td></tr>';
+    var assignLabel = s.driver_name ? 'Reassign' : 'Assign';
+    var assignIcon = s.driver_name ? 'swap_horiz' : 'person_add';
+    var actionBtn = s.status === 'Delivered' || s.status === 'Failed' ? '' : '<button onclick="openAssignModal(\'' + esc(s.delivery_number) + '\',' + (s.assigned_driver_id || 'null') + ',\'' + esc(s.assigned_vehicle_plate || '') + '\')" style="padding:4px 10px;font-size:11px;border:1.5px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;font-weight:600;color:#3b82f6;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.background=\'#eff6ff\';this.style.borderColor=\'#93c5fd\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#e2e8f0\'"><span class="material-symbols-outlined" style="font-size:14px;">' + assignIcon + '</span>' + assignLabel + '</button>';
+    return '<tr><td><strong>' + esc(s.delivery_number || '') + '</strong></td><td>' + esc(s.awb || '\u2014') + '</td><td>' + sender + '</td><td>' + receiver + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag || 'PKG') + '</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">' + route + '</td><td>' + esc(s.driver_name || 'Unassigned') + '</td><td>' + veh + '</td><td>' + plate + '</td><td><span class="badge ' + sc + '">' + esc(s.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + dateOrdered + '</td><td style="white-space:nowrap;font-size:11px;">' + dateDelivered + '</td><td>' + actionBtn + '</td></tr>';
   }).join('');
 }
 
@@ -1462,6 +1498,73 @@ function loadPods() {
       var tb = document.getElementById('pods-tbody');
       if (tb) tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
     });
+}
+
+// ═══ ASSIGN DRIVER FUNCTIONS ═════════════════════════════════════════════════
+function openAssignModal(dn, currentDriverId, currentPlate) {
+  var modal = document.getElementById('modal-assign-driver');
+  document.getElementById('assign-dn').value = dn;
+  document.getElementById('assign-modal-err').style.display = 'none';
+
+  // Ensure staff and vehicle data is loaded
+  if (!_staffData.length) loadStaff();
+  if (!_vehicleData.length) loadVehicles();
+
+  // Populate driver dropdown from cached staff data
+  var driverSel = document.getElementById('assign-driver');
+  driverSel.innerHTML = '<option value="">Unassigned</option>';
+  var drivers = (_staffData || []).filter(function(s) { return s.role === 'Driver' && s.status === 'active'; });
+  drivers.forEach(function(d) {
+    var opt = document.createElement('option');
+    opt.value = d.staff_id || d.id;
+    opt.textContent = d.name;
+    if ((d.staff_id || d.id) == currentDriverId) opt.selected = true;
+    driverSel.appendChild(opt);
+  });
+
+  // Populate vehicle dropdown from cached vehicle data
+  var vehSel = document.getElementById('assign-vehicle');
+  vehSel.innerHTML = '<option value="">None</option>';
+  (_vehicleData || []).forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.plate_number;
+    opt.textContent = v.plate_number + ' (' + (v.type || 'N/A') + ')';
+    if (v.plate_number === currentPlate) opt.selected = true;
+    vehSel.appendChild(opt);
+  });
+
+  modal.style.display = 'flex';
+}
+function closeAssignModal() {
+  document.getElementById('modal-assign-driver').style.display = 'none';
+}
+async function submitAssignDriver() {
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  var dn = document.getElementById('assign-dn').value;
+  var driverId = document.getElementById('assign-driver').value;
+  var plate = document.getElementById('assign-vehicle').value;
+  var errEl = document.getElementById('assign-modal-err');
+  var btn = document.getElementById('assign-submit-btn');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;animation:spin 1s linear infinite;">sync</span> Assigning...';
+  try {
+    var r = await apiFetch('/' + slug + '/api/admin/shipments/' + encodeURIComponent(dn) + '/assign', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_driver_id: driverId || null, assigned_vehicle_plate: plate || null })
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to assign driver.');
+    closeAssignModal();
+    loadShipments();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Assign';
 }
 </script>
 </body>
