@@ -189,7 +189,7 @@ textarea{resize:vertical;}
     <div class="nav-sec">Operations</div>
     <button class="nav-link active" onclick="go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
     <button class="nav-link" onclick="go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
-    <button class="nav-link" onclick="go('routes',this)"><span class="material-symbols-outlined">route</span>Routes</button>
+
     <div class="nav-sec">Management</div>
     <button class="nav-link" onclick="go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
     <button class="nav-link" onclick="go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
@@ -251,30 +251,16 @@ textarea{resize:vertical;}
         <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
       </div>
 
-      <div class="grid-3-1">
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all →</button>
-          </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
-              <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
-            </table>
-          </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
+          <button class="card-action" onclick="go('shipments',null)">View all →</button>
         </div>
-        <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">pie_chart</span>Item Types</span></div>
-          <div class="card-body">
-            <div class="type-bar-list">
-              <div><div class="type-bar-meta"><span class="type-bar-name">Package</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#8b5cf6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Vehicle</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#3b82f6;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Food</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#f59e0b;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Document</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#22c55e;"></div></div></div>
-              <div><div class="type-bar-meta"><span class="type-bar-name">Bulk</span><span class="type-bar-ct">0</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:#64748b;"></div></div></div>
-            </div>
-          </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -364,10 +350,8 @@ textarea{resize:vertical;}
     </div>
 
     <!-- â•â• ROUTES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-routes" class="screen">
-      <div class="ph-row"><div><h2>Routes</h2><p>Delivery zones scoped to your company.</p></div><button class="btn btn-primary btn-sm"><span class="material-symbols-outlined">add</span>Add Route</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Route ID</th><th>Name</th><th>Vehicle</th><th>Driver</th><th>Active Shipments</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">route</span><p>No routes defined</p></div></td></tr></tbody></table></div></div>
-    </div>
+
+
 
     <!-- â• â•  STAFF â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  -->
     <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
@@ -543,7 +527,7 @@ var pageMeta={
   'dashboard':['Dashboard','Welcome back'],
   'shipments':['Shipments','All deliveries in your workspace'],
   'new-shipment':['New Shipment','Shipments / New'],
-  'routes':['Routes','Your delivery zones'],
+
   'staff':['Staff','Your team'],
   'vehicles':['Vehicles','Your fleet'],
   'app-users':['App Users','Registered users for your company'],
@@ -1389,9 +1373,9 @@ function updateDashboardStats() {
   // Update recent shipments table on dashboard
   var recentTbody = document.querySelector('#s-dashboard .tbl-wrap tbody');
   if (recentTbody && _allShipments.length) {
-    var recent = _allShipments.slice(0, 5);
+    var recent = _allShipments.slice(0, 8);
     var statusBadge = function(st) {
-      var map = { 'Pending': 'b-pending', 'In-Transit': 'b-transit', 'In Transit': 'b-transit', 'Out for Delivery': 'b-transit', 'Delivered': 'b-delivered', 'Failed': 'b-declined' };
+      var map = { 'Pending': 'b-pending', 'Queued': 'b-awaiting', 'In-Transit': 'b-transit', 'In Transit': 'b-transit', 'Out for Delivery': 'b-transit', 'Delivered': 'b-delivered', 'Failed': 'b-declined' };
       return '<span class="badge ' + (map[st] || 'b-pending') + '">' + esc(st || 'Unknown') + '</span>';
     };
     recentTbody.innerHTML = recent.map(function(s) {

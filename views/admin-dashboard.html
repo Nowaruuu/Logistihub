@@ -1280,7 +1280,7 @@ function renderDashboardShipments(){
   // Recent shipments on dashboard (first 5)
   var tbody=document.querySelector('#s-dashboard .tbl-wrap tbody');
   if(!tbody)return;
-  var recent=_allShipments.slice(0,5);
+  var recent=_allShipments.slice(0,8);
   if(!recent.length){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr>';return;}
   tbody.innerHTML=recent.map(function(s){
     var tc=typeCls[s.item_type_flag]||'t-pkg';
