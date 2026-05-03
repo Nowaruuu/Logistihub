@@ -197,8 +197,6 @@ textarea{resize:vertical;}
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
     <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
-    <div class="nav-sec">Users</div>
-    <button class="nav-link" onclick="go('user-reg',this)"><span class="material-symbols-outlined">person_add</span>User Registration</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
   </nav>
@@ -234,7 +232,7 @@ textarea{resize:vertical;}
 
   <div class="content">
 
-    <!-- â•â• DASHBOARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- — DASHBOARD ——————————————————————————————————————————— -->
     <div id="s-dashboard" class="screen active">
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
@@ -427,35 +425,7 @@ textarea{resize:vertical;}
     </div>
 
     <!-- â•â• USER REGISTRATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-user-reg" class="screen">
-      <div class="ph-row"><div><h2>User Registration Page</h2><p>Your private, tenant-scoped registration link for drivers and field staff.</p></div></div>
 
-      <div style="background:#0f2235;border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
-        <span class="material-symbols-outlined" style="color:#38bdf8;font-size:18px;margin-top:1px;">shield</span>
-        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;">
-          <strong style="color:#fff;">This page belongs exclusively to your company.</strong> The registration URL below is scoped to your tenant ID. Users who register through this link are automatically associated with your company only. No other company on this platform can access this page or see your registered users.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">link</span>Your Registration URL</span></div>
-        <div class="card-body">
-          <div class="reg-link-box">
-            <div class="reg-link-text">
-              <strong>Share with your staff and drivers only</strong>
-              <span class="reg-link-url" id="reg-page-url">logisticsos.io/your-workspace/register</span>
-            </div>
-            <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
-          </div>
-          <p style="font-size:11px;color:#94a3b8;margin-top:10px;">After registering, users are directed to download the Logistics OS mobile app for their platform (iOS / Android / APK).</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">group</span>Registered Users</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">group</span><p>No users registered yet</p><p class="esub">Share your registration link with your staff.</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
 
     <!-- â•â• SETTINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-settings" class="screen">
@@ -1287,15 +1257,19 @@ var _allShipments = [];
 var _shipStatusFilter = 'All';
 
 function loadShipments() {
-  if (!_SLUG) return;
-  apiFetch('/' + _SLUG + '/api/manager/shipments')
+  var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
+  if (!slug) return;
+  apiFetch('/' + slug + '/api/admin/shipments?t=' + Date.now())
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      _allShipments = Array.isArray(data.shipments) ? data.shipments : [];
+      if (Array.isArray(data)) _allShipments = data;
+      else if (Array.isArray(data.shipments)) _allShipments = data.shipments;
+      else _allShipments = [];
       renderShipments();
       updateDashboardStats();
     })
-    .catch(function() {
+    .catch(function(err) {
+      console.error('[Manager] Failed to load shipments:', err);
       var tb = document.getElementById('shipments-tbody');
       if (tb) tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load shipments</p></div></td></tr>';
     });
@@ -1395,14 +1369,14 @@ function updateDashboardStats() {
 
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
-// Load shipments on page load and when navigating to shipments
+// Load shipments on page load and when navigating to shipments/dashboard
 (function() {
   var _origGo2 = go;
   go = function(id, navBtn) {
     _origGo2(id, navBtn);
-    if (id === 'shipments') loadShipments();
+    if (id === 'shipments' || id === 'dashboard') loadShipments();
   };
-  // Also load on initial page load
+  // Load on initial page load
   loadShipments();
 })();
 </script>
