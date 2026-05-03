@@ -147,6 +147,22 @@
 
         footer { padding: 40px 0; text-align: center; border-top: 1px solid #f1f5f9; color: var(--text-muted); font-size: 13px; }
 
+        /* --- Dark page adaptation (gradient/dark bg) --- */
+        body.dark-page { color: #f1f5f9; }
+        body.dark-page nav { border-bottom-color: rgba(255,255,255,0.1); }
+        body.dark-page .logo { color: #fff; }
+        body.dark-page .staff-link { color: rgba(255,255,255,0.7); }
+        body.dark-page .staff-link:hover { color: #fff; }
+        body.dark-page .app-content h2 { color: #fff; }
+        body.dark-page .app-content p { color: rgba(255,255,255,0.65); }
+        body.dark-page .app-visual { background: rgba(255,255,255,0.08); }
+        body.dark-page .cta-box { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        body.dark-page .cta-box p { color: rgba(255,255,255,0.9) !important; }
+        body.dark-page .cta-box p[style*="text-muted"], body.dark-page .cta-box p:last-of-type { color: rgba(255,255,255,0.55) !important; }
+        body.dark-page #qr-canvas { background: #fff; }
+        body.dark-page footer { color: rgba(255,255,255,0.45); border-top-color: rgba(255,255,255,0.08); }
+        body.dark-page .staff-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+
         @media (max-width: 800px) {
             .app-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
             .hero h1 { font-size: 38px; }
@@ -231,7 +247,21 @@
             // Apply page body background — supports solid color or gradient
             if (bgPageColor) {
                 document.body.style.background = bgPageColor;
-                // Do NOT set nav background separately — gradient re-renders at wrong scale
+
+                // Detect if background is dark and switch to light text
+                var isDark = false;
+                if (bgPageColor.includes('gradient')) {
+                    // Gradients are almost always dark-themed, enable light text
+                    isDark = true;
+                } else {
+                    // Solid color — compute luminance
+                    var hex = bgPageColor.replace('#', '');
+                    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+                    var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+                    var luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+                    if (luminance < 0.5) isDark = true;
+                }
+                if (isDark) document.body.classList.add('dark-page');
             }
 
             // Apply hero background — image > gradient/color > default
