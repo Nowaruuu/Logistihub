@@ -894,8 +894,10 @@ router.get('/driver/jobs', authMiddleware, async (req, res) => {
   const tid = req.tenantId;
   try {
     const [rows] = await query(
-      `SELECT * FROM shipment WHERE tenant_id = ? AND status = 'Pending' AND assigned_driver_id IS NULL
-       ORDER BY created_at DESC LIMIT 30`,
+      `SELECT s.* FROM shipment s
+       WHERE s.tenant_id = ? AND s.status = 'Pending' AND s.assigned_driver_id IS NULL
+         AND EXISTS (SELECT 1 FROM payment p WHERE p.delivery_number = s.delivery_number AND p.tenant_id = s.tenant_id AND p.status = 'Paid')
+       ORDER BY s.created_at DESC LIMIT 30`,
       [tid]
     );
 
@@ -964,6 +966,15 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
       [dn, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not available or already taken.' });
+
+    // Check payment — driver cannot accept unpaid shipments
+    const [payRows] = await query(
+      "SELECT 1 FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
+      [dn, tid]
+    );
+    if (!payRows.length) {
+      return res.status(400).json({ error: 'This shipment has not been paid yet. The customer must pay before a driver can accept it.' });
+    }
 
     // Get driver's registered vehicle plate + type
     const [driverRows] = await query(

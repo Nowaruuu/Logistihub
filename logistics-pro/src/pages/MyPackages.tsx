@@ -258,6 +258,16 @@ function MyPackagesInner() {
 
       {/* ── List ── */}
       <div className="flex-1 px-4 pb-24 space-y-3 pt-2">
+        {/* Payment warning */}
+        {activeTab === 'topay' && displayed.length > 0 && (
+          <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
+            <CreditCard className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Payment required before delivery</p>
+              <p className="text-[11px] text-amber-600/80 dark:text-amber-400/70 mt-0.5 leading-relaxed">Your shipment will not be assigned to a driver until payment is completed. Please tap "Pay Now" to proceed.</p>
+            </div>
+          </div>
+        )}
         {displayed.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             {(() => { const T = TABS.find(t => t.id === activeTab)!; const Icon = T.icon; return (
