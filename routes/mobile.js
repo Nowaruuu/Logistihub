@@ -491,19 +491,17 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
   };
   const requiredTypes = CATEGORY_VEHICLES[itemType.toUpperCase()] || null;
   if (requiredTypes) {
-    try {
-      const [vehicles] = await query(
-        'SELECT vehicle_type FROM vehicle WHERE tenant_id = ? AND status != "Decommissioned"',
-        [tid]
-      );
-      const tenantTypes = vehicles.map(v => (v.vehicle_type || '').toLowerCase());
-      const hasCompatible = requiredTypes.some(rt => tenantTypes.includes(rt));
-      if (!hasCompatible) {
-        return res.status(400).json({
-          error: `No suitable vehicle available for ${itemType} deliveries. Your fleet needs: ${requiredTypes.join(', ')}. Contact your admin to add the right vehicle type.`
-        });
-      }
-    } catch (_) { /* vehicle table might not exist — allow shipment */ }
+    const [vehicles] = await query(
+      `SELECT LOWER(vehicle_type) AS vtype FROM vehicle WHERE tenant_id = ? AND status != 'Retired' GROUP BY LOWER(vehicle_type)`,
+      [tid]
+    );
+    const tenantTypes = vehicles.map(v => v.vtype || '');
+    const hasCompatible = requiredTypes.some(rt => tenantTypes.includes(rt));
+    if (!hasCompatible) {
+      return res.status(400).json({
+        error: `No suitable vehicle available for ${itemType} deliveries. Your fleet needs one of: ${requiredTypes.join(', ')}. Contact your admin to add the right vehicle type.`
+      });
+    }
   }
 
   try {
