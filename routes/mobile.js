@@ -784,7 +784,7 @@ async function ensureChatTable() {
 // Helper: verify shipment is in chat-eligible status and user is a party
 async function getChatShipment(deliveryNumber, tenantId) {
   const [rows] = await query(
-    `SELECT id, delivery_number, sender_user_id, assigned_driver_id, status
+    `SELECT delivery_number, sender_user_id, assigned_driver_id, status
      FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1`,
     [deliveryNumber, tenantId]
   );
@@ -1379,7 +1379,7 @@ router.post('/driver/decline', authMiddleware, async (req, res) => {
 
   try {
     const [rows] = await query(
-      'SELECT id, status, sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      'SELECT status, sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
       [delivery_number, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
