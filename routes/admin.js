@@ -506,9 +506,25 @@ router.delete('/:slug/api/admin/clients/:id', requireAdmin, requireSlugMatch, as
 router.get('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
-    const [tenants] = await query('SELECT company_name, slug, brand_color, bg_app_color, bg_sidebar_color, logo_url, background_url, bg_hero_color, bg_page_color FROM TENANT WHERE tenant_id = ?', [tid]);
+    // Return only lightweight fields (colors, text). Images loaded separately.
+    const [tenants] = await query(
+      `SELECT company_name, slug, brand_color, bg_app_color, bg_sidebar_color, bg_hero_color, bg_page_color,
+              CASE WHEN logo_url IS NOT NULL AND logo_url != '' THEN 1 ELSE 0 END AS has_logo,
+              CASE WHEN background_url IS NOT NULL AND background_url != '' THEN 1 ELSE 0 END AS has_background
+       FROM TENANT WHERE tenant_id = ?`, [tid]);
     const [staff] = await query("SELECT name, username AS email FROM STAFF WHERE tenant_id = ? AND role = 'Admin' LIMIT 1", [tid]);
     res.json({ ...tenants[0], ...staff[0] });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /:slug/api/admin/settings/images — returns large image blobs separately (lazy load)
+router.get('/:slug/api/admin/settings/images', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  try {
+    const [tenants] = await query('SELECT logo_url, background_url FROM TENANT WHERE tenant_id = ?', [tid]);
+    res.json(tenants[0] || {});
   } catch(err) {
     res.status(500).json({ error: err.message });
   }

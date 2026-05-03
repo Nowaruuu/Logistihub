@@ -1439,6 +1439,7 @@ function loadSettings() {
   var t = window.__TENANT__;
   if (!t) return;
   var slug = t.slug;
+  // Fast path: load lightweight settings (colors, text) — no image blobs
   apiFetch('/' + slug + '/api/admin/settings?t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -1451,7 +1452,6 @@ function loadSettings() {
       var _brand = d.brand_color || _t.brand_color;
       var _app = d.bg_app_color || _t.bg_app_color;
       var _side = d.bg_sidebar_color || _t.bg_sidebar_color;
-      console.log('[loadSettings] API:', d.bg_app_color, d.bg_sidebar_color, '| TENANT:', _t.bg_app_color, _t.bg_sidebar_color, '| Final:', _app, _side);
       // Set ALL hidden inputs FIRST
       if (_brand) document.getElementById('set-brand-color-hex').value = _brand;
       if (_app)   document.getElementById('set-bg-app-hex').value = _app;
@@ -1460,19 +1460,9 @@ function loadSettings() {
       if (_brand && typeof _brandFL !== 'undefined' && _brandFL)     _brandFL.setValue(_brand);
       if (_app && typeof _appFL !== 'undefined' && _appFL)           _appFL.setValue(_app);
       if (_side && typeof _sidebarFL !== 'undefined' && _sidebarFL)  _sidebarFL.setValue(_side);
-      if (d.logo_url) {
-        // Update settings preview
-        document.getElementById('logo-preview').innerHTML = '<img src="' + d.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-        // Also refresh sidebar logo in case __TENANT__ was stale
-        var lc = document.getElementById('sidebar-logo-container');
-        var li = document.getElementById('sidebar-logo-img');
-        if (lc && li) { li.src = d.logo_url; lc.style.display = 'block'; }
-      }
-      if (d.background_url) {
-        document.getElementById('bg-preview').innerHTML = '<img src="' + d.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
-        document.getElementById('bg-preview').dataset.base64 = d.background_url;
-        setBgType('image');
-      } else if (d.bg_hero_color) {
+
+      // Handle hero/page colors (lightweight, already in response)
+      if (!d.has_background && d.bg_hero_color) {
         document.getElementById('set-hero-color-hex').value = d.bg_hero_color;
         var hp = document.getElementById('hero-color-preview');
         if (hp) hp.style.background = d.bg_hero_color;
@@ -1490,6 +1480,26 @@ function loadSettings() {
       if (typeof updateLandingPreview === 'function') updateLandingPreview();
       // Final contrast fix after all FillList setValue callbacks finish
       setTimeout(function(){ updateAppTextContrast(); updateSidebarTextContrast(); }, 100);
+
+      // Lazy path: load images in background (these are large base64 blobs)
+      if (d.has_logo || d.has_background) {
+        apiFetch('/' + slug + '/api/admin/settings/images')
+          .then(function(r2){ return r2.json(); })
+          .then(function(img) {
+            if (img.logo_url) {
+              document.getElementById('logo-preview').innerHTML = '<img src="' + img.logo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+              var lc = document.getElementById('sidebar-logo-container');
+              var li = document.getElementById('sidebar-logo-img');
+              if (lc && li) { li.src = img.logo_url; lc.style.display = 'block'; }
+            }
+            if (img.background_url) {
+              document.getElementById('bg-preview').innerHTML = '<img src="' + img.background_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
+              document.getElementById('bg-preview').dataset.base64 = img.background_url;
+              setBgType('image');
+            }
+            if (typeof updateLandingPreview === 'function') updateLandingPreview();
+          }).catch(function(e){ console.warn('[loadSettings] Image load deferred:', e.message); });
+      }
     }).catch(function(err){ console.error('[loadSettings] Error:', err); });
 }
 
