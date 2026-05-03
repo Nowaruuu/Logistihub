@@ -511,11 +511,11 @@ textarea{resize:vertical;}
       <!-- Stat Cards -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:20px;border-left:4px solid #10b981;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Revenue (YTD)</div>
-          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Collected (Paid)</div>
+          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">All-Time Revenue</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Total Billed</div>
           <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
@@ -555,7 +555,7 @@ textarea{resize:vertical;}
         <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
           <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b;">receipt_long</span>Recent Transactions</h3>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Delivery #</th><th>Client</th><th>Method</th><th>Amount</th><th>Date</th></tr></thead><tbody id="sr-transactions-tbody"><tr><td colspan="6"><div class="empty"><p>No paid transactions yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Delivery #</th><th>Client</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="sr-transactions-tbody"><tr><td colspan="7"><div class="empty"><p>No transactions yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -1375,20 +1375,21 @@ var _srMonthlyChart=null, _srTypeChart=null;
 function loadSalesReport(){
   apiFetch('/api/admin/sales-report').then(function(data){
     // Stat cards
-    document.getElementById('sr-rev-ytd').textContent='\u20b1'+Number(data.revenue_ytd||0).toLocaleString();
-    document.getElementById('sr-rev-all').textContent='\u20b1'+Number(data.revenue_all||0).toLocaleString();
-    var avgDel=data.delivered_count>0?Math.round(data.revenue_all/data.delivered_count):0;
+    document.getElementById('sr-rev-ytd').textContent='\u20b1'+Number(data.revenue_paid||0).toLocaleString();
+    document.getElementById('sr-rev-all').textContent='\u20b1'+Number(data.revenue_total||0).toLocaleString();
+    var avgDel=data.shipment_count>0?Math.round(data.revenue_total/data.shipment_count):0;
     document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
 
-    // Monthly Revenue Chart
-    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    // Monthly Revenue Chart (stacked: paid + pending)
+    var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var labels=(data.monthly||[]).map(function(m){
       var parts=m.month.split('-');
-      return months[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
+      return monthNames[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
     });
-    var values=(data.monthly||[]).map(function(m){return Number(m.total)||0;});
+    var paidVals=(data.monthly||[]).map(function(m){return Number(m.paid_total)||0;});
+    var pendingVals=(data.monthly||[]).map(function(m){return Number(m.pending_total)||0;});
     var counts=(data.monthly||[]).map(function(m){return Number(m.count)||0;});
     if(_srMonthlyChart)_srMonthlyChart.destroy();
     var ctx1=document.getElementById('sr-monthly-chart');
@@ -1398,17 +1399,18 @@ function loadSalesReport(){
         data:{
           labels:labels,
           datasets:[
-            {label:'Revenue',data:values,backgroundColor:'rgba(37,99,235,0.7)',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2},
-            {label:'Transactions',data:counts,type:'line',borderColor:'#10b981',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#10b981',yAxisID:'y1',order:1}
+            {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev'},
+            {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev'},
+            {label:'Orders',data:counts,type:'line',borderColor:'#3b82f6',backgroundColor:'transparent',borderWidth:2,tension:0.4,pointRadius:4,pointBackgroundColor:'#3b82f6',yAxisID:'y1',order:1}
           ]
         },
         options:{
           responsive:true,maintainAspectRatio:false,
           plugins:{legend:{position:'bottom'}},
           scales:{
-            y:{beginAtZero:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
+            y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
             y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1}},
-            x:{grid:{display:false}}
+            x:{stacked:true,grid:{display:false}}
           }
         }
       });

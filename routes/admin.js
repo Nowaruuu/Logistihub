@@ -122,14 +122,14 @@ router.get('/:slug/api/admin/stats', requireAdmin, requireSlugMatch, async (req,
 router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
-    // Total revenue YTD
-    const [[{ revenue_ytd }]] = await query(
-      "SELECT COALESCE(SUM(total_amount),0) AS revenue_ytd FROM payment WHERE tenant_id = ? AND status = 'Paid' AND YEAR(paid_at) = YEAR(NOW())",
+    // Total collected (paid)
+    const [[{ revenue_paid }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS revenue_paid FROM payment WHERE tenant_id = ? AND status = 'Paid'",
       [tid]
     );
-    // Total revenue all time
-    const [[{ revenue_all }]] = await query(
-      "SELECT COALESCE(SUM(total_amount),0) AS revenue_all FROM payment WHERE tenant_id = ? AND status = 'Paid'",
+    // Total billed (all statuses)
+    const [[{ revenue_total }]] = await query(
+      "SELECT COALESCE(SUM(total_amount),0) AS revenue_total FROM payment WHERE tenant_id = ?",
       [tid]
     );
     // Pending amount
@@ -141,56 +141,63 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
       "SELECT COUNT(*) AS pending_count FROM payment WHERE tenant_id = ? AND status IN ('Pending','AwaitingAdmin')",
       [tid]
     );
-    // Monthly revenue for last 12 months
+    // Total shipment count
+    const [[{ shipment_count }]] = await query(
+      "SELECT COUNT(*) AS shipment_count FROM shipment WHERE tenant_id = ?",
+      [tid]
+    );
+    // Monthly revenue for last 12 months (ALL payments - grouped by created_at since pending ones have no paid_at)
     const [monthly] = await query(
-      `SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month, SUM(total_amount) AS total, COUNT(*) AS count
-       FROM payment WHERE tenant_id = ? AND status = 'Paid' AND paid_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      `SELECT DATE_FORMAT(COALESCE(paid_at, created_at), '%Y-%m') AS month,
+              SUM(total_amount) AS total,
+              SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
+              SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
+              COUNT(*) AS count
+       FROM payment WHERE tenant_id = ? AND COALESCE(paid_at, created_at) >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
        GROUP BY month ORDER BY month ASC`,
       [tid]
     );
-    // Revenue by shipment type
+    // Revenue by shipment type (all payments)
     const [byType] = await query(
-      `SELECT s.item_type_flag AS type, COALESCE(SUM(p.total_amount),0) AS total, COUNT(*) AS count
+      `SELECT COALESCE(s.item_type_flag, 'OTHER') AS type, COALESCE(SUM(p.total_amount),0) AS total, COUNT(*) AS count
        FROM payment p
-       JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
-       WHERE p.tenant_id = ? AND p.status = 'Paid'
-       GROUP BY s.item_type_flag ORDER BY total DESC`,
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       WHERE p.tenant_id = ?
+       GROUP BY type ORDER BY total DESC`,
       [tid]
     );
-    // Top clients by revenue
+    // Top clients by revenue (all payments)
     const [topClients] = await query(
       `SELECT COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
-              SUM(p.total_amount) AS total, COUNT(*) AS orders
+              SUM(p.total_amount) AS total, COUNT(*) AS orders,
+              SUM(CASE WHEN p.status = 'Paid' THEN p.total_amount ELSE 0 END) AS paid
        FROM payment p
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
        LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
-       WHERE p.tenant_id = ? AND p.status = 'Paid'
+       WHERE p.tenant_id = ?
        GROUP BY client_name ORDER BY total DESC LIMIT 10`,
       [tid]
     );
-    // Recent paid transactions
+    // Recent transactions (ALL - not just paid)
     const [recentTx] = await query(
-      `SELECT p.invoice_id, p.delivery_number, p.total_amount, p.payment_method, p.paid_at, p.status,
-              COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name
+      `SELECT p.invoice_id, p.delivery_number, p.total_amount, p.payment_method, 
+              COALESCE(p.paid_at, p.created_at) AS tx_date, p.status,
+              COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Walk-in') AS client_name,
+              s.total_fee
        FROM payment p
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
        LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
-       WHERE p.tenant_id = ? AND p.status = 'Paid'
-       ORDER BY p.paid_at DESC LIMIT 20`,
-      [tid]
-    );
-    // Delivered shipments count (for avg per delivery calc)
-    const [[{ delivered_count }]] = await query(
-      "SELECT COUNT(*) AS delivered_count FROM shipment WHERE tenant_id = ? AND status = 'Delivered'",
+       WHERE p.tenant_id = ?
+       ORDER BY COALESCE(p.paid_at, p.created_at) DESC LIMIT 20`,
       [tid]
     );
 
     res.json({
-      revenue_ytd: Number(revenue_ytd),
-      revenue_all: Number(revenue_all),
+      revenue_paid: Number(revenue_paid),
+      revenue_total: Number(revenue_total),
       pending_amount: Number(pending_amount),
       pending_count: Number(pending_count),
-      delivered_count: Number(delivered_count),
+      shipment_count: Number(shipment_count),
       monthly,
       by_type: byType,
       top_clients: topClients,
