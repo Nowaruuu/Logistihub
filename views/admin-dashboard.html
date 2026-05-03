@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+.lh-dot{background:none!important;border:none!important;}
 /* ── GUI Scale ─────────────────────────────────────────── */
 /* Small */
 .scale-sm .content { font-size: 12px; }
@@ -1243,11 +1244,11 @@ function _clearMapLayers(){
 }
 function _icon(color,size){
   var s=size||16;
-  return L.divIcon({className:'',iconSize:[s,s],iconAnchor:[s/2,s/2],
+  return L.divIcon({className:'lh-dot',iconSize:[s,s],iconAnchor:[s/2,s/2],
     html:'<div style="width:'+s+'px;height:'+s+'px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>'});
 }
 function _pulseIcon(color){
-  return L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
+  return L.divIcon({className:'lh-dot',iconSize:[22,22],iconAnchor:[11,11],
     html:'<div style="width:22px;height:22px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 0 0 5px '+color+'44,0 2px 8px rgba(0,0,0,.35);animation:pulse-ring 1.5s ease infinite;"></div>'});
 }
 // Fetch real road route from OSRM and draw it
