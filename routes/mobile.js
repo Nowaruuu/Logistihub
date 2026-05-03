@@ -907,22 +907,28 @@ router.get('/driver/jobs', authMiddleware, async (req, res) => {
       if (vRows.length) driverVehicleType = (vRows[0].vehicle_type || '').toLowerCase();
     }
 
-    // Filter by vehicle compatibility if driver has a known vehicle
+    // Filter by vehicle compatibility — drivers MUST have a vehicle type
     const VEHICLE_CATEGORIES = {
       motorcycle: ['PACKAGE', 'FOOD', 'DOC'],
       sedan: ['PACKAGE', 'FOOD', 'DOC'],
-      van: ['PACKAGE', 'FOOD', 'BULK'],
+      van: ['PACKAGE', 'FOOD'],
       truck: ['BULK', 'VEHICLE', 'PACKAGE'],
       flatbed: ['BULK', 'VEHICLE'],
     };
 
-    let filteredJobs = rows;
-    if (driverVehicleType && VEHICLE_CATEGORIES[driverVehicleType]) {
+    let filteredJobs = [];
+    if (!driverVehicleType) {
+      // No vehicle registered — show no jobs
+      filteredJobs = [];
+    } else if (VEHICLE_CATEGORIES[driverVehicleType]) {
       const allowedCategories = VEHICLE_CATEGORIES[driverVehicleType];
       filteredJobs = rows.filter(job => {
         const cat = (job.item_type_flag || 'PACKAGE').toUpperCase();
         return allowedCategories.includes(cat);
       });
+    } else {
+      // Unknown vehicle type — show no jobs until vehicle is properly registered
+      filteredJobs = [];
     }
 
     res.json({ jobs: filteredJobs });
@@ -976,8 +982,15 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     const shipCategory = (rows[0].item_type_flag || 'PACKAGE').toUpperCase();
     const allowedVehicles = CATEGORY_VEHICLES[shipCategory] || ['motorcycle','sedan','van','truck','flatbed'];
 
-    // Only enforce if driver has a known vehicle type
-    if (effectiveVehicleType && allowedVehicles.length > 0 && !allowedVehicles.includes(effectiveVehicleType)) {
+    // Driver MUST have a registered vehicle type to accept any job
+    if (!effectiveVehicleType) {
+      return res.status(400).json({
+        error: 'You must register your vehicle before accepting jobs. Go to Profile → Vehicle Info.'
+      });
+    }
+
+    // Enforce vehicle-type compatibility — no exceptions
+    if (!allowedVehicles.includes(effectiveVehicleType)) {
       return res.status(400).json({
         error: `Your vehicle (${effectiveVehicleType}) is not suitable for ${shipCategory.toLowerCase()} deliveries. Required: ${allowedVehicles.join(', ')}.`
       });
@@ -1258,7 +1271,7 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
             name: `Shipment ${delivery_number}`,
             quantity: 1
           }],
-          payment_method_types: ['gcash', 'grab_pay', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
+          payment_method_types: ['gcash', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
           success_url: `https://logistichub.ddns.net/${slug}/api/mobile/pay/success?dn=${delivery_number}`,
           cancel_url:  `https://logistichub.ddns.net/${slug}/api/mobile/pay/cancel?dn=${delivery_number}`,
           metadata: {
