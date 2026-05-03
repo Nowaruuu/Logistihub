@@ -1197,7 +1197,8 @@
         document.getElementById('val-active-users').textContent     = data.totalUsers     || 0;
         document.getElementById('val-monthly-activity').textContent = data.totalShipments || 0;
         document.getElementById('val-platform-revenue').textContent = '₱' + Number(data.totalRevenue || 0).toLocaleString();
-        renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants);
+        try { renderCharts(data.activeTenants || 0, data.pendingTenants || 0, data.suspendedTenants || 0, data.monthlyTenants); } catch(ce) { console.error('Charts error:', ce); }
+        try { renderForecast(data); } catch(fe) { console.error('Forecast error:', fe); }
         generateInsights(data);
         return data;
       } catch(e) { console.error('Dashboard error:', e); }
