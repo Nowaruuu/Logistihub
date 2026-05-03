@@ -166,30 +166,13 @@ app.listen(PORT, async () => {
   console.log(`   Env:     ${process.env.NODE_ENV || 'development'}`);
   console.log(`   DB:      ${process.env.DB_NAME}@${process.env.DB_HOST}\n`);
 
-  // One-time data reset for clean slate
+  // Ensure schema columns exist
   try {
     const { query } = require('./config/db');
-
-    // Truncate all shipment and payment data
-    const [flagCheck] = await query("SELECT 1 FROM shipment LIMIT 1").catch(() => [[{x:0}]]);
-    // Only truncate if there's existing data (one-time wipe)
-    const [existingShipments] = await query("SELECT COUNT(*) AS cnt FROM shipment").catch(() => [[{cnt:0}]]);
-    if (existingShipments[0]?.cnt > 0) {
-      await query('DELETE FROM SHIPMENT_HISTORY').catch(() => {});
-      await query('DELETE FROM proof_of_delivery').catch(() => {});
-      await query('DELETE FROM sub_package').catch(() => {});
-      await query('DELETE FROM sub_bulk').catch(() => {});
-      await query('DELETE FROM payment').catch(() => {});
-      await query('DELETE FROM shipment').catch(() => {});
-      console.log('   🗑️  Truncated all shipments and payments (clean slate)');
-    }
-
-    // Ensure columns exist
     try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL'); } catch(_) {}
     console.log('   ✅ Schema columns verified');
-
   } catch (e) { console.error('Cleanup error:', e.message); }
 });
 
