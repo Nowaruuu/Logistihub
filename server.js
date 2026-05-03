@@ -169,7 +169,7 @@ app.listen(PORT, async () => {
   // One-time cleanup: remove erroneous shipments created without suitable vehicles
   try {
     const { query } = require('./config/db');
-    const badDNs = ['DLV-MOPBWQTR-7D1D'];
+    const badDNs = ['DLV-MOPBWQTR-7D1D', 'DLV-MOPEC6GL-49B7'];
     for (const dn of badDNs) {
       const [rows] = await query('SELECT delivery_number FROM shipment WHERE delivery_number = ? LIMIT 1', [dn]);
       if (rows.length) {
