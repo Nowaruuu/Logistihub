@@ -152,9 +152,26 @@ router.get('/paymongo-success', async (req, res) => {
   const { token } = req.query;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.type !== 'checkout') throw new Error();
+    if (decoded.type !== 'checkout') throw new Error('Invalid token type');
     
     const p = decoded.payload;
+
+    // Check if this tenant was already created (e.g. user refreshed the success page)
+    const [existing] = await query('SELECT tenant_id FROM TENANT WHERE slug = ? LIMIT 1', [p.slug]);
+    if (existing.length > 0) {
+      // Tenant already exists — just redirect to success
+      const successToken = jwt.sign({ 
+        type: 'setup_success', 
+        tenant_id: existing[0].tenant_id, 
+        slug: p.slug, 
+        plan: p.plan, 
+        name: p.name, 
+        email: p.email, 
+        company: p.company_name 
+      }, process.env.JWT_SECRET, { expiresIn: '15m' });
+      return res.redirect(`/onboarding?success=true&token=${successToken}`);
+    }
+
     const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
     const passwordHash = await bcrypt.hash(p.password, saltRounds);
 
@@ -177,11 +194,23 @@ router.get('/paymongo-success', async (req, res) => {
       [tenantId, p.name, staffUsername, passwordHash, p.email]
     );
 
-    sendWelcomeEmail(p.email, p.name, p.org_name || p.company_name, p.slug, staffUsername).catch(e => console.error(e));
-    // Record subscription payment
-    const isTest = !process.env.PAYMONGO_SECRET_KEY || process.env.PAYMONGO_SECRET_KEY.startsWith('sk_test_');
-    await query(`INSERT INTO SUBSCRIPTION_PAYMENT (tenant_id, plan, amount, currency, status, is_test_mode) VALUES (?, ?, ?, 'PHP', 'paid', ?)`, [tenantId, p.plan, PLAN_PRICES[p.plan], isTest ? 1 : 0]);
-    logAudit({ actor: p.email, actor_type: 'tenant', action: 'TENANT_REGISTERED', target: p.org_name || p.company_name, tenant_slug: p.slug, ip_address: req.ip, metadata: { plan: p.plan, amount: PLAN_PRICES[p.plan], is_test: isTest } });
+    // ── Non-critical: welcome email ─────────────────
+    sendWelcomeEmail(p.email, p.name, p.org_name || p.company_name, p.slug, staffUsername).catch(e => console.error('Welcome email error:', e.message));
+
+    // ── Non-critical: subscription payment record ─────
+    try {
+      const isTest = !process.env.PAYMONGO_SECRET_KEY || process.env.PAYMONGO_SECRET_KEY.startsWith('sk_test_');
+      await query(`INSERT INTO SUBSCRIPTION_PAYMENT (tenant_id, plan, amount, currency, status, is_test_mode) VALUES (?, ?, ?, 'PHP', 'paid', ?)`, [tenantId, p.plan, PLAN_PRICES[p.plan], isTest ? 1 : 0]);
+    } catch (subErr) {
+      console.error('Subscription payment record error (non-fatal):', subErr.message);
+    }
+
+    // ── Non-critical: audit log ─────────────────────
+    try {
+      logAudit({ actor: p.email, actor_type: 'tenant', action: 'TENANT_REGISTERED', target: p.org_name || p.company_name, tenant_slug: p.slug, ip_address: req.ip, metadata: { plan: p.plan, amount: PLAN_PRICES[p.plan] } });
+    } catch (auditErr) {
+      console.error('Audit log error (non-fatal):', auditErr.message);
+    }
 
     // Sign a success token so the onboarding UI can show Step 4
     const successToken = jwt.sign({ 
@@ -196,8 +225,8 @@ router.get('/paymongo-success', async (req, res) => {
 
     res.redirect(`/onboarding?success=true&token=${successToken}`);
   } catch (err) {
-    console.error('Success handler error:', err);
-    res.redirect('/onboarding?error=Payment+Verification+Failed');
+    console.error('Success handler error:', err.message, err.stack);
+    res.redirect('/onboarding?error=Payment+Verification+Failed.+Please+contact+support.+Error:+' + encodeURIComponent(err.message));
   }
 });
 
