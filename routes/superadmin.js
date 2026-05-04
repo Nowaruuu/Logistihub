@@ -384,6 +384,35 @@ router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/superadmin/tenants/:id/plan  — change pricing plan
+// ─────────────────────────────────────────────────────────────────────────────
+router.patch('/tenants/:id/plan', requireSuperadmin, async (req, res) => {
+  const { plan } = req.body;
+  const allowed = ['Padala', 'Negosyo', 'Korporasyon'];
+  if (!plan || !allowed.includes(plan)) {
+    return res.status(400).json({ error: `Plan must be one of: ${allowed.join(', ')}` });
+  }
+  try {
+    const [[tenant]] = await query('SELECT company_name, slug, plan AS old_plan FROM TENANT WHERE tenant_id = ?', [req.params.id]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+    await query('UPDATE TENANT SET plan = ? WHERE tenant_id = ?', [plan, req.params.id]);
+    logAudit({
+      actor: req.superadmin?.email || 'superadmin',
+      actor_type: 'superadmin',
+      action: 'CHANGE_PLAN',
+      target: tenant.company_name,
+      tenant_slug: tenant.slug,
+      ip_address: req.ip,
+      metadata: JSON.stringify({ old_plan: tenant.old_plan, new_plan: plan })
+    });
+    res.json({ ok: true, plan, message: `Plan for "${tenant.company_name}" changed to ${plan}.` });
+  } catch(e) {
+    console.error('Change plan error:', e);
+    res.status(500).json({ error: 'Failed to change plan.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/superadmin/tenants/:id  — permanently delete a tenant & all data
 // ─────────────────────────────────────────────────────────────────────────────
 router.delete('/tenants/:id', requireSuperadmin, async (req, res) => {

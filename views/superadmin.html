@@ -1017,11 +1017,20 @@
           return;
         }
 
-        tb.innerHTML = data.map(t => `
+        tb.innerHTML = data.map(t => {
+          const planColors = {'Padala':'bg-neutral','Negosyo':'bg-pending','Korporasyon':'bg-active'};
+          const planBadge = planColors[t.plan] || 'bg-neutral';
+          return `
           <tr>
             <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
             <td>${t.admin_email || 'N/A'}</td>
-            <td>${t.plan || 'trial'}</td>
+            <td>
+              <select onchange="changeTenantPlan(${t.tenant_id}, this.value, '${t.company_name.replace(/'/g,"\\'")}')" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;background:#fff;outline:none;">
+                <option value="Padala" ${t.plan==='Padala'?'selected':''}>📦 Padala</option>
+                <option value="Negosyo" ${t.plan==='Negosyo'?'selected':''}>⚡ Negosyo</option>
+                <option value="Korporasyon" ${t.plan==='Korporasyon'?'selected':''}>🏢 Korporasyon</option>
+              </select>
+            </td>
             <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span></td>
             <td>${new Date(t.created_at).toLocaleDateString()}</td>
             <td style="display:flex;gap:6px;">
@@ -1034,7 +1043,7 @@
               </button>
             </td>
           </tr>
-        `).join('');
+        `}).join('');
       } catch (e) {
         console.error("Superadmin Load Error:", e);
       }
@@ -1055,6 +1064,26 @@
 
     function editTenant(id) {
       console.log("Managing tenant ID:", id);
+    }
+
+    async function changeTenantPlan(tenantId, newPlan, companyName) {
+      if (!confirm(`Change "${companyName}" plan to ${newPlan}?`)) {
+        loadAll(); // Reset dropdown to original value
+        return;
+      }
+      try {
+        const r = await fetch(`/api/superadmin/tenants/${tenantId}/plan`, {
+          method: 'PATCH', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: newPlan })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed');
+        showToast(`✅ ${companyName} plan changed to ${newPlan}.`);
+      } catch(e) {
+        showToast('Plan change failed: ' + e.message, 'error');
+        loadAll(); // Reset dropdown
+      }
     }
 
     async function loadPlatformSettings() {
