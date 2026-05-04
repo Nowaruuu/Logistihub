@@ -91,7 +91,6 @@ async function sendRegistrationEmail(email, fullName, companyName, slug, downloa
 async function sendWelcomeEmail(email, fullName, companyName, slug, staffUsername) {
   const adminUrl = process.env.BASE_URL + '/' + slug + '/admin-login';
   const staffUrl = process.env.BASE_URL + '/' + slug + '/staff-login';
-  const registerUrl = process.env.BASE_URL + '/' + slug + '/register';
 
   const subject = 'Your Logistics OS workspace is ready!';
   const html = `
@@ -120,12 +119,11 @@ async function sendWelcomeEmail(email, fullName, companyName, slug, staffUsernam
           <p style="color:#64748b;font-size:13px;line-height:1.5;margin-bottom:16px;">
             Use this link to log in and manage your workspace &mdash; create staff, track shipments, and configure your logistics portal.
           </p>
-          <a href="${adminUrl}" style="display:inline-block;background:#0a1628;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:10px 20px;border-radius:6px;margin-bottom:12px;">Go to Admin Login &rarr;</a>
-          <div><a href="${adminUrl}" style="color:#3b82f6;font-size:11px;text-decoration:underline;">${adminUrl}</a></div>
+          <a href="${adminUrl}" style="display:inline-block;background:#0a1628;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:10px 20px;border-radius:6px;">${adminUrl}</a>
         </div>
 
         <!-- Staff -->
-        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:16px;">
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:24px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
             <span style="background:#0f766e;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:0.05em;">STAFF</span>
             <strong style="color:#0a1628;font-size:14px;">Staff Login Portal</strong>
@@ -133,20 +131,7 @@ async function sendWelcomeEmail(email, fullName, companyName, slug, staffUsernam
           <p style="color:#64748b;font-size:13px;line-height:1.5;margin-bottom:16px;">
             Share this link with your drivers and staff members. They will use their assigned credentials to log in and manage deliveries.
           </p>
-          <a href="${staffUrl}" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:10px 20px;border-radius:6px;margin-bottom:12px;">Go to Staff Login &rarr;</a>
-          <div><a href="${staffUrl}" style="color:#3b82f6;font-size:11px;text-decoration:underline;">${staffUrl}</a></div>
-        </div>
-
-        <!-- Register -->
-        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:24px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <span style="background:#8b5cf6;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:0.05em;">REGISTER</span>
-            <strong style="color:#0a1628;font-size:14px;">Staff Registration</strong>
-          </div>
-          <p style="color:#64748b;font-size:13px;line-height:1.5;margin-bottom:16px;">
-            Use your Admin dashboard to invite new staff members. Their credentials will be auto-generated and emailed to them directly.
-          </p>
-          <div><a href="${registerUrl}" style="color:#3b82f6;font-size:11px;text-decoration:underline;">${registerUrl}</a></div>
+          <a href="${staffUrl}" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:10px 20px;border-radius:6px;">${staffUrl}</a>
         </div>
 
         <p style="font-size:12px;color:#94a3b8;text-align:center;">
