@@ -60,6 +60,12 @@ pool.getConnection()
         longitude DECIMAL(11,8) DEFAULT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
+      "ALTER TABLE shipment ADD COLUMN proof_photo_url LONGTEXT DEFAULT NULL",
+      `INSERT IGNORE INTO proof_of_delivery (delivery_number, tenant_id, photo, receiver_name, notes, created_at)
+       SELECT s.delivery_number, s.tenant_id, s.proof_photo_url, s.receiver_name, 'Auto-backfilled', s.created_at
+       FROM shipment s
+       WHERE s.status = 'Delivered'
+       AND NOT EXISTS (SELECT 1 FROM proof_of_delivery p WHERE p.delivery_number = s.delivery_number AND p.tenant_id = s.tenant_id)`,
     ];
     for (const sql of migrations) {
       try {
