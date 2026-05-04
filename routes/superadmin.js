@@ -477,7 +477,7 @@ router.patch('/platform-settings', requireSuperadmin, (req, res) => {
   if (!req.superadmin.is_primary) {
     return res.status(403).json({ error: 'Only the root superadmin can change platform settings.' });
   }
-  const allowed = ['platform_name','primary_color','hero_title','hero_subtitle','hero_cta_text','support_email','base_domain'];
+  const allowed = ['platform_name','primary_color','hero_title','hero_subtitle','hero_cta_text','support_email','base_domain','price_padala','price_negosyo','price_korporasyon'];
   const current = readPlatform();
   allowed.forEach(k => { if (req.body[k] !== undefined) current[k] = req.body[k]; });
   savePlatform(current);

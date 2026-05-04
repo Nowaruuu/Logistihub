@@ -356,20 +356,20 @@
         <div class="pricing-grid">
             <div class="pricing-card">
                 <h3>Padala</h3>
-                <div class="price">₱1,499<span>/month</span></div>
+                <div class="price" id="price-padala">₱1,499<span>/month</span></div>
                 <p>For small courier teams and local deliveries.</p>
                 <a href="/onboarding" class="btn btn-primary">Apply Now</a>
             </div>
             <div class="pricing-card featured">
                 <div class="plan-badge">Most Popular</div>
                 <h3>Negosyo</h3>
-                <div class="price">₱4,999<span>/month</span></div>
+                <div class="price" id="price-negosyo">₱4,999<span>/month</span></div>
                 <p>For growing logistics businesses and SMEs.</p>
                 <a href="/onboarding" class="btn btn-primary">Apply Now</a>
             </div>
             <div class="pricing-card">
                 <h3>Korporasyon</h3>
-                <div class="price">₱14,999<span>/month</span></div>
+                <div class="price" id="price-korporasyon">₱14,999<span>/month</span></div>
                 <p>Full platform access for large-scale operations.</p>
                 <a href="/onboarding" class="btn btn-primary">Apply Now</a>
             </div>
@@ -433,6 +433,14 @@
                 document.getElementById('footer-brand').textContent = s.platform_name;
                 document.title = `${s.platform_name} — The Smart Logistics OS`;
             }
+        }).catch(() => {});
+
+        // Load dynamic pricing
+        fetch('/api/platform').then(r => r.json()).then(s => {
+            function fmt(v) { return Number(v).toLocaleString(); }
+            if (s.price_padala)      document.getElementById('price-padala').innerHTML      = '₱' + fmt(s.price_padala)      + '<span>/month</span>';
+            if (s.price_negosyo)     document.getElementById('price-negosyo').innerHTML     = '₱' + fmt(s.price_negosyo)     + '<span>/month</span>';
+            if (s.price_korporasyon) document.getElementById('price-korporasyon').innerHTML = '₱' + fmt(s.price_korporasyon) + '<span>/month</span>';
         }).catch(() => {});
     </script>
 </body>

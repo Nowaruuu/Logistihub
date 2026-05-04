@@ -432,10 +432,6 @@
 
       <!-- ==================== TENANTS (MANAGEMENT) ==================== -->
       <div id="screen-tenants" class="screen">
-        <div class="flex-row">
-          <div class="spacer"></div>
-          <button class="btn btn-primary" onclick="openInviteModal()"><span class="material-symbols-rounded">add</span> Invite Tenant</button>
-        </div>
         <div class="card">
           <div class="card-header"><div class="card-title">Tenant Management</div></div>
           <div class="table-responsive">
@@ -544,13 +540,13 @@
           </div>
         </div>
       </div>
-
       <!-- ==================== SETTINGS ==================== -->
       <div id="screen-settings" class="screen">
         <div class="settings-grid">
           <!-- Settings Navigation -->
           <div class="settings-nav">
             <div class="set-tab active" onclick="setTab('general', this)">General Settings</div>
+            <div class="set-tab" onclick="setTab('pricing', this)">Pricing Plans</div>
             <div class="set-tab" onclick="setTab('limits', this)">Tenant Limits & Rules</div>
             <div class="set-tab" onclick="setTab('roles', this)">Developer Roles</div>
           </div>
@@ -592,6 +588,29 @@
                 </div>
               </div>
 
+
+              <div id="set-pricing" class="set-pane">
+                <h3 style="margin-bottom:6px; font-size:16px;">Plan Pricing Configuration</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">Set the monthly subscription price for each plan tier. Changes will reflect across the landing page, onboarding, and admin dashboards.</p>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px;">
+                  <div style="padding:24px;border:1.5px solid #e2e8f0;border-radius:16px;background:#fafbfc;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:20px;color:#64748b;">speed</span><strong style="font-size:14px;">Padala</strong></div>
+                    <label class="form-label" style="font-size:11px;">Monthly Price (PHP)</label>
+                    <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:16px;font-weight:700;color:#64748b;">&#8369;</span><input type="number" class="form-control" id="form-price-padala" placeholder="1499" min="0" step="1" style="font-size:18px;font-weight:700;"></div>
+                  </div>
+                  <div style="padding:24px;border:1.5px solid #3b82f6;border-radius:16px;background:#eff6ff;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:20px;color:#3b82f6;">bolt</span><strong style="font-size:14px;color:#1d4ed8;">Negosyo</strong><span style="font-size:9px;font-weight:700;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:99px;text-transform:uppercase;">Recommended</span></div>
+                    <label class="form-label" style="font-size:11px;">Monthly Price (PHP)</label>
+                    <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:16px;font-weight:700;color:#3b82f6;">&#8369;</span><input type="number" class="form-control" id="form-price-negosyo" placeholder="4999" min="0" step="1" style="font-size:18px;font-weight:700;"></div>
+                  </div>
+                  <div style="padding:24px;border:1.5px solid #8b5cf6;border-radius:16px;background:#f5f3ff;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="material-symbols-rounded" style="font-size:20px;color:#8b5cf6;">public</span><strong style="font-size:14px;color:#6d28d9;">Korporasyon</strong></div>
+                    <label class="form-label" style="font-size:11px;">Monthly Price (PHP)</label>
+                    <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:16px;font-weight:700;color:#8b5cf6;">&#8369;</span><input type="number" class="form-control" id="form-price-korporasyon" placeholder="14999" min="0" step="1" style="font-size:18px;font-weight:700;"></div>
+                  </div>
+                </div>
+                <button class="btn btn-primary" onclick="savePricing()">Save Pricing</button>
+              </div>
 
               <div id="set-limits" class="set-pane">
                 <h3 style="margin-bottom:20px; font-size:16px;">Default Tenant Limits</h3>
@@ -1024,13 +1043,7 @@
           <tr>
             <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
             <td>${t.admin_email || 'N/A'}</td>
-            <td>
-              <select onchange="changeTenantPlan(${t.tenant_id}, this.value, '${t.company_name.replace(/'/g,"\\'")}')" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;background:#fff;outline:none;">
-                <option value="Padala" ${t.plan==='Padala'?'selected':''}>📦 Padala</option>
-                <option value="Negosyo" ${t.plan==='Negosyo'?'selected':''}>⚡ Negosyo</option>
-                <option value="Korporasyon" ${t.plan==='Korporasyon'?'selected':''}>🏢 Korporasyon</option>
-              </select>
-            </td>
+            <td><span class="badge ${planBadge}">${t.plan || 'trial'}</span></td>
             <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span></td>
             <td>${new Date(t.created_at).toLocaleDateString()}</td>
             <td style="display:flex;gap:6px;">
@@ -1066,24 +1079,22 @@
       console.log("Managing tenant ID:", id);
     }
 
-    async function changeTenantPlan(tenantId, newPlan, companyName) {
-      if (!confirm(`Change "${companyName}" plan to ${newPlan}?`)) {
-        loadAll(); // Reset dropdown to original value
-        return;
-      }
+    async function savePricing() {
+      const payload = {
+        price_padala:      document.getElementById('form-price-padala').value.trim() || '1499',
+        price_negosyo:     document.getElementById('form-price-negosyo').value.trim() || '4999',
+        price_korporasyon: document.getElementById('form-price-korporasyon').value.trim() || '14999',
+      };
       try {
-        const r = await fetch(`/api/superadmin/tenants/${tenantId}/plan`, {
+        const r = await fetch('/api/superadmin/platform-settings', {
           method: 'PATCH', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: newPlan })
+          body: JSON.stringify(payload)
         });
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Failed');
-        showToast(`✅ ${companyName} plan changed to ${newPlan}.`);
-      } catch(e) {
-        showToast('Plan change failed: ' + e.message, 'error');
-        loadAll(); // Reset dropdown
-      }
+        if (!r.ok) throw new Error(d.error);
+        showToast('✅ Pricing updated! Changes are live on the landing page.');
+      } catch(e) { showToast('Save failed: ' + e.message, 'error'); }
     }
 
     async function loadPlatformSettings() {
@@ -1099,6 +1110,10 @@
         if (s.hero_subtitle) document.getElementById('form-hero-subtitle').value = s.hero_subtitle;
         if (s.hero_cta_text) document.getElementById('form-hero-cta').value      = s.hero_cta_text;
         if (s.support_email) document.getElementById('form-support-email').value = s.support_email;
+        // Pricing
+        if (s.price_padala) document.getElementById('form-price-padala').value = s.price_padala;
+        if (s.price_negosyo) document.getElementById('form-price-negosyo').value = s.price_negosyo;
+        if (s.price_korporasyon) document.getElementById('form-price-korporasyon').value = s.price_korporasyon;
       } catch(e) { console.error('Platform settings load error:', e); }
     }
 
@@ -1293,56 +1308,8 @@
     };
   </script>
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
-<div id="invite-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;padding:32px;width:100%;max-width:450px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-    <h3 style="margin:0 0 20px;">Invite New Tenant</h3>
-    <div style="margin-bottom:16px;">
-      <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Admin Email</label>
-      <input type="email" id="invite-email" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;" placeholder="admin@example.com"/>
-    </div>
-    <div style="margin-bottom:16px;">
-      <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Company Name</label>
-      <input type="text" id="invite-company" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;" placeholder="e.g. Acme Logistics"/>
-    </div>
-    <div style="margin-bottom:20px;">
-      <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Notes (Optional)</label>
-      <textarea id="invite-notes" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;height:80px;resize:vertical;box-sizing:border-box;"></textarea>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:12px;">
-      <button onclick="closeInviteModal()" style="padding:10px 18px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;">Cancel</button>
-      <button id="invite-submit-btn" onclick="sendInvite()" style="padding:10px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Send Invitation</button>
-    </div>
-  </div>
-</div>
 <script>
-function openInviteModal() {
-  document.getElementById("invite-modal").style.display = "flex";
-}
-function closeInviteModal() {
-  document.getElementById("invite-modal").style.display = "none";
-  document.getElementById("invite-email").value = "";
-  document.getElementById("invite-company").value = "";
-  document.getElementById("invite-notes").value = "";
-}
-async function sendInvite() {
-  var email = document.getElementById("invite-email").value.trim();
-  var company = document.getElementById("invite-company").value.trim();
-  var notes = document.getElementById("invite-notes").value.trim();
-  var btn = document.getElementById("invite-submit-btn");
-  if (!email || !company) { alert("Please fill in Email and Company Name"); return; }
-  btn.disabled = true;
-  btn.textContent = "Sending...";
-  try {
-    await SuperadminAPI.inviteTenant(email, company, notes);
-    alert("Invitation sent to " + email);
-    closeInviteModal();
-  } catch(err) {
-    alert("Error: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Send Invitation";
-  }
-}
+// Invite modal removed — tenants self-register via onboarding flow
 
 // ── APPLICATION REVIEW QUEUE ──────────────────────────────────────────────────
 var _rejectAppId = null;
