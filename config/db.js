@@ -48,6 +48,18 @@ pool.getConnection()
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`,
+      `CREATE TABLE IF NOT EXISTS proof_of_delivery (
+        pod_id INT AUTO_INCREMENT PRIMARY KEY,
+        delivery_number VARCHAR(100) NOT NULL,
+        tenant_id INT NOT NULL,
+        photo LONGTEXT DEFAULT NULL,
+        signature LONGTEXT DEFAULT NULL,
+        receiver_name VARCHAR(255) DEFAULT NULL,
+        notes TEXT DEFAULT NULL,
+        latitude DECIMAL(10,8) DEFAULT NULL,
+        longitude DECIMAL(11,8) DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
     ];
     for (const sql of migrations) {
       try {
