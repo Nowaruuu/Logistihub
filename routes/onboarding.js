@@ -77,8 +77,7 @@ router.post('/check-email', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email required' });
     
-    const emailPrefix = email.split('@')[0];
-    const [rows] = await query("SELECT staff_id FROM STAFF WHERE role = 'Admin' AND username LIKE ?", [`${emailPrefix}@%`]);
+    const [rows] = await query("SELECT staff_id FROM STAFF WHERE role = 'Admin' AND username = ?", [email]);
     
     if (rows.length > 0) {
       return res.status(400).json({ error: 'This email is already associated with an existing workspace.' });
