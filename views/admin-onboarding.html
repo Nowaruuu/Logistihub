@@ -302,7 +302,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
           <div class="slug-prefix">logistihub.ddns.net/</div>
           <input id="c-slug" type="text" placeholder=""/>
         </div>
-        <span class="hint">Your admin dashboard: logistihub.ddns.net/{slug}/admin &nbsp;|&nbsp; User registration: logistihub.ddns.net/{slug}/register</span>
+        <span class="hint">Your admin dashboard: logistichub.ddns.net/{slug}/admin</span>
       </div>
       <div class="form-group">
         <label class="form-label">Tagline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
@@ -432,7 +432,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
           <div class="pl-title">&#x2728; Workspace URLs</div>
           <div class="pl-item"><span class="material-symbols-outlined">home</span><div>Public Landing Page: <strong id="sum-landing-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
           <div class="pl-item"><span class="material-symbols-outlined">dashboard</span><div>Admin Dashboard: <strong id="sum-admin-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
-          <div class="pl-item"><span class="material-symbols-outlined">person_add</span><div>User Registration: <strong id="sum-reg-url" style="font-family:'DM Mono',monospace;font-size:11px;">—</strong></div></div>
+
         </div>
 
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;display:flex;align-items:flex-start;gap:10px;text-align:left;margin-bottom:16px;">
@@ -738,9 +738,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sum-email').textContent = decodedData.email;
         document.getElementById('sum-company').textContent = decodedData.company;
         document.getElementById('sum-plan').textContent = decodedData.plan.toUpperCase();
-        document.getElementById('sum-admin-url').textContent = 'logistihub.ddns.net/' + decodedData.slug + '/admin';
-        document.getElementById('sum-reg-url').textContent = 'logistihub.ddns.net/' + decodedData.slug + '/register';
-        document.getElementById('sum-landing-url').textContent = 'logistihub.ddns.net/' + decodedData.slug;
+        document.getElementById('sum-admin-url').textContent = 'logistichub.ddns.net/' + decodedData.slug + '/admin';
+        document.getElementById('sum-landing-url').textContent = 'logistichub.ddns.net/' + decodedData.slug;
         document.querySelector('.success-center .btn').onclick = () => { window.location.href = '/' + decodedData.slug; };
         goStep(6);
         window.history.replaceState({}, document.title, '/onboarding');
