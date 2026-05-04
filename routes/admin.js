@@ -789,7 +789,7 @@ const { sendStaffWelcomeEmail } = require('../config/mailer');
 const crypto = require('crypto');
 
 router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { name, email, role, license_expiry } = req.body;  // email = Gmail address
+  const { name, email, role, license_expiry } = req.body;  // email = contact email address
   const tid  = req.tenantId;
   const slug = req.params.slug;
 
@@ -802,10 +802,10 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
     return res.status(403).json({ error: 'Managers are not allowed to create Manager or Admin accounts.' });
   }
 
-  // Derive login username: prefix from Gmail + @slug.com
-  // e.g. bollinrah@gmail.com  →  bollinrah@amongiz.com  (if slug = 'amongiz')
-  const gmailPrefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '');
-  const loginUsername = gmailPrefix + '@' + slug + '.com';
+  // Derive login username: prefix from email + @slug.com
+  // e.g. bollinrah@yahoo.com  →  bollinrah@amongiz.com  (if slug = 'amongiz')
+  const emailPrefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '');
+  const loginUsername = emailPrefix + '@' + slug + '.com';
 
   try {
     // ── Enforce Padala (startup) plan driver limit ──
@@ -849,7 +849,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
     // Respond immediately — email is fire-and-forget
     res.status(201).json({ ok: true, message: 'Staff created. Welcome email sent to ' + email + '.', username: loginUsername });
 
-    // Send email AFTER responding — to Gmail address, but showing loginUsername as their credentials
+    // Send email AFTER responding — to their email address, showing loginUsername as their credentials
     const [tenants] = await query('SELECT company_name FROM TENANT WHERE tenant_id = ?', [tid]);
     const companyName = tenants[0]?.company_name || 'Your Company';
     const loginUrl = (process.env.BASE_URL || 'https://logistichub.ddns.net') + '/' + slug + '/staff-login';

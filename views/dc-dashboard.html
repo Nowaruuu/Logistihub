@@ -979,9 +979,9 @@ window.addEventListener('load', function() {
         </select>
       </div>
     </div>
-    <div style="margin-bottom:14px;"><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Gmail Address *</label>
-      <input id="s-email" type="email" placeholder="e.g. juan@gmail.com" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
-      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Must be a Gmail address (@gmail.com). Login credentials will be emailed here.</div>
+    <div style="margin-bottom:14px;"><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Email Address *</label>
+      <input id="s-email" type="email" placeholder="e.g. juan@email.com" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Any valid email address. Login credentials will be emailed here.</div>
     </div>
     <div style="margin-bottom:20px;"><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">License Expiry <span style="font-weight:400;color:#94a3b8;">(optional, for drivers)</span></label>
       <input id="s-license" type="date" min="2026-04-26" max="2031-04-26" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
@@ -1217,7 +1217,7 @@ async function submitAddStaff() {
   errEl.style.display = 'none';
 
   if(!name || !email || !role) { errEl.textContent = 'Please fill in all required fields.'; errEl.style.display = 'block'; return; }
-  if(!email.toLowerCase().endsWith('@gmail.com')) { errEl.textContent = 'Please enter a valid Gmail address (@gmail.com).'; errEl.style.display = 'block'; return; }
+  if(!email.includes('@') || !email.includes('.')) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; return; }
 
   btn.disabled = true; btn.textContent = 'Adding...';
   try {
