@@ -167,6 +167,8 @@ textarea{resize:vertical;}
 .copy-btn:hover{background:#bbf7d0;}
 .copy-btn .material-symbols-outlined{font-size:14px;}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <script src="/public/frontend-api.js"></script>
 <body>
@@ -267,17 +269,17 @@ textarea{resize:vertical;}
       <div class="grid-2">
         <div class="card">
           <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div>
+          <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
           <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →</button></div>
-          <div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>No staff records</p></div>
+          <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">map</span>Live Shipment Map</span></div>
-        <div class="card-body"><div class="map-ph"><span class="material-symbols-outlined">map</span><p>Map activates once shipments are in transit</p></div></div>
+        <div class="card-body" style="padding:8px;"><div id="dash-live-map" style="height:500px;border-radius:10px;overflow:hidden;background:#e2e8f0;"></div></div>
       </div>
     </div>
 
@@ -1395,13 +1397,133 @@ var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.sl
   var _origGo2 = go;
   go = function(id, navBtn) {
     _origGo2(id, navBtn);
-    if (id === 'shipments' || id === 'dashboard') loadShipments();
+    if (id === 'shipments' || id === 'dashboard') { loadShipments(); loadDashFleet(); loadDashStaff(); setTimeout(loadDashMap,300); }
     if (id === 'payments') loadPayments();
     if (id === 'pod') loadPods();
   };
   // Load on initial page load
   loadShipments();
+  loadDashFleet();
+  loadDashStaff();
+  setTimeout(loadDashMap, 500);
 })();
+
+// ── Dashboard Fleet Status ────────────────────────────────────────────────────
+function loadDashFleet(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/vehicles')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var vehicles=Array.isArray(data)?data:Array.isArray(data.vehicles)?data.vehicles:[];
+      var el=document.getElementById('dash-fleet-body');
+      if(!el)return;
+      if(!vehicles.length){el.innerHTML='<div style="padding:28px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:#e2e8f0;display:block;margin-bottom:6px;">directions_car</span><p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">No vehicles registered yet</p><button class="btn btn-primary btn-sm" onclick="go(\'vehicles\',null)" style="margin:0 auto;"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>';return;}
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      vehicles.slice(0,5).forEach(function(v){
+        var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' · '+esc(v.model):'')+'</div></div></div>';
+        html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span>';
+        html+='</div>';
+      });
+      if(vehicles.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(vehicles.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+
+// ── Dashboard Staff On Duty ───────────────────────────────────────────────────
+function loadDashStaff(){
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/manager/staff')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
+      var el=document.getElementById('dash-staff-body');
+      if(!el)return;
+      if(!staff.length){el.innerHTML='<div style="padding:28px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:#e2e8f0;display:block;margin-bottom:6px;">badge</span><p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">No staff members yet</p><button class="btn btn-primary btn-sm" onclick="go(\'staff\',null)" style="margin:0 auto;"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>';return;}
+      var rc={'Driver':'b-transit','Document Controller':'b-delivered','Manager':'b-awaiting','Admin':'b-pending'};
+      var html='<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+      staff.slice(0,5).forEach(function(s){
+        var statusBc=s.status==='active'||s.status==='Available'?'b-available':'b-maint';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:14px;color:#64748b;">person</span></div><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(s.full_name||s.name||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(s.role||'Staff')+'</div></div></div>';
+        html+='<span class="badge '+statusBc+'">'+esc(s.status||'Active')+'</span>';
+        html+='</div>';
+      });
+      if(staff.length>5) html+='<div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px;">+'+(staff.length-5)+' more</div>';
+      html+='</div>';
+      el.innerHTML=html;
+    }).catch(function(){});
+}
+
+// ── Dashboard Live Map ────────────────────────────────────────────────────────
+var _dashMap=null;
+var _dashMapLayers=[];
+function _clearMapLayers(){
+  _dashMapLayers.forEach(function(l){_dashMap.removeLayer(l);});
+  _dashMapLayers=[];
+}
+function _addDot(lat,lng,color,radius,popup){
+  var m=L.circleMarker([lat,lng],{radius:radius,fillColor:color,fillOpacity:1,color:'#fff',weight:3,opacity:1}).addTo(_dashMap);
+  if(popup)m.bindPopup(popup);
+  _dashMapLayers.push(m);
+  return m;
+}
+function _drawOSRMRoute(pLat,pLng,dLat,dLng,isActive){
+  var url='https://router.project-osrm.org/route/v1/driving/'+pLng+','+pLat+';'+dLng+','+dLat+'?overview=full&geometries=geojson';
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    if(!data.routes||!data.routes.length)return;
+    var coords=data.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+    var shadow=L.polyline(coords,{color:'#000',weight:isActive?10:8,opacity:0.15,lineCap:'round',lineJoin:'round'}).addTo(_dashMap);
+    _dashMapLayers.push(shadow);
+    var route=L.polyline(coords,{color:isActive?'#2563eb':'#6366f1',weight:isActive?6:5,opacity:isActive?0.9:0.7,lineCap:'round',lineJoin:'round'}).addTo(_dashMap);
+    _dashMapLayers.push(route);
+  }).catch(function(){
+    var line=L.polyline([[pLat,pLng],[dLat,dLng]],{color:isActive?'#2563eb':'#6366f1',weight:5,opacity:0.7,dashArray:'8 6'}).addTo(_dashMap);
+    _dashMapLayers.push(line);
+  });
+}
+function loadDashMap(){
+  var mapEl=document.getElementById('dash-live-map');
+  if(!mapEl)return;
+  if(!_dashMap){
+    var phBounds=L.latLngBounds([4.2,116.5],[21.3,127.0]);
+    _dashMap=L.map(mapEl,{scrollWheelZoom:true,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:6,maxZoom:18}).setView([12.5,122.0],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(_dashMap);
+    setTimeout(function(){_dashMap.invalidateSize();},200);
+  }
+  _clearMapLayers();
+  var allPts=[];
+  var transit=_allShipments.filter(function(s){return s.status==='In Transit'||s.status==='Out for Delivery';});
+  var pool=transit.length?transit:_allShipments;
+  pool.forEach(function(s){
+    var pLat=parseFloat(s.pickup_lat), pLng=parseFloat(s.pickup_lng);
+    var dLat=parseFloat(s.dropoff_lat), dLng=parseFloat(s.dropoff_lng);
+    var hasPickup=pLat&&pLng&&!isNaN(pLat)&&!isNaN(pLng);
+    var hasDrop=dLat&&dLng&&!isNaN(dLat)&&!isNaN(dLng);
+    if(!hasPickup&&!hasDrop)return;
+    var isActive=(s.status==='In Transit'||s.status==='Out for Delivery');
+    var typeLabel=s.item_type_flag||'PKG';
+    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
+    if(hasPickup){
+      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">▲ Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      allPts.push([pLat,pLng]);
+    }
+    if(hasDrop){
+      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">▼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      allPts.push([dLat,dLng]);
+    }
+    if(hasPickup&&hasDrop){
+      _drawOSRMRoute(pLat,pLng,dLat,dLng,isActive);
+    }
+  });
+  if(allPts.length>0){
+    _dashMap.fitBounds(L.latLngBounds(allPts),{padding:[40,40],maxZoom:14});
+  }
+}
 
 // ═══ PAYMENTS LOADING ════════════════════════════════════════════════════════
 var _allPayments = [];
