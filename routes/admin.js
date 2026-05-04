@@ -461,7 +461,7 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       }
     }
 
-    const newStatus = driverBusy ? 'Queued' : 'Pending';
+    const newStatus = driverBusy ? 'Queued' : 'In-Transit';
     await query(
       `UPDATE shipment SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = ? WHERE delivery_number = ? AND tenant_id = ?`,
       [assigned_driver_id, assigned_vehicle_plate || null, newStatus, dn, tid]
@@ -476,8 +476,8 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name) VALUES (?, ?, ?, '', ?, ?)`,
       [dn, tid, newStatus,
        driverBusy
-         ? `Shipment queued for driver ${driverName}. Awaiting driver acceptance after current delivery.`
-         : `Driver ${driverName} assigned. Awaiting driver acceptance.`,
+         ? `Shipment queued for driver ${driverName}. Will start after current delivery.`
+         : `Driver ${driverName} assigned and pickup started.`,
        req.admin?.name || 'Manager']
     );
 
@@ -485,8 +485,8 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       ok: true,
       queued: driverBusy,
       message: driverBusy
-        ? `Driver is currently busy. Shipment queued — ${driverName} will be prompted to accept after their current delivery.`
-        : `Driver ${driverName} assigned. Awaiting acceptance.`
+        ? `Driver is currently busy. Shipment queued — ${driverName} will start after their current delivery.`
+        : `Driver ${driverName} assigned. Shipment is now In-Transit.`
     });
   } catch (err) {
     console.error('[PUT /admin/shipments/assign]', err);
