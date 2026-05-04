@@ -8,7 +8,7 @@ import Layout from './components/Layout';
 // Pages
 import Dashboard from './pages/Dashboard';
 import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
+
 import SendPackage from './pages/SendPackage';
 import MyPackages from './pages/MyPackages';
 import TrackShipment from './pages/TrackShipment';
@@ -67,7 +67,7 @@ export default function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
+
             <Route path="/force-change-password" element={<ForceChangePassword />} />
 
             <Route path="/" element={<SignIn />} />

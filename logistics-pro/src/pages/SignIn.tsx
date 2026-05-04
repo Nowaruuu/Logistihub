@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { LogIn, ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -169,9 +169,9 @@ export default function SignIn() {
         <div className="flex flex-col items-center justify-center px-6 pb-12 pt-6">
           <p className="text-slate-500 dark:text-slate-400 text-[14px] font-medium">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-orange-600 font-bold hover:underline">
-              Sign Up
-            </Link>
+            <span className="text-orange-600 font-bold">
+              Register on the web portal
+            </span>
           </p>
           <p className="text-slate-400 dark:text-slate-500 text-[12px] font-medium mt-4">
             Contact support if you cannot sign in to your account.
