@@ -302,3 +302,13 @@ export async function getPaymentStatus(deliveryNumber: string) {
   if (!res.ok) return { status: 'unknown' };
   return res.json();
 }
+
+export async function updateDriverLocation(deliveryNumber: string, lat: number, lng: number) {
+  try {
+    await fetch(mobileUrl(`/driver/location/${deliveryNumber}`), {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ lat, lng }),
+    });
+  } catch { /* silent — don't block UI */ }
+}

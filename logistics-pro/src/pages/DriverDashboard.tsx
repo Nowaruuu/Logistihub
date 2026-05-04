@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Delivery, Driver } from '../types';
 import { deliveryService } from '../services/deliveryService';
-import { getProfile, getChatContact, declineDelivery } from '../lib/api';
+import { getProfile, getChatContact, declineDelivery, updateDriverLocation } from '../lib/api';
 import DeliveryChat from '../components/DeliveryChat';
 import { 
   Truck, 
@@ -83,6 +83,57 @@ export default function DriverDashboard() {
     const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // ── Background GPS tracking: send driver location for active deliveries ──
+  const gpsWatchRef = useRef<number | null>(null);
+  const latestGPS = useRef<[number, number] | null>(null);
+
+  useEffect(() => {
+    // Only track GPS when driver has active (In-Transit / Out for Delivery) assignments
+    const trackable = activeAssignments.filter(a =>
+      ['In Transit', 'In-Transit', 'Out for Delivery'].includes(a.status)
+    );
+    if (trackable.length === 0) {
+      // No active assignments — stop GPS
+      if (gpsWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchRef.current);
+        gpsWatchRef.current = null;
+      }
+      return;
+    }
+
+    // Start watching GPS if not already
+    if (gpsWatchRef.current === null && navigator.geolocation) {
+      gpsWatchRef.current = navigator.geolocation.watchPosition(
+        (pos) => { latestGPS.current = [pos.coords.latitude, pos.coords.longitude]; },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+      );
+    }
+
+    // Upload GPS every 10 seconds for each trackable delivery
+    const uploadInterval = setInterval(() => {
+      if (!latestGPS.current) return;
+      const [lat, lng] = latestGPS.current;
+      trackable.forEach(a => {
+        updateDriverLocation(a.trackingNumber, lat, lng);
+      });
+    }, 10_000);
+
+    return () => {
+      clearInterval(uploadInterval);
+      // Don't clear the watch here — we'll clear it when trackable becomes empty
+    };
+  }, [activeAssignments]);
+
+  // Cleanup GPS watch on unmount
+  useEffect(() => {
+    return () => {
+      if (gpsWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchRef.current);
+      }
+    };
+  }, []);
 
   const handleAcceptJob = async (jobId: string) => {
     if (!user || !profile || hasActiveJob) return;
