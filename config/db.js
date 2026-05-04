@@ -61,6 +61,10 @@ pool.getConnection()
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
       "ALTER TABLE shipment ADD COLUMN proof_photo_url LONGTEXT DEFAULT NULL",
+      // Live GPS tracking columns
+      "ALTER TABLE shipment ADD COLUMN driver_lat DECIMAL(10,8) DEFAULT NULL",
+      "ALTER TABLE shipment ADD COLUMN driver_lng DECIMAL(11,8) DEFAULT NULL",
+      "ALTER TABLE shipment ADD COLUMN driver_location_updated_at DATETIME DEFAULT NULL",
       `INSERT IGNORE INTO proof_of_delivery (delivery_number, tenant_id, photo, receiver_name, notes, created_at)
        SELECT s.delivery_number, s.tenant_id, s.proof_photo_url, s.receiver_name, 'Auto-backfilled', s.created_at
        FROM shipment s

@@ -1016,7 +1016,7 @@ window.addEventListener('load', function() {
           <option value="">Unassigned</option>
         </select>
       </div>
-      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle</label>
+      <div><label id="assign-vehicle-label" style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle</label>
         <select id="assign-vehicle" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
           <option value="">None</option>
         </select>
@@ -1344,7 +1344,7 @@ function renderShipments() {
     var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
     var assignLabel = s.driver_name ? 'Reassign' : 'Assign';
     var assignIcon = s.driver_name ? 'swap_horiz' : 'person_add';
-    var actionBtn = s.status === 'Delivered' || s.status === 'Failed' ? '' : '<button onclick="openAssignModal(\'' + esc(s.delivery_number) + '\',' + (s.assigned_driver_id || 'null') + ',\'' + esc(s.assigned_vehicle_plate || '') + '\')" style="padding:4px 10px;font-size:11px;border:1.5px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;font-weight:600;color:#3b82f6;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.background=\'#eff6ff\';this.style.borderColor=\'#93c5fd\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#e2e8f0\'"><span class="material-symbols-outlined" style="font-size:14px;">' + assignIcon + '</span>' + assignLabel + '</button>';
+    var actionBtn = s.status === 'Delivered' || s.status === 'Failed' ? '' : '<button onclick="openAssignModal(\'' + esc(s.delivery_number) + '\',' + (s.assigned_driver_id || 'null') + ',\'' + esc(s.assigned_vehicle_plate || '') + '\',\'' + esc(s.vehicle_type || '') + '\')" style="padding:4px 10px;font-size:11px;border:1.5px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;font-weight:600;color:#3b82f6;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.background=\'#eff6ff\';this.style.borderColor=\'#93c5fd\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#e2e8f0\'"><span class="material-symbols-outlined" style="font-size:14px;">' + assignIcon + '</span>' + assignLabel + '</button>';
     return '<tr><td><strong>' + esc(s.delivery_number || '') + '</strong></td><td>' + esc(s.awb || '\u2014') + '</td><td>' + sender + '</td><td>' + receiver + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag || 'PKG') + '</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">' + route + '</td><td>' + esc(s.driver_name || 'Unassigned') + '</td><td>' + veh + '</td><td>' + plate + '</td><td><span class="badge ' + sc + '">' + esc(s.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + dateOrdered + '</td><td style="white-space:nowrap;font-size:11px;">' + dateDelivered + '</td><td>' + actionBtn + '</td></tr>';
   }).join('');
 }
@@ -1486,7 +1486,7 @@ function loadPods() {
 }
 
 // ═══ ASSIGN DRIVER FUNCTIONS ═════════════════════════════════════════════════
-async function openAssignModal(dn, currentDriverId, currentPlate) {
+async function openAssignModal(dn, currentDriverId, currentPlate, requestedVehicleType) {
   var modal = document.getElementById('modal-assign-driver');
   document.getElementById('assign-dn').value = dn;
   document.getElementById('assign-modal-err').style.display = 'none';
@@ -1507,6 +1507,15 @@ async function openAssignModal(dn, currentDriverId, currentPlate) {
       _vehicleData = Array.isArray(vd) ? vd : [];
     } catch(e) { console.error('Failed to load vehicles for assign modal', e); }
   }
+
+  // Build vehicle busy map — plates currently in-transit or out-for-delivery
+  var vehicleBusyMap = {};
+  (_allShipments || []).forEach(function(s) {
+    if (!s.assigned_vehicle_plate) return;
+    if (s.status === 'In-Transit' || s.status === 'In Transit' || s.status === 'Out for Delivery') {
+      vehicleBusyMap[s.assigned_vehicle_plate] = s.delivery_number;
+    }
+  });
 
   // Populate driver dropdown from cached staff data with availability
   var driverSel = document.getElementById('assign-driver');
@@ -1560,17 +1569,56 @@ async function openAssignModal(dn, currentDriverId, currentPlate) {
       return;
     }
 
-    // No own vehicle — show fleet vehicles only
-    (_vehicleData || []).forEach(function(v) {
+    // No own vehicle — show fleet vehicles, matching requested type first
+    var reqType = (requestedVehicleType || '').toLowerCase();
+    var sorted = (_vehicleData || []).slice().sort(function(a, b) {
+      // Matching type first, then available first
+      var aMatch = (a.vehicle_type || '').toLowerCase() === reqType ? 0 : 1;
+      var bMatch = (b.vehicle_type || '').toLowerCase() === reqType ? 0 : 1;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+      var aAvail = a.status === 'Available' ? 0 : 1;
+      var bAvail = b.status === 'Available' ? 0 : 1;
+      return aAvail - bAvail;
+    });
+
+    sorted.forEach(function(v) {
       var opt = document.createElement('option');
       opt.value = v.plate_number;
       var label = v.plate_number;
       if (v.vehicle_type) label += ' (' + v.vehicle_type + ')';
-      if (v.status && v.status !== 'Available') label += ' [' + v.status + ']';
+      // Check if vehicle is currently busy (in transit / out for delivery)
+      var busyDn = vehicleBusyMap[v.plate_number];
+      if (busyDn) {
+        label += ' \u{1F534} In Use';
+        opt.disabled = true;
+        opt.style.color = '#94a3b8';
+      } else if (v.status === 'Maintenance') {
+        label += ' \u{1F7E1} Maintenance';
+        opt.disabled = true;
+        opt.style.color = '#94a3b8';
+      } else if (v.status === 'Retired') {
+        label += ' \u26D4 Retired';
+        opt.disabled = true;
+        opt.style.color = '#94a3b8';
+      } else {
+        label += ' \u{1F7E2} Available';
+      }
+      // Mark if it matches the requested vehicle type
+      if (reqType && (v.vehicle_type || '').toLowerCase() === reqType) {
+        label += ' \u2705';
+      }
       opt.textContent = label;
       if (v.plate_number === currentPlate) opt.selected = true;
       vehSel.appendChild(opt);
     });
+  }
+
+  // Show requested vehicle type label
+  var vehLabel = document.getElementById('assign-vehicle-label');
+  if (vehLabel) {
+    vehLabel.textContent = requestedVehicleType
+      ? 'Vehicle (requested: ' + requestedVehicleType.charAt(0).toUpperCase() + requestedVehicleType.slice(1) + ')'
+      : 'Vehicle';
   }
 
   // Auto-update vehicle when driver changes
