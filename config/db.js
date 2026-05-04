@@ -48,7 +48,6 @@ pool.getConnection()
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`,
-      "DROP TABLE IF EXISTS proof_of_delivery",
       `CREATE TABLE IF NOT EXISTS proof_of_delivery (
         pod_id INT AUTO_INCREMENT PRIMARY KEY,
         delivery_number VARCHAR(100) NOT NULL,
