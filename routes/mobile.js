@@ -1062,93 +1062,96 @@ router.get('/notifications', authMiddleware, async (req, res) => {
       console.warn('[notifications] NOTIFICATION table query failed:', e.message);
     }
 
-    // 2. Also pull from shipment_history as fallback / supplement
+    // 2. Also pull from SHIPMENT_HISTORY as fallback / supplement
     if (req.user) {
       // CUSTOMER: notifications from their shipments' history
-      const [rows] = await query(
-        `SELECT sh.id, sh.shipment_id, sh.status, sh.note, sh.changed_at,
-                s.delivery_number, s.destination
-         FROM shipment_history sh
-         JOIN shipment s ON s.id = sh.shipment_id
-         WHERE s.sender_user_id = ? AND s.tenant_id = ?
-         ORDER BY sh.changed_at DESC
-         LIMIT 50`,
-        [req.user.user_id, tid]
-      );
-      const historyNotifs = rows.map(r => {
-        let title = 'Shipment Update';
-        let message = `Your package #${r.delivery_number} status changed to ${r.status}.`;
-        if (r.status === 'Delivered') {
-          title = 'Successfully Delivered!';
-          message = `Your package #${r.delivery_number} has been delivered to ${r.destination || 'the destination'}.`;
-        } else if (r.status === 'In Transit') {
-          title = 'Package In Transit';
-          message = `Your package #${r.delivery_number} is on its way!`;
-        } else if (r.status === 'Out for Delivery') {
-          title = 'Out for Delivery';
-          message = `Your package #${r.delivery_number} is nearby and will arrive soon.`;
-        } else if (r.status === 'Processing') {
-          title = 'Package Received';
-          message = `Your shipment #${r.delivery_number} has been received and is being processed.`;
-        }
-        return {
-          id: `sh-${r.id}`,
-          title,
-          message,
-          type: 'Shipments',
-          read: false,
-          createdAt: r.changed_at,
-          relatedTrackingNumber: r.delivery_number
-        };
-      });
-      // Merge, avoiding duplicates by tracking number + status
-      const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
-      historyNotifs.forEach(n => {
-        if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
-          notifications.push(n);
-        }
-      });
+      try {
+        const [rows] = await query(
+          `SELECT sh.id, sh.status, sh.description, sh.created_at,
+                  sh.delivery_number, s.destination
+           FROM SHIPMENT_HISTORY sh
+           JOIN shipment s ON s.delivery_number = sh.delivery_number AND s.tenant_id = sh.tenant_id
+           WHERE s.sender_user_id = ? AND s.tenant_id = ?
+           ORDER BY sh.created_at DESC
+           LIMIT 50`,
+          [req.user.user_id, tid]
+        );
+        const historyNotifs = rows.map(r => {
+          let title = 'Shipment Update';
+          let message = `Your package #${r.delivery_number} status changed to ${r.status}.`;
+          if (r.status === 'Delivered') {
+            title = 'Successfully Delivered!';
+            message = `Your package #${r.delivery_number} has been delivered to ${r.destination || 'the destination'}.`;
+          } else if (r.status === 'In-Transit') {
+            title = 'Package In Transit';
+            message = `Your package #${r.delivery_number} is on its way!`;
+          } else if (r.status === 'Out for Delivery') {
+            title = 'Out for Delivery';
+            message = `Your package #${r.delivery_number} is nearby and will arrive soon.`;
+          } else if (r.status === 'Pending') {
+            title = 'Package Received';
+            message = `Your shipment #${r.delivery_number} has been received and is being processed.`;
+          }
+          return {
+            id: `sh-${r.id}`,
+            title,
+            message,
+            type: 'Shipments',
+            read: false,
+            createdAt: r.created_at,
+            relatedTrackingNumber: r.delivery_number
+          };
+        });
+        const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
+        historyNotifs.forEach(n => {
+          if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
+            notifications.push(n);
+          }
+        });
+      } catch(e) { console.warn('[notifications] SHIPMENT_HISTORY customer fallback failed:', e.message); }
     } else if (req.staff) {
       // DRIVER: notifications from assigned shipments
-      const [rows] = await query(
-        `SELECT sh.id, sh.shipment_id, sh.status, sh.note, sh.changed_at,
-                s.delivery_number, s.origin, s.destination
-         FROM shipment_history sh
-         JOIN shipment s ON s.id = sh.shipment_id
-         WHERE s.assigned_driver_id = ? AND s.tenant_id = ?
-         ORDER BY sh.changed_at DESC
-         LIMIT 50`,
-        [req.staff.staff_id, tid]
-      );
-      const historyNotifs = rows.map(r => {
-        let title = 'Job Update';
-        let message = `Delivery #${r.delivery_number} status: ${r.status}.`;
-        if (r.status === 'In Transit') {
-          title = 'New Pickup Assigned';
-          message = `Pick up #${r.delivery_number} from ${r.origin || 'the sender'}.`;
-        } else if (r.status === 'Delivered') {
-          title = 'Delivery Completed';
-          message = `You completed delivery #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
-        } else if (r.status === 'Out for Delivery') {
-          title = 'En Route';
-          message = `You're delivering #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
-        }
-        return {
-          id: `sh-${r.id}`,
-          title,
-          message,
-          type: 'Shipments',
-          read: false,
-          createdAt: r.changed_at,
-          relatedTrackingNumber: r.delivery_number
-        };
-      });
-      const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
-      historyNotifs.forEach(n => {
-        if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
-          notifications.push(n);
-        }
-      });
+      try {
+        const [rows] = await query(
+          `SELECT sh.id, sh.status, sh.description, sh.created_at,
+                  sh.delivery_number, s.origin, s.destination
+           FROM SHIPMENT_HISTORY sh
+           JOIN shipment s ON s.delivery_number = sh.delivery_number AND s.tenant_id = sh.tenant_id
+           WHERE s.assigned_driver_id = ? AND s.tenant_id = ?
+           ORDER BY sh.created_at DESC
+           LIMIT 50`,
+          [req.staff.staff_id, tid]
+        );
+        const historyNotifs = rows.map(r => {
+          let title = 'Job Update';
+          let message = `Delivery #${r.delivery_number} status: ${r.status}.`;
+          if (r.status === 'In-Transit') {
+            title = 'New Pickup Assigned';
+            message = `Pick up #${r.delivery_number} from ${r.origin || 'the sender'}.`;
+          } else if (r.status === 'Delivered') {
+            title = 'Delivery Completed';
+            message = `You completed delivery #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
+          } else if (r.status === 'Out for Delivery') {
+            title = 'En Route';
+            message = `You're delivering #${r.delivery_number} to ${r.destination || 'the recipient'}.`;
+          }
+          return {
+            id: `sh-${r.id}`,
+            title,
+            message,
+            type: 'Shipments',
+            read: false,
+            createdAt: r.created_at,
+            relatedTrackingNumber: r.delivery_number
+          };
+        });
+        const existingKeys = new Set(notifications.map(n => n.relatedTrackingNumber + n.title));
+        historyNotifs.forEach(n => {
+          if (!existingKeys.has(n.relatedTrackingNumber + n.title)) {
+            notifications.push(n);
+          }
+        });
+      } catch(e) { console.warn('[notifications] SHIPMENT_HISTORY driver fallback failed:', e.message); }
     }
 
     // Sort by date descending
