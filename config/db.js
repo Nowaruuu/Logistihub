@@ -70,15 +70,39 @@ pool.getConnection()
        FROM shipment s
        WHERE s.status = 'Delivered'
        AND NOT EXISTS (SELECT 1 FROM proof_of_delivery p WHERE p.delivery_number = s.delivery_number AND p.tenant_id = s.tenant_id)`,
+      // ─── FOREIGN KEY CONSTRAINTS (ERD relationships) ──────────────────────
+      "ALTER TABLE STAFF ADD CONSTRAINT fk_staff_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE APP_USER ADD CONSTRAINT fk_appuser_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE shipment ADD CONSTRAINT fk_shipment_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE shipment ADD CONSTRAINT fk_shipment_client FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE SET NULL",
+      "ALTER TABLE vehicle ADD CONSTRAINT fk_vehicle_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE route ADD CONSTRAINT fk_route_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE payment ADD CONSTRAINT fk_payment_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE client ADD CONSTRAINT fk_client_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE proof_of_delivery ADD CONSTRAINT fk_pod_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE DELIVERY_CHAT ADD CONSTRAINT fk_chat_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE NOTIFICATION ADD CONSTRAINT fk_notification_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE SAVED_ADDRESS ADD CONSTRAINT fk_savedaddr_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE SHIPMENT_HISTORY ADD CONSTRAINT fk_shiphistory_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE VEHICLE_REQUEST ADD CONSTRAINT fk_vreq_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE DELIVERY_RATING ADD CONSTRAINT fk_rating_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE decline_reasons ADD CONSTRAINT fk_decline_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      "ALTER TABLE SUBSCRIPTION_PAYMENT ADD CONSTRAINT fk_subpay_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
+      // Sub-tables → shipment
+      "ALTER TABLE sub_package ADD CONSTRAINT fk_subpkg_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
+      "ALTER TABLE sub_food ADD CONSTRAINT fk_subfood_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
+      "ALTER TABLE sub_document ADD CONSTRAINT fk_subdoc_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
+      "ALTER TABLE sub_vehicle ADD CONSTRAINT fk_subveh_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
+      "ALTER TABLE sub_bulk ADD CONSTRAINT fk_subbulk_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
     ];
     for (const sql of migrations) {
       try {
         await pool.execute(sql);
         console.log('  ✅ Migration applied:', sql.substring(0, 60) + '...');
       } catch (e) {
-        // Error 1060 = "Duplicate column name" — column already exists, safe to skip
-        if (e.errno === 1060) {
-          // Column already exists — skip silently
+        // 1060 = Duplicate column, 1061 = Duplicate key name, 1022 = Duplicate key, 1826 = Duplicate FK
+        if ([1060, 1061, 1022, 1826].includes(e.errno)) {
+          // Already exists — skip silently
         } else {
           console.warn('  ⚠️  Migration skipped:', e.message);
         }
