@@ -1434,8 +1434,23 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
     // Save proof of delivery photo if provided
     if (status === 'Delivered') {
       try {
+        // Ensure proof_of_delivery table exists
+        await query(`CREATE TABLE IF NOT EXISTS proof_of_delivery (
+          pod_id INT AUTO_INCREMENT PRIMARY KEY,
+          delivery_number VARCHAR(100) NOT NULL,
+          tenant_id INT NOT NULL,
+          photo LONGTEXT DEFAULT NULL,
+          signature LONGTEXT DEFAULT NULL,
+          receiver_name VARCHAR(255) DEFAULT NULL,
+          notes TEXT DEFAULT NULL,
+          latitude DECIMAL(10,8) DEFAULT NULL,
+          longitude DECIMAL(11,8) DEFAULT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         if (proof_photo) {
           await query('UPDATE shipment SET proof_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [proof_photo, dn, tid]);
+          console.log('[POD] Saved proof_photo_url to shipment:', dn, '(length:', proof_photo.length, ')');
         }
         // Also insert into proof_of_delivery table for admin POD dashboard
         await query(
@@ -1443,7 +1458,10 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
            VALUES (?, ?, ?, ?, ?, NOW())`,
           [dn, tid, proof_photo || null, staffName, location || 'Delivered by driver']
         );
-      } catch(_) { /* columns/table may not exist yet */ }
+        console.log('[POD] Inserted into proof_of_delivery table for:', dn);
+      } catch(podErr) {
+        console.error('[POD] ERROR saving proof of delivery:', podErr.message || podErr);
+      }
     }
 
     const descriptions = {
