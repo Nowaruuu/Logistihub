@@ -1429,10 +1429,18 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
 
     // Save proof of delivery photo if provided
-    if (status === 'Delivered' && proof_photo) {
+    if (status === 'Delivered') {
       try {
-        await query('UPDATE shipment SET proof_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [proof_photo, dn, tid]);
-      } catch(_) { /* column may not exist yet */ }
+        if (proof_photo) {
+          await query('UPDATE shipment SET proof_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [proof_photo, dn, tid]);
+        }
+        // Also insert into proof_of_delivery table for admin POD dashboard
+        await query(
+          `INSERT INTO proof_of_delivery (delivery_number, tenant_id, photo, receiver_name, notes, created_at)
+           VALUES (?, ?, ?, ?, ?, NOW())`,
+          [dn, tid, proof_photo || null, staffName, location || 'Delivered by driver']
+        );
+      } catch(_) { /* columns/table may not exist yet */ }
     }
 
     const descriptions = {
