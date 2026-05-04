@@ -1068,7 +1068,7 @@ router.get('/notifications', authMiddleware, async (req, res) => {
       try {
         const [rows] = await query(
           `SELECT sh.id, sh.status, sh.description, sh.created_at,
-                  sh.delivery_number, s.destination
+                  sh.delivery_number, s.dropoff_location AS destination
            FROM SHIPMENT_HISTORY sh
            JOIN shipment s ON s.delivery_number = sh.delivery_number AND s.tenant_id = sh.tenant_id
            WHERE s.sender_user_id = ? AND s.tenant_id = ?
@@ -1114,7 +1114,7 @@ router.get('/notifications', authMiddleware, async (req, res) => {
       try {
         const [rows] = await query(
           `SELECT sh.id, sh.status, sh.description, sh.created_at,
-                  sh.delivery_number, s.origin, s.destination
+                  sh.delivery_number, s.pickup_location AS origin, s.dropoff_location AS destination
            FROM SHIPMENT_HISTORY sh
            JOIN shipment s ON s.delivery_number = sh.delivery_number AND s.tenant_id = sh.tenant_id
            WHERE s.assigned_driver_id = ? AND s.tenant_id = ?

@@ -669,7 +669,7 @@ router.get('/:slug/api/admin/pods', requireAdmin, requireSlugMatch, async (req, 
        FROM proof_of_delivery pod
        LEFT JOIN shipment s ON s.delivery_number = pod.delivery_number AND s.tenant_id = pod.tenant_id
        WHERE pod.tenant_id = ?
-       ORDER BY pod.created_at DESC
+       ORDER BY pod.pod_id DESC
        LIMIT 200`,
       [req.tenantId]
     );
