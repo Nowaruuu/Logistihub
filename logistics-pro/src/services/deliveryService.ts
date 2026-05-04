@@ -85,7 +85,7 @@ export const deliveryService = {
    */
   async getDriverDeliveries(): Promise<Delivery[]> {
     const all = await getDeliveries();
-    return all.filter((d: any) => ['In-Transit', 'Out for Delivery'].includes(d.status))
+    return all.filter((d: any) => ['Pending', 'In-Transit', 'Out for Delivery'].includes(d.status))
       .map(mapShipmentToDelivery);
   }
 };
