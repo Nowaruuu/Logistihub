@@ -404,7 +404,26 @@ export default function DriverDashboard() {
                       <ExternalLink className="size-4" />
                       Navigate
                     </button>
-                    {assignment.status === 'In Transit' ? (
+                    {(assignment.status === 'Pending' || assignment.status === 'Processing') ? (
+                      <button
+                        onClick={async () => {
+                          setCompleting(assignment.id);
+                          try {
+                            await deliveryService.updateStatus(assignment.trackingNumber, 'In-Transit', 'Starting pickup');
+                            await fetchData();
+                          } catch (err) { console.error(err); }
+                          finally { setCompleting(null); }
+                        }}
+                        disabled={completing === assignment.id}
+                        className="flex items-center justify-center gap-2 py-3.5 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all disabled:opacity-60"
+                      >
+                        {completing === assignment.id ? (
+                          <><Loader2 className="size-4 animate-spin" /> Starting...</>
+                        ) : (
+                          <><Truck className="size-4" /> Start Pickup</>
+                        )}
+                      </button>
+                    ) : assignment.status === 'In Transit' ? (
                       <button
                         onClick={async () => {
                           setCompleting(assignment.id);

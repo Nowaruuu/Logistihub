@@ -818,7 +818,7 @@ router.get('/chat/:dn', authMiddleware, async (req, res) => {
     }
 
     // Chat only available for In-Transit / Out for Delivery
-    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    const chatStatuses = ['Pending', 'Processing', 'In-Transit', 'In Transit', 'Out for Delivery'];
     const chatEnabled = chatStatuses.includes(shipment.status);
     console.log('[CHAT DEBUG] chatEnabled:', chatEnabled, 'status:', JSON.stringify(shipment.status));
 
@@ -855,7 +855,7 @@ router.post('/chat/:dn', authMiddleware, async (req, res) => {
     if (staffId && Number(shipment.assigned_driver_id) !== staffId) return res.status(403).json({ error: 'Not authorized.' });
 
     // Chat only during active delivery
-    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    const chatStatuses = ['Pending', 'Processing', 'In-Transit', 'In Transit', 'Out for Delivery'];
     if (!chatStatuses.includes(shipment.status)) return res.status(400).json({ error: 'Chat is only available during active delivery.' });
 
     const senderType = req.user ? 'user' : 'driver';
@@ -883,7 +883,7 @@ router.get('/chat/:dn/contact', authMiddleware, async (req, res) => {
     if (!shipment) return res.status(404).json({ error: 'Shipment not found.' });
 
     // Only during active delivery
-    const chatStatuses = ['In-Transit', 'In Transit', 'Out for Delivery'];
+    const chatStatuses = ['Pending', 'Processing', 'In-Transit', 'In Transit', 'Out for Delivery'];
     if (!chatStatuses.includes(shipment.status)) return res.status(400).json({ error: 'Contact only available during active delivery.' });
 
     const userId = req.user?.user_id || null;
