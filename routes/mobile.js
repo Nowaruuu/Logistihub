@@ -435,7 +435,7 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
       [rows] = await query(
         `SELECT s.*, d.name AS driver_name
          FROM shipment s LEFT JOIN STAFF d ON d.staff_id = s.assigned_driver_id
-         WHERE s.tenant_id = ? AND (s.assigned_driver_id = ? OR s.status = 'Pending')
+         WHERE s.tenant_id = ? AND s.assigned_driver_id = ?
          ORDER BY FIELD(s.status, 'In-Transit', 'Out for Delivery', 'Queued', 'Pending', 'Delivered', 'Failed'), s.created_at DESC LIMIT 50`,
         [tid, staffId]
       );
