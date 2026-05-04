@@ -686,7 +686,7 @@ async function checkAppStatus() {
     } else if (data.status === 'approved') {
       box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534;"><strong>✅ Approved!</strong><br/>Check your email for the payment link.</div>';
     } else if (data.status === 'rejected') {
-      box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#991b1b;"><strong>❌ Rejected</strong><br/>Reason: ' + (data.rejection_reason || 'N/A') + '<br/><br/><button class="btn btn-primary btn-sm" onclick="goStep(1)" style="font-size:11px;">Re-Apply</button></div>';
+      box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#991b1b;"><strong>❌ Rejected</strong><br/>Reason: ' + (data.rejection_reason || 'N/A') + '<br/><br/><button class="btn btn-primary btn-sm" onclick="window.location.href=\'/onboarding\'" style="font-size:11px;">Re-Apply</button></div>';
     }
   } catch (e) {
     box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#dc2626;">Error checking status.</div>';
