@@ -512,7 +512,13 @@ function goStep(n){
   updateDots(n);
   window.scrollTo(0,0);
   if(n===2){
-    document.getElementById('plan-chip').innerHTML='<span class="material-symbols-outlined">credit_card</span>'+selectedPlan.name+' — '+selectedPlan.price+'/mo';
+    var chipEl = document.getElementById('plan-chip');
+    if(selectedPlan.id) {
+      chipEl.innerHTML='<span class="material-symbols-outlined">credit_card</span>'+selectedPlan.name+' — '+selectedPlan.price+'/mo';
+      chipEl.style.display = '';
+    } else {
+      chipEl.style.display = 'none';
+    }
   }
 }
 
