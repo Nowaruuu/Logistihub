@@ -310,8 +310,8 @@ textarea{resize:vertical;}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Created</th><th></th></tr></thead>
-            <tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
+            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Route</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments yet</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -360,8 +360,12 @@ textarea{resize:vertical;}
       <div class="ph-row"><div><h2>Sales Report</h2><p>Revenue analytics and financial summaries.</p></div>
         <button class="btn btn-primary btn-sm" onclick="exportSalesCSV()"><span class="material-symbols-outlined">download</span>Export CSV</button>
       </div>
-      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
-        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="sr-total-revenue">&#8369;0</div><div class="stat-note">All time</div></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="sr-total-revenue">&#8369;0</div><div class="stat-note">Total fees collected</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="sr-expenses" style="color:#f59e0b;">&#8369;0</div><div class="stat-note" id="sr-expenses-note">Fuel + driver labor</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-b"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="sr-net-profit" style="color:#10b981;">&#8369;0</div><div class="stat-note">After estimated costs</div></div>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-top:10px;">
         <div class="stat-card"><div class="stat-label">Completed<div class="stat-icon si-b"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value" id="sr-completed">0</div><div class="stat-note">Delivered shipments</div></div>
         <div class="stat-card"><div class="stat-label">Avg. Per Delivery<div class="stat-icon si-p"><span class="material-symbols-outlined">analytics</span></div></div><div class="stat-value" id="sr-avg">&#8369;0</div><div class="stat-note">Average fee</div></div>
         <div class="stat-card"><div class="stat-label">Pending Collection<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="sr-pending">&#8369;0</div><div class="stat-note">Unpaid deliveries</div></div>
@@ -1382,17 +1386,19 @@ function renderShipments() {
   var tbody = document.querySelector('#s-shipments tbody');
   if (!tbody) return;
   var filtered = _shipStatusFilter === 'All' ? _allShipments : _allShipments.filter(function(s){ return s.status === _shipStatusFilter; });
-  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>'; return; }
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>No shipments found</p></div></td></tr>'; return; }
   tbody.innerHTML = filtered.map(function(s) {
     var tc = typeCls[s.item_type_flag] || 't-pkg';
     var sc = statusCls[s.status] || 'b-pending';
-    var route = esc(s.pickup_location || 'N/A') + ' → ' + esc(s.dropoff_location || 'N/A');
+    var pickupShort = esc(s.pickup_location || 'N/A').split(',')[0];
+    var dropoffShort = esc(s.dropoff_location || 'N/A').split(',')[0];
+    var routeHtml = '<div style="font-size:11px;line-height:1.4;max-width:180px;"><span style="color:#10b981;">●</span> ' + pickupShort + '<br><span style="color:#ef4444;">●</span> ' + dropoffShort + '</div>';
     var client = s.sender_name ? esc(s.sender_name) : esc(s.client_name || 'N/A');
     var assignLabel = s.driver_name ? 'Reassign' : 'Assign';
     var assignIcon = s.driver_name ? 'swap_horiz' : 'person_add';
     var actionBtn = s.status === 'Delivered' || s.status === 'Failed' ? '' : '<button onclick="openAssignModal(\'' + esc(s.delivery_number) + '\',' + (s.assigned_driver_id || 'null') + ',\'' + esc(s.assigned_vehicle_plate || '') + '\',\'' + esc(s.vehicle_type || '') + '\')" style="padding:4px 10px;font-size:11px;border:1.5px solid #e2e8f0;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;font-weight:600;color:#3b82f6;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">' + assignIcon + '</span>' + assignLabel + '</button>';
     function fmtD(v) { if(!v) return '—'; var d=new Date(v); return d.toLocaleDateString(); }
-    return '<tr><td><strong>' + esc(s.delivery_number||'') + '</strong></td><td>' + esc(s.awb||'—') + '</td><td>' + client + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag||'PKG') + '</span></td><td style="max-width:200px;white-space:normal;word-break:break-word;font-size:11px;">' + route + '</td><td>' + esc(s.driver_name||'Unassigned') + '</td><td>' + esc(s.vehicle_type||'—') + '</td><td><span class="badge ' + sc + '">' + esc(s.status||'Pending') + '</span></td><td style="font-size:11px;">' + fmtD(s.created_at) + '</td><td>' + actionBtn + '</td></tr>';
+    return '<tr><td><strong>' + esc(s.delivery_number||'') + '</strong></td><td>' + client + '</td><td><span class="type-pill ' + tc + '">' + esc(s.item_type_flag||'PKG') + '</span></td><td>' + routeHtml + '</td><td>' + esc(s.driver_name||'Unassigned') + '</td><td>' + esc(s.vehicle_type||'—') + '</td><td><span class="badge ' + sc + '">' + esc(s.status||'Pending') + '</span></td><td style="font-size:11px;">' + fmtD(s.created_at) + '</td><td>' + actionBtn + '</td></tr>';
   }).join('');
 }
 function filterShipmentStatus(status, btn) {
@@ -1473,8 +1479,22 @@ function loadSalesReport() {
   var delivered = data.filter(function(s){return s.status==='Delivered';});
   var totalRev = delivered.reduce(function(a,s){return a+(parseFloat(s.total_fee)||0);},0);
   var pendingRev = data.filter(function(s){return s.status!=='Delivered'&&s.status!=='Failed';}).reduce(function(a,s){return a+(parseFloat(s.total_fee)||0);},0);
+  // Estimate expenses: driver labor (₱15/km) + fuel (₱12/km) = ₱27/km per delivery
+  // If estimated_distance_km is available use it, otherwise estimate 30% of fee as cost
+  var COST_PER_KM = 27; // ₱15 driver + ₱12 fuel
+  var totalExpenses = delivered.reduce(function(a,s){
+    var dist = parseFloat(s.estimated_distance_km) || 0;
+    if (dist > 0) return a + (dist * COST_PER_KM);
+    return a + ((parseFloat(s.total_fee)||0) * 0.30); // fallback: 30% of fee
+  },0);
+  var netProfit = totalRev - totalExpenses;
   var avg = delivered.length ? totalRev/delivered.length : 0;
   document.getElementById('sr-total-revenue').textContent = '₱' + totalRev.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('sr-expenses').textContent = '₱' + totalExpenses.toLocaleString('en-PH',{minimumFractionDigits:2});
+  var netEl = document.getElementById('sr-net-profit');
+  netEl.textContent = '₱' + Math.abs(netProfit).toLocaleString('en-PH',{minimumFractionDigits:2});
+  netEl.style.color = netProfit >= 0 ? '#10b981' : '#ef4444';
+  if (netProfit < 0) netEl.textContent = '-' + netEl.textContent;
   document.getElementById('sr-completed').textContent = delivered.length;
   document.getElementById('sr-avg').textContent = '₱' + avg.toFixed(2);
   document.getElementById('sr-pending').textContent = '₱' + pendingRev.toLocaleString('en-PH',{minimumFractionDigits:2});

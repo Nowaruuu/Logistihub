@@ -386,8 +386,10 @@ textarea{resize:vertical;}
     <!-- â•â• PAYMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card" id="pay-stat-revenue"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">No data yet</div></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card" id="pay-stat-revenue"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">Total fees collected</div></div>
+        <div class="stat-card" id="pay-stat-expenses"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" style="color:#f59e0b;">₱0</div><div class="stat-note">Fuel + driver labor</div></div>
+        <div class="stat-card" id="pay-stat-net"><div class="stat-label">Net Profit<div class="stat-icon si-b"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" style="color:#10b981;">₱0</div><div class="stat-note">After estimated costs</div></div>
         <div class="stat-card" id="pay-stat-pending"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
         <div class="stat-card" id="pay-stat-overdue"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
@@ -1542,6 +1544,14 @@ function loadPayments() {
       if (penEl) penEl.textContent = data.pending_count || 0;
       var overdue = _allPayments.filter(function(p) { return p.status === 'Overdue'; }).length;
       if (overdueEl) overdueEl.textContent = overdue;
+      // Expense estimation
+      var totalRev = Number(data.total_revenue || 0);
+      var estExpenses = Math.round(totalRev * 0.30); // 30% estimate for fuel + driver labor
+      var netProfit = totalRev - estExpenses;
+      var expEl = document.querySelector('#pay-stat-expenses .stat-value');
+      if(expEl) expEl.textContent = '\u20B1' + estExpenses.toLocaleString();
+      var netEl = document.querySelector('#pay-stat-net .stat-value');
+      if(netEl) { netEl.textContent = '\u20B1' + Math.abs(netProfit).toLocaleString(); netEl.style.color = netProfit >= 0 ? '#10b981' : '#ef4444'; }
       var revNote = document.querySelector('#pay-stat-revenue .stat-note');
       var penNote = document.querySelector('#pay-stat-pending .stat-note');
       var overdueNote = document.querySelector('#pay-stat-overdue .stat-note');
