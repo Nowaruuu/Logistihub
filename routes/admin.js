@@ -450,6 +450,19 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
     );
     const driverBusy = activeJobs.length > 0;
 
+    // #7 — NO multiple deliveries per vehicle: check if vehicle already has an active shipment
+    if (assigned_vehicle_plate) {
+      const [vehicleActiveJobs] = await query(
+        `SELECT delivery_number FROM shipment WHERE assigned_vehicle_plate = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery') AND delivery_number != ? LIMIT 1`,
+        [assigned_vehicle_plate, tid, dn]
+      );
+      if (vehicleActiveJobs.length > 0) {
+        return res.status(400).json({
+          error: `Vehicle ${assigned_vehicle_plate} is currently on an active delivery (${vehicleActiveJobs[0].delivery_number}). A vehicle can only handle one active delivery at a time.`
+        });
+      }
+    }
+
     // If driver is busy, check they don't already have a queued job (limit: 1)
     if (driverBusy) {
       const [queuedJobs] = await query(
@@ -866,7 +879,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
 // CREATE VEHICLE (Admin only)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-    const { plate_number, type, capacity_tons, status, ownership_doc, model } = req.body;
+    const { plate_number, type, capacity_tons, status, ownership_doc, model, ownership_type, image_url } = req.body;
   const tid = req.tenantId;
 
   if (!plate_number || !type) return res.status(400).json({ error: 'plate_number and type are required.' });
@@ -878,17 +891,27 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     if (existing.length) return res.status(409).json({ error: 'A vehicle with that plate number already exists.' });
 
     // ── Plan vehicle limit check ──────────────────────────────────────────
-    const [[tenant]] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
-    if (tenant && tenant.plan === 'startup') {
+    const [[tenant]] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
+    const PLAN_LIMITS = { startup: 20, growth: 50, enterprise: null }; // Padala:20, Negosyo:50, Korporasyon:unlimited
+    const planKey = (tenant?.plan || 'startup').toLowerCase();
+    const maxVehicles = tenant?.max_vehicles || PLAN_LIMITS[planKey] || PLAN_LIMITS.startup;
+
+    if (maxVehicles) {
       const [[vc]] = await query('SELECT COUNT(*) AS n FROM vehicle WHERE tenant_id = ?', [tid]);
-      if (vc.n >= 10) {
-        return res.status(402).json({ error: 'Padala plan is limited to 10 vehicles. Upgrade to Negosyo for unlimited vehicles.' });
+      if (vc.n >= maxVehicles) {
+        const planNames = { startup: 'Padala', growth: 'Negosyo', enterprise: 'Korporasyon' };
+        const currentPlanName = planNames[planKey] || planKey;
+        return res.status(402).json({
+          error: `${currentPlanName} plan is limited to ${maxVehicles} vehicles. Upgrade your plan for more.`,
+          limit: maxVehicles,
+          current: vc.n
+        });
       }
     }
 
     await query(
-      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [tid, plate_number.toUpperCase(), type, model || null, capacity_tons || null, status || 'Available', ownership_doc || null]
+      `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc, ownership_type, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tid, plate_number.toUpperCase(), type, model || null, capacity_tons || null, status || 'Available', ownership_doc || null, ownership_type || 'company', image_url || null]
     );
 
     res.status(201).json({ ok: true, message: 'Vehicle added successfully.' });

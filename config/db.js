@@ -94,14 +94,36 @@ pool.getConnection()
       "ALTER TABLE sub_document ADD CONSTRAINT fk_subdoc_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
       "ALTER TABLE sub_vehicle ADD CONSTRAINT fk_subveh_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
       "ALTER TABLE sub_bulk ADD CONSTRAINT fk_subbulk_shipment FOREIGN KEY (delivery_number) REFERENCES shipment(delivery_number) ON DELETE CASCADE",
+
+      // ─── PHASE 2: Defense Revisions ─────────────────────────────────────────
+      // #5 — AUDIT_LOG FK to TENANT (via tenant_slug → slug)
+      "ALTER TABLE AUDIT_LOG ADD COLUMN tenant_id INT DEFAULT NULL",
+      "UPDATE AUDIT_LOG a JOIN TENANT t ON a.tenant_slug = t.slug SET a.tenant_id = t.tenant_id WHERE a.tenant_id IS NULL",
+      "ALTER TABLE AUDIT_LOG ADD CONSTRAINT fk_audit_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE SET NULL",
+
+      // #4 — Vehicle ownership type (company-owned vs employee-owned)
+      "ALTER TABLE vehicle ADD COLUMN ownership_type ENUM('company','employee') DEFAULT 'company'",
+      // #14 — Vehicle image
+      "ALTER TABLE vehicle ADD COLUMN image_url LONGTEXT DEFAULT NULL",
+
+      // #17 — Plan-based limits stored on TENANT
+      "ALTER TABLE TENANT ADD COLUMN max_vehicles INT DEFAULT NULL",
+      "ALTER TABLE TENANT ADD COLUMN max_distance_km INT DEFAULT 100",
+
+      // #22 — Ensure driver accounts auto-activate (already 'Available' status on insert, this is a safety net)
+      // Set any lingering 'pending' driver accounts to 'Available'
+      "UPDATE STAFF SET status = 'Available' WHERE role = 'Driver' AND (status IS NULL OR status = 'pending' OR status = '')",
+
+      // #6 — Driver's license required columns (already exist from previous migrations, adding OR/CR for staff)
+      "ALTER TABLE STAFF ADD COLUMN or_cr_url LONGTEXT DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {
         await pool.execute(sql);
         console.log('  ✅ Migration applied:', sql.substring(0, 60) + '...');
       } catch (e) {
-        // 1060 = Duplicate column, 1061 = Duplicate key name, 1022 = Duplicate key, 1826 = Duplicate FK
-        if ([1060, 1061, 1022, 1826].includes(e.errno)) {
+        // 1060 = Duplicate column, 1061 = Duplicate key name, 1022 = Duplicate key, 1826 = Duplicate FK, 1050 = Table exists, 1068 = Key exists
+        if ([1060, 1061, 1022, 1826, 1050, 1068].includes(e.errno)) {
           // Already exists — skip silently
         } else {
           console.warn('  ⚠️  Migration skipped:', e.message);

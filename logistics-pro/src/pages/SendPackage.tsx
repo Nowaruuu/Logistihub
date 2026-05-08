@@ -144,6 +144,8 @@ export default function SendPackage() {
     Package: 'PACKAGE', Food: 'FOOD', Document: 'DOC', Bulk: 'BULK', Vehicle: 'VEHICLE',
   };
   const [enabledCatIds, setEnabledCatIds] = useState<string[]>(['PACKAGE','VEHICLE','FOOD','DOC','BULK']);
+  // Max distance limit (from tenant config)
+  const [maxDistanceKm, setMaxDistanceKm] = useState(100);
 
   // Live-refresh tenant config: on mount, on visibility change, and every 30s
   useEffect(() => {
@@ -154,6 +156,7 @@ export default function SendPackage() {
         if (cfg.supported_categories) {
           setEnabledCatIds(cfg.supported_categories.map((l: string) => CAT_LABEL_TO_ID[l]).filter(Boolean));
         }
+        if (cfg.max_distance_km) setMaxDistanceKm(cfg.max_distance_km);
       }).catch(() => {});
     };
 
@@ -254,17 +257,29 @@ export default function SendPackage() {
   const weightKg = weightUnit === 'ton' ? rawWeight * 1000 : rawWeight;
   const distKm = routeDistKm;
 
-  // Gas estimation pricing: base + fuel cost + weight surcharge + category surcharge
-  // Fuel cost = road distance × vehicle fuel rate (₱/km)
+  // Gas + weight-based pricing: base ₱50 + fuel cost + weight surcharge + category surcharge
+  // Weight surcharge tiers (heavier = significantly more expensive for driver compensation):
+  //   0-20kg: ₱2/kg (light parcels)
+  //   21-100kg: ₱3/kg (medium packages)
+  //   101-500kg: ₱2/kg (bulk, volume discount)
+  //   500+kg: ₱1.50/kg (heavy freight)
   const selectedVehicle = VEHICLE_TYPES.find(v => v.id === vehicle);
   const fuelRate = selectedVehicle?.fuelRate || 5;
   const fuelCost = distKm * fuelRate;
-  const tierRate = weightKg <= 50 ? weightKg * 1 : weightKg <= 500 ? 50 + (weightKg - 50) * 0.80 : 50 + 360 + (weightKg - 500) * 0.50;
+  const weightSurcharge = weightKg <= 20 ? weightKg * 2
+    : weightKg <= 100 ? 40 + (weightKg - 20) * 3
+    : weightKg <= 500 ? 40 + 240 + (weightKg - 100) * 2
+    : 40 + 240 + 800 + (weightKg - 500) * 1.50;
   const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
   const safetySurcharge = extraSafety ? SAFETY_FEE : 0;
-  const baseFee = 50 + fuelCost + tierRate + categorySurcharge + safetySurcharge;
+  // Driver compensation: ₱15/km for driver labor (on top of fuel)
+  const driverCompensation = distKm * 15;
+  const baseFee = 50 + fuelCost + driverCompensation + weightSurcharge + categorySurcharge + safetySurcharge;
   // Express = 1.8× base (consistent in both display & totalFee)
   const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
+
+  // Distance limit check
+  const isOverDistanceLimit = distKm > maxDistanceKm;
 
   // Check if a date is Sunday
   const isSunday = (dateStr: string) => {
@@ -398,6 +413,7 @@ export default function SendPackage() {
     if (!PH_PHONE_REGEX.test(receiverPhone.trim())) { setError('Receiver phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
     if (compatibleVehicles.length === 0) { setError('No suitable vehicle available for this package category. Please choose a different category or contact your admin.'); return; }
+    if (isOverDistanceLimit) { setError(`Route distance (${Math.round(distKm)}km) exceeds the maximum allowed distance of ${maxDistanceKm}km. Please choose a closer destination.`); return; }
     setShowReview(true);
   };
 
@@ -959,6 +975,31 @@ export default function SendPackage() {
           </div>
         </button>
       </section>
+
+      {/* ── Distance Info / Warning ── */}
+      {distKm > 0 && (
+        <section className="mt-4 px-5">
+          {isOverDistanceLimit ? (
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800">
+              <AlertTriangle className="size-5 text-red-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">Distance Limit Exceeded</p>
+                <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-0.5">
+                  Route is ~{Math.round(distKm)}km — max allowed is {maxDistanceKm}km. Choose a closer destination.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <MapIcon className="size-3.5 text-slate-400" />
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Route distance: <strong className="text-slate-700 dark:text-slate-300">{distKm.toFixed(1)} km</strong>
+                <span className="text-slate-400 ml-1">/ {maxDistanceKm}km limit</span>
+              </span>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Shipping Method ── */}
       <section className="mt-6 px-5">

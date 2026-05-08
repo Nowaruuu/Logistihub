@@ -123,6 +123,7 @@ router.get('/tenant-config', async (req, res) => {
       available_vehicles: vehicleTypes,
       vehicle_capacities: capacityMap || {},
       supported_categories: supportedCats,
+      max_distance_km: t.max_distance_km || 100,
     });
   } catch (err) {
     console.error('[GET /tenant-config] FATAL:', err.message);
@@ -505,6 +506,27 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     if (!hasCompatible) {
       return res.status(400).json({
         error: `No suitable vehicle available for ${itemType} deliveries. Your fleet needs one of: ${requiredTypes.join(', ')}. Contact your admin to add the right vehicle type.`
+      });
+    }
+  }
+
+  // #3 — Distance limit check (prevent super-far deliveries)
+  if (pickup_lat && pickup_lng && dropoff_lat && dropoff_lng) {
+    // Calculate Haversine distance for quick server-side check
+    const R = 6371;
+    const dLat = (dropoff_lat - pickup_lat) * Math.PI / 180;
+    const dLon = (dropoff_lng - pickup_lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(pickup_lat*Math.PI/180)*Math.cos(dropoff_lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    const straightLineDist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    // Fetch tenant's max distance (default 100km)
+    const [[tenantCfg]] = await query('SELECT max_distance_km FROM TENANT WHERE tenant_id = ?', [tid]);
+    const maxDistKm = tenantCfg?.max_distance_km || 100;
+    // Road distance is typically ~1.3x straight-line, so be generous with the check
+    if (straightLineDist > maxDistKm * 1.2) {
+      return res.status(400).json({
+        error: `Route distance (~${Math.round(straightLineDist)}km) exceeds the maximum allowed distance of ${maxDistKm}km. Please choose a closer destination or contact your admin.`,
+        max_distance_km: maxDistKm,
+        estimated_distance_km: Math.round(straightLineDist)
       });
     }
   }

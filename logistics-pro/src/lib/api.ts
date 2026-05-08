@@ -17,9 +17,9 @@ function apiUrl(path: string): string {
   return `${API_BASE_URL}/${getSlug()}/api${path}`; 
 }
 
-export async function getTenantConfig(): Promise<{ available_vehicles: string[]; vehicle_capacities: Record<string, number>; company_name: string; logo_url: string | null; primary_color: string; supported_categories: string[] }> {
+export async function getTenantConfig(): Promise<{ available_vehicles: string[]; vehicle_capacities: Record<string, number>; company_name: string; logo_url: string | null; primary_color: string; supported_categories: string[]; max_distance_km: number }> {
   const slug = localStorage.getItem('auth_slug') || '';
-  const fallback = { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], vehicle_capacities: {}, company_name: '', logo_url: null, primary_color: '#ea580c', supported_categories: ['Package','Food','Document','Bulk','Vehicle'] };
+  const fallback = { available_vehicles: ['motorcycle','sedan','van','truck','flatbed'], vehicle_capacities: {}, company_name: '', logo_url: null, primary_color: '#ea580c', supported_categories: ['Package','Food','Document','Bulk','Vehicle'], max_distance_km: 100 };
   if (!slug) return fallback;
   try {
     const res = await fetch(`${API_BASE_URL}/${slug}/api/mobile/tenant-config`);
