@@ -821,13 +821,17 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
   const loginUsername = emailPrefix + '@' + slug + '.com';
 
   try {
-    // ── Enforce Padala (startup) plan driver limit ──
+    // ── Enforce plan-based driver limit ──
     if (role === 'Driver') {
-      const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
-      if (tenantPlan[0]?.plan === 'startup') {
-        const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver' AND status = 'active'", [tid]);
-        if (driverCount[0].cnt >= 10) {
-          return res.status(403).json({ error: 'Padala plan is limited to 10 drivers. Upgrade to Negosyo for unlimited riders.' });
+      const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
+      const DRIVER_LIMITS = { startup: 20, enterprise: 50, global: null };
+      const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
+      const maxDrivers = DRIVER_LIMITS[planKey] ?? DRIVER_LIMITS.startup;
+      if (maxDrivers) {
+        const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver'", [tid]);
+        if (driverCount[0].cnt >= maxDrivers) {
+          const planNames = { startup: 'Padala', enterprise: 'Negosyo', global: 'Korporasyon' };
+          return res.status(403).json({ error: `${planNames[planKey] || planKey} plan is limited to ${maxDrivers} drivers. Upgrade your plan for more.` });
         }
       }
     }
@@ -892,14 +896,14 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
 
     // ── Plan vehicle limit check ──────────────────────────────────────────
     const [[tenant]] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
-    const PLAN_LIMITS = { startup: 20, growth: 50, enterprise: null }; // Padala:20, Negosyo:50, Korporasyon:unlimited
+    const PLAN_LIMITS = { startup: 20, enterprise: 50, global: null }; // Padala:20, Negosyo:50, Korporasyon:unlimited
     const planKey = (tenant?.plan || 'startup').toLowerCase();
-    const maxVehicles = tenant?.max_vehicles || PLAN_LIMITS[planKey] || PLAN_LIMITS.startup;
+    const maxVehicles = tenant?.max_vehicles || PLAN_LIMITS[planKey] ?? PLAN_LIMITS.startup;
 
     if (maxVehicles) {
       const [[vc]] = await query('SELECT COUNT(*) AS n FROM vehicle WHERE tenant_id = ?', [tid]);
       if (vc.n >= maxVehicles) {
-        const planNames = { startup: 'Padala', growth: 'Negosyo', enterprise: 'Korporasyon' };
+        const planNames = { startup: 'Padala', enterprise: 'Negosyo', global: 'Korporasyon' };
         const currentPlanName = planNames[planKey] || planKey;
         return res.status(402).json({
           error: `${currentPlanName} plan is limited to ${maxVehicles} vehicles. Upgrade your plan for more.`,
@@ -1113,13 +1117,17 @@ router.post('/:slug/api/manager/staff', requireManager, requireSlugMatch, async 
   if (!name || !email || !role) return res.status(400).json({ error: 'name, email and role are required.' });
   if (!MANAGER_ALLOWED.includes(role)) return res.status(403).json({ error: 'Managers can only add Driver or Document Controller roles.' });
 
-  // ── Enforce Padala (startup) plan driver limit ──
+  // ── Enforce plan-based driver limit ──
   if (role === 'Driver') {
-    const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
-    if (tenantPlan[0]?.plan === 'startup') {
-      const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver' AND status = 'active'", [tid]);
-      if (driverCount[0].cnt >= 10) {
-        return res.status(403).json({ error: 'Padala plan is limited to 10 drivers. Upgrade to Negosyo for unlimited riders.' });
+    const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
+    const DRIVER_LIMITS = { startup: 20, enterprise: 50, global: null };
+    const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
+    const maxDrivers = DRIVER_LIMITS[planKey] ?? DRIVER_LIMITS.startup;
+    if (maxDrivers) {
+      const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver'", [tid]);
+      if (driverCount[0].cnt >= maxDrivers) {
+        const planNames = { startup: 'Padala', enterprise: 'Negosyo', global: 'Korporasyon' };
+        return res.status(403).json({ error: `${planNames[planKey] || planKey} plan is limited to ${maxDrivers} drivers. Upgrade your plan for more.` });
       }
     }
   }

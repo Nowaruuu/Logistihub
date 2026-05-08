@@ -249,12 +249,16 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
     );
 
     if (existing.length === 0) {
-      // ── Enforce Padala (startup) plan vehicle limit ──
-      const [tenantPlan] = await query('SELECT plan FROM TENANT WHERE tenant_id = ?', [tid]);
-      if (tenantPlan[0]?.plan === 'startup') {
+      // ── Enforce plan-based vehicle limit ──
+      const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
+      const PLAN_LIMITS = { startup: 20, enterprise: 50, global: null };
+      const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
+      const maxVehicles = tenantPlan[0]?.max_vehicles || PLAN_LIMITS[planKey] ?? PLAN_LIMITS.startup;
+      if (maxVehicles) {
         const [vehCount] = await query('SELECT COUNT(*) AS cnt FROM vehicle WHERE tenant_id = ?', [tid]);
-        if (vehCount[0].cnt >= 10) {
-          return res.status(403).json({ error: 'Padala plan is limited to 10 vehicles. Contact your admin to upgrade.' });
+        if (vehCount[0].cnt >= maxVehicles) {
+          const planNames = { startup: 'Padala', enterprise: 'Negosyo', global: 'Korporasyon' };
+          return res.status(403).json({ error: `${planNames[planKey] || planKey} plan is limited to ${maxVehicles} vehicles. Contact your admin to upgrade.` });
         }
       }
 
