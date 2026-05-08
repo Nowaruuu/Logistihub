@@ -139,11 +139,17 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='ht
 
 <div class="header">
   <div class="header-logo">
-    <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
-    <div><div class="logo-name">LogistiHub</div><div class="logo-sub">Workspace Setup</div></div>
+    <div class="logo-box" id="ob-logo-box"><span class="material-symbols-outlined" id="ob-logo-icon">package_2</span><img id="ob-logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:7px;"></div>
+    <div><div class="logo-name" id="ob-logo-name">LogistiHub</div><div class="logo-sub">Workspace Setup</div></div>
   </div>
   <div class="header-help">Need help? <a href="#">Contact support</a></div>
 </div>
+<script>
+fetch('/api/platform').then(function(r){return r.json()}).then(function(s){
+  if(s.platform_logo){var i=document.getElementById('ob-logo-img');var k=document.getElementById('ob-logo-icon');if(i&&k){i.src=s.platform_logo;i.style.display='block';k.style.display='none';}}
+  if(s.platform_name){var n=document.getElementById('ob-logo-name');if(n)n.textContent=s.platform_name;}
+}).catch(function(){});
+</script>
 
 <!-- Step indicator -->
 <div class="step-bar" id="step-bar">

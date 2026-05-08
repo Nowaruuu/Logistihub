@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogistiHub — The Smart LogistiHub</title>
+    <title>LogistiHub — The Smart Logistics Platform</title>
     <meta name="description" content="One platform to manage your entire logistics operation — shipments, drivers, routes, and analytics.">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -302,7 +302,7 @@
 
     <nav id="top">
         <a href="/" class="logo">
-            <div class="logo-box"><span class="material-symbols-outlined">package_2</span></div>
+            <div class="logo-box" id="nav-logo-box"><span class="material-symbols-outlined" id="nav-logo-icon">package_2</span><img id="nav-logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:8px;"></div>
             <span id="nav-brand">LogistiHub</span>
         </a>
         <ul class="nav-links">
@@ -428,10 +428,19 @@
             if (s.hero_subtitle)  document.getElementById('hero-subtitle').textContent   = s.hero_subtitle;
             if (s.hero_cta_text)  document.getElementById('hero-cta-text').textContent  = s.hero_cta_text;
             if (s.hero_cta_text)  document.getElementById('nav-cta').childNodes[s.hero_cta_text ? 0 : 0]; // nav cta text
+            if (s.platform_logo) {
+                var logoImg = document.getElementById('nav-logo-img');
+                var logoIcon = document.getElementById('nav-logo-icon');
+                if (logoImg && logoIcon) {
+                    logoImg.src = s.platform_logo;
+                    logoImg.style.display = 'block';
+                    logoIcon.style.display = 'none';
+                }
+            }
             if (s.platform_name) {
                 document.getElementById('nav-brand').textContent   = s.platform_name;
                 document.getElementById('footer-brand').textContent = s.platform_name;
-                document.title = `${s.platform_name} — The Smart LogistiHub`;
+                document.title = `${s.platform_name} — The Smart Logistics Platform`;
             }
         }).catch(() => {});
 
