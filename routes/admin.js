@@ -443,38 +443,45 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       return res.json({ ok: true, queued: false, message: 'Driver unassigned.' });
     }
 
-    // Check if this driver is currently busy (has an active delivery)
-    const [activeJobs] = await query(
-      `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery') LIMIT 1`,
-      [assigned_driver_id, tid]
-    );
-    const driverBusy = activeJobs.length > 0;
 
-    // #7 — NO multiple deliveries per vehicle: check if vehicle already has an active shipment
+    // #7 — Batch delivery support: allow up to MAX_ACTIVE_PER_VEHICLE active shipments per vehicle
+    // This supports multi-stop deliveries (same route, different drop-off locations)
+    const MAX_ACTIVE_PER_VEHICLE = 5;
     if (assigned_vehicle_plate) {
       const [vehicleActiveJobs] = await query(
-        `SELECT delivery_number FROM shipment WHERE assigned_vehicle_plate = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery') AND delivery_number != ? LIMIT 1`,
+        `SELECT delivery_number FROM shipment WHERE assigned_vehicle_plate = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery') AND delivery_number != ?`,
         [assigned_vehicle_plate, tid, dn]
       );
-      if (vehicleActiveJobs.length > 0) {
+      if (vehicleActiveJobs.length >= MAX_ACTIVE_PER_VEHICLE) {
         return res.status(400).json({
-          error: `Vehicle ${assigned_vehicle_plate} is currently on an active delivery (${vehicleActiveJobs[0].delivery_number}). A vehicle can only handle one active delivery at a time.`
+          error: `Vehicle ${assigned_vehicle_plate} already has ${vehicleActiveJobs.length} active deliveries (max ${MAX_ACTIVE_PER_VEHICLE}). Complete some deliveries before assigning more.`
         });
       }
     }
 
-    // If driver is busy, check they don't already have a queued job (limit: 1)
-    if (driverBusy) {
+    // Batch delivery: a driver can handle up to MAX concurrent active deliveries
+    // and up to MAX_QUEUED waiting in the queue
+    const MAX_ACTIVE_PER_DRIVER = 5;
+    const MAX_QUEUED_PER_DRIVER = 3;
+
+    const [driverActiveJobs] = await query(
+      `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status IN ('In-Transit', 'Out for Delivery')`,
+      [assigned_driver_id, tid]
+    );
+    const driverAtCapacity = driverActiveJobs.length >= MAX_ACTIVE_PER_DRIVER;
+
+    if (driverAtCapacity) {
+      // Driver is at max active — check if we can queue it
       const [queuedJobs] = await query(
-        `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Queued' LIMIT 1`,
+        `SELECT delivery_number FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Queued'`,
         [assigned_driver_id, tid]
       );
-      if (queuedJobs.length > 0) {
-        return res.status(400).json({ error: 'This driver already has a queued job. A driver can only have 1 queued shipment at a time.' });
+      if (queuedJobs.length >= MAX_QUEUED_PER_DRIVER) {
+        return res.status(400).json({ error: `This driver already has ${driverActiveJobs.length} active and ${queuedJobs.length} queued deliveries. Complete some before assigning more.` });
       }
     }
 
-    const newStatus = driverBusy ? 'Queued' : 'In-Transit';
+    const newStatus = driverAtCapacity ? 'Queued' : 'In-Transit';
     await query(
       `UPDATE shipment SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = ? WHERE delivery_number = ? AND tenant_id = ?`,
       [assigned_driver_id, assigned_vehicle_plate || null, newStatus, dn, tid]
@@ -488,18 +495,18 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
     await query(
       `INSERT INTO SHIPMENT_HISTORY (delivery_number, tenant_id, status, location, description, actor_name) VALUES (?, ?, ?, '', ?, ?)`,
       [dn, tid, newStatus,
-       driverBusy
-         ? `Shipment queued for driver ${driverName}. Will start after current delivery.`
+       driverAtCapacity
+         ? `Shipment queued for driver ${driverName}. Will start after a current delivery is completed.`
          : `Driver ${driverName} assigned and pickup started.`,
        req.admin?.name || 'Manager']
     );
 
     res.json({
       ok: true,
-      queued: driverBusy,
-      message: driverBusy
-        ? `Driver is currently busy. Shipment queued — ${driverName} will start after their current delivery.`
-        : `Driver ${driverName} assigned. Shipment is now In-Transit.`
+      queued: driverAtCapacity,
+      message: driverAtCapacity
+        ? `Driver is at max capacity (${driverActiveJobs.length} active). Shipment queued — ${driverName} will start after completing a delivery.`
+        : `Driver ${driverName} assigned. Shipment is now In-Transit. (${driverActiveJobs.length + 1} active deliveries)`
     });
   } catch (err) {
     console.error('[PUT /admin/shipments/assign]', err);
