@@ -253,7 +253,8 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
       const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
       const PLAN_LIMITS = { startup: 20, enterprise: 50, global: null };
       const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
-      const maxVehicles = tenantPlan[0]?.max_vehicles || PLAN_LIMITS[planKey] ?? PLAN_LIMITS.startup;
+      const limitVal = PLAN_LIMITS.hasOwnProperty(planKey) ? PLAN_LIMITS[planKey] : PLAN_LIMITS.startup;
+      const maxVehicles = tenantPlan[0]?.max_vehicles || limitVal;
       if (maxVehicles) {
         const [vehCount] = await query('SELECT COUNT(*) AS cnt FROM vehicle WHERE tenant_id = ?', [tid]);
         if (vehCount[0].cnt >= maxVehicles) {

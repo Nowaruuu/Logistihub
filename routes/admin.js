@@ -826,7 +826,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
       const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
       const DRIVER_LIMITS = { startup: 20, enterprise: 50, global: null };
       const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
-      const maxDrivers = DRIVER_LIMITS[planKey] ?? DRIVER_LIMITS.startup;
+      const maxDrivers = DRIVER_LIMITS[planKey] !== undefined ? DRIVER_LIMITS[planKey] : DRIVER_LIMITS.startup;
       if (maxDrivers) {
         const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver'", [tid]);
         if (driverCount[0].cnt >= maxDrivers) {
@@ -898,7 +898,8 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
     const [[tenant]] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
     const PLAN_LIMITS = { startup: 20, enterprise: 50, global: null }; // Padala:20, Negosyo:50, Korporasyon:unlimited
     const planKey = (tenant?.plan || 'startup').toLowerCase();
-    const maxVehicles = tenant?.max_vehicles || PLAN_LIMITS[planKey] ?? PLAN_LIMITS.startup;
+    const limitVal = PLAN_LIMITS.hasOwnProperty(planKey) ? PLAN_LIMITS[planKey] : PLAN_LIMITS.startup;
+    const maxVehicles = tenant?.max_vehicles || limitVal;
 
     if (maxVehicles) {
       const [[vc]] = await query('SELECT COUNT(*) AS n FROM vehicle WHERE tenant_id = ?', [tid]);
@@ -1122,7 +1123,7 @@ router.post('/:slug/api/manager/staff', requireManager, requireSlugMatch, async 
     const [tenantPlan] = await query('SELECT plan, max_vehicles FROM TENANT WHERE tenant_id = ?', [tid]);
     const DRIVER_LIMITS = { startup: 20, enterprise: 50, global: null };
     const planKey = (tenantPlan[0]?.plan || 'startup').toLowerCase();
-    const maxDrivers = DRIVER_LIMITS[planKey] ?? DRIVER_LIMITS.startup;
+    const maxDrivers = DRIVER_LIMITS[planKey] !== undefined ? DRIVER_LIMITS[planKey] : DRIVER_LIMITS.startup;
     if (maxDrivers) {
       const [driverCount] = await query("SELECT COUNT(*) AS cnt FROM STAFF WHERE tenant_id = ? AND role = 'Driver'", [tid]);
       if (driverCount[0].cnt >= maxDrivers) {
