@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Developer Platform — Logistics OS</title>
+<title>Developer Platform — LogistiHub</title>
 
 <!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -225,7 +225,7 @@
       <div class="brand-icon"><span class="material-symbols-rounded">terminal</span></div>
       <div>
         <div class="brand-name">Dev Console</div>
-        <div class="brand-sub">Logistics OS</div>
+        <div class="brand-sub">LogistiHub</div>
       </div>
     </div>
     <nav class="nav-menu">
@@ -560,6 +560,26 @@
                   <input type="text" class="form-control" id="form-platform-name" placeholder="e.g. LogistiHub">
                 </div>
                 <div class="form-group">
+                  <label class="form-label">Platform Logo</label>
+                  <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Displayed on the landing page, login screens, and onboarding. Recommended: Square PNG, max 2MB.</p>
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <div id="logo-preview-wrap" style="width:64px;height:64px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fafc;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('logo-file-input').click()">
+                      <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;">
+                      <span id="logo-preview-icon" class="material-symbols-rounded" style="font-size:28px;color:#cbd5e1;">add_photo_alternate</span>
+                    </div>
+                    <div style="flex:1;">
+                      <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handlePlatformLogo(this.files[0])">
+                      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('logo-file-input').click()" style="font-size:12px;padding:6px 14px;">
+                        <span class="material-symbols-rounded" style="font-size:14px;">upload</span> Upload Logo
+                      </button>
+                      <button class="btn btn-sm" id="logo-clear-btn" onclick="clearPlatformLogo()" style="font-size:12px;padding:6px 10px;color:#dc2626;display:none;">
+                        <span class="material-symbols-rounded" style="font-size:14px;">close</span> Remove
+                      </button>
+                    </div>
+                  </div>
+                  <input type="hidden" id="form-platform-logo" value="">
+                </div>
+                <div class="form-group">
                   <label class="form-label">Primary Color</label>
                   <div style="display:flex;gap:12px;align-items:center;">
                     <input type="color" id="form-primary-color" value="#3b82f6" style="width:48px;height:40px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;" oninput="document.getElementById('form-primary-color-hex').value=this.value">
@@ -568,7 +588,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Hero Title</label>
-                  <input type="text" class="form-control" id="form-hero-title" placeholder="The Logistics OS for Modern Businesses">
+                  <input type="text" class="form-control" id="form-hero-title" placeholder="The LogistiHub for Modern Businesses">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Hero Subtitle</label>
@@ -1102,6 +1122,14 @@
         const s = await fetch('/api/superadmin/platform-settings', { credentials: 'include' }).then(r => r.json());
         if (!s) return;
         if (s.platform_name)  document.getElementById('form-platform-name').value  = s.platform_name;
+        if (s.platform_logo) {
+          document.getElementById('form-platform-logo').value = s.platform_logo;
+          document.getElementById('logo-preview-img').src = s.platform_logo;
+          document.getElementById('logo-preview-img').style.display = 'block';
+          document.getElementById('logo-preview-icon').style.display = 'none';
+          document.getElementById('logo-preview-wrap').style.borderStyle = 'solid';
+          document.getElementById('logo-clear-btn').style.display = '';
+        }
         if (s.primary_color) {
           document.getElementById('form-primary-color').value     = s.primary_color;
           document.getElementById('form-primary-color-hex').value = s.primary_color;
@@ -1120,6 +1148,7 @@
     async function savePlatformSettings() {
       const payload = {
         platform_name:  document.getElementById('form-platform-name').value.trim(),
+        platform_logo:  document.getElementById('form-platform-logo').value || '',
         primary_color:  document.getElementById('form-primary-color').value,
         hero_title:     document.getElementById('form-hero-title').value.trim(),
         hero_subtitle:  document.getElementById('form-hero-subtitle').value.trim(),
@@ -1136,6 +1165,30 @@
         if (!r.ok) throw new Error(d.error);
         showToast('Platform settings saved! Changes will appear on the landing page.');
       } catch(e) { showToast('Save failed: ' + e.message, 'error'); }
+    }
+
+    function handlePlatformLogo(file) {
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { showToast('Logo file must be under 2MB.', 'error'); return; }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('form-platform-logo').value = e.target.result;
+        document.getElementById('logo-preview-img').src = e.target.result;
+        document.getElementById('logo-preview-img').style.display = 'block';
+        document.getElementById('logo-preview-icon').style.display = 'none';
+        document.getElementById('logo-preview-wrap').style.borderStyle = 'solid';
+        document.getElementById('logo-clear-btn').style.display = '';
+      };
+      reader.readAsDataURL(file);
+    }
+    function clearPlatformLogo() {
+      document.getElementById('form-platform-logo').value = '';
+      document.getElementById('logo-preview-img').src = '';
+      document.getElementById('logo-preview-img').style.display = 'none';
+      document.getElementById('logo-preview-icon').style.display = '';
+      document.getElementById('logo-preview-wrap').style.borderStyle = 'dashed';
+      document.getElementById('logo-clear-btn').style.display = 'none';
+      document.getElementById('logo-file-input').value = '';
     }
 
     // ── PRESCRIPTIVE INSIGHTS ──────────────────────────────────────────────
