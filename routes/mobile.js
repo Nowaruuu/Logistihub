@@ -534,6 +534,8 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
         estimated_distance_km: Math.round(straightLineDist)
       });
     }
+    // Store computed distance for expense calculations
+    var computed_distance_km = Math.round(straightLineDist * 10) / 10;
   }
 
    try {
@@ -545,14 +547,14 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     await query(
       `INSERT INTO shipment (
         delivery_number, tenant_id, sender_user_id, sender_name, sender_phone, pickup_location, dropoff_location,
-        pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
+        pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, distance_km,
         receiver_name, receiver_phone, receiver_address,
         item_type_flag, vehicle_type, weight, size, shipping_method, total_fee,
         estimated_arrival, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
       [
         deliveryNumber, tid, userId, sender_name || null, sender_phone || null, pickup_location, dropoff_location,
-        pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null,
+        pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null, computed_distance_km || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
         itemType, vehicle_type || null, weight || null, size || null, shipping_method || 'Standard',
         total_fee || 0, estimated_arrival || '3-5 business days'

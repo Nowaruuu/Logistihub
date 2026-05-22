@@ -175,6 +175,27 @@ app.listen(PORT, async () => {
     try { await query('ALTER TABLE vehicle ADD COLUMN image_url LONGTEXT DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE vehicle MODIFY COLUMN image_url LONGTEXT'); } catch(_) {}
     try { await query('ALTER TABLE vehicle ADD COLUMN ownership_type VARCHAR(20) DEFAULT "company"'); } catch(_) {}
+
+    // Backfill distance_km for existing shipments that have lat/lng but no distance
+    try {
+      const [needDist] = await query(
+        `SELECT delivery_number, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng
+         FROM shipment WHERE distance_km IS NULL AND pickup_lat IS NOT NULL AND dropoff_lat IS NOT NULL`
+      );
+      if (needDist && needDist.length) {
+        for (const s of needDist) {
+          const R = 6371;
+          const dLat = (s.dropoff_lat - s.pickup_lat) * Math.PI / 180;
+          const dLon = (s.dropoff_lng - s.pickup_lng) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(s.pickup_lat*Math.PI/180)*Math.cos(s.dropoff_lat*Math.PI/180)*Math.sin(dLon/2)**2;
+          const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const km = Math.round(dist * 10) / 10;
+          await query('UPDATE shipment SET distance_km = ? WHERE delivery_number = ?', [km, s.delivery_number]);
+        }
+        console.log(`   ✅ Backfilled distance_km for ${needDist.length} shipments`);
+      }
+    } catch(e) { console.error('Distance backfill error:', e.message); }
+
     console.log('   ✅ Schema columns verified');
   } catch (e) { console.error('Cleanup error:', e.message); }
 });
