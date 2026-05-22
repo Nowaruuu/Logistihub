@@ -3135,12 +3135,9 @@ async function loadPayments() {
     var pendingCount = parseInt(d.pending_count || 0);
     var overdueCount = d.payments.filter(function(p){return p.status==='Overdue';}).length;
 
-    // Compute estimated expenses: ₱27/km for all paid deliveries
-    var totalKm = 0;
-    d.payments.forEach(function(p) {
-      if(p.status === 'Paid' && p.distance_km) totalKm += parseFloat(p.distance_km);
-    });
-    var expenses = totalKm * 27;
+    // Compute estimated expenses: use server-computed values
+    var totalKm = parseFloat(d.total_distance || 0);
+    var expenses = parseFloat(d.total_expenses || 0);
     var netProfit = rev - expenses;
 
     var fmt = function(v) { return '\u20B1' + Math.abs(v).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}); };

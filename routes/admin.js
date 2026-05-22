@@ -259,7 +259,7 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
               COALESCE(u.first_name, '') AS customer_first,
               COALESCE(u.last_name, '')  AS customer_last,
               u.email                    AS customer_email,
-              s.receiver_name, s.total_fee
+              s.receiver_name, s.total_fee, s.distance_km
        FROM payment p
        INNER JOIN (
          SELECT delivery_number, MAX(invoice_id) AS latest_id
@@ -316,7 +316,16 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
       "SELECT COUNT(DISTINCT delivery_number) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
       [tid]
     );
-    res.json({ payments: rows, total_revenue, pending_count });
+    // Compute total distance for expense estimation
+    const [[{ total_distance }]] = await query(
+      `SELECT COALESCE(SUM(s.distance_km),0) AS total_distance
+       FROM payment p
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       WHERE p.tenant_id = ? AND p.status = 'Paid'`,
+      [tid]
+    );
+    const total_expenses = parseFloat(total_distance) * 27;
+    res.json({ payments: rows, total_revenue, pending_count, total_distance: parseFloat(total_distance), total_expenses });
   } catch (err) {
     console.error('[GET /admin/payments]', err);
     res.status(500).json({ error: err.message || 'Failed to load payments.' });
