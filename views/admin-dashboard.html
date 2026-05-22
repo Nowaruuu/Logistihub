@@ -2841,10 +2841,18 @@ async function denyVehicleRequest(id) {
 
 // ── Assign Vehicle to Driver modal ───────────────────────────────────────────
 var _assignVehiclePlate = '';
-function openAssignVehicleModal(plate) {
+async function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
+  // Auto-load staff if not loaded yet (e.g. user hasn't visited Staff tab)
+  if (!_staffData || !_staffData.length) {
+    try {
+      var r = await apiFetch('/' + _SLUG + '/api/admin/staff');
+      var d = await r.json();
+      _staffData = Array.isArray(d) ? d : (d.staff || []);
+    } catch(e) { _staffData = []; }
+  }
   var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && !s.vehicle_plate;});
-  if(!drivers.length) { alert('No unassigned drivers found.'); return; }
+  if(!drivers.length) { alert('No unassigned drivers found. All drivers already have vehicles assigned.'); return; }
   var bg  = getComputedStyle(document.body).getPropertyValue('--bg-1').trim()  || '#1e1b4b';
   var bg2 = getComputedStyle(document.body).getPropertyValue('--bg-2').trim()  || '#2d2a5e';
   var bdr = getComputedStyle(document.body).getPropertyValue('--border').trim()|| '#3b3880';
