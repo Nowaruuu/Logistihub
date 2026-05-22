@@ -480,10 +480,12 @@ textarea{resize:vertical;}
     <!-- â•â• PAYMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card"><div class="stat-label">Total Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value">₱0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">₱0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">₱0</div><div class="stat-note">₱27/km fuel + labor</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">₱0</div><div class="stat-note" id="pay-net-note">Revenue − Expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Invoices</span>
@@ -3121,25 +3123,60 @@ async function loadAuditLogs() {
 // ── PAYMENTS ─────────────────────────────────────────────────────────────────
 async function loadPayments() {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
-  if(tb) tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
+  if(tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
   try {
     var res = await apiFetch('/' + _SLUG + '/api/admin/payments');
     var d = await res.json();
     if (!d || !d.payments) throw new Error('Invalid response');
 
     // Update stat cards
-    var cards = document.querySelectorAll('#s-payments .stat-card');
-    if (cards.length >= 2) {
-      var rev = parseFloat(d.total_revenue || 0);
-      cards[0].querySelector('.stat-value').textContent = '\u20B1' + rev.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
-      cards[0].querySelector('.stat-note').textContent = d.payments.filter(function(p){return p.status==='Paid';}).length + ' paid invoices';
-      cards[1].querySelector('.stat-value').textContent = d.pending_count;
-      cards[1].querySelector('.stat-note').textContent = d.pending_count ? d.pending_count + ' awaiting payment' : 'All cleared';
-    }
+    var rev = parseFloat(d.total_revenue || 0);
+    var paidCount = d.payments.filter(function(p){return p.status==='Paid';}).length;
+    var pendingCount = parseInt(d.pending_count || 0);
+    var overdueCount = d.payments.filter(function(p){return p.status==='Overdue';}).length;
+
+    // Compute estimated expenses: ₱27/km for all paid deliveries
+    var totalKm = 0;
+    d.payments.forEach(function(p) {
+      if(p.status === 'Paid' && p.distance_km) totalKm += parseFloat(p.distance_km);
+    });
+    var expenses = totalKm * 27;
+    var netProfit = rev - expenses;
+
+    var fmt = function(v) { return '\u20B1' + Math.abs(v).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}); };
+
+    // Gross Revenue
+    var el;
+    el = document.getElementById('pay-gross');
+    if(el) el.textContent = fmt(rev);
+    el = document.getElementById('pay-gross-note');
+    if(el) el.textContent = paidCount + ' paid invoices';
+
+    // Est. Expenses
+    el = document.getElementById('pay-expenses');
+    if(el) el.textContent = fmt(expenses);
+
+    // Net Profit
+    el = document.getElementById('pay-net');
+    if(el) { el.textContent = (netProfit < 0 ? '-' : '') + fmt(netProfit); el.style.color = netProfit >= 0 ? '#16a34a' : '#dc2626'; }
+    el = document.getElementById('pay-net-note');
+    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue − Expenses';
+
+    // Pending
+    el = document.getElementById('pay-pending');
+    if(el) el.textContent = pendingCount;
+    el = document.getElementById('pay-pending-note');
+    if(el) el.textContent = pendingCount ? pendingCount + ' awaiting payment' : 'All cleared';
+
+    // Overdue
+    el = document.getElementById('pay-overdue');
+    if(el) el.textContent = overdueCount;
+    el = document.getElementById('pay-overdue-note');
+    if(el) el.textContent = overdueCount ? overdueCount + ' past due' : 'No data yet';
 
     renderPayments(d.payments);
   } catch(e) {
-    if(tb) tb.innerHTML = '<tr><td colspan="9"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load payments.</p></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="10"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load payments.</p></div></td></tr>';
   }
 }
 
