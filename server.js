@@ -172,6 +172,9 @@ app.listen(PORT, async () => {
     try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE vehicle ADD COLUMN image_url LONGTEXT DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE vehicle MODIFY COLUMN image_url LONGTEXT'); } catch(_) {}
+    try { await query('ALTER TABLE vehicle ADD COLUMN ownership_type VARCHAR(20) DEFAULT "company"'); } catch(_) {}
     console.log('   ✅ Schema columns verified');
   } catch (e) { console.error('Cleanup error:', e.message); }
 });

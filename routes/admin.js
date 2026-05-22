@@ -890,7 +890,7 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
 // CREATE VEHICLE (Admin only)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
-    const { plate_number, type, capacity_tons, status, ownership_doc, model, ownership_type, image_url } = req.body;
+    const { plate_number, type, capacity_tons, status, ownership_doc, model, ownership_type, image_url, image_base64 } = req.body;
   const tid = req.tenantId;
 
   if (!plate_number || !type) return res.status(400).json({ error: 'plate_number and type are required.' });
@@ -921,9 +921,12 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
       }
     }
 
+    // Accept either image_url or image_base64 (base64 data URI from upload)
+    const finalImageUrl = image_base64 || image_url || null;
+
     await query(
       `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc, ownership_type, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [tid, plate_number.toUpperCase(), type, model || null, capacity_tons || null, status || 'Available', ownership_doc || null, ownership_type || 'company', image_url || null]
+      [tid, plate_number.toUpperCase(), type, model || null, capacity_tons || null, status || 'Available', ownership_doc || null, ownership_type || 'company', finalImageUrl]
     );
 
     res.status(201).json({ ok: true, message: 'Vehicle added successfully.' });
