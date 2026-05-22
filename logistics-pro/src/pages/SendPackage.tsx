@@ -146,6 +146,8 @@ export default function SendPackage() {
   const [enabledCatIds, setEnabledCatIds] = useState<string[]>(['PACKAGE','VEHICLE','FOOD','DOC','BULK']);
   // Max distance limit (from tenant config)
   const [maxDistanceKm, setMaxDistanceKm] = useState(100);
+  // Server-provided pricing config (admin-customizable)
+  const [pricingConfig, setPricingConfig] = useState<any>(null);
 
   // Live-refresh tenant config: on mount, on visibility change, and every 30s
   useEffect(() => {
@@ -157,6 +159,7 @@ export default function SendPackage() {
           setEnabledCatIds(cfg.supported_categories.map((l: string) => CAT_LABEL_TO_ID[l]).filter(Boolean));
         }
         if (cfg.max_distance_km) setMaxDistanceKm(cfg.max_distance_km);
+        if (cfg.pricing_config) setPricingConfig(cfg.pricing_config);
       }).catch(() => {});
     };
 
@@ -257,26 +260,40 @@ export default function SendPackage() {
   const weightKg = weightUnit === 'ton' ? rawWeight * 1000 : rawWeight;
   const distKm = routeDistKm;
 
-  // Gas + weight-based pricing: base ₱50 + fuel cost + weight surcharge + category surcharge
-  // Weight surcharge tiers (heavier = significantly more expensive for driver compensation):
-  //   0-20kg: ₱2/kg (light parcels)
-  //   21-100kg: ₱3/kg (medium packages)
-  //   101-500kg: ₱2/kg (bulk, volume discount)
-  //   500+kg: ₱1.50/kg (heavy freight)
+  // Pricing: use server config if available, otherwise hardcoded defaults
+  const pc = pricingConfig || {};
+  const pcBaseFee = pc.base_fee ?? 50;
+  const pcDriverLabor = pc.driver_labor_per_km ?? 15;
+  const pcExpressMulti = pc.express_multiplier ?? 1.8;
+  const pcSafetyFee = pc.safety_fee ?? SAFETY_FEE;
+  const pcFuelRates = pc.fuel_rates || {};
+  const pcWeightTiers = pc.weight_tiers || [
+    { max_kg: 20, rate: 2.00 }, { max_kg: 100, rate: 3.00 },
+    { max_kg: 500, rate: 2.00 }, { max_kg: null, rate: 1.50 }
+  ];
+  const pcCatSurcharges = pc.category_surcharges || {};
+
   const selectedVehicle = VEHICLE_TYPES.find(v => v.id === vehicle);
-  const fuelRate = selectedVehicle?.fuelRate || 5;
+  const fuelRate = pcFuelRates[vehicle] ?? selectedVehicle?.fuelRate ?? 5;
   const fuelCost = distKm * fuelRate;
-  const weightSurcharge = weightKg <= 20 ? weightKg * 2
-    : weightKg <= 100 ? 40 + (weightKg - 20) * 3
-    : weightKg <= 500 ? 40 + 240 + (weightKg - 100) * 2
-    : 40 + 240 + 800 + (weightKg - 500) * 1.50;
-  const categorySurcharge = category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0;
-  const safetySurcharge = extraSafety ? SAFETY_FEE : 0;
-  // Driver compensation: ₱15/km for driver labor (on top of fuel)
-  const driverCompensation = distKm * 15;
-  const baseFee = 50 + fuelCost + driverCompensation + weightSurcharge + categorySurcharge + safetySurcharge;
-  // Express = 1.8× base (consistent in both display & totalFee)
-  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * 1.8);
+  // Weight surcharge from tiers
+  let weightSurcharge = 0;
+  let remainingKg = weightKg;
+  let prevMax = 0;
+  for (const tier of pcWeightTiers) {
+    const tierMax = tier.max_kg ?? Infinity;
+    const tierRange = tierMax - prevMax;
+    const kgInTier = Math.min(remainingKg, tierRange);
+    if (kgInTier > 0) { weightSurcharge += kgInTier * tier.rate; remainingKg -= kgInTier; }
+    prevMax = tierMax;
+    if (remainingKg <= 0) break;
+  }
+  const categorySurcharge = pcCatSurcharges[category] ?? (category === 'VEHICLE' ? 800 : category === 'BULK' ? 300 : category === 'FOOD' ? 50 : 0);
+  const safetySurcharge = extraSafety ? pcSafetyFee : 0;
+  const driverCompensation = distKm * pcDriverLabor;
+  const baseFee = pcBaseFee + fuelCost + driverCompensation + weightSurcharge + categorySurcharge + safetySurcharge;
+  // Express multiplier
+  const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * pcExpressMulti);
 
   // Distance limit check
   const isOverDistanceLimit = distKm > maxDistanceKm;

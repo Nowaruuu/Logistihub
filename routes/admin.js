@@ -316,11 +316,15 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
       "SELECT COUNT(DISTINCT delivery_number) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
       [tid]
     );
-    // Compute expenses per delivery using actual vehicle fuel rates + driver labor
-    // Fuel rates match mobile app: motorcycle=₱2.20, sedan=₱4.70, van=₱6.11, truck=₱11, flatbed=₱15.71
-    // Driver labor: ₱15/km (same as mobile pricing)
-    const FUEL_RATES = { motorcycle: 2.20, sedan: 4.70, van: 6.11, truck: 11.00, flatbed: 15.71 };
-    const DRIVER_LABOR_PER_KM = 15;
+    // Load tenant pricing config for expense calculation
+    const [[tenantRow]] = await query('SELECT pricing_config FROM TENANT WHERE tenant_id = ?', [tid]);
+    let tenantPricing = null;
+    if (tenantRow && tenantRow.pricing_config) {
+      try { tenantPricing = typeof tenantRow.pricing_config === 'string' ? JSON.parse(tenantRow.pricing_config) : tenantRow.pricing_config; } catch(_) {}
+    }
+    const FUEL_RATES = (tenantPricing && tenantPricing.fuel_rates) || { motorcycle: 2.20, sedan: 4.70, van: 6.11, truck: 11.00, flatbed: 15.71 };
+    const DRIVER_LABOR_PER_KM = (tenantPricing && tenantPricing.driver_labor_per_km) || 15;
+
     const [paidShipments] = await query(
       `SELECT s.distance_km, LOWER(COALESCE(s.vehicle_type, 'sedan')) AS vtype
        FROM payment p
@@ -332,7 +336,7 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
     let total_expenses = 0;
     for (const sh of paidShipments) {
       const km = parseFloat(sh.distance_km) || 0;
-      const fuelRate = FUEL_RATES[sh.vtype] || 4.70; // default sedan rate
+      const fuelRate = FUEL_RATES[sh.vtype] || 4.70;
       total_distance += km;
       total_expenses += km * (fuelRate + DRIVER_LABOR_PER_KM);
     }
@@ -357,6 +361,47 @@ router.post('/:slug/api/admin/payments/:id/confirm', requireAdmin, requireSlugMa
   } catch (err) {
     console.error('[POST /admin/payments/confirm]', err);
     res.status(500).json({ error: err.message || 'Failed to confirm payment.' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_PRICING = {
+  base_fee: 50,
+  driver_labor_per_km: 15,
+  express_multiplier: 1.8,
+  safety_fee: 150,
+  fuel_rates: { motorcycle: 2.20, sedan: 4.70, van: 6.11, truck: 11.00, flatbed: 15.71 },
+  weight_tiers: [
+    { max_kg: 20, rate: 2.00 },
+    { max_kg: 100, rate: 3.00 },
+    { max_kg: 500, rate: 2.00 },
+    { max_kg: null, rate: 1.50 }
+  ],
+  category_surcharges: { PACKAGE: 0, FOOD: 50, DOC: 0, BULK: 300, VEHICLE: 800 }
+};
+
+router.get('/:slug/api/admin/pricing', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const [[row]] = await query('SELECT pricing_config FROM TENANT WHERE tenant_id = ?', [req.tenantId]);
+    let config = DEFAULT_PRICING;
+    if (row && row.pricing_config) {
+      try { config = typeof row.pricing_config === 'string' ? JSON.parse(row.pricing_config) : row.pricing_config; } catch(_) {}
+    }
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:slug/api/admin/pricing', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const config = req.body;
+    await query('UPDATE TENANT SET pricing_config = ? WHERE tenant_id = ?', [JSON.stringify(config), req.tenantId]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

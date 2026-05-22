@@ -756,6 +756,44 @@ textarea{resize:vertical;}
           </div>
         </div>
 
+        <div class="form-sec" style="margin-top:12px;">Delivery Pricing</div>
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:12px;">Customize how delivery fees are calculated for your customers.</p>
+
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Base Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50"/></div><span class="hint">Flat fee charged per delivery</span></div>
+          <div class="form-group"><label class="form-label">Driver Labor (₱/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15"/></div><span class="hint">Driver compensation per km</span></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Express Multiplier (×)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8"/></div><span class="hint">Express = base × this value</span></div>
+          <div class="form-group"><label class="form-label">Insurance Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150"/></div><span class="hint">Optional safety surcharge</span></div>
+        </div>
+
+        <div class="form-sec" style="margin-top:8px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;">
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Van</label><input id="price-fuel-van" type="number" step="0.1" min="0" value="6.11" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Truck</label><input id="price-fuel-truck" type="number" step="0.1" min="0" value="11.00" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Flatbed</label><input id="price-fuel-flatbed" type="number" step="0.1" min="0" value="15.71" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+        </div>
+
+        <div class="form-sec" style="margin-top:8px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0–20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21–100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101–500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">500+ kg</label><input id="price-wt-4" type="number" step="0.5" min="0" value="1.50" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+        </div>
+
+        <div class="form-sec" style="margin-top:8px;font-size:11px;">Category Surcharges (₱)</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;">
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Document</label><input id="price-cat-DOC" type="number" step="10" min="0" value="0" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Bulk</label><input id="price-cat-BULK" type="number" step="10" min="0" value="300" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Vehicle</label><input id="price-cat-VEHICLE" type="number" step="10" min="0" value="800" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+        </div>
+
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
           <button class="btn" onclick="resetToDefaults()" style="font-size:12px;padding:8px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px;">restart_alt</span>Reset to Default</button>
           <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
@@ -1953,6 +1991,34 @@ function loadSettings() {
           }).catch(function(e){ console.warn('[loadSettings] Image load deferred:', e.message); });
       }
     }).catch(function(err){ console.error('[loadSettings] Error:', err); });
+
+  // Load pricing config
+  apiFetch('/' + slug + '/api/admin/pricing')
+    .then(function(r){ return r.json(); })
+    .then(function(pc) {
+      if (pc.base_fee != null) document.getElementById('price-base-fee').value = pc.base_fee;
+      if (pc.driver_labor_per_km != null) document.getElementById('price-driver-labor').value = pc.driver_labor_per_km;
+      if (pc.express_multiplier != null) document.getElementById('price-express-multi').value = pc.express_multiplier;
+      if (pc.safety_fee != null) document.getElementById('price-safety-fee').value = pc.safety_fee;
+      if (pc.fuel_rates) {
+        ['motorcycle','sedan','van','truck','flatbed'].forEach(function(v) {
+          var el = document.getElementById('price-fuel-' + v);
+          if (el && pc.fuel_rates[v] != null) el.value = pc.fuel_rates[v];
+        });
+      }
+      if (pc.weight_tiers && pc.weight_tiers.length >= 4) {
+        for (var i = 0; i < 4; i++) {
+          var el = document.getElementById('price-wt-' + (i+1));
+          if (el) el.value = pc.weight_tiers[i].rate;
+        }
+      }
+      if (pc.category_surcharges) {
+        ['PACKAGE','FOOD','DOC','BULK','VEHICLE'].forEach(function(c) {
+          var el = document.getElementById('price-cat-' + c);
+          if (el && pc.category_surcharges[c] != null) el.value = pc.category_surcharges[c];
+        });
+      }
+    }).catch(function(e){ console.warn('[loadSettings] Pricing load:', e.message); });
 }
 
 function applyBranding(d) {
@@ -2193,6 +2259,40 @@ async function saveSettings() {
       if (payload.logo_url)         window.__TENANT__.logo_url = payload.logo_url;
       if (payload.background_url !== undefined) window.__TENANT__.background_url = payload.background_url;
       applyBranding(payload);
+
+      // Save pricing config too
+      var pricingPayload = {
+        base_fee: parseFloat(document.getElementById('price-base-fee').value) || 50,
+        driver_labor_per_km: parseFloat(document.getElementById('price-driver-labor').value) || 15,
+        express_multiplier: parseFloat(document.getElementById('price-express-multi').value) || 1.8,
+        safety_fee: parseFloat(document.getElementById('price-safety-fee').value) || 150,
+        fuel_rates: {
+          motorcycle: parseFloat(document.getElementById('price-fuel-motorcycle').value) || 2.20,
+          sedan: parseFloat(document.getElementById('price-fuel-sedan').value) || 4.70,
+          van: parseFloat(document.getElementById('price-fuel-van').value) || 6.11,
+          truck: parseFloat(document.getElementById('price-fuel-truck').value) || 11.00,
+          flatbed: parseFloat(document.getElementById('price-fuel-flatbed').value) || 15.71
+        },
+        weight_tiers: [
+          { max_kg: 20, rate: parseFloat(document.getElementById('price-wt-1').value) || 2 },
+          { max_kg: 100, rate: parseFloat(document.getElementById('price-wt-2').value) || 3 },
+          { max_kg: 500, rate: parseFloat(document.getElementById('price-wt-3').value) || 2 },
+          { max_kg: null, rate: parseFloat(document.getElementById('price-wt-4').value) || 1.5 }
+        ],
+        category_surcharges: {
+          PACKAGE: parseFloat(document.getElementById('price-cat-PACKAGE').value) || 0,
+          FOOD: parseFloat(document.getElementById('price-cat-FOOD').value) || 0,
+          DOC: parseFloat(document.getElementById('price-cat-DOC').value) || 0,
+          BULK: parseFloat(document.getElementById('price-cat-BULK').value) || 0,
+          VEHICLE: parseFloat(document.getElementById('price-cat-VEHICLE').value) || 0
+        }
+      };
+      apiFetch('/' + slug + '/api/admin/pricing', {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(pricingPayload)
+      }).catch(function(e){ console.warn('Pricing save failed:', e.message); });
+
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; } }, 2000);
       return;
     } else {

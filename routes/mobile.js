@@ -116,6 +116,14 @@ router.get('/tenant-config', async (req, res) => {
       console.warn('[tenant-config] category parse failed:', e.message);
     }
 
+    // ── Pricing config ──
+    let pricingConfig = null;
+    try {
+      if (t.pricing_config) {
+        pricingConfig = typeof t.pricing_config === 'string' ? JSON.parse(t.pricing_config) : t.pricing_config;
+      }
+    } catch(_) {}
+
     res.json({
       company_name: t.company_name || '',
       logo_url: t.logo_url || null,
@@ -124,6 +132,7 @@ router.get('/tenant-config', async (req, res) => {
       vehicle_capacities: capacityMap || {},
       supported_categories: supportedCats,
       max_distance_km: t.max_distance_km || 100,
+      pricing_config: pricingConfig,
     });
   } catch (err) {
     console.error('[GET /tenant-config] FATAL:', err.message);
