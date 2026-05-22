@@ -458,7 +458,7 @@ textarea{resize:vertical;}
 
     <!-- â•â• VEHICLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th></th><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Ownership</th><th>Status</th><th>Assigned Driver</th><th></th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
     </div>
 
     <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
@@ -2504,6 +2504,21 @@ setInterval(function() {
         </select>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Ownership Type *</label>
+        <select id="v-ownership" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="company">Company-owned</option>
+          <option value="employee">Employee-owned</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle Image <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="v-image" type="file" accept="image/*" style="display:none;" onchange="previewVehicleImage(this)">
+          <button type="button" onclick="document.getElementById('v-image').click()" style="padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;background:#fafbfc;color:#475569;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">add_a_photo</span> Upload</button>
+          <img id="v-image-preview" src="" style="display:none;width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;">
+        </div>
+      </div>
+    </div>
     <!-- Ownership Document -->
     <div style="margin-bottom:20px;">
       <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;color:#f59e0b;">verified</span> Certificate of Registration / Official Receipt (CR/OR) *</label>
@@ -2650,18 +2665,22 @@ function loadVehicles() {
 function renderVehicles(list) {
   var tb = document.getElementById('vehicles-tbody');
   if(!tb) return;
-  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>No vehicles registered</p></div></td></tr>'; return; }
   var stColors = {'Available':'b-delivered','On-Duty':'b-transit','Maintenance':'b-awaiting','Retired':'b-declined'};
   tb.innerHTML = list.map(function(v) {
     var plate = v.plate_number || '';
     var delBtn    = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     var assignBtn = (plate && v.status === 'Available') ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
+    var ownerBadge = v.ownership_type === 'employee' ? '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Employee</span>' : '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">Company</span>';
+    var imgCell = v.image_url ? '<img src="' + v.image_url + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;">' : '<div style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8;">directions_car</span></div>';
     return '<tr>' +
+      '<td>' + imgCell + '</td>' +
       '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
       '<td>' + esc(v.vehicle_type||'—') + '</td>' +
       '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
       '<td>' + (v.capacity_tons || '—') + '</td>' +
+      '<td>' + ownerBadge + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
       '<td>' + esc(v.assigned_driver_name||'—') + '</td>' +
       '<td><div style="display:flex;gap:2px;">' + assignBtn + updateBtn + delBtn + '</div></td></tr>';
@@ -2895,9 +2914,24 @@ function openVehicleModal() {
   document.getElementById('v-model').value = '';
   document.getElementById('v-capacity').value = '';
   document.getElementById('v-status').value = 'Available';
+  document.getElementById('v-ownership').value = 'company';
+  var imgPreview = document.getElementById('v-image-preview');
+  if(imgPreview) { imgPreview.style.display = 'none'; imgPreview.src = ''; }
+  window._vehicleImageBase64 = null;
   document.getElementById('vehicle-modal-err').style.display = 'none';
   clearDocUpload();
   document.getElementById('modal-vehicle').style.display = 'flex';
+}
+
+function previewVehicleImage(input) {
+  if(!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    window._vehicleImageBase64 = e.target.result;
+    var preview = document.getElementById('v-image-preview');
+    if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+  };
+  reader.readAsDataURL(input.files[0]);
 }
 function closeVehicleModal() { document.getElementById('modal-vehicle').style.display = 'none'; }
 
@@ -2914,11 +2948,12 @@ async function submitAddVehicle() {
   if(!plate || !type || !capacity || !status) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
   if(!window._vehicleDocBase64) { errEl.textContent = 'Please upload the CR/OR (Certificate of Registration / Official Receipt) document.'; errEl.style.display = 'block'; return; }
 
+  var ownership = document.getElementById('v-ownership').value;
   btn.disabled = true; btn.textContent = 'Adding...';
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({plate_number: plate, type, model: model || null, capacity_tons: capacity, status, ownership_doc: window._vehicleDocBase64})
+      body: JSON.stringify({plate_number: plate, type, model: model || null, capacity_tons: capacity, status, ownership_type: ownership, ownership_doc: window._vehicleDocBase64, image_base64: window._vehicleImageBase64 || null})
     });
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
