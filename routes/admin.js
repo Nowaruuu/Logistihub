@@ -937,17 +937,25 @@ router.post('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (
 });
 
 router.put('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { type, capacity_tons, status, model } = req.body;
+  const { type, capacity_tons, status, model, ownership_type, image_base64 } = req.body;
   const tid = req.tenantId;
   const plate = req.params.plate;
 
   if (!type) return res.status(400).json({ error: 'Type is required.' });
 
   try {
-    await query(
-      `UPDATE vehicle SET vehicle_type = ?, model = ?, capacity_tons = ?, status = ? WHERE plate_number = ? AND tenant_id = ?`,
-      [type, model || null, capacity_tons || null, status || 'Available', plate, tid]
-    );
+    let sql = `UPDATE vehicle SET vehicle_type = ?, model = ?, capacity_tons = ?, status = ?, ownership_type = ?`;
+    let params = [type, model || null, capacity_tons || null, status || 'Available', ownership_type || 'company'];
+
+    if (image_base64) {
+      sql += `, image_url = ?`;
+      params.push(image_base64);
+    }
+
+    sql += ` WHERE plate_number = ? AND tenant_id = ?`;
+    params.push(plate, tid);
+
+    await query(sql, params);
     res.json({ ok: true, message: 'Vehicle updated successfully.' });
   } catch(err) {
     console.error('[PUT /admin/vehicles]', err);

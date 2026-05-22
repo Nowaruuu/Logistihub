@@ -2588,6 +2588,21 @@ setInterval(function() {
         </select>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Ownership Type</label>
+        <select id="u-v-ownership" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="company">Company-owned</option>
+          <option value="employee">Employee-owned</option>
+        </select>
+      </div>
+      <div><label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle Image <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="u-v-image" type="file" accept="image/*" style="display:none;" onchange="previewUpdateVehicleImage(this)">
+          <button type="button" onclick="document.getElementById('u-v-image').click()" style="padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;background:#fafbfc;color:#475569;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">add_a_photo</span> Upload</button>
+          <img id="u-v-image-preview" src="" style="display:none;width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;">
+        </div>
+      </div>
+    </div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeUpdateVehicleModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
       <button id="update-vehicle-submit-btn" onclick="submitUpdateVehicle()" style="flex:2;padding:12px;background:#0f2235;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -2670,7 +2685,7 @@ function renderVehicles(list) {
   tb.innerHTML = list.map(function(v) {
     var plate = v.plate_number || '';
     var delBtn    = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
-    var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
+    var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\', \'' + (v.ownership_type||'company') + '\', \'' + (v.image_url ? '1' : '') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     var assignBtn = (plate && v.status === 'Available') ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
     var ownerBadge = v.ownership_type === 'employee' ? '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Employee</span>' : '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">Company</span>';
     var imgCell = v.image_url
@@ -2841,7 +2856,7 @@ function openAssignVehicleModal(plate) {
     '<select id="assign-driver-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid '+bdr+';background:'+bg2+';color:'+txt+';font-size:13px;margin-bottom:10px;">' + opts + '</select>' +
     '<p style="font-size:11px;color:'+txtMuted+';margin-bottom:14px;">Driver will receive a notification and must accept the assignment.</p>' +
     '<div style="display:flex;gap:8px;">' +
-      '<button class="btn" style="flex:1;background:'+bg2+';color:'+txt+';" onclick="closeModal(\'assign-vehicle-modal\')">Cancel</button>' +
+      '<button class="btn" style="flex:1;background:'+bg2+';color:'+txt+';" onclick="document.getElementById(\'assign-vehicle-modal\').style.display=\'none\'">Cancel</button>' +
       '<button class="btn btn-primary" style="flex:1;" onclick="submitAssignVehicle()">Send Assignment</button>' +
     '</div>' +
   '</div>';
@@ -2997,16 +3012,34 @@ async function submitAddVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
 
-function openUpdateVehicleModal(plate, type, capacity, status, model) {
+function openUpdateVehicleModal(plate, type, capacity, status, model, ownership, hasImage) {
   document.getElementById('u-v-plate').value = plate;
   document.getElementById('u-v-type').value = type;
   document.getElementById('u-v-model').value = model || '';
   document.getElementById('u-v-capacity').value = capacity;
   document.getElementById('u-v-status').value = status;
+  document.getElementById('u-v-ownership').value = ownership || 'company';
+  window._updateVehicleImageBase64 = null;
+  var imgPrev = document.getElementById('u-v-image-preview');
+  // Find existing image from vehicleData
+  var existing = (_vehicleData||[]).find(function(v){return v.plate_number===plate;});
+  if(existing && existing.image_url) { imgPrev.src = existing.image_url; imgPrev.style.display = 'block'; }
+  else { imgPrev.src = ''; imgPrev.style.display = 'none'; }
   document.getElementById('update-vehicle-modal-err').style.display = 'none';
   document.getElementById('modal-update-vehicle').style.display = 'flex';
 }
 function closeUpdateVehicleModal() { document.getElementById('modal-update-vehicle').style.display = 'none'; }
+
+function previewUpdateVehicleImage(input) {
+  if(!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    window._updateVehicleImageBase64 = e.target.result;
+    var preview = document.getElementById('u-v-image-preview');
+    if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
 
 async function submitUpdateVehicle() {
   var plate    = document.getElementById('u-v-plate').value.trim();
@@ -3014,17 +3047,21 @@ async function submitUpdateVehicle() {
   var model    = document.getElementById('u-v-model').value.trim();
   var capacity = document.getElementById('u-v-capacity').value;
   var status   = document.getElementById('u-v-status').value;
+  var ownership = document.getElementById('u-v-ownership').value;
   var errEl    = document.getElementById('update-vehicle-modal-err');
   var btn      = document.getElementById('update-vehicle-submit-btn');
   errEl.style.display = 'none';
 
   if(!type || !capacity || !status) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
 
+  var payload = {type, model: model || null, capacity_tons: capacity, status, ownership_type: ownership};
+  if(window._updateVehicleImageBase64) payload.image_base64 = window._updateVehicleImageBase64;
+
   btn.disabled = true; btn.textContent = 'Updating...';
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(plate), {
       method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({type, model: model || null, capacity_tons: capacity, status})
+      body: JSON.stringify(payload)
     });
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed to update vehicle.');
