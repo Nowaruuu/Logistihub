@@ -316,16 +316,28 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
       "SELECT COUNT(DISTINCT delivery_number) AS pending_count FROM payment WHERE tenant_id = ? AND status = 'Pending'",
       [tid]
     );
-    // Compute total distance for expense estimation
-    const [[{ total_distance }]] = await query(
-      `SELECT COALESCE(SUM(s.distance_km),0) AS total_distance
+    // Compute expenses per delivery using actual vehicle fuel rates + driver labor
+    // Fuel rates match mobile app: motorcycle=₱2.20, sedan=₱4.70, van=₱6.11, truck=₱11, flatbed=₱15.71
+    // Driver labor: ₱15/km (same as mobile pricing)
+    const FUEL_RATES = { motorcycle: 2.20, sedan: 4.70, van: 6.11, truck: 11.00, flatbed: 15.71 };
+    const DRIVER_LABOR_PER_KM = 15;
+    const [paidShipments] = await query(
+      `SELECT s.distance_km, LOWER(COALESCE(s.vehicle_type, 'sedan')) AS vtype
        FROM payment p
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
-       WHERE p.tenant_id = ? AND p.status = 'Paid'`,
+       WHERE p.tenant_id = ? AND p.status = 'Paid' AND s.distance_km IS NOT NULL`,
       [tid]
     );
-    const total_expenses = parseFloat(total_distance) * 27;
-    res.json({ payments: rows, total_revenue, pending_count, total_distance: parseFloat(total_distance), total_expenses });
+    let total_distance = 0;
+    let total_expenses = 0;
+    for (const sh of paidShipments) {
+      const km = parseFloat(sh.distance_km) || 0;
+      const fuelRate = FUEL_RATES[sh.vtype] || 4.70; // default sedan rate
+      total_distance += km;
+      total_expenses += km * (fuelRate + DRIVER_LABOR_PER_KM);
+    }
+    total_expenses = Math.round(total_expenses * 100) / 100;
+    res.json({ payments: rows, total_revenue, pending_count, total_distance, total_expenses });
   } catch (err) {
     console.error('[GET /admin/payments]', err);
     res.status(500).json({ error: err.message || 'Failed to load payments.' });
