@@ -814,6 +814,19 @@ textarea{resize:vertical;}
         </div>
       </div>
 
+      <!-- Billing Cycle Toggle -->
+      <div style="display:flex;justify-content:center;margin-bottom:20px;">
+        <div id="billing-cycle-toggle" style="display:inline-flex;background:#f1f5f9;border-radius:12px;padding:4px;gap:2px;">
+          <button onclick="setBillingCycle('monthly')" class="bc-btn bc-active" data-cycle="monthly" style="padding:10px 20px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;">Monthly</button>
+          <button onclick="setBillingCycle('quarterly')" class="bc-btn" data-cycle="quarterly" style="padding:10px 20px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;background:transparent;color:#64748b;">
+            Quarterly <span style="background:#dcfce7;color:#16a34a;font-size:9px;padding:2px 6px;border-radius:99px;margin-left:4px;font-weight:800;">Save 10%</span>
+          </button>
+          <button onclick="setBillingCycle('annual')" class="bc-btn" data-cycle="annual" style="padding:10px 20px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;background:transparent;color:#64748b;">
+            Annual <span style="background:#dcfce7;color:#16a34a;font-size:9px;padding:2px 6px;border-radius:99px;margin-left:4px;font-weight:800;">Save 17%</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Plans Grid -->
       <div id="upgrade-plans-grid" style="display:grid;gap:20px;"></div>
 
@@ -861,6 +874,28 @@ textarea{resize:vertical;}
         noFeatures: []
       }
     ];
+
+    var _billingCycle = 'monthly';
+    var _cycleMultipliers = { monthly: 1, quarterly: 2.7, annual: 10 };
+    var _cycleLabels = { monthly: '/mo', quarterly: '/qtr', annual: '/yr' };
+
+    function setBillingCycle(cycle) {
+      _billingCycle = cycle;
+      document.querySelectorAll('.bc-btn').forEach(function(b) {
+        if (b.getAttribute('data-cycle') === cycle) {
+          b.style.background = '#fff';
+          b.style.color = '#0f172a';
+          b.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          b.classList.add('bc-active');
+        } else {
+          b.style.background = 'transparent';
+          b.style.color = '#64748b';
+          b.style.boxShadow = 'none';
+          b.classList.remove('bc-active');
+        }
+      });
+      renderPlansGrid();
+    }
 
     async function renderPlansGrid() {
       var currentPlan = (window.__TENANT__ && window.__TENANT__.plan) ? window.__TENANT__.plan.toLowerCase() : 'startup';
@@ -936,8 +971,9 @@ textarea{resize:vertical;}
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + p.price + '</span>' +
-            '<span style="font-size:13px;color:#94a3b8;font-weight:500;">/mo</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + cyclePrice + '</span>' +
+            '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">₱' + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Package, Plus, MapPin, User, Bell, Menu, Settings, HelpCircle, LogOut, X, ChevronRight, Calculator, Radar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
+import { getTenantConfig } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [tenantBrand, setTenantBrand] = useState<{ company_name: string; logo_url: string | null; primary_color: string }>({ company_name: 'LOGISTIHUB', logo_url: null, primary_color: '#ea580c' });
+
+  useEffect(() => {
+    getTenantConfig().then(cfg => {
+      setTenantBrand({ company_name: cfg.company_name || 'LOGISTIHUB', logo_url: cfg.logo_url || null, primary_color: cfg.primary_color || '#ea580c' });
+    }).catch(() => {});
+  }, []);
 
   const isDriver = profile?.role === 'driver';
 
@@ -67,10 +75,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-black italic">
-                    S
-                  </div>
-                  <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-slate-100 italic">LOGISTICHUB</span>
+                  {tenantBrand.logo_url ? (
+                    <img src={tenantBrand.logo_url} alt={tenantBrand.company_name} className="size-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="size-10 rounded-full flex items-center justify-center text-white font-black italic" style={{ backgroundColor: tenantBrand.primary_color }}>
+                      {tenantBrand.company_name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-slate-100 italic">{tenantBrand.company_name.toUpperCase()}</span>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}

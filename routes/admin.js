@@ -1459,13 +1459,47 @@ router.post('/:slug/api/admin/downgrade', requireAdmin, requireSlugMatch, async 
       [plan, effectiveDate, tid]
     );
 
-    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'DOWNGRADE_SCHEDULED', target: `${tenant.plan} → ${plan} (effective ${effectiveDate})`, tenant_slug: slug, ip_address: req.ip });
+    // Archive excess vehicles/drivers if downgrade reduces limits
+    const PLAN_VEHICLE_LIMITS = { startup: 20, enterprise: 50, global: 999999 };
+    const newLimit = PLAN_VEHICLE_LIMITS[plan] || 20;
+    let archived = { vehicles: 0, drivers: 0 };
+
+    // Archive excess vehicles (keep newest up to limit, archive the rest)
+    const [vehicles] = await query(
+      "SELECT id FROM FLEET_VEHICLE WHERE tenant_id = ? AND status != 'archived' ORDER BY created_at DESC",
+      [tid]
+    );
+    if (vehicles.length > newLimit) {
+      const excessIds = vehicles.slice(newLimit).map(v => v.id);
+      await query(
+        `UPDATE FLEET_VEHICLE SET status = 'archived' WHERE id IN (${excessIds.map(() => '?').join(',')})`,
+        excessIds
+      );
+      archived.vehicles = excessIds.length;
+    }
+
+    // Archive excess drivers (keep newest up to limit, archive the rest)
+    const [drivers] = await query(
+      "SELECT staff_id FROM STAFF WHERE tenant_id = ? AND role = 'Driver' AND status != 'archived' ORDER BY created_at DESC",
+      [tid]
+    );
+    if (drivers.length > newLimit) {
+      const excessDriverIds = drivers.slice(newLimit).map(d => d.staff_id);
+      await query(
+        `UPDATE STAFF SET status = 'archived' WHERE staff_id IN (${excessDriverIds.map(() => '?').join(',')})`,
+        excessDriverIds
+      );
+      archived.drivers = excessDriverIds.length;
+    }
+
+    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'DOWNGRADE_SCHEDULED', target: `${tenant.plan} → ${plan} (effective ${effectiveDate})${archived.vehicles || archived.drivers ? ` | archived ${archived.vehicles} vehicles, ${archived.drivers} drivers` : ''}`, tenant_slug: slug, ip_address: req.ip });
 
     res.json({ 
       ok: true, 
       message: `Your plan will be downgraded to ${plan.toUpperCase()} on ${effectiveDate}.`,
       effective_date: effectiveDate,
-      new_plan: plan
+      new_plan: plan,
+      archived
     });
   } catch(err) {
     console.error('[POST /admin/downgrade]', err);
