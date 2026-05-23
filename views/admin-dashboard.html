@@ -325,6 +325,7 @@ textarea{resize:vertical;}
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="closeSidebar();go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
     <button class="nav-link" onclick="closeSidebar();go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
+    <button class="nav-link" onclick="closeSidebar();go('pricing',this)"><span class="material-symbols-outlined">sell</span>Pricing</button>
     <button class="nav-link" onclick="closeSidebar();go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
     <button class="nav-link" onclick="closeSidebar();go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
@@ -823,9 +824,16 @@ textarea{resize:vertical;}
           </div>
         </div>
 
-        <div class="form-sec" style="margin-top:12px;">Delivery Pricing</div>
-        <p style="font-size:11px;color:#94a3b8;margin-bottom:12px;">Customize how delivery fees are calculated for your customers.</p>
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:12px;">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
+      </div>
+    </div>
 
+    <!-- ══ PRICING ═══════════════════════════════ -->
+    <div id="s-pricing" class="screen">
+      <div class="ph-row"><div><h2>Delivery Pricing</h2><p>Customize how delivery fees are calculated for your customers.</p></div></div>
+      <div class="form-card" style="max-width:700px;">
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Base Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50"/></div><span class="hint">Flat fee charged per delivery</span></div>
           <div class="form-group"><label class="form-label">Driver Labor (₱/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15"/></div><span class="hint">Driver compensation per km</span></div>
@@ -863,7 +871,7 @@ textarea{resize:vertical;}
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
           <button class="btn" onclick="resetToDefaults()" style="font-size:12px;padding:8px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px;">restart_alt</span>Reset to Default</button>
-          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn btn-primary" onclick="savePricing()">Save Pricing</button>
         </div>
       </div>
     </div>
@@ -2273,6 +2281,57 @@ async function resetToDefaults() {
   }
 }
 
+async function savePricing() {
+  var t = window.__TENANT__;
+  if (!t) return;
+  var slug = t.slug;
+  var btn = document.querySelector('[onclick="savePricing()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  var pricingPayload = {
+    base_fee: parseFloat(document.getElementById('price-base-fee').value) || 50,
+    driver_labor_per_km: parseFloat(document.getElementById('price-driver-labor').value) || 15,
+    express_multiplier: parseFloat(document.getElementById('price-express-multi').value) || 1.8,
+    safety_fee: parseFloat(document.getElementById('price-safety-fee').value) || 150,
+    fuel_rates: {
+      motorcycle: parseFloat(document.getElementById('price-fuel-motorcycle').value) || 2.20,
+      sedan: parseFloat(document.getElementById('price-fuel-sedan').value) || 4.70,
+      van: parseFloat(document.getElementById('price-fuel-van').value) || 6.11,
+      truck: parseFloat(document.getElementById('price-fuel-truck').value) || 11.00,
+      flatbed: parseFloat(document.getElementById('price-fuel-flatbed').value) || 15.71
+    },
+    weight_tiers: [
+      { max_kg: 20, rate: parseFloat(document.getElementById('price-wt-1').value) || 2 },
+      { max_kg: 100, rate: parseFloat(document.getElementById('price-wt-2').value) || 3 },
+      { max_kg: 500, rate: parseFloat(document.getElementById('price-wt-3').value) || 2 },
+      { max_kg: null, rate: parseFloat(document.getElementById('price-wt-4').value) || 1.5 }
+    ],
+    category_surcharges: {
+      PACKAGE: parseFloat(document.getElementById('price-cat-PACKAGE').value) || 0,
+      FOOD: parseFloat(document.getElementById('price-cat-FOOD').value) || 0,
+      DOC: parseFloat(document.getElementById('price-cat-DOC').value) || 0,
+      BULK: parseFloat(document.getElementById('price-cat-BULK').value) || 0,
+      VEHICLE: parseFloat(document.getElementById('price-cat-VEHICLE').value) || 0
+    }
+  };
+  try {
+    var r = await apiFetch('/' + slug + '/api/admin/pricing', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(pricingPayload)
+    });
+    if (r.ok) {
+      if (btn) { btn.textContent = '✓ Saved!'; btn.style.background = '#16a34a'; }
+      setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Pricing'; btn.style.background=''; } }, 2000);
+    } else {
+      alert('Failed to save pricing.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Save Pricing'; }
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Pricing'; }
+  }
+}
+
 async function saveSettings() {
   var t = window.__TENANT__;
   if (!t) return;
@@ -2329,38 +2388,7 @@ async function saveSettings() {
       if (payload.background_url !== undefined) window.__TENANT__.background_url = payload.background_url;
       applyBranding(payload);
 
-      // Save pricing config too
-      var pricingPayload = {
-        base_fee: parseFloat(document.getElementById('price-base-fee').value) || 50,
-        driver_labor_per_km: parseFloat(document.getElementById('price-driver-labor').value) || 15,
-        express_multiplier: parseFloat(document.getElementById('price-express-multi').value) || 1.8,
-        safety_fee: parseFloat(document.getElementById('price-safety-fee').value) || 150,
-        fuel_rates: {
-          motorcycle: parseFloat(document.getElementById('price-fuel-motorcycle').value) || 2.20,
-          sedan: parseFloat(document.getElementById('price-fuel-sedan').value) || 4.70,
-          van: parseFloat(document.getElementById('price-fuel-van').value) || 6.11,
-          truck: parseFloat(document.getElementById('price-fuel-truck').value) || 11.00,
-          flatbed: parseFloat(document.getElementById('price-fuel-flatbed').value) || 15.71
-        },
-        weight_tiers: [
-          { max_kg: 20, rate: parseFloat(document.getElementById('price-wt-1').value) || 2 },
-          { max_kg: 100, rate: parseFloat(document.getElementById('price-wt-2').value) || 3 },
-          { max_kg: 500, rate: parseFloat(document.getElementById('price-wt-3').value) || 2 },
-          { max_kg: null, rate: parseFloat(document.getElementById('price-wt-4').value) || 1.5 }
-        ],
-        category_surcharges: {
-          PACKAGE: parseFloat(document.getElementById('price-cat-PACKAGE').value) || 0,
-          FOOD: parseFloat(document.getElementById('price-cat-FOOD').value) || 0,
-          DOC: parseFloat(document.getElementById('price-cat-DOC').value) || 0,
-          BULK: parseFloat(document.getElementById('price-cat-BULK').value) || 0,
-          VEHICLE: parseFloat(document.getElementById('price-cat-VEHICLE').value) || 0
-        }
-      };
-      apiFetch('/' + slug + '/api/admin/pricing', {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(pricingPayload)
-      }).catch(function(e){ console.warn('Pricing save failed:', e.message); });
+      // Pricing is now saved separately via savePricing()
 
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; } }, 2000);
       return;
