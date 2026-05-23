@@ -131,7 +131,10 @@ nav::-webkit-scrollbar{display:none;}
 [data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4a6382,#64748b);border-color:#1e293b;}
 [data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#5b7a9e,#7c8fa3);}
 table{width:100%;border-collapse:collapse;}
-
+#s-pricing.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
+#s-pricing .ph-row{flex-shrink:0;}
+#s-pricing > div[style*="grid"]{flex:1;min-height:0;overflow-y:auto;}
+#s-pricing .form-card{display:flex;flex-direction:column;justify-content:space-between;min-height:100%;}
 #s-payments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
 #s-payments .ph-row{flex-shrink:0;}
 #s-payments .stat-grid{flex-shrink:0;}
@@ -844,43 +847,51 @@ textarea{resize:vertical;}
 
         <!-- LEFT: Pricing Config -->
         <div class="form-card" style="margin-bottom:0;padding:16px;">
-          <div class="form-sec" style="margin-bottom:8px;padding-bottom:5px;">Base Rates</div>
-          <div class="form-grid" style="gap:10px;">
-            <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Base Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50" oninput="calcPreview()"/></div><span class="hint">Flat fee per delivery</span></div>
-            <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Driver Labor (₱/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15" oninput="calcPreview()"/></div><span class="hint">Driver compensation per km</span></div>
-          </div>
-          <div class="form-grid" style="gap:10px;">
-            <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Express Multiplier (×)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8" oninput="calcPreview()"/></div><span class="hint">Express = base × this value</span></div>
-            <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Insurance Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150" oninput="calcPreview()"/></div><span class="hint">Optional safety surcharge</span></div>
-          </div>
-
-          <div class="form-sec" style="margin-top:4px;margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px;">
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Van</label><input id="price-fuel-van" type="number" step="0.1" min="0" value="6.11" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Truck</label><input id="price-fuel-truck" type="number" step="0.1" min="0" value="11.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Flatbed</label><input id="price-fuel-flatbed" type="number" step="0.1" min="0" value="15.71" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div>
+            <div class="form-sec" style="margin-bottom:8px;padding-bottom:5px;">Base Rates</div>
+            <div class="form-grid" style="gap:10px;">
+              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Base Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50" oninput="calcPreview()"/></div><span class="hint">Flat fee per delivery</span></div>
+              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Driver Labor (₱/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15" oninput="calcPreview()"/></div><span class="hint">Driver compensation per km</span></div>
+            </div>
+            <div class="form-grid" style="gap:10px;">
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Express Multiplier (×)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8" oninput="calcPreview()"/></div><span class="hint">Express = base × this value</span></div>
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Insurance Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150" oninput="calcPreview()"/></div><span class="hint">Optional safety surcharge</span></div>
+            </div>
           </div>
 
-          <div class="form-sec" style="margin-top:4px;margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0–20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21–100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101–500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">500+ kg</label><input id="price-wt-4" type="number" step="0.5" min="0" value="1.50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Van</label><input id="price-fuel-van" type="number" step="0.1" min="0" value="6.11" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Truck</label><input id="price-fuel-truck" type="number" step="0.1" min="0" value="11.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Flatbed</label><input id="price-fuel-flatbed" type="number" step="0.1" min="0" value="15.71" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+            </div>
           </div>
 
-          <div class="form-sec" style="margin-top:4px;margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (₱)</div>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px;">
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Document</label><input id="price-cat-DOC" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Bulk</label><input id="price-cat-BULK" type="number" step="10" min="0" value="300" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Vehicle</label><input id="price-cat-VEHICLE" type="number" step="10" min="0" value="800" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+          <div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0–20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21–100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101–500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">500+ kg</label><input id="price-wt-4" type="number" step="0.5" min="0" value="1.50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+            </div>
           </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
+          <div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (₱)</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Document</label><input id="price-cat-DOC" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Bulk</label><input id="price-cat-BULK" type="number" step="10" min="0" value="300" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Vehicle</label><input id="price-cat-VEHICLE" type="number" step="10" min="0" value="800" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;">
             <button class="btn" onclick="resetToDefaults()" style="font-size:12px;padding:8px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px;">restart_alt</span>Reset to Default</button>
             <button class="btn btn-primary" onclick="savePricing()">Save Pricing</button>
           </div>
