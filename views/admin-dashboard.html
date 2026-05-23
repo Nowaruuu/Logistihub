@@ -131,6 +131,11 @@ nav::-webkit-scrollbar{display:none;}
 [data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4a6382,#64748b);border-color:#1e293b;}
 [data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#5b7a9e,#7c8fa3);}
 table{width:100%;border-collapse:collapse;}
+#s-pricing.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
+#s-pricing .ph-row{flex-shrink:0;}
+#s-pricing > div:last-of-type{flex:1;min-height:0;overflow-y:auto;}
+#s-pricing .form-card{min-height:100%;display:flex;flex-direction:column;}
+#s-pricing .form-card > div:last-child{margin-top:auto;}
 #s-shipments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
 #s-shipments .ph-row{flex-shrink:0;}
 #s-shipments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
