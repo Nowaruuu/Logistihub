@@ -228,10 +228,37 @@ textarea{resize:vertical;}
 .copy-btn{flex-shrink:0;padding:6px 12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
 .copy-btn:hover{background:#bbf7d0;}
 .copy-btn .material-symbols-outlined{font-size:14px;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40;}
+.sidebar-overlay.show{display:block;}
+.sidebar-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;margin-right:8px;}
+.sidebar-toggle span{display:block;width:20px;height:2px;background:#334155;margin:4px 0;border-radius:2px;transition:all .3s;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;}
+  .sidebar.open{left:0;}
+  .sidebar-toggle{display:block;}
+  body{display:block;}
+  .main{width:100%;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2,.grid-3-1{grid-template-columns:1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .content{padding:14px;}
+  .search-bar{display:none;}
+  .topbar{padding:0 12px;}
+  .ph-row{flex-direction:column;gap:10px;}
+  .filter-bar{flex-direction:column;align-items:stretch;}
+  .card-head{flex-direction:column;gap:8px;align-items:flex-start;}
+  .tabs-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  body.sidebar-open{overflow:hidden;}
+}
+@media(max-width:480px){
+  .stat-grid{grid-template-columns:1fr;}
+  .stat-value{font-size:20px;}
+}
 </style>
 </head>
 <script src="/public/frontend-api.js"></script>
 <body>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
@@ -249,22 +276,22 @@ textarea{resize:vertical;}
   </div>
   <nav>
     <div class="nav-sec">Operations</div>
-    <button class="nav-link active" onclick="go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
-    <button class="nav-link" onclick="go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
+    <button class="nav-link active" onclick="closeSidebar();go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
+    <button class="nav-link" onclick="closeSidebar();go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
 
     <div class="nav-sec">Management</div>
-    <button class="nav-link" onclick="go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
-    <button class="nav-link" onclick="go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
-    <button class="nav-link" onclick="go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
+    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
+    <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
+    <button class="nav-link" onclick="closeSidebar();go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
-    <button class="nav-link" onclick="go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
-    <button class="nav-link" onclick="go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
-    <button class="nav-link" onclick="go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
-    <button class="nav-link" onclick="go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
+    <button class="nav-link" onclick="closeSidebar();go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
+    <button class="nav-link" onclick="closeSidebar();go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
+    <button class="nav-link" onclick="closeSidebar();go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
+    <button class="nav-link" onclick="closeSidebar();go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
-    <button class="nav-link" onclick="go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
-    <button class="nav-link" onclick="go('upgrade',this)"><span class="material-symbols-outlined">swap_vert</span>Manage Plan</button>
-    <button class="nav-link" onclick="go('audit',this)"><span class="material-symbols-outlined">history</span>Audit Logs</button>
+    <button class="nav-link" onclick="closeSidebar();go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
+    <button class="nav-link" onclick="closeSidebar();go('upgrade',this)"><span class="material-symbols-outlined">swap_vert</span>Manage Plan</button>
+    <button class="nav-link" onclick="closeSidebar();go('audit',this)"><span class="material-symbols-outlined">history</span>Audit Logs</button>
   </nav>
   <div class="sidebar-bottom">
     <div class="user-row" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
@@ -285,6 +312,7 @@ textarea{resize:vertical;}
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
+    <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
     <div>
       <div class="page-title" id="page-title">Dashboard</div>
       <div class="page-sub" id="page-sub">Welcome back</div>
@@ -1108,6 +1136,8 @@ textarea{resize:vertical;}
 </div>
 
 <script>
+function toggleSidebar(){var s=document.querySelector('.sidebar');var o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('show');document.body.classList.toggle('sidebar-open');}
+function closeSidebar(){document.querySelector('.sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.classList.remove('sidebar-open');}
 // ── Global session expiry handler ─────────────────────────────────────────────
 var _sessionExpired = false;
 
