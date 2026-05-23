@@ -150,49 +150,47 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
     const period = req.query.period || 'monthly';
     let chartSql, chartParams;
     const tz = '+08:00'; // Philippine Time
+    // Use COALESCE so payments without paid_at fall back to created_at
+    const dateCol = `COALESCE(paid_at, created_at)`;
     if (period === 'daily') {
-      // Hourly breakdown for today in PHT
-      chartSql = `SELECT HOUR(CONVERT_TZ(paid_at, '+00:00', '${tz}')) AS hr,
+      chartSql = `SELECT HOUR(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) AS hr,
                          SUM(total_amount) AS total,
                          SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
                          SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
                          COUNT(*) AS count
-                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL
-                    AND DATE(CONVERT_TZ(paid_at, '+00:00', '${tz}')) = DATE(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
+                  FROM payment WHERE tenant_id = ?
+                    AND DATE(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) = DATE(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
                   GROUP BY hr ORDER BY hr ASC`;
       chartParams = [tid];
     } else if (period === 'weekly') {
-      // Daily breakdown for the current week (7-day block within current month)
-      // Week blocks: 1-7, 8-14, 15-21, 22-28, 29-end
-      chartSql = `SELECT DAY(CONVERT_TZ(paid_at, '+00:00', '${tz}')) AS day_num,
+      chartSql = `SELECT DAY(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) AS day_num,
                          SUM(total_amount) AS total,
                          SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
                          SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
                          COUNT(*) AS count
-                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL
-                    AND YEAR(CONVERT_TZ(paid_at, '+00:00', '${tz}')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
-                    AND MONTH(CONVERT_TZ(paid_at, '+00:00', '${tz}')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
-                    AND FLOOR((DAY(CONVERT_TZ(paid_at, '+00:00', '${tz}'))-1)/7) = FLOOR((DAY(CONVERT_TZ(NOW(), '+00:00', '${tz}'))-1)/7)
+                  FROM payment WHERE tenant_id = ?
+                    AND YEAR(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
+                    AND MONTH(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
+                    AND FLOOR((DAY(CONVERT_TZ(${dateCol}, '+00:00', '${tz}'))-1)/7) = FLOOR((DAY(CONVERT_TZ(NOW(), '+00:00', '${tz}'))-1)/7)
                   GROUP BY day_num ORDER BY day_num ASC`;
       chartParams = [tid];
     } else if (period === 'yearly') {
-      chartSql = `SELECT YEAR(CONVERT_TZ(paid_at, '+00:00', '${tz}')) AS yr,
+      chartSql = `SELECT YEAR(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) AS yr,
                          SUM(total_amount) AS total,
                          SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
                          SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
                          COUNT(*) AS count
-                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL AND paid_at >= DATE_SUB(NOW(), INTERVAL 5 YEAR)
+                  FROM payment WHERE tenant_id = ? AND ${dateCol} >= DATE_SUB(NOW(), INTERVAL 5 YEAR)
                   GROUP BY yr ORDER BY yr ASC`;
       chartParams = [tid];
     } else {
-      // Monthly: all 12 months of current year
-      chartSql = `SELECT MONTH(CONVERT_TZ(paid_at, '+00:00', '${tz}')) AS mo,
+      chartSql = `SELECT MONTH(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) AS mo,
                          SUM(total_amount) AS total,
                          SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid_total,
                          SUM(CASE WHEN status IN ('Pending','AwaitingAdmin') THEN total_amount ELSE 0 END) AS pending_total,
                          COUNT(*) AS count
-                  FROM payment WHERE tenant_id = ? AND paid_at IS NOT NULL
-                    AND YEAR(CONVERT_TZ(paid_at, '+00:00', '${tz}')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
+                  FROM payment WHERE tenant_id = ?
+                    AND YEAR(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '${tz}'))
                   GROUP BY mo ORDER BY mo ASC`;
       chartParams = [tid];
     }
