@@ -163,6 +163,13 @@ table{width:100%;border-collapse:collapse;}
 #s-pod > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
 #s-pod > .card > .card-head{flex-shrink:0;}
 #s-pod > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
+#s-subscription.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
+#s-subscription .ph-row{flex-shrink:0;}
+#s-subscription > div[style*="grid"]{flex-shrink:0;}
+#s-subscription > #sub-pending-downgrade{flex-shrink:0;}
+#s-subscription > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+#s-subscription > .card > div:first-child{flex-shrink:0;}
+#s-subscription > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
 #s-shipments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
 #s-shipments .ph-row{flex-shrink:0;}
 #s-shipments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
