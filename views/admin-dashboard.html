@@ -133,9 +133,15 @@ nav::-webkit-scrollbar{display:none;}
 table{width:100%;border-collapse:collapse;}
 #s-pricing.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
 #s-pricing .ph-row{flex-shrink:0;}
-#s-pricing > div:last-of-type{flex:1;min-height:0;overflow-y:auto;}
-#s-pricing .form-card{min-height:100%;display:flex;flex-direction:column;}
+#s-pricing > div[style*="grid"]{flex:1;min-height:0;overflow-y:auto;align-items:stretch;}
+#s-pricing .form-card{display:flex;flex-direction:column;}
 #s-pricing .form-card > div:last-child{margin-top:auto;}
+#s-payments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
+#s-payments .ph-row{flex-shrink:0;}
+#s-payments .stat-grid{flex-shrink:0;}
+#s-payments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+#s-payments > .card > .card-head{flex-shrink:0;}
+#s-payments > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
 #s-shipments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
 #s-shipments .ph-row{flex-shrink:0;}
 #s-shipments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
