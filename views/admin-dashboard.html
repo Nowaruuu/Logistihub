@@ -237,22 +237,34 @@ textarea{resize:vertical;}
   .sidebar.open{left:0;}
   .sidebar-toggle{display:block;}
   body{display:block;}
-  .main{width:100%;}
+  .main{width:100%;min-width:0;}
   .stat-grid{grid-template-columns:repeat(2,1fr);}
   .grid-2,.grid-3-1{grid-template-columns:1fr;}
   .form-grid{grid-template-columns:1fr;}
-  .content{padding:14px;}
+  .content{padding:14px;overflow-x:hidden;}
   .search-bar{display:none;}
   .topbar{padding:0 12px;}
   .ph-row{flex-direction:column;gap:10px;}
   .filter-bar{flex-direction:column;align-items:stretch;}
   .card-head{flex-direction:column;gap:8px;align-items:flex-start;}
-  .tabs-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tabs-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;flex-wrap:nowrap;padding-bottom:4px;}
+  .tab{flex-shrink:0;}
   body.sidebar-open{overflow:hidden;}
+  /* Tables — allow horizontal scroll */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+  .tbl-wrap table{min-width:600px;}
+  .card{overflow:hidden;}
+  /* Map — shrink on mobile */
+  #dash-live-map{height:250px!important;}
+  .map-ph{height:150px;}
+  /* Reg link box */
+  .reg-link-box{flex-direction:column;gap:8px;}
+  .copy-btn{align-self:flex-start;}
 }
 @media(max-width:480px){
   .stat-grid{grid-template-columns:1fr;}
   .stat-value{font-size:20px;}
+  #dash-live-map{height:200px!important;}
 }
 </style>
 </head>
