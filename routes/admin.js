@@ -150,8 +150,8 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
     const period = req.query.period || 'monthly';
     let chartSql, chartParams;
     const tz = '+08:00'; // Philippine Time
-    // Use COALESCE so payments without paid_at fall back to billing_date
-    const dateCol = `COALESCE(paid_at, billing_date)`;
+    // Use COALESCE so payments without paid_at fall back to billing_date, then NOW()
+    const dateCol = `COALESCE(paid_at, billing_date, NOW())`;
     if (period === 'daily') {
       chartSql = `SELECT HOUR(CONVERT_TZ(${dateCol}, '+00:00', '${tz}')) AS hr,
                          SUM(total_amount) AS total,
