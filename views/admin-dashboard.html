@@ -833,7 +833,7 @@ textarea{resize:vertical;}
     <!-- ══ PRICING ═══════════════════════════════ -->
     <div id="s-pricing" class="screen">
       <div class="ph-row"><div><h2>Delivery Pricing</h2><p>Customize how delivery fees are calculated for your customers.</p></div></div>
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start;">
 
         <!-- LEFT: Pricing Config -->
         <div class="form-card" style="margin-bottom:0;">
@@ -893,21 +893,21 @@ textarea{resize:vertical;}
               <div style="margin-bottom:10px;">
                 <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Vehicle Type</label>
                 <select id="calc-vehicle" onchange="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;font-family:inherit;">
-                  <option value="motorcycle">🏍️ Motorcycle</option>
-                  <option value="sedan">🚗 Sedan</option>
-                  <option value="van">🚐 Van</option>
-                  <option value="truck">🚛 Truck</option>
-                  <option value="flatbed">🛻 Flatbed</option>
+                  <option value="motorcycle">Motorcycle</option>
+                  <option value="sedan">Sedan</option>
+                  <option value="van">Van</option>
+                  <option value="truck">Truck</option>
+                  <option value="flatbed">Flatbed</option>
                 </select>
               </div>
               <div style="margin-bottom:10px;">
                 <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Category</label>
                 <select id="calc-category" onchange="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;font-family:inherit;">
-                  <option value="PACKAGE">📦 Package</option>
-                  <option value="FOOD">🍔 Food</option>
-                  <option value="DOC">📄 Document</option>
-                  <option value="BULK">📋 Bulk</option>
-                  <option value="VEHICLE">🚗 Vehicle</option>
+                  <option value="PACKAGE">Package</option>
+                  <option value="FOOD">Food</option>
+                  <option value="DOC">Document</option>
+                  <option value="BULK">Bulk</option>
+                  <option value="VEHICLE">Vehicle</option>
                 </select>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
@@ -920,9 +920,9 @@ textarea{resize:vertical;}
                   <input id="calc-kg" type="number" min="0" value="5" oninput="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;text-align:center;font-weight:600;"/>
                 </div>
               </div>
-              <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;"><input id="calc-express" type="checkbox" onchange="calcPreview()" style="accent-color:#f59e0b;"/> Express</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;"><input id="calc-insurance" type="checkbox" onchange="calcPreview()" style="accent-color:#3b82f6;"/> Insurance</label>
+              <div style="display:flex;gap:12px;margin-bottom:10px;">
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;font-weight:600;"><input id="calc-express" type="checkbox" onchange="calcPreview()" style="accent-color:#f59e0b;"/> Express</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;font-weight:600;"><input id="calc-insurance" type="checkbox" onchange="calcPreview()" style="accent-color:#3b82f6;"/> Insurance</label>
               </div>
             </div>
             <!-- Result -->
