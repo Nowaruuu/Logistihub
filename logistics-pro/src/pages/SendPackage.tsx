@@ -1059,7 +1059,7 @@ export default function SendPackage() {
                     <span className="text-[10px] text-slate-400">Fuel ({selectedVehicle?.fuelType})</span>
                     <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost)} ({fuelRate}/km)</span>
                     <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(tierRate)}</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(weightSurcharge)}</span>
                     {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{categorySurcharge}</span></>}
                     <span className="text-[10px] text-slate-400">Base fee</span>
                     <span className="text-[10px] text-slate-500 text-right">₱50</span>
@@ -1104,7 +1104,7 @@ export default function SendPackage() {
                     <span className="text-[10px] text-slate-400">Fuel + Priority</span>
                     <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost * 1.8)}</span>
                     <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(tierRate * 1.8)}</span>
+                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(weightSurcharge * 1.8)}</span>
                     {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{Math.round(categorySurcharge * 1.8)}</span></>}
                     <span className="text-[10px] text-slate-400">Base fee</span>
                     <span className="text-[10px] text-slate-500 text-right">₱{Math.round(50 * 1.8)}</span>

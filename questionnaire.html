@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LogistiHub Survey Questionnaire</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11.5pt;
+    color: #000;
+    background: #fff;
+    line-height: 1.35;
+  }
+  .page {
+    width: 8.5in;
+    margin: 0 auto;
+    padding: 0.6in 0.8in;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    font-size: 15pt;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-size: 11.5pt;
+    margin-bottom: 2px;
+  }
+  .directions {
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 13pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 14px;
+    text-decoration: underline;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 11pt;
+  }
+  table th, table td {
+    border: 1px solid #000;
+    padding: 5px 6px;
+    vertical-align: middle;
+    color: #000;
+  }
+  .param-header td {
+    font-weight: bold;
+    background: #eee;
+  }
+  .sc { width: 32px; text-align: center; }
+  .stmt { text-align: left; }
+  .driver-note {
+    font-style: italic;
+    font-size: 10pt;
+    margin-bottom: 6px;
+  }
+  .open-ended {
+    margin-top: 14px;
+    page-break-inside: avoid;
+  }
+  .open-ended p.title { font-weight: bold; margin-bottom: 6px; }
+  .open-ended p.q { margin-bottom: 4px; }
+  .line {
+    border-bottom: 1px solid #000;
+    height: 22px;
+    margin-bottom: 2px;
+  }
+  .page-break { page-break-before: always; }
+  @media print {
+    .page { padding: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="header">
+    <h1>LogistiHub: A Web and Mobile Integrated Multi-Tenant Platform</h1>
+    <p>A self-constructed survey questionnaire</p>
+    <p>Calimquim, Collin, Tolentino, Nick Angelo, Alcaraz, Shaun Anilov</p>
+  </div>
+  <div class="directions">
+    <p><strong>Directions:</strong> Kindly answer the following statements based on the given Likert's Scale:</p>
+    <p>5 – Strongly agree, 4 – Agree, 3 – Neutral, 2 – Disagree, 1 – Strongly disagree</p>
+  </div>
+
+  <div class="section-title">Part I: Client (Customer) Evaluation</div>
+
+  <table>
+    <tr class="param-header"><td class="stmt">1. Shipment Creation &amp; Mobile Usability</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">I can easily create a new shipment using the mobile application.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The interactive map makes selecting pickup and drop-off locations intuitive.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The automated fare estimation provides clear and transparent shipping costs.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The available shipment categories cover all my delivery needs.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The mobile application interface is visually appealing and easy to navigate.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">2. Real-Time Tracking &amp; Notifications</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">The live GPS tracking accurately reflects the driver's current location without delays.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Push notifications provide timely updates on my shipment's progress.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The estimated delivery time aligns closely with the actual arrival time.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The tracking map interface is easy to understand and interacts smoothly.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The in-app chat and call feature allows effective communication with the driver during active deliveries.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">3. Payments &amp; Reliability</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">Processing payments through the integrated gateway (e.g., PayMongo, GCash) is seamless.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The proof-of-delivery photo gives me confidence that my package was safely received.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The system clearly displays the breakdown of charges before I finalize my payment.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">I experience no technical errors or crashes when confirming my payment.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">My personal data and transaction information feel secure within the app.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <p class="driver-note">* The following section is for Driver respondents only.</p>
+  <table>
+    <tr class="param-header"><td class="stmt">4. Driver Experience</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">The OSRM-powered turn-by-turn navigation provides accurate directions that follow actual road networks.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The proof-of-delivery photo capture uploads successfully and attaches correctly to the shipment record.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The job accept/decline system allows me to manage my delivery queue efficiently.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The earnings and statistics dashboard accurately reflects my completed deliveries and total earnings.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">5. Overall Satisfaction</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">Overall, the app makes sending or receiving packages more convenient compared to traditional methods.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">I consider the LogistiHub platform reliable for handling sensitive or high-value shipments.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">I would recommend the LogistiHub app to friends or colleagues who need delivery services.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <div class="open-ended">
+    <p class="title">Open-Ended Questions:</p>
+    <p class="q">1. What feature of the app did you find most useful?</p>
+    <div class="line"></div><div class="line"></div>
+    <p class="q" style="margin-top:6px;">2. What improvements or additional features would you like to see in future versions?</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page page-break">
+  <div class="header">
+    <h1>LogistiHub: A Web and Mobile Integrated Multi-Tenant Platform</h1>
+    <p>A self-constructed survey questionnaire</p>
+    <p>Calimquim, Collin, Tolentino, Nick Angelo, Alcaraz, Shaun Anilov</p>
+  </div>
+  <div class="directions">
+    <p><strong>Directions:</strong> Kindly answer the following statements based on the given Likert's Scale:</p>
+    <p>5 – Strongly agree, 4 – Agree, 3 – Neutral, 2 – Disagree, 1 – Strongly disagree</p>
+  </div>
+
+  <div class="section-title">Part II: Tenant (Logistics Company) Evaluation</div>
+
+  <table>
+    <tr class="param-header"><td class="stmt">1. Platform Management &amp; Data Isolation</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">The web dashboard provides a comprehensive overview of our daily operations.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The system reliably isolates and secures our company data from other tenants.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The custom branding options accurately reflect our unique company identity.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Managing user roles and access permissions within our tenant space is straightforward.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The onboarding process for registering and setting up our company workspace was efficient and straightforward.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">2. Dispatch &amp; Fleet Management</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">The system effectively prevents dispatch errors by enforcing vehicle-type compatibility.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Monitoring driver locations through the 10-second GPS polling is reliable and smooth.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The OSRM-computed routes provide accurate and efficient directions for our drivers.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Assigning shipments to available drivers is a fast and organized process.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The driver application allows our staff to update delivery statuses quickly in the field.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">3. Administration &amp; Billing Integration</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">The automated fare computation accurately applies our specific fuel, weight, and distance rules.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Managing subscription renewals and tracking revenue via the integrated gateway is efficient.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The audit logs provide transparent and easily accessible records of system events.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The platform generates accurate financial summaries for completed transactions.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The system accurately enforces resource limits based on our subscription plan (e.g., vehicle count per plan tier).</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <table>
+    <tr class="param-header"><td class="stmt">4. Overall Satisfaction</td><td class="sc">5</td><td class="sc">4</td><td class="sc">3</td><td class="sc">2</td><td class="sc">1</td></tr>
+    <tr><td class="stmt">Adjusting operational parameters (e.g., base rates, vehicle capacities) in the system is easy.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Notifications and shipment status updates are delivered promptly when changes occur.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">Overall, the platform helps us manage logistics operations more effectively than manual or paper-based methods.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">The platform provides sufficient features for our daily logistics operations.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+    <tr><td class="stmt">I would recommend LogistiHub to other logistics companies.</td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td><td class="sc"></td></tr>
+  </table>
+
+  <div class="open-ended">
+    <p class="title">Open-Ended Questions:</p>
+    <p class="q">1. What feature of the platform did you find most useful for your operations?</p>
+    <div class="line"></div><div class="line"></div>
+    <p class="q" style="margin-top:6px;">2. What improvements or additional features would you like to see in future versions?</p>
+    <div class="line"></div><div class="line"></div>
+  </div>
+</div>
+
+</body>
+</html>
