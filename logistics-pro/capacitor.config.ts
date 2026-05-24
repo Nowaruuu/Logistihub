@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: 'LogisticHub',
   webDir: 'dist',
   server: {
-    url: 'https://logistihub.ddns.net/app',
     androidScheme: 'https'
   }
 };
