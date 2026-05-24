@@ -37,6 +37,11 @@ app.use(cors({
 
 // Serve uploaded files / public assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
+// Serve client mobile app (Capacitor dist) at /app
+app.use('/app', express.static(path.join(__dirname, 'logistics-pro/dist')));
+app.get('/app/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'logistics-pro/dist/index.html'));
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITING

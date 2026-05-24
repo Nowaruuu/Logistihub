@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'LogisticHub',
   webDir: 'dist',
   server: {
-    // This allows the app to talk to your Firebase/API over HTTPS
+    url: 'https://logistihub.ddns.net/app',
     androidScheme: 'https'
   }
 };
