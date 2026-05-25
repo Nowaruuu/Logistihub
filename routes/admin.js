@@ -721,6 +721,37 @@ router.put('/:slug/api/admin/staff/:id/suspend', requireAdmin, requireSlugMatch,
   }
 });
 
+// ── License Verification (Admin approves/rejects driver license) ──────────
+router.put('/:slug/api/admin/staff/:id/license', requireAdmin, requireSlugMatch, async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body; // 'verify' or 'reject'
+  const tid = req.tenantId;
+
+  if (!['verify', 'reject'].includes(action)) {
+    return res.status(400).json({ error: 'action must be "verify" or "reject".' });
+  }
+
+  try {
+    const [rows] = await query('SELECT name, role, license_status FROM STAFF WHERE staff_id = ? AND tenant_id = ?', [id, tid]);
+    if (!rows.length) return res.status(404).json({ error: 'Staff member not found.' });
+
+    const newStatus = action === 'verify' ? 'verified' : 'not_uploaded';
+    await query('UPDATE STAFF SET license_status = ? WHERE staff_id = ? AND tenant_id = ?', [newStatus, id, tid]);
+
+    logAudit({
+      actor: req.admin.email, actor_type: 'admin',
+      action: action === 'verify' ? 'VERIFY_LICENSE' : 'REJECT_LICENSE',
+      target: `${rows[0].name} (${rows[0].role})`,
+      tenant_slug: req.params.slug, ip_address: req.ip
+    });
+
+    res.json({ ok: true, license_status: newStatus, message: action === 'verify' ? 'License verified.' : 'License rejected.' });
+  } catch (err) {
+    console.error('[PUT /admin/staff/:id/license]', err);
+    res.status(500).json({ error: err.message || 'Failed to update license status.' });
+  }
+});
+
 router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   const [rows] = await query(
