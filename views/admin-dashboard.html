@@ -3973,9 +3973,9 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
   document.getElementById('admin-reassign-title').textContent = isReassign ? 'Reassign Driver' : 'Assign Driver';
   var subtitle = document.getElementById('admin-reassign-subtitle');
   if (isReassign) {
-    subtitle.style.color = '#ef4444'; subtitle.textContent = 'âš  This shipment was declined â€” pick a new driver to restart it';
+    subtitle.style.color = '#ef4444'; subtitle.textContent = 'This shipment was declined - pick a new driver to restart it';
   } else {
-    subtitle.style.color = '#64748b'; subtitle.textContent = 'No driver has taken this yet â€” manually assign one now';
+    subtitle.style.color = '#64748b'; subtitle.textContent = 'No driver has taken this yet - manually assign one now';
   }
   var btn = document.getElementById('admin-reassign-btn');
   btn.style.background = isReassign ? '#dc2626' : '#2563eb';
@@ -4001,7 +4001,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
   // Populate driver dropdown â€” EXCLUDE Pending Review license drivers
   var driverSel = document.getElementById('admin-reassign-driver');
   driverSel.innerHTML = '<option value="">Select driver...</option>';
-  var BLOCKED_LICENSE = ['Pending â€” Review', 'Pending Review', 'Pending-Review', 'pending'];
+  var BLOCKED_LICENSE = ['pending_review'];
   var allDrivers = _adminReassignStaff.filter(function(s){ return s.role === 'Driver' && s.status === 'active'; });
   var drivers = allDrivers.filter(function(d){
     var ls = (d.license_status || '').trim();
@@ -4017,14 +4017,14 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     var opt = document.createElement('option');
     var did = d.staff_id || d.id;
     opt.value = did;
-    var ind = busyMap[did] ? 'ðŸŸ¡ ' : 'ðŸŸ¢ ';
-    opt.textContent = ind + (d.name || d.full_name) + (busyMap[did] ? ' (busy)' : ' (available)');
+
+    opt.textContent = busyMap[did] ? '[Busy] ' + (d.name || d.full_name) : '[Available] ' + (d.name || d.full_name);
     if (did == currentDriverId) opt.selected = true;
     driverSel.appendChild(opt);
   });
   if (drivers.length === 0) {
     var noOpt = document.createElement('option'); noOpt.value=''; noOpt.disabled=true;
-    noOpt.textContent = 'âš  No eligible drivers (all have unverified licenses)';
+    noOpt.textContent = 'No eligible drivers - all have unverified licenses';
     driverSel.appendChild(noOpt);
   }
 
