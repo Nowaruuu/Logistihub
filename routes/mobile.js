@@ -196,7 +196,7 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
   try {
     const [rows] = await query(
       `SELECT s.vehicle_plate, s.vehicle_type, s.license_status, s.license_expiry,
-              v.model, v.capacity_tons
+              v.model, v.capacity_tons, v.image_url
        FROM STAFF s
        LEFT JOIN vehicle v ON v.plate_number = s.vehicle_plate AND v.tenant_id = s.tenant_id
        WHERE s.staff_id = ? LIMIT 1`,
@@ -213,7 +213,7 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
 // PUT /driver/vehicle — register/update driver's vehicle
 router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
-  const { vehicle_plate, vehicle_type, model } = req.body;
+  const { vehicle_plate, vehicle_type, model, vehicle_photo } = req.body;
   if (!vehicle_plate || !vehicle_type) {
     return res.status(400).json({ error: 'vehicle_plate and vehicle_type are required.' });
   }
@@ -272,17 +272,22 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
         }
       }
 
+      // Validate photo is provided for new vehicle registration
+      if (!vehicle_photo) {
+        return res.status(400).json({ error: 'A photo of your vehicle is required.' });
+      }
       // New plate — insert into fleet
       await query(
-        `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc)
-         VALUES (?, ?, ?, ?, 0, 'Available', ?)`,
-        [tid, plate, vehicle_type, model || null, `Registered by driver: ${driverName}`]
+        `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc, image_url)
+         VALUES (?, ?, ?, ?, 0, 'Available', ?, ?)`,
+        [tid, plate, vehicle_type, model || null, `Registered by driver: ${driverName}`, vehicle_photo]
       );
     } else {
-      // Plate already exists — only update model and ownership note, NEVER touch type/capacity
+      // Plate already exists — update model, ownership note, and photo if provided
       await query(
-        `UPDATE vehicle SET model = COALESCE(?, model), ownership_doc = ? WHERE plate_number = ? AND tenant_id = ?`,
-        [model || null, `Driver: ${driverName}`, plate, tid]
+        `UPDATE vehicle SET model = COALESCE(?, model), ownership_doc = ?,
+         image_url = COALESCE(?, image_url) WHERE plate_number = ? AND tenant_id = ?`,
+        [model || null, `Driver: ${driverName}`, vehicle_photo || null, plate, tid]
       );
     }
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2, ChevronRight, ShieldAlert, Clock, XCircle } from 'lucide-react';
+import { ChevronLeft, Truck, Save, AlertCircle, CheckCircle, Loader2, ChevronRight, ShieldAlert, Clock, XCircle, Camera } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const API_BASE = 'https://logistichub.ddns.net';
@@ -17,10 +17,13 @@ const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'Van', 'Truck', 'Flatbed', 'L300',
 
 export default function VehicleInfo() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
+  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null); // base64 data URL
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const [licenseStatus, setLicenseStatus] = useState<string>('not_uploaded');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,32 +38,68 @@ export default function VehicleInfo() {
         if (d.vehicle_type)  setVehicleType(d.vehicle_type);
         if (d.model)         setVehicleModel(d.model);
         if (d.license_status) setLicenseStatus(d.license_status);
+        if (d.image_url)     setExistingPhotoUrl(d.image_url);
       })
       .catch(() => { /* no vehicle yet */ })
       .finally(() => setLoading(false));
   }, []);
 
+  // Compress and set vehicle photo from file input
+  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1024;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
+        if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        setVehiclePhoto(canvas.toDataURL('image/jpeg', 0.75));
+        setError('');
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
   const handleSave = async () => {
     if (!vehiclePlate.trim()) { setError('Please enter your plate number.'); return; }
     if (!vehicleType)         { setError('Please select a vehicle type.'); return; }
+    if (!vehiclePhoto && !existingPhotoUrl) {
+      setError('A photo of your vehicle is required. Please take or upload a photo.');
+      return;
+    }
     setError('');
     setSaving(true);
     try {
       const res = await fetch(mobileUrl('/driver/vehicle'), {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ vehicle_plate: vehiclePlate, vehicle_type: vehicleType, model: vehicleModel || null }),
+        body: JSON.stringify({
+          vehicle_plate: vehiclePlate,
+          vehicle_type: vehicleType,
+          model: vehicleModel || null,
+          vehicle_photo: vehiclePhoto || undefined, // only send if new photo taken
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save.');
 
-      // Immediately re-fetch to confirm the server actually saved it
+      // Re-fetch to confirm server saved it
       const verify = await fetch(mobileUrl('/driver/vehicle'), { headers: authHeaders() });
       if (verify.ok) {
         const saved = await verify.json();
         if (saved.vehicle_plate) setVehiclePlate(saved.vehicle_plate);
         if (saved.vehicle_type)  setVehicleType(saved.vehicle_type);
         if (saved.model)         setVehicleModel(saved.model);
+        if (saved.image_url)     setExistingPhotoUrl(saved.image_url);
       }
 
       setSuccess(true);
@@ -71,7 +110,6 @@ export default function VehicleInfo() {
       setSaving(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -135,8 +173,21 @@ export default function VehicleInfo() {
     );
   }
 
+  // Current photo to display (newly captured takes priority over existing)
+  const displayPhoto = vehiclePhoto || existingPhotoUrl;
+
   return (
     <div className="pb-28 space-y-5">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoCapture}
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-4">
         <button
@@ -149,6 +200,56 @@ export default function VehicleInfo() {
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Vehicle Information</h1>
           <p className="text-xs text-slate-500">Your vehicle is auto-assigned when you accept jobs</p>
         </div>
+      </div>
+
+      {/* Vehicle Photo — REQUIRED */}
+      <div className="mx-5">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+            Vehicle Photo <span className="text-red-500">*</span>
+          </label>
+          {displayPhoto && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[10px] font-bold text-orange-600 flex items-center gap-1"
+            >
+              <Camera className="size-3" /> Retake
+            </button>
+          )}
+        </div>
+
+        {displayPhoto ? (
+          <div className="relative rounded-2xl overflow-hidden border-2 border-orange-500 shadow-lg shadow-orange-500/10">
+            <img
+              src={displayPhoto}
+              alt="Vehicle"
+              className="w-full h-48 object-cover"
+            />
+            {vehiclePhoto && (
+              <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1">
+                <CheckCircle className="size-3" /> New Photo
+              </div>
+            )}
+            {!vehiclePhoto && existingPhotoUrl && (
+              <div className="absolute top-2 right-2 bg-slate-800/70 backdrop-blur text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                Existing
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-48 border-2 border-dashed border-red-300 dark:border-red-800/60 rounded-2xl flex flex-col items-center justify-center gap-3 bg-red-50 dark:bg-red-950/10 active:bg-red-100 dark:active:bg-red-950/20 transition-colors"
+          >
+            <div className="size-16 rounded-full bg-orange-600/10 flex items-center justify-center">
+              <Camera className="size-8 text-orange-500" />
+            </div>
+            <div className="text-center">
+              <p className="text-slate-900 dark:text-white font-bold text-sm">Take Vehicle Photo</p>
+              <p className="text-red-500 text-xs mt-0.5 font-semibold">Required — tap to capture</p>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Card */}
@@ -172,7 +273,7 @@ export default function VehicleInfo() {
           {/* Plate number */}
           <div>
             <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">
-              Plate Number
+              Plate Number <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -186,7 +287,7 @@ export default function VehicleInfo() {
           {/* Vehicle type grid */}
           <div>
             <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">
-              Vehicle Type
+              Vehicle Type <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {VEHICLE_TYPES.map(type => (
@@ -207,7 +308,7 @@ export default function VehicleInfo() {
             </div>
           </div>
 
-          {/* Model (optional, local only) */}
+          {/* Model (optional) */}
           <div>
             <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">
               Model / Description <span className="text-slate-400 font-normal normal-case">(optional)</span>
@@ -227,7 +328,7 @@ export default function VehicleInfo() {
       <div className="mx-5 flex gap-3 p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30">
         <AlertCircle className="size-5 text-orange-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-orange-800 dark:text-orange-400/80 leading-relaxed">
-          Your plate number will automatically appear in the shipment record when you accept a delivery job.
+          Your plate number and vehicle photo will be visible to admin and appear in shipment records when you accept a delivery job.
         </p>
       </div>
 
@@ -251,8 +352,8 @@ export default function VehicleInfo() {
       <div className="mx-5">
         <button
           onClick={handleSave}
-          disabled={saving}
-          className="w-full flex items-center justify-center gap-2.5 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-extrabold text-[15px] shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
+          disabled={saving || (!vehiclePhoto && !existingPhotoUrl)}
+          className="w-full flex items-center justify-center gap-2.5 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-extrabold text-[15px] shadow-xl active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {saving ? (
             <><Loader2 className="size-5 animate-spin" />Saving…</>
@@ -260,6 +361,9 @@ export default function VehicleInfo() {
             <><Save className="size-5" />Save Vehicle Details</>
           )}
         </button>
+        {!vehiclePhoto && !existingPhotoUrl && (
+          <p className="text-center text-xs text-red-500 font-semibold mt-2">Vehicle photo required to save</p>
+        )}
       </div>
 
       {/* Request fleet vehicle */}
