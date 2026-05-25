@@ -31,6 +31,23 @@ export default function DriverDashboard() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [driverInfo, setDriverInfo] = useState<Driver | null>(null);
+  const [vehicleCapacityTons, setVehicleCapacityTons] = useState<number | null>(null);
+
+  // Derive max concurrent jobs from vehicle capacity
+  // Motorcycle ≤0.2t → 2 | Car/Sedan ≤0.5t → 3 | Van/L300 ≤2t → 5 | Truck/Flatbed >2t → 8
+  const getMaxJobsFromCapacity = (tons: number | null, vehicleType?: string): number => {
+    const type = (vehicleType || '').toLowerCase();
+    if (type.includes('motorcycle') || type.includes('bike')) return 2;
+    if (type.includes('sedan') || type.includes('car')) return 3;
+    if (type.includes('truck') || type.includes('flatbed') || type.includes('elf')) return 8;
+    if (type.includes('van') || type.includes('l300')) return 5;
+    // Fall back to capacity_tons if type is ambiguous
+    if (tons === null) return 5; // default
+    if (tons <= 0.2) return 2;
+    if (tons <= 0.5) return 3;
+    if (tons <= 2)   return 5;
+    return 8;
+  };
   const [availableJobs, setAvailableJobs] = useState<Delivery[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<Delivery[]>([]);
   const [activeTab, setActiveTab] = useState<'available' | 'active'>('available');
@@ -59,7 +76,7 @@ export default function DriverDashboard() {
     localStorage.setItem(getDeclinedKey(), JSON.stringify(arr));
   };
 
-  const MAX_ACTIVE_JOBS = 5;
+  const MAX_ACTIVE_JOBS = getMaxJobsFromCapacity(vehicleCapacityTons, driverInfo?.vehicleType);
   const activeCount = activeAssignments.length;
   const hasActiveJob = activeCount > 0;       // used for online-toggle lock only
   const isAtCapacity = activeCount >= MAX_ACTIVE_JOBS;
@@ -94,6 +111,23 @@ export default function DriverDashboard() {
           verificationStatus: 'Verified'
         } as Driver);
       }
+
+      // Fetch vehicle capacity for dynamic job-limit calculation
+      try {
+        const slug = localStorage.getItem('auth_slug') || '';
+        const token = localStorage.getItem('auth_token') || '';
+        const vRes = await fetch(`https://logistichub.ddns.net/${slug}/api/mobile/driver/vehicle`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (vRes.ok) {
+          const vData = await vRes.json();
+          setVehicleCapacityTons(vData.capacity_tons ?? null);
+          // Also update vehicleType if available from the real vehicle record
+          if (vData.vehicle_type) {
+            setDriverInfo(prev => prev ? { ...prev, vehicleType: vData.vehicle_type } : prev);
+          }
+        }
+      } catch { /* non-fatal */ }
     } catch (err) {
       console.error('Failed to fetch driver data:', err);
     }

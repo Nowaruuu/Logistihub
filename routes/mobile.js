@@ -196,7 +196,7 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
   try {
     const [rows] = await query(
       `SELECT s.vehicle_plate, s.vehicle_type, s.license_status, s.license_expiry,
-              v.model
+              v.model, v.capacity_tons
        FROM STAFF s
        LEFT JOIN vehicle v ON v.plate_number = s.vehicle_plate AND v.tenant_id = s.tenant_id
        WHERE s.staff_id = ? LIMIT 1`,
