@@ -1684,10 +1684,24 @@ function renderShipmentsTable(){
 }
 
 var _origGo=go;
-go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}};
+go=function(id,navBtn){
+  _origGo(id,navBtn);
+  if(id==='app-users') loadAppUsers();
+  if(id==='staff') loadStaff(); // refresh badge and table when navigating to staff
+  if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}
+};
 // Auto-load on page load
 loadShipments();
 loadStaff(); // Load staff early so pending license badge shows on nav
+// Refresh staff badge every 30 seconds so it stays current without needing to navigate
+setInterval(function(){
+  apiFetch('/'+_SLUG+'/api/admin/staff').then(function(r){return r.json();}).then(function(list){
+    if(!Array.isArray(list)) return;
+    var cnt = list.filter(function(s){ return s.role==='Driver' && s.license_status==='pending_review'; }).length;
+    var badge = document.getElementById('staff-pending-badge');
+    if(badge){ badge.textContent = cnt; badge.style.display = cnt > 0 ? '' : 'none'; }
+  }).catch(function(){});
+}, 30000);
 
 // â”€â”€ Dashboard Fleet Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadDashFleet(){
@@ -4018,7 +4032,8 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     var did = d.staff_id || d.id;
     opt.value = did;
 
-    opt.textContent = busyMap[did] ? '[Busy] ' + (d.name || d.full_name) : '[Available] ' + (d.name || d.full_name);
+    opt.textContent = busyMap[did] ? (d.name || d.full_name) + ' (busy)' : (d.name || d.full_name) + ' (available)';
+    opt.style.color = busyMap[did] ? '#f59e0b' : '#16a34a'; opt.style.fontWeight = '600';
     if (did == currentDriverId) opt.selected = true;
     driverSel.appendChild(opt);
   });
