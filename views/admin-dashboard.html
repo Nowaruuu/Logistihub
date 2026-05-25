@@ -1850,37 +1850,34 @@ function _renderSalesChart(chartData, period){
   var labels=slots.map(function(s){return s.label;});
   var paidVals=slots.map(function(s){return s.paid;});
   var pendingVals=slots.map(function(s){return s.pending;});
-  var counts=slots.map(function(s){return s.count;});
-  if(_srMonthlyChart)_srMonthlyChart.destroy();
-  var ctx1=document.getElementById('sr-monthly-chart');
-  if(ctx1){
-    // Force canvas to match parent container dimensions before Chart.js init
-    var parent=ctx1.parentElement;
-    if(parent){
-      ctx1.style.width='100%';
-      ctx1.style.height=parent.clientHeight+'px';
-    }
-    _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
-      type:'bar',
-      data:{
-        labels:labels,
-        datasets:[
-          {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-          {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60}
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom'}},
-        scales:{
-          y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
-          x:{stacked:true,grid:{display:false}}
-        }
+  if(_srMonthlyChart){_srMonthlyChart.destroy();_srMonthlyChart=null;}
+  // Replace canvas element to avoid stale dimensions from display:none
+  var oldCanvas=document.getElementById('sr-monthly-chart');
+  if(!oldCanvas) return;
+  var wrapper=oldCanvas.parentElement;
+  oldCanvas.remove();
+  var c=document.createElement('canvas');
+  c.id='sr-monthly-chart';
+  c.height=260;
+  wrapper.appendChild(c);
+  _srMonthlyChart=new Chart(c,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[
+        {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
+        {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'}},
+      scales:{
+        y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
+        x:{stacked:true,grid:{display:false}}
       }
-    });
-    // Force resize after creation
-    setTimeout(function(){ if(_srMonthlyChart) _srMonthlyChart.resize(); }, 100);
-  }
+    }
+  });
 }
 function loadSalesReportChart(period){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
