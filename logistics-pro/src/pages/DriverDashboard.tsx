@@ -59,7 +59,10 @@ export default function DriverDashboard() {
     localStorage.setItem(getDeclinedKey(), JSON.stringify(arr));
   };
 
-  const hasActiveJob = activeAssignments.length > 0;
+  const MAX_ACTIVE_JOBS = 5;
+  const activeCount = activeAssignments.length;
+  const hasActiveJob = activeCount > 0;       // used for online-toggle lock only
+  const isAtCapacity = activeCount >= MAX_ACTIVE_JOBS;
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -154,8 +157,10 @@ export default function DriverDashboard() {
   }, []);
 
   const handleAcceptJob = async (jobId: string) => {
-    if (!user || !profile || hasActiveJob) return;
-    // Block acceptance if phone number is not set
+    if (!user || !profile) return;
+    // Block if at vehicle capacity (5 active deliveries max)
+    if (isAtCapacity) return;
+    // Block if no phone number set
     if (!profile.phone?.trim()) {
       setShowPhoneRequired(true);
       return;
@@ -243,9 +248,17 @@ export default function DriverDashboard() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className={cn(
                     'text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full',
-                    hasActiveJob ? 'bg-blue-500/20 text-blue-400' : isOnline ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'
+                    hasActiveJob
+                      ? isAtCapacity
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-blue-500/20 text-blue-400'
+                      : isOnline ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'
                   )}>
-                    {hasActiveJob ? '● On Delivery' : isOnline ? '● Online' : '○ Offline'}
+                    {hasActiveJob
+                      ? activeCount >= MAX_ACTIVE_JOBS
+                        ? '● Full (5/5)'
+                        : `● ${activeCount}/5 Active`
+                      : isOnline ? '● Online' : '○ Offline'}
                   </span>
                 </div>
               </div>
@@ -285,17 +298,17 @@ export default function DriverDashboard() {
 
       {/* Single-task notice */}
       <AnimatePresence>
-        {hasActiveJob && activeTab === 'available' && (
+        {isAtCapacity && activeTab === 'available' && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="mx-5 flex items-start gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20"
+            className="mx-5 flex items-start gap-3 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20"
           >
-            <AlertTriangle className="size-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="size-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-amber-400">You have an active delivery</p>
-              <p className="text-xs text-amber-500/70 mt-0.5">Complete your current job before accepting a new one.</p>
+              <p className="text-sm font-bold text-red-400">Vehicle at full capacity</p>
+              <p className="text-xs text-red-500/70 mt-0.5">You have {activeCount} active deliveries (max {MAX_ACTIVE_JOBS}). Complete a delivery to accept more.</p>
             </div>
           </motion.div>
         )}
@@ -399,22 +412,22 @@ export default function DriverDashboard() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleDeclineJob(job.trackingNumber)}
-                      disabled={!isOnline || hasActiveJob || accepting === job.id}
+                      disabled={!isOnline || isAtCapacity || accepting === job.id}
                       className="py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-950/20 dark:hover:text-red-400 dark:hover:border-red-900/40 disabled:opacity-40"
                     >
                       Decline
                     </button>
                     <button
                       onClick={() => handleAcceptJob(job.id)}
-                      disabled={!isOnline || hasActiveJob || accepting === job.id}
+                      disabled={!isOnline || isAtCapacity || accepting === job.id}
                       className={cn(
                         'py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
-                        hasActiveJob
+                        isAtCapacity
                           ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                           : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
                       )}
                     >
-                      {accepting === job.id ? 'Accepting...' : hasActiveJob ? 'Busy' : 'Accept'}
+                      {accepting === job.id ? 'Accepting...' : isAtCapacity ? `Full (${MAX_ACTIVE_JOBS}/${MAX_ACTIVE_JOBS})` : `Accept (${activeCount}/${MAX_ACTIVE_JOBS})`}
                     </button>
                   </div>
                 </motion.div>
