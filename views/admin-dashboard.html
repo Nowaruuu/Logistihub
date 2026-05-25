@@ -1854,7 +1854,10 @@ function _renderSalesChart(chartData, period){
   if(_srMonthlyChart)_srMonthlyChart.destroy();
   var ctx1=document.getElementById('sr-monthly-chart');
   if(ctx1){
-    ctx1.setAttribute('height','260');
+    // Set explicit pixel size so Chart.js doesn't need to measure the container
+    var w = (ctx1.parentElement ? ctx1.parentElement.clientWidth : 0) || 800;
+    ctx1.width = w;
+    ctx1.height = 260;
     _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
       type:'bar',
       data:{
@@ -1865,7 +1868,7 @@ function _renderSalesChart(chartData, period){
         ]
       },
       options:{
-        responsive:true,maintainAspectRatio:false,
+        responsive:false,
         plugins:{legend:{position:'bottom'}},
         scales:{
           y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
@@ -1915,14 +1918,16 @@ function loadSalesReport(){
     if(_srTypeChart)_srTypeChart.destroy();
     var ctx2=document.getElementById('sr-type-chart');
     if(ctx2){
-      ctx2.setAttribute('height','220');
+      var w2 = (ctx2.parentElement ? ctx2.parentElement.clientWidth : 0) || 400;
+      ctx2.width = w2;
+      ctx2.height = 220;
       _srTypeChart=new Chart(ctx2.getContext('2d'),{
         type:'doughnut',
         data:{
           labels:typeLabels,
           datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
         },
-        options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+        options:{responsive:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
       });
     }
 
