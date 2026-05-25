@@ -256,7 +256,15 @@ export default function DriverDashboard() {
     setCompleting(deliveryId);
     setShowProofModal(null);
     try {
-      await deliveryService.updateStatus(deliveryId, 'Delivered', 'Recipient Location', photo || undefined);
+      const coords = latestGPS.current; // grab latest GPS fix
+      await deliveryService.updateStatus(
+        deliveryId,
+        'Delivered',
+        'Recipient Location',
+        photo || undefined,
+        coords ? coords[0] : null,
+        coords ? coords[1] : null
+      );
       await fetchData();
     } catch (err) {
       console.error('Error completing delivery:', err);

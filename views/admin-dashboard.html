@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -3904,16 +3904,26 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : '-';
+      // Geolocation — show as Google Maps link if coordinates present
+      var geo = (p.latitude && p.longitude)
+        ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;" title="Open in Google Maps">' + parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;vertical-align:middle;\">open_in_new</span></a>'
+        : '<span style="color:#94a3b8;font-size:11px;">-</span>';
       var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
-      var type = esc(p.capture_type || p.type || 'Photo');
-      var media = p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : (p.signature ? '<img src="' + p.signature + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : '-');
+      // Capture type badge
+      var ct = p.capture_type || 'Photo';
+      var typeColor = ct === 'Photo' ? 'background:#dcfce7;color:#15803d' : 'background:#f1f5f9;color:#94a3b8';
+      var typeIcon = ct === 'Photo' ? 'photo_camera' : 'hide_image';
+      var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
+      // Media — thumbnail with click-to-view, or No Photo badge
+      var media = p.photo
+        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" />'
+        : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
-        '<td><strong>' + esc(p.delivery_number || '-') + '</strong></td>' +
+        '<td><strong style="color:#3b82f6;">' + esc(p.delivery_number || '-') + '</strong></td>' +
         '<td>' + type + '</td>' +
-        '<td style="font-family:monospace;font-size:11px;">' + geo + '</td>' +
-        '<td>' + ts + '</td>' +
+        '<td>' + geo + '</td>' +
+        '<td style="font-size:11px;color:#64748b;">' + ts + '</td>' +
         '<td>' + media + '</td>' +
       '</tr>';
     }).join('');

@@ -1534,24 +1534,30 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
           tenant_id INT NOT NULL,
           photo LONGTEXT DEFAULT NULL,
           signature LONGTEXT DEFAULT NULL,
+          capture_type VARCHAR(50) DEFAULT 'Photo',
           receiver_name VARCHAR(255) DEFAULT NULL,
           notes TEXT DEFAULT NULL,
           latitude DECIMAL(10,8) DEFAULT NULL,
           longitude DECIMAL(11,8) DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
+        // Add capture_type column to existing tables (safe to run multiple times)
+        await query(`ALTER TABLE proof_of_delivery ADD COLUMN IF NOT EXISTS capture_type VARCHAR(50) DEFAULT 'Photo'`).catch(()=>{});
 
         if (proof_photo) {
           await query('UPDATE shipment SET proof_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [proof_photo, dn, tid]);
           console.log('[POD] Saved proof_photo_url to shipment:', dn, '(length:', proof_photo.length, ')');
         }
         // Also insert into proof_of_delivery table for admin POD dashboard
+        const podLat = (req.body.lat !== undefined && req.body.lat !== null) ? parseFloat(req.body.lat) : null;
+        const podLng = (req.body.lng !== undefined && req.body.lng !== null) ? parseFloat(req.body.lng) : null;
+        const captureType = proof_photo ? 'Photo' : 'None';
         await query(
-          `INSERT INTO proof_of_delivery (delivery_number, tenant_id, photo, receiver_name, notes, created_at)
-           VALUES (?, ?, ?, ?, ?, NOW())`,
-          [dn, tid, proof_photo || null, staffName, location || 'Delivered by driver']
+          `INSERT INTO proof_of_delivery (delivery_number, tenant_id, photo, capture_type, receiver_name, notes, latitude, longitude, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+          [dn, tid, proof_photo || null, captureType, staffName, location || 'Delivered by driver', podLat, podLng]
         );
-        console.log('[POD] Inserted into proof_of_delivery table for:', dn);
+        console.log('[POD] Inserted into proof_of_delivery table for:', dn, '| lat:', podLat, '| lng:', podLng, '| hasPhoto:', !!proof_photo);
       } catch(podErr) {
         console.error('[POD] ERROR saving proof of delivery:', podErr.message || podErr);
       }
