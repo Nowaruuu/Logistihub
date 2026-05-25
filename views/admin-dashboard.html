@@ -1901,10 +1901,10 @@ function loadSalesReport(){
     var netEl = document.getElementById('sr-net-profit');
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
-    // Render chart with current period selection (delay to ensure container is visible)
-    setTimeout(function(){
+    // Render chart with current period selection (wait for paint)
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
       _renderSalesChart(data.chart_data||[], curPeriod);
-    }, 50);
+    }); });
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
