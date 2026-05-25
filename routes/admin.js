@@ -546,6 +546,62 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
     }
 
     const newStatus = driverAtCapacity ? 'Queued' : 'In-Transit';
+
+    // ── WEIGHT CAPACITY CHECK ─────────────────────────────────────────────────
+    if (assigned_vehicle_plate) {
+      const VEHICLE_WEIGHT_LIMITS_KG = {
+        motorcycle: 50, sedan: 200, suv: 300, pickup: 1000,
+        van: 1000, truck: 5000, trailer: 15000
+      };
+
+      // Get shipment weight
+      const [shipWeight] = await query(
+        'SELECT weight, item_type_flag FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+        [dn, tid]
+      );
+      const packageWeightKg = parseFloat(shipWeight[0]?.weight) || 0;
+
+      if (packageWeightKg > 0) {
+        // Get vehicle registered capacity
+        const [vCap] = await query(
+          'SELECT capacity_tons, vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+          [assigned_vehicle_plate, tid]
+        );
+        let vehicleCapacityKg = null;
+        if (vCap.length && vCap[0].capacity_tons) {
+          vehicleCapacityKg = parseFloat(vCap[0].capacity_tons) * 1000;
+        } else if (vCap.length && vCap[0].vehicle_type) {
+          vehicleCapacityKg = VEHICLE_WEIGHT_LIMITS_KG[(vCap[0].vehicle_type||'').toLowerCase()] || 200;
+        } else {
+          vehicleCapacityKg = 200; // safe default
+        }
+
+        // Sum current active load on this vehicle (excluding current shipment)
+        const [loadRows] = await query(
+          `SELECT COALESCE(SUM(COALESCE(weight, 0)), 0) AS total_weight
+           FROM shipment
+           WHERE assigned_vehicle_plate = ? AND tenant_id = ? AND delivery_number != ?
+             AND status IN ('In-Transit', 'Out for Delivery', 'Queued')`,
+          [assigned_vehicle_plate, tid, dn]
+        );
+        const currentWeightKg = parseFloat(loadRows[0]?.total_weight) || 0;
+        const newTotalKg = currentWeightKg + packageWeightKg;
+
+        if (newTotalKg > vehicleCapacityKg) {
+          const remaining = Math.max(0, vehicleCapacityKg - currentWeightKg);
+          const vType = vCap[0]?.vehicle_type || 'vehicle';
+          return res.status(400).json({
+            error: `Weight limit exceeded for ${assigned_vehicle_plate} (${vType}). ` +
+                   `Max capacity: ${vehicleCapacityKg} kg. ` +
+                   `Current load: ${currentWeightKg} kg. ` +
+                   `This package: ${packageWeightKg} kg. ` +
+                   `Remaining: ${remaining} kg. ` +
+                   `Use a vehicle with higher capacity or complete active deliveries first.`
+          });
+        }
+      }
+    }
+
     await query(
       `UPDATE shipment SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = ? WHERE delivery_number = ? AND tenant_id = ?`,
       [assigned_driver_id, assigned_vehicle_plate || null, newStatus, dn, tid]

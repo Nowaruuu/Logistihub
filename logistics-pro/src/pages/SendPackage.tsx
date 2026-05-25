@@ -19,20 +19,20 @@ const PACKAGE_CATEGORIES = [
   { id: 'BULK', label: 'Bulk Freight', icon: Boxes, desc: 'Pallets, wholesale cargo' },
 ] as const;
 
-// Vehicle types with REAL Philippine fuel rates
+// Vehicle types with REAL Philippine fuel rates + PH-researched weight limits
 // Based on: Gasoline ~₱61/L, Diesel ~₱55/L (as of 2025)
-// Fuel cost per km = price_per_liter ÷ km_per_liter
+// Weight limits based on PH regulations & industry standards:
 const VEHICLE_TYPES = [
-  // Motorcycle: ~35 km/L gasoline → ₱61/35 = ₱1.74/km + driver labor → ~₱2.20/km
-  { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 20, fuelRate: 2.20, desc: 'Small parcels, documents', fuelType: 'Gasoline' },
-  // Sedan: ~13 km/L gasoline → ₱61/13 = ₱4.69/km
-  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 100, fuelRate: 4.70, desc: 'Medium packages', fuelType: 'Gasoline' },
-  // Van: ~9 km/L diesel → ₱55/9 = ₱6.11/km
-  { id: 'van', label: 'Van', icon: Truck, maxKg: 500, fuelRate: 6.11, desc: 'Multiple boxes, food', fuelType: 'Diesel' },
-  // Truck: ~5 km/L diesel → ₱55/5 = ₱11/km
+  // Motorcycle: delivery motos typically 50kg max payload
+  { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 50, fuelRate: 2.20, desc: 'Small parcels, documents', fuelType: 'Gasoline' },
+  // Sedan: 150–200 kg max per PH DBM standards
+  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 200, fuelRate: 4.70, desc: 'Medium packages up to 200 kg', fuelType: 'Gasoline' },
+  // Van (L300 / Hiace): 940–1,200 kg
+  { id: 'van', label: 'Van', icon: Truck, maxKg: 1000, fuelRate: 6.11, desc: 'Multiple boxes, up to 1,000 kg', fuelType: 'Diesel' },
+  // Truck (4–6 wheeler): up to 5,000 kg
   { id: 'truck', label: 'Truck', icon: Truck, maxKg: 5000, fuelRate: 11.00, desc: 'Heavy cargo, pallets', fuelType: 'Diesel' },
-  // Flatbed: ~3.5 km/L diesel → ₱55/3.5 = ₱15.71/km
-  { id: 'flatbed', label: 'Flatbed', icon: Truck, maxKg: 20000, fuelRate: 15.71, desc: 'Vehicles, heavy equipment', fuelType: 'Diesel' },
+  // Flatbed: vehicles, heavy equipment
+  { id: 'flatbed', label: 'Flatbed', icon: Truck, maxKg: 15000, fuelRate: 15.71, desc: 'Vehicles, heavy equipment', fuelType: 'Diesel' },
 ] as const;
 
 // Which vehicles are compatible with each category
@@ -429,6 +429,16 @@ export default function SendPackage() {
     if (!receiverPhone.trim()) { setError('Receiver phone number is required'); return; }
     if (!PH_PHONE_REGEX.test(receiverPhone.trim())) { setError('Receiver phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
+    // Weight limit check against selected vehicle capacity
+    const effectiveMaxKg = tenantCapacities[vehicle] ?? selectedVehicle?.maxKg ?? 200;
+    if (weightKg > effectiveMaxKg) {
+      const unitDisplay = weightKg >= 1000 ? `${(weightKg/1000).toFixed(2)} tons` : `${weightKg} kg`;
+      setError(
+        `Package weight (${unitDisplay}) exceeds the ${selectedVehicle?.label || vehicle} limit of ${effectiveMaxKg} kg. ` +
+        `Please choose a vehicle with higher capacity (e.g. Van up to 1,000 kg, Truck up to 5,000 kg).`
+      );
+      return;
+    }
     if (compatibleVehicles.length === 0) { setError('No suitable vehicle available for this package category. Please choose a different category or contact your admin.'); return; }
     if (isOverDistanceLimit) { setError(`Route distance (${Math.round(distKm)}km) exceeds the maximum allowed distance of ${maxDistanceKm}km. Please choose a closer destination.`); return; }
     setShowReview(true);

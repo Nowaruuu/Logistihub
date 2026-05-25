@@ -1378,6 +1378,51 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
       }
     }
 
+    // ── WEIGHT CAPACITY CHECK ─────────────────────────────────────────────────
+    // Default max weight (kg) per vehicle type based on PH standards
+    const VEHICLE_WEIGHT_LIMITS_KG = {
+      motorcycle: 50, sedan: 200, suv: 300, pickup: 1000,
+      van: 1000, truck: 5000, trailer: 15000
+    };
+    const packageWeightKg = parseFloat(rows[0].weight) || 0;
+    if (packageWeightKg > 0) {
+      // Get vehicle's registered capacity from fleet table (capacity_tons takes priority)
+      let vehicleCapacityKg = null;
+      if (driverVehiclePlate) {
+        const [vCap] = await query(
+          'SELECT capacity_tons, vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+          [driverVehiclePlate, tid]
+        );
+        if (vCap.length && vCap[0].capacity_tons) {
+          vehicleCapacityKg = parseFloat(vCap[0].capacity_tons) * 1000;
+        }
+      }
+      // Fall back to type-based default
+      if (!vehicleCapacityKg) {
+        vehicleCapacityKg = VEHICLE_WEIGHT_LIMITS_KG[effectiveVehicleType] || 200;
+      }
+
+      // Sum weight of current active shipments on this vehicle
+      const [activeWeightRows] = await query(
+        `SELECT COALESCE(SUM(COALESCE(weight, 0)), 0) AS total_weight
+         FROM shipment
+         WHERE assigned_vehicle_plate = ? AND tenant_id = ?
+           AND status IN ('In-Transit', 'Out for Delivery', 'Queued')`,
+        [driverVehiclePlate || '', tid]
+      );
+      const currentWeightKg = parseFloat(activeWeightRows[0]?.total_weight) || 0;
+      const newTotalKg = currentWeightKg + packageWeightKg;
+
+      if (newTotalKg > vehicleCapacityKg) {
+        const remaining = Math.max(0, vehicleCapacityKg - currentWeightKg);
+        return res.status(400).json({
+          error: `Weight limit exceeded. Your ${effectiveVehicleType} can carry up to ${vehicleCapacityKg} kg. ` +
+                 `Current load: ${currentWeightKg} kg. This package: ${packageWeightKg} kg. ` +
+                 `Remaining capacity: ${remaining} kg.`
+        });
+      }
+    }
+
     await query(
       `UPDATE shipment
        SET assigned_driver_id = ?, assigned_vehicle_plate = ?, status = 'In-Transit'
