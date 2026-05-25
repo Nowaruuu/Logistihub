@@ -1850,27 +1850,30 @@ function _renderSalesChart(chartData, period){
   var labels=slots.map(function(s){return s.label;});
   var paidVals=slots.map(function(s){return s.paid;});
   var pendingVals=slots.map(function(s){return s.pending;});
-  if(_srMonthlyChart){_srMonthlyChart.destroy();_srMonthlyChart=null;}
+  var counts=slots.map(function(s){return s.count;});
+  if(_srMonthlyChart)_srMonthlyChart.destroy();
   var ctx1=document.getElementById('sr-monthly-chart');
-  if(!ctx1) return;
-  _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
-    type:'bar',
-    data:{
-      labels:labels,
-      datasets:[
-        {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
-        {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60}
-      ]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom'}},
-      scales:{
-        y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
-        x:{stacked:true,grid:{display:false}}
+  if(ctx1){
+    ctx1.setAttribute('height','260');
+    _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:labels,
+        datasets:[
+          {label:'Collected',data:paidVals,backgroundColor:'#10b981',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60},
+          {label:'Pending',data:pendingVals,backgroundColor:'#f59e0b',borderRadius:6,borderSkipped:false,yAxisID:'y',order:2,stack:'rev',maxBarThickness:60}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom'}},
+        scales:{
+          y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
+          x:{stacked:true,grid:{display:false}}
+        }
       }
-    }
-  });
+    });
+  }
 }
 function loadSalesReportChart(period){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -1899,8 +1902,8 @@ function loadSalesReport(){
     var netEl = document.getElementById('sr-net-profit');
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
-    // Render both charts after brief delay so container is painted
-    setTimeout(function(){
+    // Render chart with current period selection
+    _renderSalesChart(data.chart_data||[], curPeriod);
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
@@ -1909,31 +1912,19 @@ function loadSalesReport(){
     var typeLabels=(data.by_type||[]).map(function(t){return t.type||'Other';});
     var typeValues=(data.by_type||[]).map(function(t){return Number(t.total)||0;});
     var typeColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899'];
-      _renderSalesChart(data.chart_data||[], curPeriod);
-
-      if(_srTypeChart){_srTypeChart.destroy();_srTypeChart=null;}
-      var ctx2=document.getElementById('sr-type-chart');
-      if(ctx2){
-        ctx2.style.display='';
-        var emp2=ctx2.parentElement.querySelector('.sr-type-empty'); if(emp2)emp2.remove();
-        if(!typeValues.length || typeValues.every(function(v){return v===0;})){
-          ctx2.style.display='none';
-          var emp=document.createElement('div'); emp.className='sr-type-empty'; emp.style.cssText='display:flex;align-items:center;justify-content:center;height:220px;color:#94a3b8;font-size:13px;'; emp.textContent='No revenue data by type yet'; ctx2.parentElement.appendChild(emp);
-        } else {
-          // Restore canvas size after destroy() resets it to 0x0
-          ctx2.removeAttribute('height'); ctx2.setAttribute('height','220');
-          ctx2.style.height='220px';
-          _srTypeChart=new Chart(ctx2.getContext('2d'),{
-            type:'doughnut',
-            data:{
-              labels:typeLabels,
-              datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
-            },
-            options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
-          });
-        }
-      }
-    }, 60);
+    if(_srTypeChart)_srTypeChart.destroy();
+    var ctx2=document.getElementById('sr-type-chart');
+    if(ctx2){
+      ctx2.setAttribute('height','220');
+      _srTypeChart=new Chart(ctx2.getContext('2d'),{
+        type:'doughnut',
+        data:{
+          labels:typeLabels,
+          datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
+        },
+        options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+      });
+    }
 
     // Top Clients Table
     var tcTb=document.getElementById('sr-top-clients-tbody');
