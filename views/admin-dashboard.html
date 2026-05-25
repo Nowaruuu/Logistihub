@@ -666,7 +666,7 @@ textarea{resize:vertical;}
             <option value="yearly">Yearly</option>
           </select>
         </div>
-        <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
+        <div style="padding:20px;position:relative;height:280px;"><canvas id="sr-monthly-chart"></canvas></div>
       </div>
       <!-- Two columns: Revenue by Type + Top Clients -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
@@ -674,7 +674,7 @@ textarea{resize:vertical;}
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
             <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
           </div>
-          <div style="padding:20px;"><canvas id="sr-type-chart" height="220"></canvas></div>
+          <div style="padding:20px;position:relative;height:240px;"><canvas id="sr-type-chart"></canvas></div>
         </div>
         <div class="card" style="padding:0;">
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
@@ -1914,14 +1914,18 @@ function loadSalesReport(){
     if(_srTypeChart)_srTypeChart.destroy();
     var ctx2=document.getElementById('sr-type-chart');
     if(ctx2){
-      _srTypeChart=new Chart(ctx2.getContext('2d'),{
-        type:'doughnut',
-        data:{
-          labels:typeLabels,
-          datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
-        },
-        options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
-      });
+      if(!typeValues.length || typeValues.every(function(v){return v===0;})){
+        ctx2.parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:13px;">No revenue data by type yet</div>';
+      } else {
+        _srTypeChart=new Chart(ctx2.getContext('2d'),{
+          type:'doughnut',
+          data:{
+            labels:typeLabels,
+            datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
+          },
+          options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+        });
+      }
     }
 
     // Top Clients Table
