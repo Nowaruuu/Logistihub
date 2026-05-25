@@ -666,7 +666,7 @@ textarea{resize:vertical;}
             <option value="yearly">Yearly</option>
           </select>
         </div>
-        <div style="padding:20px;position:relative;height:280px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
+        <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260" style="width:100%;"></canvas></div>
       </div>
       <!-- Two columns: Revenue by Type + Top Clients -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
@@ -674,7 +674,7 @@ textarea{resize:vertical;}
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
             <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
           </div>
-          <div style="padding:20px;position:relative;height:240px;"><canvas id="sr-type-chart" height="220"></canvas></div>
+          <div style="padding:20px;"><canvas id="sr-type-chart" height="220" style="width:100%;"></canvas></div>
         </div>
         <div class="card" style="padding:0;">
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
@@ -1851,16 +1851,9 @@ function _renderSalesChart(chartData, period){
   var paidVals=slots.map(function(s){return s.paid;});
   var pendingVals=slots.map(function(s){return s.pending;});
   if(_srMonthlyChart){_srMonthlyChart.destroy();_srMonthlyChart=null;}
-  // Replace canvas element to avoid stale dimensions from display:none
-  var oldCanvas=document.getElementById('sr-monthly-chart');
-  if(!oldCanvas) return;
-  var wrapper=oldCanvas.parentElement;
-  oldCanvas.remove();
-  var c=document.createElement('canvas');
-  c.id='sr-monthly-chart';
-  c.height=260;
-  wrapper.appendChild(c);
-  _srMonthlyChart=new Chart(c,{
+  var ctx1=document.getElementById('sr-monthly-chart');
+  if(!ctx1) return;
+  _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
     type:'bar',
     data:{
       labels:labels,
@@ -1870,7 +1863,7 @@ function _renderSalesChart(chartData, period){
       ]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,
+      responsive:false,
       plugins:{legend:{position:'bottom'}},
       scales:{
         y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
@@ -1882,7 +1875,6 @@ function _renderSalesChart(chartData, period){
 function loadSalesReportChart(period){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   apiFetch('/'+slug+'/api/admin/sales-report?period='+period).then(function(r){return r.json();}).then(function(data){
-    window._srRenderVer=(window._srRenderVer||0)+1;
     _renderSalesChart(data.chart_data||[], period);
   }).catch(function(e){console.error('Chart refresh error:',e);});
 }
@@ -1935,7 +1927,7 @@ function loadSalesReport(){
             labels:typeLabels,
             datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
           },
-          options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+          options:{responsive:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
         });
       }
     }
