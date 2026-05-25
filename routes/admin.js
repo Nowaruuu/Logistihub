@@ -607,9 +607,13 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       [assigned_driver_id, assigned_vehicle_plate || null, newStatus, dn, tid]
     );
 
-    // Get driver name for history
-    const [driverInfo] = await query('SELECT name FROM STAFF WHERE staff_id = ? LIMIT 1', [assigned_driver_id]);
+    // Get driver name + user_id for notification
+    const [driverInfo] = await query(
+      'SELECT name, user_id FROM STAFF WHERE staff_id = ? LIMIT 1',
+      [assigned_driver_id]
+    );
     const driverName = driverInfo[0]?.name || 'Driver';
+    const driverUserId = driverInfo[0]?.user_id || null;
 
     // Log to shipment history
     await query(
@@ -617,9 +621,36 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       [dn, tid, newStatus,
        driverAtCapacity
          ? `Shipment queued for driver ${driverName}. Will start after a current delivery is completed.`
-         : `Driver ${driverName} assigned and pickup started.`,
+         : `Driver ${driverName} assigned by staff and pickup started.`,
        req.admin?.name || 'Manager']
     );
+
+    // 🔔 Notify the driver that they've been assigned by staff
+    // (driver may not have been watching available jobs — this ensures they know)
+    try {
+      const assignedBy = req.admin?.name || 'The system';
+      const notifTitle = driverAtCapacity ? '📦 Delivery Queued for You' : '📦 You\'ve Been Assigned a Delivery';
+      const notifMsg = driverAtCapacity
+        ? `${assignedBy} has queued delivery ${dn} for you. It will start automatically when you complete your current delivery.`
+        : `${assignedBy} has assigned delivery ${dn} to you. Please check your Active tab and head to the pickup location.`;
+
+      await query(
+        `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, related_tracking)
+         VALUES (?, 'staff', ?, ?, ?, 'Shipments', ?)`,
+        [assigned_driver_id, tid, notifTitle, notifMsg, dn]
+      );
+
+      // Also notify via app_user record if driver has a linked user account
+      if (driverUserId) {
+        await query(
+          `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, related_tracking)
+           VALUES (?, 'app_user', ?, ?, ?, 'Shipments', ?)`,
+          [driverUserId, tid, notifTitle, notifMsg, dn]
+        );
+      }
+    } catch (notifErr) {
+      console.warn('[assign] Notification insert failed (non-critical):', notifErr.message);
+    }
 
     res.json({
       ok: true,

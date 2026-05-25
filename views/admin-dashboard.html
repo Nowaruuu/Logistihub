@@ -4000,16 +4000,26 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate) {
   // Populate vehicle dropdown
   function fillVehicles(selDriverId) {
     var vehSel = document.getElementById('admin-reassign-vehicle');
-    vehSel.innerHTML = '<option value="">None</option>';
-    var selDriver = selDriverId ? drivers.find(function(d){ return (d.staff_id||d.id) == selDriverId; }) : null;
-    if (selDriver && selDriver.vehicle_plate) {
-      var o = document.createElement('option'); o.value = selDriver.vehicle_plate;
-      o.textContent = selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' — Own vehicle';
-      o.selected = true; vehSel.innerHTML = ''; vehSel.appendChild(o); vehSel.disabled = true; return;
+    vehSel.innerHTML = '<option value="">None (optional)</option>';
+    if (!selDriverId) {
+      // No driver selected yet — show placeholder
+      vehSel.disabled = true;
+      var ph = document.createElement('option'); ph.value = ''; ph.disabled = true;
+      ph.textContent = '← Select a driver first'; vehSel.appendChild(ph);
+      return;
     }
     vehSel.disabled = false;
+    var selDriver = drivers.find(function(d){ return (d.staff_id||d.id) == selDriverId; });
+    if (selDriver && selDriver.vehicle_plate) {
+      // Driver has their own registered vehicle — auto-select and lock
+      var o = document.createElement('option'); o.value = selDriver.vehicle_plate;
+      o.textContent = '✅ ' + selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' — Driver\'s own vehicle';
+      o.selected = true; vehSel.innerHTML = ''; vehSel.appendChild(o); vehSel.disabled = true; return;
+    }
+    // Driver has no personal vehicle — show fleet
     var busyVehicles = {};
     (_allShipments||[]).forEach(function(s){ if(s.assigned_vehicle_plate && (s.status==='In-Transit'||s.status==='In Transit'||s.status==='Out for Delivery')) busyVehicles[s.assigned_vehicle_plate]=true; });
+    var fleetCount = 0;
     (_adminReassignVehicles||[]).forEach(function(v){
       var o = document.createElement('option'); o.value = v.plate_number;
       var lbl = v.plate_number + (v.vehicle_type ? ' (' + v.vehicle_type + ')' : '');
@@ -4018,8 +4028,13 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate) {
       else lbl += ' 🟢 Available';
       o.textContent = lbl;
       if (v.plate_number === currentPlate) o.selected = true;
-      vehSel.appendChild(o);
+      vehSel.appendChild(o); fleetCount++;
     });
+    if (fleetCount === 0) {
+      var no = document.createElement('option'); no.value = ''; no.disabled = true;
+      no.textContent = '⚠ No fleet vehicles — driver needs to register their vehicle';
+      vehSel.appendChild(no);
+    }
   }
   driverSel.onchange = function(){ fillVehicles(this.value); };
   fillVehicles(currentDriverId);
