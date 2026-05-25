@@ -1,1002 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Dashboard — LogistiHub</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-.lh-dot{background:none!important;border:none!important;}
-/* ── GUI Scale ─────────────────────────────────────────── */
-/* Small */
-.scale-sm .content { font-size: 11px; }
-.scale-sm .content .stat-value { font-size: 16px; }
-.scale-sm .content .stat-card { padding: 8px 10px; min-height: auto; }
-.scale-sm .content .stat-label { font-size: 9px; }
-.scale-sm .content .stat-note { font-size: 9px; }
-.scale-sm .content h2 { font-size: 13px; }
-.scale-sm .content .card { padding: 0; }
-.scale-sm .content td, .scale-sm .content th { padding: 5px 8px; font-size: 10px; }
-.scale-sm .content .form-label { font-size: 10px; }
-.scale-sm .content input, .scale-sm .content select, .scale-sm .content textarea { font-size: 11px; padding: 6px 8px; }
-.scale-sm .content .btn { font-size: 10px; padding: 5px 10px; }
-.scale-sm .content .ph-row h2 { font-size: 13px; }
-.scale-sm .content .ph-row p { font-size: 10px; }
-.scale-sm .content .form-sec { font-size: 9px; }
-.scale-sm .content .hint { font-size: 9px; }
-.scale-sm .content .badge { font-size: 9px; padding: 2px 6px; }
-.scale-sm .content .card-head { padding: 8px 12px; }
-.scale-sm .content .tabs-bar .tab { font-size: 10px; padding: 6px 10px; }
-.scale-sm .page-title { font-size: 12px; }
-.scale-sm .page-sub { font-size: 9px; }
-.scale-sm .nav-link { font-size: 11px; padding: 7px 10px; }
-.scale-sm .nav-link .material-symbols-outlined { font-size: 16px; }
-.scale-sm .nav-sec { font-size: 8px; }
-.scale-sm .sidebar { width: 190px; }
-
-/* Medium (default) */
-.scale-md .content { font-size: 14px; }
-.scale-md .content .stat-value { font-size: 26px; }
-
-/* Large */
-.scale-lg .content { font-size: 17px; }
-.scale-lg .content .stat-value { font-size: 36px; }
-.scale-lg .content .stat-card { padding: 26px 24px; }
-.scale-lg .content .stat-label { font-size: 14px; }
-.scale-lg .content h2 { font-size: 24px; }
-.scale-lg .content .card { margin-bottom: 24px; }
-.scale-lg .content td, .scale-lg .content th { padding: 16px 18px; font-size: 15px; }
-.scale-lg .content .form-label { font-size: 16px; }
-.scale-lg .content input, .scale-lg .content select, .scale-lg .content textarea { font-size: 16px; padding: 13px 16px; }
-.scale-lg .content .btn { font-size: 15px; padding: 12px 22px; }
-.scale-lg .content .form-sec { font-size: 13px; }
-.scale-lg .content .hint { font-size: 13px; }
-.scale-lg .content .ph-row h2 { font-size: 24px; }
-.scale-lg .content .ph-row p { font-size: 15px; }
-.scale-lg .page-title { font-size: 20px; }
-.scale-lg .page-sub { font-size: 14px; }
-.scale-lg .nav-link { font-size: 15px; padding: 12px 14px; }
-.scale-lg .nav-link .material-symbols-outlined { font-size: 19px; }
-.scale-lg .nav-sec { font-size: 11px; }
-body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;height:100vh;display:flex;overflow:hidden;}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
-
-/* ── SIDEBAR ────────────────────────────────────────── */
-.sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
-.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
-.tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
-.tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
-.tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
-.tenant-badge .material-symbols-outlined{font-size:11px;}
-
-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}
-nav::-webkit-scrollbar{display:none;}
-.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;padding:11px 10px 4px;}
-.nav-link{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.nav-link:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);}
-.nav-link.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
-.nav-link .material-symbols-outlined{font-size:17px;}
-.nav-badge{margin-left:auto;background:rgba(251,191,36,.18);color:#fbbf24;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'DM Mono',monospace;}
-.sidebar-bottom{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,.07);}
-.user-row{display:flex;align-items:center;gap:9px;padding:9px 10px;}
-.uavatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;}
-.uavatar .material-symbols-outlined{font-size:15px;color:rgba(255,255,255,.6);}
-.uname{font-size:12px;font-weight:600;color:#fff;}
-.uemail{font-size:10px;color:rgba(255,255,255,.3);}
-
-/* ── MAIN ────────────────────────────────────────────── */
-.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-width:0;}
-.topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
-.page-title{font-weight:700;font-size:15px;color:#0f2235;}
-.page-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
-.tb-right{display:flex;align-items:center;gap:8px;}
-.tb-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#94a3b8;}
-.tb-btn:hover{background:#f1f5f9;}
-.notif-wrap{position:relative;}
-.notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid #fff;}
-.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;}
-.search-bar input{border:none;background:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
-.search-bar .material-symbols-outlined{color:#94a3b8;font-size:16px;}
-
-.content{padding:22px;flex:1;min-width:0;overflow-x:hidden;}
-.screen{display:none;}
-.screen.active{display:block;}
-
-/* ── STAT GRID ───────────────────────────────────────── */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;}
-.stat-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.stat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
-.stat-icon .material-symbols-outlined{font-size:15px;}
-.si-b{background:#eff6ff;}.si-b .material-symbols-outlined{color:#3b82f6;}
-.si-g{background:#f0fdf4;}.si-g .material-symbols-outlined{color:#22c55e;}
-.si-a{background:#fffbeb;}.si-a .material-symbols-outlined{color:#f59e0b;}
-.si-r{background:#fff1f2;}.si-r .material-symbols-outlined{color:#f43f5e;}
-.si-p{background:#f5f3ff;}.si-p .material-symbols-outlined{color:#8b5cf6;}
-.stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
-.stat-note{font-size:10px;color:#94a3b8;margin-top:3px;}
-
-/* ── CARD ────────────────────────────────────────────── */
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px;max-width:100%;}
-.card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
-.card-title .material-symbols-outlined{font-size:15px;color:#94a3b8;}
-.card-body{padding:14px 16px;}
-.card-action{font-size:12px;color:#3b82f6;font-weight:600;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;}
-.card-action:hover{text-decoration:underline;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
-
-/* ── TABLE ───────────────────────────────────────────── */
-.tbl-wrap{overflow-x:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-.tbl-wrap::-webkit-scrollbar{height:8px;}
-.tbl-wrap::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px;margin:0 8px;}
-.tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#3b4f6b,#1e293b);border-radius:8px;border:2px solid #f1f5f9;}
-.tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#4a6382,#2d3f56);}
-[data-theme="dark"] .tbl-wrap{scrollbar-color:#4a6382 #1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-track{background:#1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4a6382,#64748b);border-color:#1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#5b7a9e,#7c8fa3);}
-table{width:100%;border-collapse:collapse;}
-#s-pricing.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-pricing .ph-row{flex-shrink:0;}
-#s-pricing > div[style*="grid"]{flex:1;min-height:0;overflow-y:auto;}
-#s-pricing .form-card{display:flex;flex-direction:column;justify-content:space-between;min-height:100%;}
-#s-payments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-payments .ph-row{flex-shrink:0;}
-#s-payments .stat-grid{flex-shrink:0;}
-#s-payments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-payments > .card > .card-head{flex-shrink:0;}
-#s-payments > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-staff.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-staff .ph-row{flex-shrink:0;}
-#s-staff > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-staff > .card > .card-head{flex-shrink:0;}
-#s-staff > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-vehicles.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-vehicles .ph-row{flex-shrink:0;}
-#s-vehicles > .card{flex-shrink:0;}
-#s-vehicles > .card:last-of-type{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-vehicles > .card:last-of-type > .card-head{flex-shrink:0;}
-#s-vehicles > .card:last-of-type > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-app-users.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-app-users .ph-row{flex-shrink:0;}
-#s-app-users > .card:first-of-type{flex-shrink:0;}
-#s-app-users > .card:last-of-type{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-app-users > .card:last-of-type > .card-head{flex-shrink:0;}
-#s-app-users > .card:last-of-type > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-pod.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-pod .ph-row{flex-shrink:0;}
-#s-pod > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-pod > .card > .card-head{flex-shrink:0;}
-#s-pod > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-subscription.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-subscription .ph-row{flex-shrink:0;}
-#s-subscription > div[style*="grid"]{flex-shrink:0;}
-#s-subscription > #sub-pending-downgrade{flex-shrink:0;}
-#s-subscription > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-subscription > .card > div:first-child{flex-shrink:0;}
-#s-subscription > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-shipments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-shipments .ph-row{flex-shrink:0;}
-#s-shipments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-shipments > .card > .card-head{flex-shrink:0;}
-#s-shipments > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-shipments .tbl-wrap::-webkit-scrollbar{width:6px;height:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a6382,#2d3f56);}
-#s-shipments thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e2e8f0;}
-th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
-td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
-tr:last-child td{border:none;}
-tr:hover td{background:#f8fafc;}
-
-/* ── BADGES ──────────────────────────────────────────── */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
-.b-pending{background:#fef9c3;color:#a16207;}
-.b-transit{background:#dbeafe;color:#1d4ed8;}
-.b-delivered{background:#dcfce7;color:#15803d;}
-.b-declined{background:#fee2e2;color:#b91c1c;}
-.b-available{background:#dcfce7;color:#15803d;}
-.b-onduty{background:#dbeafe;color:#1d4ed8;}
-.b-maint{background:#fef9c3;color:#a16207;}
-.b-paid{background:#dcfce7;color:#15803d;}
-.b-overdue{background:#fee2e2;color:#b91c1c;}
-.b-awaiting{background:#fef3c7;color:#92400e;}
-.type-pill{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
-.t-pkg{background:#ede9fe;color:#6d28d9;}
-.t-veh{background:#dbeafe;color:#1d4ed8;}
-.t-food{background:#fef9c3;color:#92400e;}
-.t-doc{background:#f0fdf4;color:#15803d;}
-.t-bulk{background:#f8fafc;color:#475569;}
-
-/* ── BUTTONS ─────────────────────────────────────────── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.btn-primary{background:#0f2235;color:#fff;}
-.btn-primary:hover{opacity:.86;}
-.btn-ghost{background:none;color:#64748b;}
-.btn-ghost:hover{background:#f1f5f9;}
-.btn-sm{padding:5px 11px;font-size:11px;}
-.btn .material-symbols-outlined{font-size:14px;}
-
-/* ── EMPTY ───────────────────────────────────────────── */
-.empty{padding:44px 20px;text-align:center;}
-.empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:7px;}
-.empty p{font-size:12px;color:#94a3b8;}
-.empty .esub{font-size:11px;color:#cbd5e1;margin-top:3px;}
-
-/* ── FORMS ───────────────────────────────────────────── */
-.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:14px;}
-.form-sec{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #f1f5f9;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.form-label{font-size:11px;font-weight:600;color:#475569;}
-.field-wrap{position:relative;}
-.field-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:16px;pointer-events:none;}
-.field-wrap input,.field-wrap select{padding-left:32px!important;}
-input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
-input:focus,select:focus,textarea:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
-select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;padding-right:26px;}
-textarea{resize:vertical;}
-.hint{font-size:10px;color:#94a3b8;font-style:italic;}
-.tabs-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:14px;}
-.tab{padding:8px 13px;font-size:12px;font-weight:500;color:#94a3b8;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.tab.active{color:#0f2235;font-weight:700;border-bottom-color:#0f2235;}
-.filter-bar{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
-.f-select{padding:6px 24px 6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 6px center;background-size:13px;}
-.f-input{padding:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;}
-.f-input:focus{border-color:#0f2235;}
-
-/* page header */
-.ph-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
-.ph-row h2{font-size:18px;font-weight:800;color:#0f2235;}
-.ph-row p{font-size:12px;color:#64748b;margin-top:3px;}
-
-/* type bars */
-.type-bar-list{display:flex;flex-direction:column;gap:10px;}
-.type-bar-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
-.type-bar-name{font-weight:600;color:#334155;}
-.type-bar-ct{color:#94a3b8;font-family:'DM Mono',monospace;font-size:11px;}
-.bar-track{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:99px;}
-
-/* map placeholder */
-.map-ph{height:200px;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#94a3b8;}
-.map-ph .material-symbols-outlined{font-size:38px;color:#cbd5e1;}
-.map-ph p{font-size:12px;}
-
-/* user reg link box */
-.reg-link-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.reg-link-text{font-size:12px;color:#15803d;line-height:1.6;}
-.reg-link-text strong{color:#14532d;display:block;margin-bottom:3px;}
-.reg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:#15803d;word-break:break-all;}
-.copy-btn{flex-shrink:0;padding:6px 12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
-.copy-btn:hover{background:#bbf7d0;}
-.copy-btn .material-symbols-outlined{font-size:14px;}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40;}
-.sidebar-overlay.show{display:block;}
-.sidebar-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;margin-right:8px;}
-.sidebar-toggle span{display:block;width:20px;height:2px;background:#334155;margin:4px 0;border-radius:2px;transition:all .3s;}
-@media(max-width:768px){
-  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;}
-  .sidebar.open{left:0;}
-  .sidebar-toggle{display:block;}
-  body{display:block;}
-  .main{width:100%!important;min-width:0!important;}
-  .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
-  .grid-2,.grid-3-1{grid-template-columns:1fr!important;}
-  .form-grid{grid-template-columns:1fr!important;}
-  .content{padding:14px;overflow-x:hidden;}
-  .search-bar{display:none;}
-  .topbar{padding:0 12px;}
-  .ph-row{flex-direction:column;gap:10px;}
-  .filter-bar{flex-direction:column;align-items:stretch;}
-  body.sidebar-open{overflow:hidden;}
-
-  /* Override ALL inline grid styles */
-  [style*="grid-template-columns:repeat(5"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(auto"]{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns: repeat"]{grid-template-columns:repeat(2,1fr)!important;}
-
-  /* CARDS — remove overflow:hidden so children can scroll */
-  .card{overflow:visible!important;max-width:100%;}
-  .card-head{flex-direction:column;gap:8px;align-items:stretch!important;overflow:visible!important;padding:10px 12px!important;}
-
-  /* TABS BAR — horizontal scroll with touch */
-  .tabs-bar{overflow-x:auto!important;-webkit-overflow-scrolling:touch;white-space:nowrap!important;flex-wrap:nowrap!important;padding-bottom:4px;display:flex!important;gap:0!important;scrollbar-width:none;}
-  .tabs-bar::-webkit-scrollbar{display:none;}
-  .tab{flex-shrink:0!important;white-space:nowrap!important;}
-
-  /* SHIPMENTS — remove fixed height layout */
-  #s-shipments.active{height:auto!important;overflow:visible!important;display:block!important;}
-  #s-shipments > .card{overflow:visible!important;}
-  #s-shipments > .card > .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
-
-  /* TABLES — force horizontal scroll */
-  .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%!important;display:block!important;}
-  .tbl-wrap table{min-width:700px!important;}
-
-  /* MAP — shrink on mobile */
-  #dash-live-map{height:250px!important;}
-  .map-ph{height:150px!important;}
-  [style*="height:500px"]{height:250px!important;}
-
-  /* LIVE PREVIEW — inline on mobile instead of fixed overlay */
-  #lp-panel{position:relative!important;right:auto!important;top:auto!important;width:100%!important;margin-bottom:16px;}
-
-  /* Reg link box */
-  .reg-link-box{flex-direction:column;gap:8px;}
-  .copy-btn{align-self:flex-start;}
-}
-@media(max-width:480px){
-  .stat-grid{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns"]{grid-template-columns:1fr!important;}
-  .stat-value{font-size:20px;}
-  #dash-live-map{height:200px!important;}
-  [style*="height:500px"]{height:200px!important;}
-}
-</style>
-</head>
-<script src="/public/frontend-api.js"></script>
-<body>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
-      <div id="sidebar-logo-container" style="display:none;flex-shrink:0;">
-        <img id="sidebar-logo-img" src="" style="width:36px;height:36px;object-fit:contain;border-radius:8px;"/>
-      </div>
-      <div>
-        <div class="tenant-name" id="sidebar-tenant-name">Your Company</div>
-        <div class="tenant-sub">ADMIN DASHBOARD</div>
-      </div>
-    </div>
-    <div class="tenant-badge"><span class="material-symbols-outlined">shield</span>Isolated Workspace</div>
-  </div>
-  <nav>
-    <div class="nav-sec">Operations</div>
-    <button class="nav-link active" onclick="closeSidebar();go('dashboard',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
-    <button class="nav-link" onclick="closeSidebar();go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
-
-    <div class="nav-sec">Management</div>
-    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff<span class="nav-badge" id="staff-pending-badge" style="display:none;">0</span></button>
-    <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
-    <button class="nav-link" onclick="closeSidebar();go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
-    <div class="nav-sec">Finance</div>
-    <button class="nav-link" onclick="closeSidebar();go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
-    <button class="nav-link" onclick="closeSidebar();go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
-    <button class="nav-link" onclick="closeSidebar();go('pricing',this)"><span class="material-symbols-outlined">sell</span>Pricing</button>
-    <button class="nav-link" onclick="closeSidebar();go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
-    <button class="nav-link" onclick="closeSidebar();go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
-    <div class="nav-sec">Config</div>
-    <button class="nav-link" onclick="closeSidebar();go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
-    <button class="nav-link" onclick="closeSidebar();go('upgrade',this)"><span class="material-symbols-outlined">swap_vert</span>Manage Plan</button>
-    <button class="nav-link" onclick="closeSidebar();go('audit',this)"><span class="material-symbols-outlined">history</span>Audit Logs</button>
-  </nav>
-  <div class="sidebar-bottom">
-    <div class="user-row" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-      <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
-        <div class="uavatar" style="flex-shrink:0;"><span class="material-symbols-outlined">person</span></div>
-        <div style="overflow:hidden;">
-          <div class="uname" id="sidebar-username" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
-          <div class="uemail" id="sidebar-role" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">ADMIN</div>
-        </div>
-      </div>
-      <button onclick="logout()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:0.2s;" onmouseover="this.style.color='#ef4444';this.style.background='#fef2f2'" onmouseout="this.style.color='#94a3b8';this.style.background='none'" title="Logout">
-        <span class="material-symbols-outlined">logout</span>
-      </button>
-    </div>
-  </div>
-</aside>
-
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-    <div>
-      <div class="page-title" id="page-title">Dashboard</div>
-      <div class="page-sub" id="page-sub">Welcome back</div>
-    </div>
-    <div class="tb-right">
-      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspace…"/></div>
-      <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
-
-      <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- DASHBOARD -->
-    <div id="s-dashboard" class="screen active">
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">In Transit<div class="stat-icon si-a"><span class="material-symbols-outlined">local_shipping</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Delivered<div class="stat-icon si-g"><span class="material-symbols-outlined">check_circle</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
-      </div>
-
-      <!-- User registration link box — TENANT SCOPED -->
-      <div class="reg-link-box" style="margin-bottom:14px;">
-        <div class="reg-link-text">
-          <strong>Your User Registration Page</strong>
-          <span class="reg-link-url" id="dashboard-reg-url">logisticsos.io/your-workspace/register</span>
-          <span style="font-size:11px;color:#15803d;display:block;margin-top:3px;">Share this link with your staff and drivers to register.</span>
-        </div>
-        <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-          <button class="card-action" onclick="go('shipments',null)">View all →</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Delivery #</th><th>Client</th><th>Type</th><th>Driver</th><th>Status</th></tr></thead>
-            <tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">inbox</span><p>No shipments yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →</button></div>
-          <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →</button></div>
-          <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">map</span>Live Shipment Map</span></div>
-        <div class="card-body" style="padding:8px;"><div id="dash-live-map" style="height:500px;border-radius:10px;overflow:hidden;background:#e2e8f0;"></div></div>
-      </div>
-    </div>
-
-    <!-- â•â• SHIPMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-shipments" class="screen">
-      <div class="ph-row">
-        <div><h2>Shipments</h2><p>All deliveries within your workspace.</p></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="tabs-bar" style="border:none;margin:0;">
-            <button class="tab active" onclick="filterShipments('All',this)">All</button>
-            <button class="tab" onclick="filterShipments('Pending',this)">Pending</button>
-            <button class="tab" onclick="filterShipments('Queued',this)">Queued</button>
-            <button class="tab" onclick="filterShipments('In Transit',this)">In Transit</button>
-            <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
-            <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
-            <button class="tab" onclick="filterShipments('Failed',this)">Failed</button>
-          </div>
-          <select class="f-select" id="admin-ship-type-filter" onchange="filterShipments(null)"><option value="">All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup → Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
-            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- â•â• NEW SHIPMENT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-new-shipment" class="screen">
-      <div class="ph-row">
-        <div><h2>New Shipment</h2><p>Create a delivery record within your workspace.</p></div>
-        <button class="btn btn-ghost" onclick="go('shipments',null)">&#8592; Back</button>
-      </div>
-      <div class="form-card">
-        <div class="form-sec">Basic Information</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Delivery Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">tag</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Airway Bill Number</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">confirmation_number</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Client</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">groups</span><select><option value="" disabled selected>Select client</option></select></div></div>
-          <div class="form-group"><label class="form-label">Item Type</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">category</span><select id="item-type-sel" onchange="showSub(this.value)"><option value="" disabled selected>Select type</option><option value="PACKAGE">Package</option><option value="VEHICLE">Vehicle</option><option value="FOOD">Food</option><option value="DOC">Document</option><option value="BULK">Bulk</option></select></div></div>
-        </div>
-      </div>
-      <div class="form-card">
-        <div class="form-sec">Routing &amp; Assignment</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Pickup Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Dropoff Location</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">location_on</span><input type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Assigned Driver</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><select><option value="" disabled selected>Select driver</option></select></div></div>
-          <div class="form-group"><label class="form-label">Helper <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person_add</span><select><option value="" disabled selected>Select helper</option></select></div></div>
-          <div class="form-group"><label class="form-label">Vehicle</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">directions_car</span><select><option value="" disabled selected>Select vehicle</option></select></div></div>
-
-          <div class="form-group"><label class="form-label">Distance (km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">straighten</span><input type="number" step="0.1"/></div></div>
-          <div class="form-group"><label class="form-label">Prohibited Check</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">gpp_maybe</span><select><option value="" disabled selected>Select</option><option>Passed</option><option>Failed</option><option>N/A</option></select></div></div>
-        </div>
-      </div>
-      <!-- sub-forms -->
-      <div id="sf-PACKAGE" class="form-card" style="display:none;"><div class="form-sec">Package Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Length (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Width (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Height (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Weight (kg)</label><input type="number"/></div></div><div class="form-group"><label class="form-label">Content Description</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-VEHICLE" class="form-card" style="display:none;"><div class="form-sec">Vehicle Cargo Details</div><div class="form-grid"><div class="form-group"><label class="form-label">VIN</label><input type="text"/></div><div class="form-group"><label class="form-label">Make / Model</label><input type="text"/></div><div class="form-group"><label class="form-label">Running Condition</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div><div class="form-group"><label class="form-label">Condition Report</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-grid"><div class="form-group"><label class="form-label">Required Temp (Â°C)</label><input type="number" step="0.1"/></div><div class="form-group"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-group"><label class="form-label">Handling Instructions</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-DOC" class="form-card" style="display:none;"><div class="form-sec">Document Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Confidentiality Level</label><select><option value="" disabled selected>Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Strictly Confidential</option></select></div><div class="form-group"><label class="form-label">Recipient ID Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
-      <div id="sf-BULK" class="form-card" style="display:none;"><div class="form-sec">Bulk Cargo</div><div class="form-grid"><div class="form-group"><label class="form-label">Pallet Count</label><input type="number"/></div><div class="form-group"><label class="form-label">Stackable</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div><div class="form-group"><label class="form-label">Forklift Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn btn-ghost" onclick="go('shipments',null)">Cancel</button>
-        <button class="btn btn-primary"><span class="material-symbols-outlined">save</span>Create Shipment</button>
-      </div>
-    </div>
-
-
-
-
-    <!-- ╔═ VEHICLES ══════════════════════════════ -->
-    <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
-
-      <!-- Vehicle Requests Panel -->
-      <div class="card" style="margin-bottom:18px;">
-        <div class="ph-row" style="padding:16px 18px 10px;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;">Vehicle Requests</strong><p style="font-size:11px;color:var(--text-muted);margin:0;">Driver requests &amp; staff assignments</p></div>
-          <button class="btn btn-sm" style="background:var(--bg-2);" onclick="loadVehicleRequests()"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">refresh</span></button>
-        </div>
-        <div id="vehicle-requests-list" style="padding:12px 18px;">
-          <p style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Loading requests...</p>
-        </div>
-      </div>
-      <!-- Package Categories (global) -->
-      <div class="card" style="margin-bottom:18px;">
-        <div class="ph-row" style="padding:14px 18px 10px;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;">Package Categories</strong><p style="font-size:11px;color:var(--text-muted);margin:0;">Toggle which delivery types your fleet currently supports</p></div>
-          <button id="pkg-cat-save-btn" onclick="savePackageCategories()" class="btn btn-primary btn-sm" style="font-size:12px;padding:6px 16px;">Save Changes</button>
-        </div>
-        <div id="pkg-cat-list" style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:10px;">
-          <p style="color:var(--text-muted);font-size:12px;">Loading…</p>
-        </div>
-      </div>
-
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Image</th><th>Plate Number</th><th>Type</th><th>Model</th><th>Capacity (tons)</th><th>Ownership</th><th>Status</th><th>Assigned Driver</th><th>Actions</th></tr></thead><tbody id="vehicles-tbody"><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">directions_car</span><p>Loading vehicles...</p></div></td></tr></tbody></table></div></div>
-    </div>
-
-
-    <!-- ════ STAFF ══════════════════════════════  -->
-    <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
-      <div class="card">
-        <div class="card-head">
-          <div class="tabs-bar" style="border:none;margin:0;"><button class="tab active" onclick="filterStaffTab('All',this)">All</button><button class="tab" onclick="filterStaffTab('Driver',this)">Driver</button><button class="tab" onclick="filterStaffTab('Document Controller',this)">Doc Controller</button><button class="tab" onclick="filterStaffTab('Manager',this)">Manager</button></div>
-          <select class="f-select" onchange="filterStaffStatus(this.value)"><option value="">All Statuses</option><option value="active">Active</option><option value="Available">Available</option><option value="inactive">Inactive</option></select>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>License Expiry</th><th>License</th><th>Status</th><th></th></tr></thead><tbody id="staff-tbody"><tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
-
-
-    <!-- â•â• APP USERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-app-users" class="screen">
-      <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
-      <div class="reg-link-box" style="margin-bottom:14px;">
-        <div class="reg-link-text">
-          <strong>Registration Page</strong>
-          <span class="reg-link-url" id="app-users-reg-url">logisticsos.io/your-workspace/register</span>
-        </div>
-        <button class="copy-btn" onclick="copyUrl()"><span class="material-symbols-outlined">content_copy</span>Copy</button>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
-          <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
-
-    <!-- â•â• PAYMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-payments" class="screen">
-      <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
-      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
-        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">₱0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">₱0</div><div class="stat-note">Fuel + driver labor</div></div>
-        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">₱0</div><div class="stat-note" id="pay-net-note">Revenue − Expenses</div></div>
-        <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">receipt_long</span>All Invoices</span>
-          <div style="display:flex;gap:8px;">
-            <select class="f-select"><option>All Methods</option><option>Cash</option><option>GCash</option><option>Check</option><option>COD</option></select>
-            <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
-          </div>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
-
-    <!-- ══ SALES REPORT ══════════════════ -->
-    <div id="s-sales-report" class="screen">
-      <div class="ph-row" style="display:flex;justify-content:flex-end;align-items:center;">
-        <div style="display:flex;gap:10px;">
-          <button class="btn" onclick="exportSalesReportCSV()" style="background:#fff;border:1.5px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:16px;">download</span>Export CSV</button>
-          <button class="btn" onclick="exportSalesReportPDF()" style="background:#fff;border:1.5px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;"><span class="material-symbols-outlined" style="font-size:16px;">picture_as_pdf</span>Export PDF</button>
-        </div>
-      </div>
-      <!-- Stat Cards -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
-        <div class="card" style="padding:20px;border-left:4px solid #10b981;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Collected (Paid)</div>
-          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
-        </div>
-        <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Total Billed</div>
-          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
-        </div>
-        <div class="card" style="padding:20px;border-left:4px solid #f59e0b;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Est. Expenses</div>
-          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">₱0</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Fuel + driver labor</div>
-        </div>
-        <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Net Profit</div>
-          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">After estimated costs</div>
-        </div>
-        <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Avg Per Delivery</div>
-          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
-        </div>
-        <div class="card" style="padding:20px;border-left:4px solid #ea580c;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Pending</div>
-          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">₱0</div>
-          <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
-        </div>
-      </div>
-      <!-- Revenue Chart -->
-      <div class="card" style="padding:0;margin-bottom:24px;">
-        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
-          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#3b82f6;">monitoring</span>Revenue Overview</h3>
-          <select id="sr-period-select" onchange="loadSalesReportChart(this.value)" style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;color:#334155;background:#fff;cursor:pointer;">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly" selected>Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </div>
-        <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
-      </div>
-      <!-- Two columns: Revenue by Type + Top Clients -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
-        <div class="card" style="padding:0;">
-          <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-            <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
-          </div>
-          <div style="padding:20px;"><canvas id="sr-type-chart" height="220"></canvas></div>
-        </div>
-        <div class="card" style="padding:0;">
-          <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-            <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#10b981;">group</span>Top Clients</h3>
-          </div>
-          <div class="tbl-wrap"><table><thead><tr><th>Client</th><th>Orders</th><th>Revenue</th></tr></thead><tbody id="sr-top-clients-tbody"><tr><td colspan="3"><div class="empty"><p>No data</p></div></td></tr></tbody></table></div>
-        </div>
-      </div>
-      <!-- Recent Transactions -->
-      <div class="card" style="padding:0;">
-        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-          <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b;">receipt_long</span>Recent Transactions</h3>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Delivery #</th><th>Client</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="sr-transactions-tbody"><tr><td colspan="7"><div class="empty"><p>No transactions yet</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
-
-    <!-- ══ SUBSCRIPTION ══════════════════ -->
-    <div id="s-subscription" class="screen">
-      <div class="ph-row"><div><h2>Subscription</h2><p>Monitor your plan billing and upcoming payments.</p></div></div>
-      <!-- Plan Summary Cards -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;">
-        <div class="card" style="padding:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Current Plan</div>
-          <div id="sub-plan-name" style="font-size:22px;font-weight:800;color:#0f2235;">Free</div>
-          <div id="sub-plan-desc" style="font-size:12px;color:#64748b;margin-top:4px;">Basic features included</div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Monthly Cost</div>
-          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">₱0.00</div>
-          <div id="sub-plan-cycle" style="font-size:12px;color:#64748b;margin-top:4px;">per month</div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Next Billing Date</div>
-          <div id="sub-next-billing" style="font-size:22px;font-weight:800;color:#0f2235;">—</div>
-          <div id="sub-days-left" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Status</div>
-          <div id="sub-status" style="font-size:22px;font-weight:800;color:#16a34a;">Active</div>
-          <div id="sub-since" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
-        </div>
-      </div>
-      <!-- Pending Downgrade Notice -->
-      <div id="sub-pending-downgrade" style="display:none;margin-bottom:16px;"></div>
-      <!-- Billing History -->
-      <div class="card" style="padding:0;">
-        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-          <h3 style="margin:0;font-size:15px;font-weight:700;">Billing History</h3>
-        </div>
-        <div class="tbl-wrap">
-          <table><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody id="sub-billing-tbody">
-            <tr><td colspan="4"><div class="empty"><span class="material-symbols-outlined">event_repeat</span><p>No billing history yet</p></div></td></tr>
-          </tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- â•â• PROOF OF DELIVERY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-pod" class="screen">
-      <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
-      <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
-        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Geolocation</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
-      </div>
-    </div>
-
-    <!-- â•â• USER REGISTRATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-
-
-    <!-- â•â• SETTINGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div id="s-settings" class="screen">
-      <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
-      <div class="form-card" style="max-width:700px;">
-
-        <div class="form-sec">Workspace</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Company Name</label>
-            <div class="field-wrap"><span class="field-ico material-symbols-outlined">business</span><input id="set-company" type="text"/></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Workspace Slug</label>
-            <div class="field-wrap"><span class="field-ico material-symbols-outlined">link</span><input id="set-slug" type="text" style="font-family:'DM Mono',monospace;"/></div>
-            <span class="hint">Changing this updates your admin and user registration URLs.</span>
-          </div>
-        </div>
-
-        <div class="form-sec" style="margin-top:6px;">Branding</div>
-        <div class="form-grid" style="margin-bottom:12px;">
-          <!-- Logo -->
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Company Logo</label>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div id="logo-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">image</span>
-              </div>
-              <div>
-                <input id="set-logo-file" type="file" accept="image/*" style="display:none;" onchange="previewLogo(this)"/>
-                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;" onclick="document.getElementById('set-logo-file').click()">
-                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload Logo
-                </button>
-                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PNG, JPG up to 2MB</div>
-              </div>
-            </div>
-          </div>
-          <!-- Landing Page Background -->
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Landing Page Background</label>
-            <div style="display:inline-flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
-              <button id="bg-type-btn-image" onclick="setBgType('image')" style="padding:6px 18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#0f2235;color:#fff;font-family:inherit;">Image</button>
-              <button id="bg-type-btn-color" onclick="setBgType('color')" style="padding:6px 18px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Color</button>
-            </div>
-            <!-- Image mode -->
-            <div id="bg-image-section" style="display:flex;align-items:center;gap:12px;">
-              <div id="bg-preview" style="width:64px;height:64px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                <span class="material-symbols-outlined" style="color:#cbd5e1;font-size:28px;">wallpaper</span>
-              </div>
-              <div>
-                <input id="set-bg-file" type="file" accept="image/*" style="display:none;" onchange="previewBackground(this)"/>
-                <button type="button" class="btn" style="font-size:12px;padding:7px 14px;border:1.5px solid #e2e8f0;background:#fff;" onclick="document.getElementById('set-bg-file').click()">
-                  <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
-                </button>
-                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
-                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">✕ Remove</button>
-              </div>
-            </div>
-            <!-- Color mode -->
-            <div id="bg-color-section" style="display:none;">
-              <div id="hero-fill-list"></div>
-              <input id="set-hero-color-hex" type="hidden" value="#0f172a"/>
-              <div id="hero-color-preview" style="width:100%;height:36px;border-radius:8px;margin-top:8px;background:#0f172a;display:flex;align-items:center;justify-content:center;">
-                <span style="color:rgba(255,255,255,0.5);font-size:11px;">Hero preview</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-sec" style="margin-top:6px;">Brand Colors</div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label class="form-label">Primary Text / Accent Color <span style="color:#94a3b8;font-weight:400;">(buttons, highlighted text, links)</span></label>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div id="brand-fill-list" style="width:100%;"></div>
-            <input id="set-brand-color-hex" type="hidden" value="#3b82f6"/>
-          </div>
-        </div>
-
-        <div class="form-sec" style="margin-top:6px;">Landing Page Body</div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label class="form-label">Page Background Color <span style="color:#94a3b8;font-weight:400;">(nav + content area)</span></label>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div id="page-fill-list" style="width:100%;"></div>
-            <input id="set-page-bg-hex" type="hidden" value="#ffffff"/>
-          </div>
-        </div>
-
-        <div class="form-sec" style="margin-top:6px;">Dashboard Colors</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">App Background Color</label>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div id="app-fill-list" style="width:100%;"></div>
-              <input id="set-bg-app-hex" type="hidden" value="#f1f5f9"/>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Sidebar Color</label>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div id="sidebar-fill-list" style="width:100%;"></div>
-              <input id="set-bg-sidebar-hex" type="hidden" value="#0f2235"/>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-          <div id="color-preview-bar" style="flex:1;height:32px;border-radius:8px;border:1.5px solid #e2e8f0;transition:background 0.3s;"></div>
-          <span style="font-size:11px;color:#94a3b8;">Preview</span>
-        </div>
-
-        <div class="form-sec">Admin Account</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Full Name</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="set-name" type="text"/></div></div>
-          <div class="form-group"><label class="form-label">Email</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">mail</span><input id="set-email" type="email"/></div></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">New Password <span style="color:#94a3b8;font-weight:400;">(leave blank to keep)</span></label>
-          <div class="field-wrap"><span class="field-ico material-symbols-outlined">lock</span><input id="set-password" type="password"/></div>
-        </div>
-        <div class="form-sec" style="margin-top:6px;">Display</div>
-        <div class="form-group">
-          <label class="form-label">GUI Scale</label>
-          <p style="font-size:11px;color:#94a3b8;margin-bottom:8px;">Adjusts the overall text and container size of the dashboard.</p>
-          <div style="display:flex;gap:8px;">
-            <button type="button" class="btn gui-scale-btn" data-scale="sm" onclick="setGuiScale('sm')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Small</button>
-            <button type="button" class="btn gui-scale-btn" data-scale="md" onclick="setGuiScale('md')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Medium</button>
-            <button type="button" class="btn gui-scale-btn" data-scale="lg" onclick="setGuiScale('lg')" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">Large</button>
-          </div>
-        </div>
-
-        <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:12px;">
-          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ PRICING ═══════════════════════════════ -->
-    <div id="s-pricing" class="screen">
-      <div class="ph-row"><div><h2>Delivery Pricing</h2><p>Customize how delivery fees are calculated for your customers.</p></div></div>
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
-
-        <!-- LEFT: Pricing Config -->
-        <div class="form-card" style="margin-bottom:0;padding:16px;">
-          <div>
-            <div class="form-sec" style="margin-bottom:8px;padding-bottom:5px;">Base Rates</div>
-            <div class="form-grid" style="gap:10px;">
-              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Base Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50" oninput="calcPreview()"/></div><span class="hint">Flat fee per delivery</span></div>
-              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Driver Labor (₱/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15" oninput="calcPreview()"/></div><span class="hint">Driver compensation per km</span></div>
-            </div>
-            <div class="form-grid" style="gap:10px;">
-              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Express Multiplier (×)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8" oninput="calcPreview()"/></div><span class="hint">Express = base × this value</span></div>
-              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Insurance Fee (₱)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150" oninput="calcPreview()"/></div><span class="hint">Optional safety surcharge</span></div>
-            </div>
-          </div>
-
-          <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Van</label><input id="price-fuel-van" type="number" step="0.1" min="0" value="6.11" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Truck</label><input id="price-fuel-truck" type="number" step="0.1" min="0" value="11.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Flatbed</label><input id="price-fuel-flatbed" type="number" step="0.1" min="0" value="15.71" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            </div>
-          </div>
-
-          <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0–20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21–100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101–500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">500+ kg</label><input id="price-wt-4" type="number" step="0.5" min="0" value="1.50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            </div>
-          </div>
-
-          <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (₱)</div>
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Document</label><input id="price-cat-DOC" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Bulk</label><input id="price-cat-BULK" type="number" step="10" min="0" value="300" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Vehicle</label><input id="price-cat-VEHICLE" type="number" step="10" min="0" value="800" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-            </div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <button class="btn" onclick="resetToDefaults()" style="font-size:12px;padding:8px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px;">restart_alt</span>Reset to Default</button>
-            <button class="btn btn-primary" onclick="savePricing()">Save Pricing</button>
-          </div>
-        </div>
-
-        <!-- RIGHT: Live Cost Calculator -->
-        <div style="position:sticky;top:0;align-self:start;">
-          <div class="card" style="padding:0;overflow:hidden;">
-            <div style="padding:14px 16px;background:linear-gradient(135deg,#0f2235 0%,#1e3a5f 100%);color:#fff;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-                <span class="material-symbols-outlined" style="font-size:18px;opacity:.7;">calculate</span>
-                <span style="font-size:13px;font-weight:700;">Cost Calculator</span>
-              </div>
-              <div style="font-size:10px;opacity:.6;">Preview how pricing affects customers</div>
-            </div>
-            <div style="padding:14px 16px;">
-              <div style="margin-bottom:10px;">
-                <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Vehicle Type</label>
-                <select id="calc-vehicle" onchange="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;font-family:inherit;">
-                  <option value="motorcycle">Motorcycle</option>
-                  <option value="sedan">Sedan</option>
-                  <option value="van">Van</option>
-                  <option value="truck">Truck</option>
-                  <option value="flatbed">Flatbed</option>
-                </select>
-              </div>
-              <div style="margin-bottom:10px;">
-                <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Category</label>
-                <select id="calc-category" onchange="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;font-family:inherit;">
-                  <option value="PACKAGE">Package</option>
-                  <option value="FOOD">Food</option>
-                  <option value="DOC">Document</option>
-                  <option value="BULK">Bulk</option>
-                  <option value="VEHICLE">Vehicle</option>
-                </select>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-                <div>
-                  <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Distance (km)</label>
-                  <input id="calc-km" type="number" min="1" value="10" oninput="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;text-align:center;font-weight:600;"/>
-                </div>
-                <div>
-                  <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Weight (kg)</label>
-                  <input id="calc-kg" type="number" min="0" value="5" oninput="calcPreview()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;margin-top:4px;text-align:center;font-weight:600;"/>
-                </div>
-              </div>
-              <div style="display:flex;gap:12px;margin-bottom:10px;">
-                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;font-weight:600;"><input id="calc-express" type="checkbox" onchange="calcPreview()" style="accent-color:#f59e0b;"/> Express</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748b;cursor:pointer;font-weight:600;"><input id="calc-insurance" type="checkbox" onchange="calcPreview()" style="accent-color:#3b82f6;"/> Insurance</label>
-              </div>
-            </div>
-            <!-- Result -->
-            <div style="border-top:1px solid #f1f5f9;padding:14px 16px;background:#f8fafc;">
-              <div id="calc-breakdown" style="font-size:11px;color:#64748b;line-height:1.8;"></div>
-              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:8px;padding-top:10px;border-top:1.5px solid #e2e8f0;">
-                <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Total Fee</span>
-                <span id="calc-total" style="font-size:24px;font-weight:800;color:#10b981;">₱0</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-<script>
+﻿
 function calcPreview(){
   var baseFee = parseFloat(document.getElementById('price-base-fee').value)||0;
   var driverLabor = parseFloat(document.getElementById('price-driver-labor').value)||0;
@@ -1034,20 +36,20 @@ function calcPreview(){
   var total = subtotal + insCost;
   // Breakdown
   var lines = [];
-  lines.push('Base fee: <b>₱'+baseFee.toFixed(2)+'</b>');
-  lines.push('Fuel ('+fuelRate+'/km × '+km+'km): <b>₱'+fuelCost.toFixed(2)+'</b>');
-  lines.push('Driver labor ('+driverLabor+'/km × '+km+'km): <b>₱'+laborCost.toFixed(2)+'</b>');
-  lines.push('Weight ('+wtRate+'/kg × '+kg+'kg): <b>₱'+weightCost.toFixed(2)+'</b>');
-  if(catCost>0) lines.push('Category surcharge: <b>₱'+catCost.toFixed(2)+'</b>');
-  if(isExpress) lines.push('Express (×'+expressMult+'): <b style="color:#f59e0b;">+₱'+expressCost.toFixed(2)+'</b>');
-  if(isInsurance) lines.push('Insurance: <b style="color:#3b82f6;">+₱'+insCost.toFixed(2)+'</b>');
+  lines.push('Base fee: <b>â‚±'+baseFee.toFixed(2)+'</b>');
+  lines.push('Fuel ('+fuelRate+'/km Ã— '+km+'km): <b>â‚±'+fuelCost.toFixed(2)+'</b>');
+  lines.push('Driver labor ('+driverLabor+'/km Ã— '+km+'km): <b>â‚±'+laborCost.toFixed(2)+'</b>');
+  lines.push('Weight ('+wtRate+'/kg Ã— '+kg+'kg): <b>â‚±'+weightCost.toFixed(2)+'</b>');
+  if(catCost>0) lines.push('Category surcharge: <b>â‚±'+catCost.toFixed(2)+'</b>');
+  if(isExpress) lines.push('Express (Ã—'+expressMult+'): <b style="color:#f59e0b;">+â‚±'+expressCost.toFixed(2)+'</b>');
+  if(isInsurance) lines.push('Insurance: <b style="color:#3b82f6;">+â‚±'+insCost.toFixed(2)+'</b>');
   document.getElementById('calc-breakdown').innerHTML = lines.join('<br>');
-  document.getElementById('calc-total').textContent = '₱'+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('calc-total').textContent = 'â‚±'+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 setTimeout(calcPreview, 100);
 </script>
 
-    <!-- ══ AUDIT LOGS ═════════════════════════ -->
+    <!-- â•â• AUDIT LOGS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-audit" class="screen">
       <div class="card" style="padding:0;overflow:hidden;">
         <div style="padding:20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
@@ -1072,7 +74,7 @@ setTimeout(calcPreview, 100);
       </div>
     </div>
 
-    <!-- ══ UPGRADE PLAN ═════════════════════════ -->
+    <!-- â•â• UPGRADE PLAN â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="s-upgrade" class="screen">
 
       <!-- Hero Banner -->
@@ -1092,7 +94,7 @@ setTimeout(calcPreview, 100);
           <div style="display:inline-flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:99px;padding:6px 16px;">
             <span class="material-symbols-outlined" style="font-size:14px;color:#10b981;">check_circle</span>
             <span style="font-size:12px;color:#64748b;">Current plan: </span>
-            <strong id="upgrade-current-plan" style="font-size:12px;color:#3b82f6;text-transform:uppercase;letter-spacing:.04em;">—</strong>
+            <strong id="upgrade-current-plan" style="font-size:12px;color:#3b82f6;text-transform:uppercase;letter-spacing:.04em;">â€”</strong>
           </div>
         </div>
       </div>
@@ -1130,7 +132,7 @@ setTimeout(calcPreview, 100);
           <span class="material-symbols-outlined" style="font-size:14px;">lock</span> Secured by PayMongo
         </div>
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash · Card · Maya
+          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash Â· Card Â· Maya
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
           <span class="material-symbols-outlined" style="font-size:14px;">autorenew</span> Cancel anytime
@@ -1254,9 +256,9 @@ setTimeout(calcPreview, 100);
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + cyclePrice + '</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;">â‚±' + cyclePrice + '</span>' +
             '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
-            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">₱' + p.price + '/mo equivalent</div>' : '') +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">â‚±' + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +
@@ -1266,7 +268,7 @@ setTimeout(calcPreview, 100);
         grid.appendChild(card);
       });
     }
-    // renderPlansGrid() is called via go('upgrade') handler — NOT here (apiFetch isn't defined yet)
+    // renderPlansGrid() is called via go('upgrade') handler â€” NOT here (apiFetch isn't defined yet)
 
     async function upgradeToPlan(planKey, btn) {
       if (!confirm('Upgrade to ' + planKey.toUpperCase() + '? You will be redirected to PayMongo to complete payment.')) return;
@@ -1304,7 +306,7 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to schedule downgrade.');
-        alert('✓ ' + d.message);
+        alert('âœ“ ' + d.message);
         renderPlansGrid();
       } catch(e) {
         alert('Error: ' + e.message);
@@ -1324,7 +326,7 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to cancel downgrade.');
-        alert('✓ ' + d.message);
+        alert('âœ“ ' + d.message);
         renderPlansGrid();
       } catch(e) {
         alert('Error: ' + e.message);
@@ -1356,7 +358,7 @@ setTimeout(calcPreview, 100);
 <script>
 function toggleSidebar(){var s=document.querySelector('.sidebar');var o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('show');document.body.classList.toggle('sidebar-open');}
 function closeSidebar(){document.querySelector('.sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.classList.remove('sidebar-open');}
-// ── Global session expiry handler ─────────────────────────────────────────────
+// â”€â”€ Global session expiry handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _sessionExpired = false;
 
 function redirectToLogin() {
@@ -1568,7 +570,7 @@ function filterAppUsers(){
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// ── Shipment loading ──────────────────────────────────────────────────────────
+// â”€â”€ Shipment loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _allShipments=[];
 function loadShipments(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -1669,7 +671,7 @@ go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(
 loadShipments();
 loadStaff(); // Load staff early so pending license badge shows on nav
 
-// ── Dashboard Fleet Status ────────────────────────────────────────────────────
+// â”€â”€ Dashboard Fleet Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadDashFleet(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1684,7 +686,7 @@ function loadDashFleet(){
       vehicles.slice(0,5).forEach(function(v){
         var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
         html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
-        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' · '+esc(v.model):'')+'</div></div></div>';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' Â· '+esc(v.model):'')+'</div></div></div>';
         html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span>';
         html+='</div>';
       });
@@ -1694,7 +696,7 @@ function loadDashFleet(){
     }).catch(function(){});
 }
 
-// ── Dashboard Staff On Duty ───────────────────────────────────────────────────
+// â”€â”€ Dashboard Staff On Duty â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadDashStaff(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1721,7 +723,7 @@ function loadDashStaff(){
     }).catch(function(){});
 }
 
-// ── Dashboard Live Map ────────────────────────────────────────────────────────
+// â”€â”€ Dashboard Live Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _dashMap=null;
 var _dashMapLayers=[];
 function _clearMapLayers(){
@@ -1757,7 +759,7 @@ function loadDashMap(){
   if(!_dashMap){
     var phBounds=L.latLngBounds([4.2,116.5],[21.3,127.0]);
     _dashMap=L.map(mapEl,{scrollWheelZoom:true,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:6,maxZoom:18}).setView([12.5,122.0],6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(_dashMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'Â© OpenStreetMap'}).addTo(_dashMap);
     setTimeout(function(){_dashMap.invalidateSize();},200);
 
   }
@@ -1773,13 +775,13 @@ function loadDashMap(){
     if(!hasPickup&&!hasDrop)return;
     var isActive=(s.status==='In Transit'||s.status==='Out for Delivery');
     var typeLabel=s.item_type_flag||'PKG';
-    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
+    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' Â· '+esc(s.driver_name):'';
     if(hasPickup){
-      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">▲ Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">â–² Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
       allPts.push([pLat,pLng]);
     }
     if(hasDrop){
-      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">▼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">â–¼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
       allPts.push([dLat,dLng]);
     }
     if(hasPickup&&hasDrop){
@@ -1792,15 +794,13 @@ function loadDashMap(){
 }
 
 
-// ── Sales Report ─────────────────────────────────────────────────────────────
+// â”€â”€ Sales Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _srMonthlyChart=null, _srTypeChart=null;
 var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // Build full slot arrays so chart always shows complete range
 function _buildFullChart(rawData, period){
-  var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var slots=[], i;
   if(period==='daily'){
     // 24 hours: build lookup by hr
@@ -1898,7 +898,7 @@ function loadSalesReport(){
     document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
-    // Expense estimation: ₱27/km (₱15 driver + ₱12 fuel) or 30% fallback
+    // Expense estimation: â‚±27/km (â‚±15 driver + â‚±12 fuel) or 30% fallback
     var totalBilled = Number(data.revenue_total||0);
     var estExpenses = data.total_distance_km ? (Number(data.total_distance_km) * 27) : (totalBilled * 0.30);
     var netProfit = totalBilled - estExpenses;
@@ -1908,7 +908,7 @@ function loadSalesReport(){
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
     // Render chart with current period selection
-    try{ _renderSalesChart(data.chart_data||[], curPeriod); }catch(e){ console.error('Chart render error:',e); }
+    _renderSalesChart(data.chart_data||[], curPeriod);
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
@@ -1952,8 +952,8 @@ function loadSalesReport(){
         txTb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No paid transactions yet</td></tr>';
       } else {
         txTb.innerHTML=data.recent_transactions.map(function(t){
-          var d=t.paid_at?new Date(t.paid_at).toLocaleDateString():'—';
-          var method=t.payment_method||'—';
+          var d=t.paid_at?new Date(t.paid_at).toLocaleDateString():'â€”';
+          var method=t.payment_method||'â€”';
           return '<tr><td style="font-family:monospace;font-size:11px;">'+esc(String(t.invoice_id))+'</td><td>'+esc(t.delivery_number||'')+'</td><td>'+esc(t.client_name||'Walk-in')+'</td><td><span style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">'+esc(method)+'</span></td><td style="font-weight:700;">\u20b1'+Number(t.total_amount||0).toLocaleString()+'</td><td style="font-size:12px;color:#64748b;">'+d+'</td></tr>';
         }).join('');
       }
@@ -2167,7 +1167,7 @@ function previewBackground(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-// FillList handles color inputs — native inputs removed
+// FillList handles color inputs â€” native inputs removed
 function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
   var app = (document.getElementById('set-bg-app-hex') || {}).value || (window.__TENANT__ && window.__TENANT__.bg_app_color) || '#f1f5f9';
@@ -2180,14 +1180,14 @@ function updateColorPreview() {
       bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
     }
   }
-  // DO NOT set CSS variables here — that's done by applyBranding() and FillList onChange
+  // DO NOT set CSS variables here â€” that's done by applyBranding() and FillList onChange
 }
 
 function loadSettings() {
   var t = window.__TENANT__;
   if (!t) return;
   var slug = t.slug;
-  // Fast path: load lightweight settings (colors, text) — no image blobs
+  // Fast path: load lightweight settings (colors, text) â€” no image blobs
   apiFetch('/' + slug + '/api/admin/settings?t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -2292,7 +1292,7 @@ function applyBranding(d) {
 
 function _colorLum(col) {
   if (!col) return 1;
-  // Handle gradient strings — weighted average by position (majority wins)
+  // Handle gradient strings â€” weighted average by position (majority wins)
   if (col.includes('gradient')) {
     // Extract rgba + position pairs
     var pairs = [];
@@ -2449,7 +1449,7 @@ async function resetToDefaults() {
     });
     if (r.ok) {
       var toast = document.createElement('div');
-      toast.textContent = '✓ Reset to default!';
+      toast.textContent = 'âœ“ Reset to default!';
       toast.style.cssText = 'position:fixed;top:24px;right:24px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.15);';
       document.body.appendChild(toast);
       setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 300); }, 2500);
@@ -2501,7 +1501,7 @@ async function savePricing() {
       body: JSON.stringify(pricingPayload)
     });
     if (r.ok) {
-      if (btn) { btn.textContent = '✓ Saved!'; btn.style.background = '#16a34a'; }
+      if (btn) { btn.textContent = 'âœ“ Saved!'; btn.style.background = '#16a34a'; }
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Pricing'; btn.style.background=''; } }, 2000);
     } else {
       alert('Failed to save pricing.');
@@ -2540,7 +1540,7 @@ async function saveSettings() {
     if (bgBase64 && bgBase64.startsWith('data:')) {
       payload.background_url = bgBase64;
     } else if (!bgBase64) {
-      // User clicked Remove and there's no image — explicitly clear
+      // User clicked Remove and there's no image â€” explicitly clear
       payload.background_url = null;
     }
   }
@@ -2557,7 +1557,7 @@ async function saveSettings() {
     if (r.status && r.status >= 400) { alert('Failed to save. Please check your connection.'); return; }
     var d = await r.json();
     if (d.success) {
-      if (btn) { btn.textContent = '✓ Saved!'; btn.style.background = '#16a34a'; }
+      if (btn) { btn.textContent = 'âœ“ Saved!'; btn.style.background = '#16a34a'; }
       // Update __TENANT__ with saved values so section switches don't use stale data
       if (payload.brand_color)      window.__TENANT__.brand_color = payload.brand_color;
       if (payload.bg_app_color)     window.__TENANT__.bg_app_color = payload.bg_app_color;
@@ -2581,7 +1581,7 @@ async function saveSettings() {
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
-// ── FillList init ────────────────────────────────────
+// â”€â”€ FillList init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
@@ -2799,7 +1799,7 @@ setInterval(function() {
 })();
 </script>
 
-<!-- ══ ADD STAFF MODAL ═══════════════════════════════════════════ -->
+<!-- â•â• ADD STAFF MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-staff" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2836,7 +1836,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ LICENSE REVIEW MODAL ═══════════════════════════════════════ -->
+<!-- â•â• LICENSE REVIEW MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-license" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:520px;box-shadow:0 24px 60px rgba(0,0,0,0.25);max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2865,7 +1865,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ ADD VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- â•â• ADD VEHICLE MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2949,7 +1949,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ UPDATE VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- â•â• UPDATE VEHICLE MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -3019,7 +2019,7 @@ setInterval(function() {
 </div>
 
 <script>
-// ── Staff & Vehicle Data Loading ───────────────────────────────────────────────
+// â”€â”€ Staff & Vehicle Data Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
@@ -3040,7 +2040,7 @@ function renderStaff(list) {
   var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
   tb.innerHTML = list.map(function(s) {
     var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
-    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : '—';
+    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : 'â€”';
     var sid = s.staff_id || s.id || '';
     var isSuspended = s.status === 'suspended';
     var suspendIcon = isSuspended ? 'play_arrow' : 'pause';
@@ -3050,12 +2050,12 @@ function renderStaff(list) {
     var delBtn = (sid && !hideBtns) ? '<button onclick="deleteStaff(\'' + sid + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     // License status badge + review button (only for drivers)
     var licStatus = s.license_status || 'not_uploaded';
-    var licBadge = '—';
+    var licBadge = 'â€”';
     if (s.role === 'Driver') {
       if (licStatus === 'verified') {
         licBadge = '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">check_circle</span>Verified</span>';
       } else if (licStatus === 'pending_review') {
-        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fde68a;cursor:pointer;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">schedule</span>Pending — Review</button>';
+        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fde68a;cursor:pointer;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">schedule</span>Pending â€” Review</button>';
       } else if (licStatus === 'expired') {
         licBadge = '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Expired</span>';
       } else {
@@ -3063,12 +2063,12 @@ function renderStaff(list) {
       }
     }
     return '<tr>' +
-      '<td><strong>' + esc(s.name || s.first_name || '—') + '</strong></td>' +
-      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'—') + '</span></td>' +
-      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'—') + '</td>' +
+      '<td><strong>' + esc(s.name || s.first_name || 'â€”') + '</strong></td>' +
+      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'â€”') + '</span></td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'â€”') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
-      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'—') + '</span></td>' +
+      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'â€”') + '</span></td>' +
       '<td>' + suspendBtn + delBtn + '</td></tr>';
   }).join('');
   // Update pending license badge on Staff nav
@@ -3118,18 +2118,18 @@ function renderVehicles(list) {
       : '<div onclick="showNoImageToast()" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="No image available"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8;">directions_car</span></div>';
     return '<tr>' +
       '<td>' + imgCell + '</td>' +
-      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'—') + '</strong></td>' +
-      '<td>' + esc(v.vehicle_type||'—') + '</td>' +
-      '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'—') + '</td>' +
-      '<td>' + (v.capacity_tons || '—') + '</td>' +
+      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'â€”') + '</strong></td>' +
+      '<td>' + esc(v.vehicle_type||'â€”') + '</td>' +
+      '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'â€”') + '</td>' +
+      '<td>' + (v.capacity_tons || 'â€”') + '</td>' +
       '<td>' + ownerBadge + '</td>' +
-      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'—') + '</span></td>' +
-      '<td>' + esc(v.assigned_driver_name||'—') + '</td>' +
+      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'â€”') + '</span></td>' +
+      '<td>' + esc(v.assigned_driver_name||'â€”') + '</td>' +
       '<td><div style="display:flex;gap:2px;">' + assignBtn + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }
 
-// ── Vehicle Image Lightbox ────────────────────────────────────────────────────
+// â”€â”€ Vehicle Image Lightbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function viewVehicleImage(url, plate) {
   var overlay = document.getElementById('vehicle-img-lightbox');
   if (!overlay) {
@@ -3160,9 +2160,9 @@ function showNoImageToast() {
   window._noImgTimer = setTimeout(function() { t.style.opacity = '0'; setTimeout(function(){ t.style.display = 'none'; }, 300); }, 2500);
 }
 
-// ── Package Categories (global tenant-level) ──────────────────────────────────
+// â”€â”€ Package Categories (global tenant-level) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
-// Display labels — internal DB keys stay the same so mobile mapping works
+// Display labels â€” internal DB keys stay the same so mobile mapping works
 var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
 var _activePkgCats = [];
 function loadPackageCategories() {
@@ -3180,7 +2180,7 @@ function renderPackageCategories() {
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + label +
+      '<span style="font-size:14px;">' + (on ? 'âœ“' : 'âœ•') + '</span>' + label +
     '</button>';
   }).join('');
 }
@@ -3192,14 +2192,14 @@ function togglePkgCat(cat) {
 }
 async function savePackageCategories() {
   var btn = document.getElementById('pkg-cat-save-btn');
-  if(btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  if(btn) { btn.disabled = true; btn.textContent = 'Savingâ€¦'; }
   try {
     await apiFetch('/' + _SLUG + '/api/admin/package-categories', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ categories: _activePkgCats })
     });
-    if(btn) { btn.textContent = '✓ Saved'; btn.style.background = '#16a34a'; }
+    if(btn) { btn.textContent = 'âœ“ Saved'; btn.style.background = '#16a34a'; }
     setTimeout(function() {
       if(btn) { btn.disabled = false; btn.textContent = 'Save Changes'; btn.style.background = ''; }
     }, 2000);
@@ -3209,7 +2209,7 @@ async function savePackageCategories() {
   }
 }
 
-// ── Vehicle Requests ─────────────────────────────────────────────────────────
+// â”€â”€ Vehicle Requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadVehicleRequests() {
   var el = document.getElementById('vehicle-requests-list');
   if(!el) return;
@@ -3222,20 +2222,20 @@ function loadVehicleRequests() {
     el.innerHTML = pending.map(function(r) {
       var isAssignment = r.request_type === 'staff_assignment';
       var flagHtml = r.refusal_count >= 3
-        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">⚠ ' + r.refusal_count + 'x refused</span>'
+        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">âš  ' + r.refusal_count + 'x refused</span>'
         : (r.refusal_count > 0 ? '<span style="background:#fff7ed;color:#ea580c;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">' + r.refusal_count + 'x refused</span>' : '');
       var typeLabel = isAssignment
         ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
         : '<span style="background:#dbeafe;color:#1d4ed8;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">DRIVER REQUEST</span>';
-      var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">✓ Approve</button>' : '';
-      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">✕ Deny</button>';
+      var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">âœ“ Approve</button>' : '';
+      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">âœ• Deny</button>';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
             typeLabel + flagHtml +
             '<strong style="font-family:monospace;font-size:13px;">' + esc(r.vehicle_plate) + '</strong>' +
           '</div>' +
-          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' · ' + esc(r.vehicle_type) + (r.model ? ' · ' + esc(r.model) : '') + '</p>' +
+          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' Â· ' + esc(r.vehicle_type) + (r.model ? ' Â· ' + esc(r.model) : '') + '</p>' +
         '</div>' +
         '<div style="display:flex;gap:6px;flex-shrink:0;">' + approveBtn + denyBtn + '</div>' +
       '</div>';
@@ -3264,7 +2264,7 @@ async function denyVehicleRequest(id) {
   } catch(e) { alert('Network error.'); }
 }
 
-// ── Assign Vehicle to Driver modal ───────────────────────────────────────────
+// â”€â”€ Assign Vehicle to Driver modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _assignVehiclePlate = '';
 async function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
@@ -3358,7 +2358,7 @@ window.go = function(id, btn) {
   if(id === 'vehicles') loadVehicles();
 };
 
-// ── Staff Modal ────────────────────────────────────────────────────────────────
+// â”€â”€ Staff Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openStaffModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-email').value = '';
@@ -3391,18 +2391,18 @@ async function submitAddStaff() {
     if(!r.ok) throw new Error(d.error || 'Failed to add staff.');
     closeStaffModal();
     loadStaff();
-    alert('✅ Staff added! A welcome email with login credentials has been sent to ' + email + '.');
+    alert('âœ… Staff added! A welcome email with login credentials has been sent to ' + email + '.');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
 
-// ── License Review Modal ──────────────────────────────────────────────────────
+// â”€â”€ License Review Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _licenseStaffId = null;
 function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
   var s = _staffData.find(function(x) { return String(x.staff_id || x.id) === String(staffId); });
   if (!s) return alert('Staff not found.');
-  document.getElementById('license-driver-name').textContent = (s.name || 'Driver') + ' — ' + (s.role || '');
+  document.getElementById('license-driver-name').textContent = (s.name || 'Driver') + ' â€” ' + (s.role || '');
   var statusLabels = { not_uploaded: 'Not Uploaded', pending_review: 'Pending Review', verified: 'Verified', expired: 'Expired' };
   document.getElementById('license-cur-status').textContent = statusLabels[s.license_status] || s.license_status || 'Unknown';
   document.getElementById('license-cur-expiry').textContent = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : 'Not set';
@@ -3432,11 +2432,11 @@ async function licenseAction(action) {
     if (!r.ok) throw new Error(d.error || 'Failed.');
     closeLicenseModal();
     loadStaff();
-    alert('✅ ' + d.message);
-  } catch (e) { alert('❌ ' + e.message); }
+    alert('âœ… ' + d.message);
+  } catch (e) { alert('âŒ ' + e.message); }
 }
 
-// ── Vehicle Modal ──────────────────────────────────────────────────────────────
+// â”€â”€ Vehicle Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
@@ -3488,7 +2488,7 @@ async function submitAddVehicle() {
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
     closeVehicleModal();
     loadVehicles();
-    alert('✅ Vehicle ' + plate.toUpperCase() + ' added successfully!');
+    alert('âœ… Vehicle ' + plate.toUpperCase() + ' added successfully!');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
@@ -3552,7 +2552,7 @@ async function submitUpdateVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
 }
 
-// ── AUDIT LOGS ───────────────────────────────────────────────────────────────
+// â”€â”€ AUDIT LOGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadAuditLogs() {
   var tb = document.getElementById('audit-logs-tbody');
   if(!tb) return;
@@ -3579,14 +2579,14 @@ async function loadAuditLogs() {
         '<td><strong>' + act + '</strong></td>' +
         '<td>' + typeHtml + '</td>' +
         '<td><span style="background:#f1f5f9;color:#334155;padding:3px 8px;border-radius:6px;font-size:11px;font-family:\'DM Mono\',monospace;font-weight:600;">' + esc(l.action) + '</span></td>' +
-        '<td>' + esc(l.target || '—') + '</td>' +
+        '<td>' + esc(l.target || 'â€”') + '</td>' +
       '</tr>';
     }).join('');
   } catch (e) {
     tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load audit logs.</p></div></td></tr>';
   }
 }
-// ── PAYMENTS ─────────────────────────────────────────────────────────────────
+// â”€â”€ PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadPayments() {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
   if(tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
@@ -3623,7 +2623,7 @@ async function loadPayments() {
     el = document.getElementById('pay-net');
     if(el) { el.textContent = (netProfit < 0 ? '-' : '') + fmt(netProfit); el.style.color = netProfit >= 0 ? '#16a34a' : '#dc2626'; }
     el = document.getElementById('pay-net-note');
-    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue − Expenses';
+    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue âˆ’ Expenses';
 
     // Pending
     el = document.getElementById('pay-pending');
@@ -3654,25 +2654,25 @@ function renderPayments(list) {
   tb.innerHTML = list.map(function(p) {
     var customer = (p.customer_first || p.customer_last)
       ? esc((p.customer_first + ' ' + p.customer_last).trim())
-      : esc(p.receiver_name || '—');
-    var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+      : esc(p.receiver_name || 'â€”');
+    var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'â€”';
     var method = p.payment_method || '';
     var methodLabels = {'gcash':'GCash','card':'Card','paymaya':'PayMaya','grab_pay':'GrabPay','billease':'BillEase','dob':'Online Banking'};
     if (method && methodLabels[method.toLowerCase()]) method = methodLabels[method.toLowerCase()];
     else if (method) method = method.charAt(0).toUpperCase() + method.slice(1);
     if (!method && p.paymongo_checkout_id) method = 'PayMongo';
-    method = esc(method || '—');
-    var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '—');
-    var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+    method = esc(method || 'â€”');
+    var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || 'â€”');
+    var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">â€”</span>';
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
-    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—');
+    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'â€”');
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">#' + esc(String(p.invoice_id||'')) + '</strong></td>' +
-      '<td><strong>' + esc(p.delivery_number||'—') + '</strong></td>' +
+      '<td><strong>' + esc(p.delivery_number||'â€”') + '</strong></td>' +
       '<td>' + customer + '</td>' +
       '<td><strong>' + amount + '</strong></td>' +
       '<td>' + method + '</td>' +
@@ -3695,7 +2695,7 @@ async function confirmPayment(invoiceId, btn) {
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
 }
-// ── Subscription ──────────────────────────────────────────────────────────────
+// â”€â”€ Subscription â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSubscription() {
   var plans = {
     'startup':    { label: 'Padala',       price: 1499,  desc: 'Up to 10 riders / drivers, local deliveries' },
@@ -3812,7 +2812,7 @@ async function cancelDowngrade(btn) {
     });
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed');
-    alert('✓ ' + d.message);
+    alert('âœ“ ' + d.message);
     // Hide the notice and reload subscription
     var container = document.getElementById('sub-pending-downgrade');
     if (container) container.style.display = 'none';
@@ -3824,7 +2824,7 @@ async function cancelDowngrade(btn) {
   }
 }
 
-// ── Proof of Delivery ─────────────────────────────────────────────────────────
+// â”€â”€ Proof of Delivery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadPODs() {
   var tb = document.querySelector('#s-pod .tbl-wrap tbody');
   if(!tb) return;
@@ -3838,13 +2838,13 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : '—';
-      var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '—';
+      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : 'â€”';
+      var ts = p.created_at ? new Date(p.created_at).toLocaleString() : 'â€”';
       var type = esc(p.capture_type || p.type || 'Photo');
-      var media = p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : (p.signature ? '<img src="' + p.signature + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : '—');
+      var media = p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : (p.signature ? '<img src="' + p.signature + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : 'â€”');
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
-        '<td><strong>' + esc(p.delivery_number || '—') + '</strong></td>' +
+        '<td><strong>' + esc(p.delivery_number || 'â€”') + '</strong></td>' +
         '<td>' + type + '</td>' +
         '<td style="font-family:monospace;font-size:11px;">' + geo + '</td>' +
         '<td>' + ts + '</td>' +
@@ -3859,7 +2859,7 @@ loadPODs();
 </script>
 
 <script>
-// ── Vehicle CR/OR Document Upload ─────────────────────────────────────────────
+// â”€â”€ Vehicle CR/OR Document Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 window._vehicleDocBase64 = null;
 
 function handleDocSelect(input) {
@@ -3893,7 +2893,4 @@ function clearDocUpload() {
   var input = document.getElementById('v-ownership-doc');
   if (input) input.value = '';
 }
-</script>
-</body>
-</html>
 
