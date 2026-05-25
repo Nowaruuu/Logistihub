@@ -497,6 +497,7 @@ textarea{resize:vertical;}
             <button class="tab" onclick="filterShipments('Out for Delivery',this)">Out for Delivery</button>
             <button class="tab" onclick="filterShipments('Delivered',this)">Delivered</button>
             <button class="tab" onclick="filterShipments('Failed',this)">Failed</button>
+          <button class="tab" onclick="filterShipments('Declined',this)">Declined</button>
           </div>
           <select class="f-select" id="admin-ship-type-filter" onchange="filterShipments(null)"><option value="">All Types</option><option>Package</option><option>Vehicle</option><option>Food</option><option>Document</option><option>Bulk</option></select>
         </div>
@@ -1621,7 +1622,7 @@ function updateStatCards(){
   if(navBadge)navBadge.textContent=total;
 }
 var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
-var statusCls={'Pending':'b-pending','Processing':'b-pending','Queued':'b-awaiting','In Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
+var statusCls={'Pending':'b-pending','Processing':'b-pending','Queued':'b-awaiting','In Transit':'b-transit','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
 function renderDashboardShipments(){
   // Recent shipments on dashboard (first 5)
   var tbody=document.querySelector('#s-dashboard .tbl-wrap tbody');
@@ -1652,7 +1653,8 @@ function renderShipmentsTable(){
   if(_adminShipStatusFilter!=='All'){
     filtered=filtered.filter(function(s){
       if(_adminShipStatusFilter==='In Transit')return s.status==='In Transit'||s.status==='In-Transit';
-      if(_adminShipStatusFilter==='Failed')return s.status==='Failed'||s.status==='Declined';
+      if(_adminShipStatusFilter==='Failed') return s.status==='Failed';
+      if(_adminShipStatusFilter==='Declined') return s.status==='Declined';
       return s.status===_adminShipStatusFilter;
     });
   }

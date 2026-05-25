@@ -784,13 +784,13 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (req.staff) {
       const sets = [];
       const vals = [];
-      if (first_name !== undefined) { sets.push('first_name = ?'); vals.push(first_name); }
-      if (last_name !== undefined)  { sets.push('last_name = ?');  vals.push(last_name);  }
-      if (phone !== undefined)      { sets.push('phone = ?');      vals.push(phone);      }
+      // STAFF table uses 'name' column (not first_name/last_name)
+      // Build combined name if either part changed
       if (first_name !== undefined || last_name !== undefined) {
         const fullName = `${first_name || ''} ${last_name || ''}`.trim();
-        sets.push('name = ?'); vals.push(fullName);
+        if (fullName) { sets.push('name = ?'); vals.push(fullName); }
       }
+      if (phone !== undefined) { sets.push('phone = ?'); vals.push(phone); }
       if (sets.length === 0) return res.json({ ok: true });
       vals.push(req.staff.staff_id, req.tenantId);
       await query(`UPDATE STAFF SET ${sets.join(', ')} WHERE staff_id = ? AND tenant_id = ?`, vals);
@@ -1424,11 +1424,14 @@ router.post('/driver/decline', authMiddleware, async (req, res) => {
       [delivery_number, tid]
     );
     if (!rows.length) return res.status(404).json({ error: 'Shipment not found.' });
-    if (rows[0].status !== 'Pending' && rows[0].status !== 'Queued') return res.status(400).json({ error: 'Only pending or queued shipments can be declined.' });
+    const validStatuses = ['Pending', 'Queued', 'In-Transit', 'In Transit', 'Out for Delivery'];
+    if (!validStatuses.includes(rows[0].status)) {
+      return res.status(400).json({ error: 'This shipment cannot be declined in its current state.' });
+    }
 
-    // Unassign driver and set back to Pending for reassignment
+    // Set to 'Declined' (not Pending) so admin can see it needs reassignment
     await query(
-      `UPDATE shipment SET status = 'Pending', assigned_driver_id = NULL WHERE delivery_number = ? AND tenant_id = ?`,
+      `UPDATE shipment SET status = 'Declined', assigned_driver_id = NULL WHERE delivery_number = ? AND tenant_id = ?`,
       [delivery_number, tid]
     );
 

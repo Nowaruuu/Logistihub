@@ -1422,7 +1422,7 @@ async function submitUpdateVehicle() {
 var _allShipments = [];
 var _shipStatusFilter = 'All';
 var typeCls = {'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
-var statusCls = {'Pending':'b-pending','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Failed':'b-declined','Queued':'b-awaiting'};
+var statusCls = {'Pending':'b-pending','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Failed':'b-declined','Queued':'b-awaiting','Declined':'b-declined'};
 
 function loadShipments() {
   if (!_SLUG) return;
@@ -1462,7 +1462,7 @@ function filterShipmentStatus(status, btn) {
 // Wire shipment tabs
 document.querySelectorAll('#s-shipments .tab').forEach(function(tab) {
   var txt = tab.textContent.trim();
-  var map = {'All':'All','Pending':'Pending','In Transit':'In-Transit','Delivered':'Delivered','Declined':'Failed'};
+  var map = {'All':'All','Pending':'Pending','In Transit':'In-Transit','Delivered':'Delivered','Declined':'Declined'};
   tab.onclick = function(){ filterShipmentStatus(map[txt]||'All', tab); };
 });
 
