@@ -1736,6 +1736,15 @@ function loadDashStaff(){
     .then(function(r){return r.json();})
     .then(function(data){
       var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
+
+      // ── Update Staff nav badge (pending license reviews) ──────────────────
+      var pendingCount = staff.filter(function(s){
+        return s.role === 'Driver' && s.license_status === 'pending_review';
+      }).length;
+      var badge = document.getElementById('staff-pending-badge');
+      if(badge){ badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
+      // ─────────────────────────────────────────────────────────────────────
+
       var el=document.getElementById('dash-staff-body');
       if(!el)return;
       if(!staff.length){el.innerHTML='<div style="padding:28px;text-align:center;"><span class="material-symbols-outlined" style="font-size:36px;color:#e2e8f0;display:block;margin-bottom:6px;">badge</span><p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">No staff members yet</p><button class="btn btn-primary btn-sm" onclick="go(\'staff\',null)" style="margin:0 auto;"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>';return;}
