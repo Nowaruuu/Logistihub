@@ -1617,16 +1617,9 @@ function updateStatCards(){
   cards[2].querySelector('.stat-note').textContent=delivered?delivered+' completed':'No data yet';
   cards[3].querySelector('.stat-value').textContent=pending;
   cards[3].querySelector('.stat-note').textContent=pending?pending+' awaiting':'No data yet';
-  // Nav badge — Shipments (first .nav-badge on page)
+  // Nav badge — Shipments count
   var navBadge=document.querySelector('.nav-badge');
   if(navBadge)navBadge.textContent=total;
-  // Nav badge — Staff pending license reviews (runs alongside shipments badge)
-  var staffBadge=document.getElementById('staff-pending-badge');
-  if(staffBadge && typeof _staffData !== 'undefined' && Array.isArray(_staffData)){
-    var pc=_staffData.filter(function(s){return s.role==='Driver'&&s.license_status==='pending_review';}).length;
-    staffBadge.textContent=pc;
-    staffBadge.style.display=pc>0?'':'none';
-  }
 }
 var typeCls={'PACKAGE':'t-pkg','VEHICLE':'t-veh','FOOD':'t-food','DOC':'t-doc','BULK':'t-bulk'};
 var statusCls={'Pending':'b-pending','Processing':'b-pending','Queued':'b-awaiting','In Transit':'b-transit','In-Transit':'b-transit','Out for Delivery':'b-transit','Delivered':'b-delivered','Declined':'b-declined','Failed':'b-declined'};
@@ -1699,7 +1692,8 @@ go=function(id,navBtn){
 };
 // Auto-load on page load
 loadShipments();
-loadStaff(); // Load staff early so pending license badge shows on nav
+loadStaff();      // updates staff badge via renderStaff()
+loadDashStaff();  // also updates staff badge + dashboard widget
 // Refresh staff badge every 30 seconds so it stays current without needing to navigate
 setInterval(function(){
   apiFetch('/'+_SLUG+'/api/admin/staff').then(function(r){return r.json();}).then(function(list){
