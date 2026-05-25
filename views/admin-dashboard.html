@@ -666,7 +666,7 @@ textarea{resize:vertical;}
             <option value="yearly">Yearly</option>
           </select>
         </div>
-        <div style="padding:20px;position:relative;height:280px;"><canvas id="sr-monthly-chart"></canvas></div>
+        <div style="padding:20px;position:relative;height:280px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
       </div>
       <!-- Two columns: Revenue by Type + Top Clients -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
@@ -674,7 +674,7 @@ textarea{resize:vertical;}
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
             <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
           </div>
-          <div style="padding:20px;position:relative;height:240px;"><canvas id="sr-type-chart"></canvas></div>
+          <div style="padding:20px;position:relative;height:240px;"><canvas id="sr-type-chart" height="220"></canvas></div>
         </div>
         <div class="card" style="padding:0;">
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
@@ -1901,8 +1901,10 @@ function loadSalesReport(){
     var netEl = document.getElementById('sr-net-profit');
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
-    // Render chart with current period selection
-    _renderSalesChart(data.chart_data||[], curPeriod);
+    // Render chart with current period selection (delay to ensure container is visible)
+    setTimeout(function(){
+      _renderSalesChart(data.chart_data||[], curPeriod);
+    }, 50);
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
@@ -1911,6 +1913,7 @@ function loadSalesReport(){
     var typeLabels=(data.by_type||[]).map(function(t){return t.type||'Other';});
     var typeValues=(data.by_type||[]).map(function(t){return Number(t.total)||0;});
     var typeColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899'];
+    setTimeout(function(){
     if(_srTypeChart)_srTypeChart.destroy();
     var ctx2=document.getElementById('sr-type-chart');
     if(ctx2){
@@ -1927,6 +1930,7 @@ function loadSalesReport(){
         });
       }
     }
+    }, 60);
 
     // Top Clients Table
     var tcTb=document.getElementById('sr-top-clients-tbody');
