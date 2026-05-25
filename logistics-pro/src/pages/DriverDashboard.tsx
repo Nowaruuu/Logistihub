@@ -43,6 +43,7 @@ export default function DriverDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showChat, setShowChat] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
+  const [showPhoneRequired, setShowPhoneRequired] = useState(false);
 
   // Persist declined job IDs across navigation
   const getDeclinedKey = () => `declined_jobs_${user?.uid || 'driver'}`;
@@ -154,6 +155,11 @@ export default function DriverDashboard() {
 
   const handleAcceptJob = async (jobId: string) => {
     if (!user || !profile || hasActiveJob) return;
+    // Block acceptance if phone number is not set
+    if (!profile.phone?.trim()) {
+      setShowPhoneRequired(true);
+      return;
+    }
     setAccepting(jobId);
     try {
       await deliveryService.acceptJob(jobId);
@@ -660,6 +666,41 @@ export default function DriverDashboard() {
                 className="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 active:scale-[0.98] transition-all"
               >
                 Yes, Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Phone Number Required Modal ── */}
+      {showPhoneRequired && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-700/50 p-6 pb-10">
+            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-5" />
+            <div className="flex flex-col items-center text-center gap-3 mb-6">
+              <div className="size-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                <span className="text-3xl">📞</span>
+              </div>
+              <div>
+                <h3 className="text-slate-900 dark:text-white font-extrabold text-lg">Phone Number Required</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 leading-relaxed">
+                  You must add a phone number to your profile before accepting any delivery jobs.
+                  This is required for customer and dispatch contact.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPhoneRequired(false)}
+                className="flex-1 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-2xl active:scale-[0.98] transition-all"
+              >
+                Later
+              </button>
+              <button
+                onClick={() => { setShowPhoneRequired(false); navigate('/profile'); }}
+                className="flex-2 px-6 py-3.5 bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all"
+              >
+                Set Phone Number →
               </button>
             </div>
           </div>
