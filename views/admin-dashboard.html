@@ -1882,6 +1882,7 @@ function _renderSalesChart(chartData, period){
 function loadSalesReportChart(period){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   apiFetch('/'+slug+'/api/admin/sales-report?period='+period).then(function(r){return r.json();}).then(function(data){
+    window._srRenderVer=(window._srRenderVer||0)+1;
     _renderSalesChart(data.chart_data||[], period);
   }).catch(function(e){console.error('Chart refresh error:',e);});
 }
@@ -1906,8 +1907,13 @@ function loadSalesReport(){
     var netEl = document.getElementById('sr-net-profit');
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
-    // Render chart with current period selection
-    _renderSalesChart(data.chart_data||[], curPeriod);
+    // Render chart with current period selection (delay for layout, guarded against race)
+    window._srRenderVer=(window._srRenderVer||0)+1;
+    var myVer=window._srRenderVer;
+    setTimeout(function(){
+      if(window._srRenderVer!==myVer) return; // user changed period, skip stale render
+      _renderSalesChart(data.chart_data||[], curPeriod);
+    }, 200);
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
