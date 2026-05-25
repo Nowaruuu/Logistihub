@@ -385,7 +385,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="closeSidebar();go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
 
     <div class="nav-sec">Management</div>
-    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff<span class="nav-badge" id="staff-pending-badge">0</span></button>
+    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff<span class="nav-badge" id="staff-pending-badge" style="display:none;">0</span></button>
     <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
     <button class="nav-link" onclick="closeSidebar();go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
@@ -3072,6 +3072,16 @@ function loadStaff() {
 }
 
 function renderStaff(list) {
+  // ── Always update the nav badge FIRST, before any early-return checks
+  var pendingCount = Array.isArray(list) ? list.filter(function(s){
+    return s.role === 'Driver' && s.license_status === 'pending_review';
+  }).length : 0;
+  var badge = document.getElementById('staff-pending-badge');
+  if (badge) {
+    badge.textContent = pendingCount;
+    badge.style.display = pendingCount > 0 ? '' : 'none';
+  }
+
   var tb = document.getElementById('staff-tbody');
   if(!tb) return;
   if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records found</p></div></td></tr>'; return; }
@@ -3109,10 +3119,7 @@ function renderStaff(list) {
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'â€”') + '</span></td>' +
       '<td>' + suspendBtn + delBtn + '</td></tr>';
   }).join('');
-  // Update pending license badge on Staff nav
-  var pendingCount = list.filter(function(s) { return s.role === 'Driver' && s.license_status === 'pending_review'; }).length;
-  var badge = document.getElementById('staff-pending-badge');
-  if (badge) { badge.textContent = pendingCount; }
+  // badge already updated at top of renderStaff
 }
 
 function filterStaffTab(role, btn) {
