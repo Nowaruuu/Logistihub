@@ -1911,17 +1911,18 @@ function loadSalesReport(){
     var typeColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899'];
       _renderSalesChart(data.chart_data||[], curPeriod);
 
-      if(_srTypeChart)_srTypeChart.destroy();
+      if(_srTypeChart){_srTypeChart.destroy();_srTypeChart=null;}
       var ctx2=document.getElementById('sr-type-chart');
       if(ctx2){
+        ctx2.style.display='';
+        var emp2=ctx2.parentElement.querySelector('.sr-type-empty'); if(emp2)emp2.remove();
         if(!typeValues.length || typeValues.every(function(v){return v===0;})){
-          // show empty state without destroying canvas
           ctx2.style.display='none';
-          var emp=ctx2.parentElement.querySelector('.sr-type-empty');
-          if(!emp){ emp=document.createElement('div'); emp.className='sr-type-empty'; emp.style.cssText='display:flex;align-items:center;justify-content:center;height:220px;color:#94a3b8;font-size:13px;'; emp.textContent='No revenue data by type yet'; ctx2.parentElement.appendChild(emp); }
+          var emp=document.createElement('div'); emp.className='sr-type-empty'; emp.style.cssText='display:flex;align-items:center;justify-content:center;height:220px;color:#94a3b8;font-size:13px;'; emp.textContent='No revenue data by type yet'; ctx2.parentElement.appendChild(emp);
         } else {
-          ctx2.style.display='';
-          var emp2=ctx2.parentElement.querySelector('.sr-type-empty'); if(emp2)emp2.remove();
+          // Restore canvas size after destroy() resets it to 0x0
+          ctx2.removeAttribute('height'); ctx2.setAttribute('height','220');
+          ctx2.style.height='220px';
           _srTypeChart=new Chart(ctx2.getContext('2d'),{
             type:'doughnut',
             data:{
