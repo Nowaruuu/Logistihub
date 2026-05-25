@@ -1320,7 +1320,7 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to schedule downgrade.');
-        alert('âœ“ ' + d.message);
+        alert('' + d.message);
         renderPlansGrid();
       } catch(e) {
         alert('Error: ' + e.message);
@@ -1340,7 +1340,7 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to cancel downgrade.');
-        alert('âœ“ ' + d.message);
+        alert('' + d.message);
         renderPlansGrid();
       } catch(e) {
         alert('Error: ' + e.message);
@@ -2502,7 +2502,7 @@ async function resetToDefaults() {
     });
     if (r.ok) {
       var toast = document.createElement('div');
-      toast.textContent = 'âœ“ Reset to default!';
+      toast.textContent = 'Reset to default!';
       toast.style.cssText = 'position:fixed;top:24px;right:24px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.15);';
       document.body.appendChild(toast);
       setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 300); }, 2500);
@@ -2554,7 +2554,7 @@ async function savePricing() {
       body: JSON.stringify(pricingPayload)
     });
     if (r.ok) {
-      if (btn) { btn.textContent = 'âœ“ Saved!'; btn.style.background = '#16a34a'; }
+      if (btn) { btn.textContent = 'Saved!'; btn.style.background = '#16a34a'; }
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Pricing'; btn.style.background=''; } }, 2000);
     } else {
       alert('Failed to save pricing.');
@@ -2610,7 +2610,7 @@ async function saveSettings() {
     if (r.status && r.status >= 400) { alert('Failed to save. Please check your connection.'); return; }
     var d = await r.json();
     if (d.success) {
-      if (btn) { btn.textContent = 'âœ“ Saved!'; btn.style.background = '#16a34a'; }
+      if (btn) { btn.textContent = 'Saved!'; btn.style.background = '#16a34a'; }
       // Update __TENANT__ with saved values so section switches don't use stale data
       if (payload.brand_color)      window.__TENANT__.brand_color = payload.brand_color;
       if (payload.bg_app_color)     window.__TENANT__.bg_app_color = payload.bg_app_color;
@@ -3263,7 +3263,7 @@ async function savePackageCategories() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ categories: _activePkgCats })
     });
-    if(btn) { btn.textContent = 'âœ“ Saved'; btn.style.background = '#16a34a'; }
+    if(btn) { btn.textContent = 'Saved'; btn.style.background = '#16a34a'; }
     setTimeout(function() {
       if(btn) { btn.disabled = false; btn.textContent = 'Save Changes'; btn.style.background = ''; }
     }, 2000);
@@ -3291,7 +3291,7 @@ function loadVehicleRequests() {
       var typeLabel = isAssignment
         ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
         : '<span style="background:#dbeafe;color:#1d4ed8;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">DRIVER REQUEST</span>';
-      var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">âœ“ Approve</button>' : '';
+      var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">Approve</button>' : '';
       var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">âœ• Deny</button>';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
         '<div style="flex:1;min-width:0;">' +
@@ -3457,7 +3457,7 @@ async function submitAddStaff() {
     if(!r.ok) throw new Error(d.error || 'Failed to add staff.');
     closeStaffModal();
     loadStaff();
-    alert('âœ… Staff added! A welcome email with login credentials has been sent to ' + email + '.');
+    alert('Staff added! A welcome email with login credentials has been sent to ' + email + '.');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
@@ -3498,8 +3498,8 @@ async function licenseAction(action) {
     if (!r.ok) throw new Error(d.error || 'Failed.');
     closeLicenseModal();
     loadStaff();
-    alert('âœ… ' + d.message);
-  } catch (e) { alert('âŒ ' + e.message); }
+    alert('' + d.message);
+  } catch (e) { alert(' ' + e.message); }
 }
 
 // â”€â”€ Vehicle Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -3554,7 +3554,7 @@ async function submitAddVehicle() {
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
     closeVehicleModal();
     loadVehicles();
-    alert('âœ… Vehicle ' + plate.toUpperCase() + ' added successfully!');
+    alert('Vehicle ' + plate.toUpperCase() + ' added successfully!');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
@@ -3878,7 +3878,7 @@ async function cancelDowngrade(btn) {
     });
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed');
-    alert('âœ“ ' + d.message);
+    alert('' + d.message);
     // Hide the notice and reload subscription
     var container = document.getElementById('sub-pending-downgrade');
     if (container) container.style.display = 'none';
@@ -4085,7 +4085,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     if (selDriver && selDriver.vehicle_plate) {
       // Driver has their own registered vehicle - auto-select and lock
       var o = document.createElement('option'); o.value = selDriver.vehicle_plate;
-      o.textContent = 'âœ… ' + selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' - Driver\'s own vehicle';
+      o.textContent = '' + selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' - Driver\'s own vehicle';
       o.selected = true; vehSel.innerHTML = ''; vehSel.appendChild(o); vehSel.disabled = true; return;
     }
     // Driver has no personal vehicle - show fleet
@@ -4136,7 +4136,7 @@ async function submitAdminReassign() {
     if (!r.ok) throw new Error(d.error || 'Failed to reassign.');
     closeAdminReassignModal();
     loadShipments();
-    alert('âœ… ' + (d.message || 'Driver reassigned successfully.'));
+    alert('' + (d.message || 'Driver reassigned successfully.'));
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false;
   btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_search</span> Reassign Driver';
