@@ -358,7 +358,7 @@ textarea{resize:vertical;}
     <button class="nav-link" onclick="closeSidebar();go('shipments',this)"><span class="material-symbols-outlined">local_shipping</span>Shipments<span class="nav-badge">0</span></button>
 
     <div class="nav-sec">Management</div>
-    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff</button>
+    <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff<span class="nav-badge" id="staff-pending-badge" style="display:none;">0</span></button>
     <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
     <button class="nav-link" onclick="closeSidebar();go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
@@ -1656,6 +1656,7 @@ var _origGo=go;
 go=function(id,navBtn){_origGo(id,navBtn);if(id==='app-users')loadAppUsers();if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}};
 // Auto-load on page load
 loadShipments();
+loadStaff(); // Load staff early so pending license badge shows on nav
 
 // ── Dashboard Fleet Status ────────────────────────────────────────────────────
 function loadDashFleet(){
@@ -3050,6 +3051,10 @@ function renderStaff(list) {
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'—') + '</span></td>' +
       '<td>' + suspendBtn + delBtn + '</td></tr>';
   }).join('');
+  // Update pending license badge on Staff nav
+  var pendingCount = list.filter(function(s) { return s.role === 'Driver' && s.license_status === 'pending_review'; }).length;
+  var badge = document.getElementById('staff-pending-badge');
+  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
 }
 
 function filterStaffTab(role, btn) {
