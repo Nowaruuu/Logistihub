@@ -1599,6 +1599,15 @@ function loadShipments(){
       renderDashboardShipments();
       renderShipmentsTable();
       updateStatCards();
+      // Refresh staff badge in the same working code path as shipments
+      apiFetch('/'+slug+'/api/admin/staff')
+        .then(function(r2){return r2.json();})
+        .then(function(staffList){
+          if(!Array.isArray(staffList))return;
+          var cnt=staffList.filter(function(s){return s.role==='Driver'&&s.license_status==='pending_review';}).length;
+          var badge=document.getElementById('staff-pending-badge');
+          if(badge){badge.textContent=cnt;badge.style.display=cnt>0?'':'none';}
+        }).catch(function(){});
     })
     .catch(function(e){console.error('Failed to load shipments:',e);});
 }
