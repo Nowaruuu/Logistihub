@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Dashboard â€” LogistiHub</title>
+<title>Admin Dashboard - LogistiHub</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -322,30 +322,30 @@ textarea{resize:vertical;}
   [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
   [style*="grid-template-columns: repeat"]{grid-template-columns:repeat(2,1fr)!important;}
 
-  /* CARDS â€” remove overflow:hidden so children can scroll */
+  /* CARDS - remove overflow:hidden so children can scroll */
   .card{overflow:visible!important;max-width:100%;}
   .card-head{flex-direction:column;gap:8px;align-items:stretch!important;overflow:visible!important;padding:10px 12px!important;}
 
-  /* TABS BAR â€” horizontal scroll with touch */
+  /* TABS BAR - horizontal scroll with touch */
   .tabs-bar{overflow-x:auto!important;-webkit-overflow-scrolling:touch;white-space:nowrap!important;flex-wrap:nowrap!important;padding-bottom:4px;display:flex!important;gap:0!important;scrollbar-width:none;}
   .tabs-bar::-webkit-scrollbar{display:none;}
   .tab{flex-shrink:0!important;white-space:nowrap!important;}
 
-  /* SHIPMENTS â€” remove fixed height layout */
+  /* SHIPMENTS - remove fixed height layout */
   #s-shipments.active{height:auto!important;overflow:visible!important;display:block!important;}
   #s-shipments > .card{overflow:visible!important;}
   #s-shipments > .card > .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
 
-  /* TABLES â€” force horizontal scroll */
+  /* TABLES - force horizontal scroll */
   .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%!important;display:block!important;}
   .tbl-wrap table{min-width:700px!important;}
 
-  /* MAP â€” shrink on mobile */
+  /* MAP - shrink on mobile */
   #dash-live-map{height:250px!important;}
   .map-ph{height:150px!important;}
   [style*="height:500px"]{height:250px!important;}
 
-  /* LIVE PREVIEW â€” inline on mobile instead of fixed overlay */
+  /* LIVE PREVIEW - inline on mobile instead of fixed overlay */
   #lp-panel{position:relative!important;right:auto!important;top:auto!important;width:100%!important;margin-bottom:16px;}
 
   /* Reg link box */
@@ -442,7 +442,7 @@ textarea{resize:vertical;}
         <div class="stat-card"><div class="stat-label">Pending Payments<div class="stat-icon si-r"><span class="material-symbols-outlined">receipt_long</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
       </div>
 
-      <!-- User registration link box â€” TENANT SCOPED -->
+      <!-- User registration link box - TENANT SCOPED -->
       <div class="reg-link-box" style="margin-bottom:14px;">
         <div class="reg-link-text">
           <strong>Your User Registration Page</strong>
@@ -725,7 +725,7 @@ textarea{resize:vertical;}
         </div>
         <div class="card" style="padding:20px;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Next Billing Date</div>
-          <div id="sub-next-billing" style="font-size:22px;font-weight:800;color:#0f2235;">â€”</div>
+          <div id="sub-next-billing" style="font-size:22px;font-weight:800;color:#0f2235;">-</div>
           <div id="sub-days-left" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
         </div>
         <div class="card" style="padding:20px;">
@@ -1108,7 +1108,7 @@ setTimeout(calcPreview, 100);
           <div style="display:inline-flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:99px;padding:6px 16px;">
             <span class="material-symbols-outlined" style="font-size:14px;color:#10b981;">check_circle</span>
             <span style="font-size:12px;color:#64748b;">Current plan: </span>
-            <strong id="upgrade-current-plan" style="font-size:12px;color:#3b82f6;text-transform:uppercase;letter-spacing:.04em;">â€”</strong>
+            <strong id="upgrade-current-plan" style="font-size:12px;color:#3b82f6;text-transform:uppercase;letter-spacing:.04em;">-</strong>
           </div>
         </div>
       </div>
@@ -1282,7 +1282,7 @@ setTimeout(calcPreview, 100);
         grid.appendChild(card);
       });
     }
-    // renderPlansGrid() is called via go('upgrade') handler â€” NOT here (apiFetch isn't defined yet)
+    // renderPlansGrid() is called via go('upgrade') handler - NOT here (apiFetch isn't defined yet)
 
     async function upgradeToPlan(planKey, btn) {
       if (!confirm('Upgrade to ' + planKey.toUpperCase() + '? You will be redirected to PayMongo to complete payment.')) return;
@@ -2005,8 +2005,8 @@ function loadSalesReport(){
         txTb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">No paid transactions yet</td></tr>';
       } else {
         txTb.innerHTML=data.recent_transactions.map(function(t){
-          var d=t.paid_at?new Date(t.paid_at).toLocaleDateString():'â€”';
-          var method=t.payment_method||'â€”';
+          var d=t.paid_at?new Date(t.paid_at).toLocaleDateString():'-';
+          var method=t.payment_method||'-';
           return '<tr><td style="font-family:monospace;font-size:11px;">'+esc(String(t.invoice_id))+'</td><td>'+esc(t.delivery_number||'')+'</td><td>'+esc(t.client_name||'Walk-in')+'</td><td><span style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">'+esc(method)+'</span></td><td style="font-weight:700;">\u20b1'+Number(t.total_amount||0).toLocaleString()+'</td><td style="font-size:12px;color:#64748b;">'+d+'</td></tr>';
         }).join('');
       }
@@ -2220,7 +2220,7 @@ function previewBackground(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-// FillList handles color inputs â€” native inputs removed
+// FillList handles color inputs - native inputs removed
 function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
   var app = (document.getElementById('set-bg-app-hex') || {}).value || (window.__TENANT__ && window.__TENANT__.bg_app_color) || '#f1f5f9';
@@ -2233,14 +2233,14 @@ function updateColorPreview() {
       bar.style.background = 'linear-gradient(to right, ' + side + ' 30%, ' + app + ' 30%)';
     }
   }
-  // DO NOT set CSS variables here â€” that's done by applyBranding() and FillList onChange
+  // DO NOT set CSS variables here - that's done by applyBranding() and FillList onChange
 }
 
 function loadSettings() {
   var t = window.__TENANT__;
   if (!t) return;
   var slug = t.slug;
-  // Fast path: load lightweight settings (colors, text) â€” no image blobs
+  // Fast path: load lightweight settings (colors, text) - no image blobs
   apiFetch('/' + slug + '/api/admin/settings?t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -2345,7 +2345,7 @@ function applyBranding(d) {
 
 function _colorLum(col) {
   if (!col) return 1;
-  // Handle gradient strings â€” weighted average by position (majority wins)
+  // Handle gradient strings - weighted average by position (majority wins)
   if (col.includes('gradient')) {
     // Extract rgba + position pairs
     var pairs = [];
@@ -2593,7 +2593,7 @@ async function saveSettings() {
     if (bgBase64 && bgBase64.startsWith('data:')) {
       payload.background_url = bgBase64;
     } else if (!bgBase64) {
-      // User clicked Remove and there's no image â€” explicitly clear
+      // User clicked Remove and there's no image - explicitly clear
       payload.background_url = null;
     }
   }
@@ -3107,7 +3107,7 @@ function renderStaff(list) {
   var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
   tb.innerHTML = list.map(function(s) {
     var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
-    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : 'â€”';
+    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : '-';
     var sid = s.staff_id || s.id || '';
     var isSuspended = s.status === 'suspended';
     var suspendIcon = isSuspended ? 'play_arrow' : 'pause';
@@ -3117,12 +3117,12 @@ function renderStaff(list) {
     var delBtn = (sid && !hideBtns) ? '<button onclick="deleteStaff(\'' + sid + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     // License status badge + review button (only for drivers)
     var licStatus = s.license_status || 'not_uploaded';
-    var licBadge = 'â€”';
+    var licBadge = '-';
     if (s.role === 'Driver') {
       if (licStatus === 'verified') {
         licBadge = '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">check_circle</span>Verified</span>';
       } else if (licStatus === 'pending_review') {
-        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fde68a;cursor:pointer;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">schedule</span>Pending â€” Review</button>';
+        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fde68a;cursor:pointer;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">schedule</span>Pending - Review</button>';
       } else if (licStatus === 'expired') {
         licBadge = '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Expired</span>';
       } else {
@@ -3130,12 +3130,12 @@ function renderStaff(list) {
       }
     }
     return '<tr>' +
-      '<td><strong>' + esc(s.name || s.first_name || 'â€”') + '</strong></td>' +
-      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'â€”') + '</span></td>' +
-      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'â€”') + '</td>' +
+      '<td><strong>' + esc(s.name || s.first_name || '-') + '</strong></td>' +
+      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'-') + '</span></td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
-      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'â€”') + '</span></td>' +
+      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'-') + '</span></td>' +
       '<td>' + suspendBtn + delBtn + '</td></tr>';
   }).join('');
   // badge already updated at top of renderStaff
@@ -3182,13 +3182,13 @@ function renderVehicles(list) {
       : '<div onclick="showNoImageToast()" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="No image available"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8;">directions_car</span></div>';
     return '<tr>' +
       '<td>' + imgCell + '</td>' +
-      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'â€”') + '</strong></td>' +
-      '<td>' + esc(v.vehicle_type||'â€”') + '</td>' +
-      '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'â€”') + '</td>' +
-      '<td>' + (v.capacity_tons || 'â€”') + '</td>' +
+      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'-') + '</strong></td>' +
+      '<td>' + esc(v.vehicle_type||'-') + '</td>' +
+      '<td style="color:#64748b;font-size:12px;">' + esc(v.model||'-') + '</td>' +
+      '<td>' + (v.capacity_tons || '-') + '</td>' +
       '<td>' + ownerBadge + '</td>' +
-      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'â€”') + '</span></td>' +
-      '<td>' + esc(v.assigned_driver_name||'â€”') + '</td>' +
+      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'-') + '</span></td>' +
+      '<td>' + esc(v.assigned_driver_name||'-') + '</td>' +
       '<td><div style="display:flex;gap:2px;">' + assignBtn + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }
@@ -3226,7 +3226,7 @@ function showNoImageToast() {
 
 // â”€â”€ Package Categories (global tenant-level) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
-// Display labels â€” internal DB keys stay the same so mobile mapping works
+// Display labels - internal DB keys stay the same so mobile mapping works
 var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
 var _activePkgCats = [];
 function loadPackageCategories() {
@@ -3468,7 +3468,7 @@ function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
   var s = _staffData.find(function(x) { return String(x.staff_id || x.id) === String(staffId); });
   if (!s) return alert('Staff not found.');
-  document.getElementById('license-driver-name').textContent = (s.name || 'Driver') + ' â€” ' + (s.role || '');
+  document.getElementById('license-driver-name').textContent = (s.name || 'Driver') + ' - ' + (s.role || '');
   var statusLabels = { not_uploaded: 'Not Uploaded', pending_review: 'Pending Review', verified: 'Verified', expired: 'Expired' };
   document.getElementById('license-cur-status').textContent = statusLabels[s.license_status] || s.license_status || 'Unknown';
   document.getElementById('license-cur-expiry').textContent = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : 'Not set';
@@ -3645,7 +3645,7 @@ async function loadAuditLogs() {
         '<td><strong>' + act + '</strong></td>' +
         '<td>' + typeHtml + '</td>' +
         '<td><span style="background:#f1f5f9;color:#334155;padding:3px 8px;border-radius:6px;font-size:11px;font-family:\'DM Mono\',monospace;font-weight:600;">' + esc(l.action) + '</span></td>' +
-        '<td>' + esc(l.target || 'â€”') + '</td>' +
+        '<td>' + esc(l.target || '-') + '</td>' +
       '</tr>';
     }).join('');
   } catch (e) {
@@ -3720,25 +3720,25 @@ function renderPayments(list) {
   tb.innerHTML = list.map(function(p) {
     var customer = (p.customer_first || p.customer_last)
       ? esc((p.customer_first + ' ' + p.customer_last).trim())
-      : esc(p.receiver_name || 'â€”');
-    var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'â€”';
+      : esc(p.receiver_name || '-');
+    var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-';
     var method = p.payment_method || '';
     var methodLabels = {'gcash':'GCash','card':'Card','paymaya':'PayMaya','grab_pay':'GrabPay','billease':'BillEase','dob':'Online Banking'};
     if (method && methodLabels[method.toLowerCase()]) method = methodLabels[method.toLowerCase()];
     else if (method) method = method.charAt(0).toUpperCase() + method.slice(1);
     if (!method && p.paymongo_checkout_id) method = 'PayMongo';
-    method = esc(method || 'â€”');
-    var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || 'â€”');
-    var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">â€”</span>';
+    method = esc(method || '-');
+    var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '-');
+    var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>';
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
-    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'â€”');
+    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-');
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">#' + esc(String(p.invoice_id||'')) + '</strong></td>' +
-      '<td><strong>' + esc(p.delivery_number||'â€”') + '</strong></td>' +
+      '<td><strong>' + esc(p.delivery_number||'-') + '</strong></td>' +
       '<td>' + customer + '</td>' +
       '<td><strong>' + amount + '</strong></td>' +
       '<td>' + method + '</td>' +
@@ -3904,13 +3904,13 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : 'â€”';
-      var ts = p.created_at ? new Date(p.created_at).toLocaleString() : 'â€”';
+      var geo = (p.latitude && p.longitude) ? parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) : '-';
+      var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
       var type = esc(p.capture_type || p.type || 'Photo');
-      var media = p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : (p.signature ? '<img src="' + p.signature + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : 'â€”');
+      var media = p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : (p.signature ? '<img src="' + p.signature + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)" />' : '-');
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
-        '<td><strong>' + esc(p.delivery_number || 'â€”') + '</strong></td>' +
+        '<td><strong>' + esc(p.delivery_number || '-') + '</strong></td>' +
         '<td>' + type + '</td>' +
         '<td style="font-family:monospace;font-size:11px;">' + geo + '</td>' +
         '<td>' + ts + '</td>' +
@@ -4038,7 +4038,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     if (!Array.isArray(_adminReassignVehicles)) _adminReassignVehicles = [];
   } catch(e) { _adminReassignVehicles = []; }
 
-  // Populate driver dropdown â€” EXCLUDE Pending Review license drivers
+  // Populate driver dropdown - EXCLUDE Pending Review license drivers
   var driverSel = document.getElementById('admin-reassign-driver');
   driverSel.innerHTML = '<option value="">Select driver...</option>';
   var BLOCKED_LICENSE = ['pending_review'];
@@ -4074,7 +4074,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     var vehSel = document.getElementById('admin-reassign-vehicle');
     vehSel.innerHTML = '<option value="">None (optional)</option>';
     if (!selDriverId) {
-      // No driver selected yet â€” show placeholder
+      // No driver selected yet - show placeholder
       vehSel.disabled = true;
       var ph = document.createElement('option'); ph.value = ''; ph.disabled = true;
       ph.textContent = 'â† Select a driver first'; vehSel.appendChild(ph);
@@ -4083,12 +4083,12 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     vehSel.disabled = false;
     var selDriver = drivers.find(function(d){ return (d.staff_id||d.id) == selDriverId; });
     if (selDriver && selDriver.vehicle_plate) {
-      // Driver has their own registered vehicle â€” auto-select and lock
+      // Driver has their own registered vehicle - auto-select and lock
       var o = document.createElement('option'); o.value = selDriver.vehicle_plate;
-      o.textContent = 'âœ… ' + selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' â€” Driver\'s own vehicle';
+      o.textContent = 'âœ… ' + selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' - Driver\'s own vehicle';
       o.selected = true; vehSel.innerHTML = ''; vehSel.appendChild(o); vehSel.disabled = true; return;
     }
-    // Driver has no personal vehicle â€” show fleet
+    // Driver has no personal vehicle - show fleet
     var busyVehicles = {};
     (_allShipments||[]).forEach(function(s){ if(s.assigned_vehicle_plate && (s.status==='In-Transit'||s.status==='In Transit'||s.status==='Out for Delivery')) busyVehicles[s.assigned_vehicle_plate]=true; });
     var fleetCount = 0;
@@ -4104,7 +4104,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     });
     if (fleetCount === 0) {
       var no = document.createElement('option'); no.value = ''; no.disabled = true;
-      no.textContent = 'âš  No fleet vehicles â€” driver needs to register their vehicle';
+      no.textContent = 'âš  No fleet vehicles - driver needs to register their vehicle';
       vehSel.appendChild(no);
     }
   }
