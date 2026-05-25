@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Package, Plus, MapPin, User, Bell, Menu, Settings, HelpCircle, LogOut, X, ChevronRight, Calculator, Radar } from 'lucide-react';
+import { Home, Package, Plus, MapPin, User, Bell, Menu, Settings, HelpCircle, LogOut, X, ChevronRight, Calculator, Radar, Wallet } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
 import { getTenantConfig } from '../lib/api';
@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = isDriver ? [
     { icon: Home, label: 'Home', path: '/dashboard' },
     { icon: MapPin, label: 'Nearby', path: '/stations' },
-    { icon: Package, label: 'Jobs', path: '/driver/jobs', isAction: true },
+    { icon: Wallet, label: 'Earnings', path: '/driver/earnings', isAction: true },
     { icon: Bell, label: 'Inbox', path: '/notifications' },
     { icon: User, label: 'Profile', path: '/profile' },
   ] : [
@@ -159,6 +159,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {location.pathname === '/dashboard' ? (isDriver ? 'Driver Dashboard' : 'My Deliveries') : 
              location.pathname === '/packages' ? 'My Packages' :
              location.pathname === '/driver/jobs' ? 'Available Jobs' :
+             location.pathname === '/driver/earnings' ? 'My Earnings' :
              location.pathname === '/send' ? 'Send Package' :
              location.pathname === '/stations' ? (isDriver ? 'Nearby Pickups' : 'Live Tracking') :
              location.pathname === '/calculator' ? 'Rate Calculator' :
