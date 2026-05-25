@@ -1906,10 +1906,8 @@ function loadSalesReport(){
     var netEl = document.getElementById('sr-net-profit');
     if(netEl){ netEl.textContent='\u20b1'+Math.abs(Math.round(netProfit)).toLocaleString(); netEl.style.color=netProfit>=0?'#10b981':'#ef4444'; if(netProfit<0) netEl.textContent='-'+netEl.textContent; }
 
-    // Render chart with current period selection (wait for layout)
-    setTimeout(function(){
-      _renderSalesChart(data.chart_data||[], curPeriod);
-    }, 200);
+    // Render chart with current period selection
+    _renderSalesChart(data.chart_data||[], curPeriod);
 
     // Store data globally for chart-only refresh
     window._srLastData=data;
