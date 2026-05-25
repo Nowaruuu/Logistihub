@@ -44,13 +44,29 @@ export default function DriverDashboard() {
   const [showChat, setShowChat] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
 
+  // Persist declined job IDs across navigation
+  const getDeclinedKey = () => `declined_jobs_${user?.uid || 'driver'}`;
+  const getDeclinedIds = (): Set<string> => {
+    try { return new Set(JSON.parse(localStorage.getItem(getDeclinedKey()) || '[]')); }
+    catch { return new Set(); }
+  };
+  const addDeclinedId = (tn: string) => {
+    const ids = getDeclinedIds();
+    ids.add(tn);
+    // Keep last 50 declined to avoid unbounded growth
+    const arr = Array.from(ids).slice(-50);
+    localStorage.setItem(getDeclinedKey(), JSON.stringify(arr));
+  };
+
   const hasActiveJob = activeAssignments.length > 0;
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
+      const declined = getDeclinedIds();
       const jobs = await deliveryService.getAvailableJobs();
-      setAvailableJobs(jobs);
+      // Filter out jobs the driver already declined
+      setAvailableJobs(jobs.filter((j: any) => !declined.has(j.trackingNumber)));
 
       const assigned = await deliveryService.getDriverDeliveries();
       setActiveAssignments(assigned);
@@ -158,6 +174,8 @@ export default function DriverDashboard() {
     if (!decliningId) return;
     const tn = decliningId;
     setDecliningId(null);
+    // Persist to localStorage so it stays hidden after navigation
+    addDeclinedId(tn);
     // Optimistically remove from list
     setAvailableJobs(prev => prev.filter(j => j.trackingNumber !== tn));
     try {
