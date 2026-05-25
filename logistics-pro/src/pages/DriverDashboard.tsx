@@ -42,6 +42,7 @@ export default function DriverDashboard() {
   const [proofPhoto, setProofPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showChat, setShowChat] = useState<string | null>(null);
+  const [decliningId, setDecliningId] = useState<string | null>(null);
 
   const hasActiveJob = activeAssignments.length > 0;
 
@@ -150,12 +151,20 @@ export default function DriverDashboard() {
   };
 
   const handleDeclineJob = async (trackingNumber: string) => {
-    const reason = prompt('Reason for declining (optional):');
-    if (reason === null) return; // user cancelled the prompt
+    setDecliningId(trackingNumber);
+  };
+
+  const confirmDecline = async () => {
+    if (!decliningId) return;
+    const tn = decliningId;
+    setDecliningId(null);
+    // Optimistically remove from list
+    setAvailableJobs(prev => prev.filter(j => j.trackingNumber !== tn));
     try {
-      await declineDelivery(trackingNumber, reason);
-      await fetchData();
+      await declineDelivery(tn);
     } catch (err: any) {
+      // Re-fetch to restore state on error
+      await fetchData();
       alert(err.message || 'Failed to decline');
     }
   };
@@ -605,6 +614,38 @@ export default function DriverDashboard() {
       {/* Chat overlay */}
       {showChat && (
         <DeliveryChat deliveryNumber={showChat} onClose={() => setShowChat(null)} />
+      )}
+
+      {/* ── Decline Confirmation Modal ── */}
+      {decliningId && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-700/50 p-6 pb-10">
+            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-5" />
+            <div className="flex flex-col items-center text-center gap-3 mb-6">
+              <div className="size-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <X className="size-7 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-slate-900 dark:text-white font-extrabold text-lg">Decline Job?</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">This shipment will be returned to the available pool for other drivers.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDecliningId(null)}
+                className="flex-1 py-3.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-2xl active:scale-[0.98] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDecline}
+                className="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 active:scale-[0.98] transition-all"
+              >
+                Yes, Decline
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

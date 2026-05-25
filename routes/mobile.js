@@ -1448,6 +1448,13 @@ router.post('/driver/decline', authMiddleware, async (req, res) => {
       );
     }
 
+    // Log to admin audit log so admin can see driver declines
+    try {
+      const [tenantRows] = await query('SELECT slug FROM TENANT WHERE tenant_id = ? LIMIT 1', [tid]);
+      const slug = tenantRows[0]?.slug || '';
+      logAudit({ actor: staffName, actor_type: 'staff', action: 'DECLINE_DELIVERY', target: delivery_number, tenant_slug: slug, ip_address: req.ip });
+    } catch(_) {}
+
     res.json({ ok: true });
   } catch (err) {
     console.error('[POST /driver/decline]', err);

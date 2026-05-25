@@ -9,7 +9,7 @@ import { cn } from '../lib/utils';
 export default function Notifications() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'Shipments' | 'Promotions' | 'Account'>('Shipments');
+  const [activeTab, setActiveTab] = useState<'Shipments' | 'Account'>('Shipments');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -69,7 +69,7 @@ export default function Notifications() {
       {/* Tab bar */}
       <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
         <div className="flex">
-          {(['Shipments', 'Promotions', 'Account'] as const).map((tab) => {
+          {(['Shipments', 'Account'] as const).map((tab) => {
             const count = notifications.filter(n => n.type === tab && !isRead(n)).length;
             return (
               <button

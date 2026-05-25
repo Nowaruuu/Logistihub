@@ -904,12 +904,13 @@ const { sendStaffWelcomeEmail } = require('../config/mailer');
 const crypto = require('crypto');
 
 router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
-  const { name, email, role, license_expiry } = req.body;  // email = contact email address
+  const { name, email, role, phone, license_expiry } = req.body;  // email = contact email address
   const tid  = req.tenantId;
   const slug = req.params.slug;
 
   const ALLOWED_ROLES = ['Driver', 'Document Controller', 'Manager'];
   if (!name || !email || !role) return res.status(400).json({ error: 'name, email and role are required.' });
+  if (!phone) return res.status(400).json({ error: 'phone is required.' });
   if (!ALLOWED_ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role.' });
 
   // Manager cannot promote/create Manager or Admin
@@ -962,6 +963,12 @@ router.post('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req
     if (license_expiry) {
       try {
         await query('UPDATE STAFF SET license_expiry = ? WHERE username = ? AND tenant_id = ?', [license_expiry, loginUsername, tid]);
+      } catch(_) { /* column may not exist — silently skip */ }
+    }
+    // Save phone number (safe)
+    if (phone) {
+      try {
+        await query('UPDATE STAFF SET phone = ? WHERE username = ? AND tenant_id = ?', [phone, loginUsername, tid]);
       } catch(_) { /* column may not exist — silently skip */ }
     }
 
