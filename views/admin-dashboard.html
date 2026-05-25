@@ -1676,7 +1676,9 @@ function renderShipmentsTable(){
     var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
     var sender = s.sender_name ? esc(s.sender_name) : esc(s.client_name||'N/A');
     var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
-    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+sender+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td style="white-space:nowrap;font-size:11px;">'+dateOrdered+'</td><td style="white-space:nowrap;font-size:11px;">'+dateDelivered+'</td><td></td></tr>';
+    var canReassign = (s.status==='Declined'||s.status==='Pending'||s.status==='Queued'||s.status==='In-Transit'||s.status==='In Transit')&&s.status!=='Delivered'&&s.status!=='Failed';
+    var reassignBtn = canReassign ? '<button onclick="openAdminReassignModal(\''+esc(s.delivery_number)+'\','+( s.assigned_driver_id||'null')+',\''+esc(s.assigned_vehicle_plate||'')+'\')" style="padding:4px 10px;font-size:11px;border:1.5px solid '+(s.status==='Declined'?'#ef4444':'#e2e8f0')+';border-radius:7px;background:'+(s.status==='Declined'?'#fef2f2':'#fff')+';cursor:pointer;font-family:inherit;font-weight:700;color:'+(s.status==='Declined'?'#dc2626':'#3b82f6')+';white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-outlined" style="font-size:13px;">'+(s.status==='Declined'?'person_search':'swap_horiz')+'</span>'+(s.status==='Declined'?'Reassign':'Assign')+'</button>' : '';
+    return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+sender+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td style="white-space:nowrap;font-size:11px;">'+dateOrdered+'</td><td style="white-space:nowrap;font-size:11px;">'+dateDelivered+'</td><td>'+reassignBtn+'</td></tr>';
   }).join('');
 }
 
@@ -3915,6 +3917,142 @@ function clearDocUpload() {
   document.getElementById('v-doc-zone').style.display = '';
   var input = document.getElementById('v-ownership-doc');
   if (input) input.value = '';
+}
+</script>
+
+<!-- ══ ADMIN REASSIGN DRIVER MODAL ════════════════════════════════════════════ -->
+<div id="modal-admin-reassign" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#0f172a;">Reassign Driver</div>
+        <div style="font-size:12px;color:#ef4444;font-weight:600;margin-top:2px;">⚠ This shipment was declined — assign a new driver to restart it</div>
+      </div>
+      <button onclick="closeAdminReassignModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:22px;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="admin-reassign-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;"></div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Delivery Number</label>
+      <input id="admin-reassign-dn" type="text" disabled style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;background:#f8fafc;color:#64748b;box-sizing:border-box;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">New Driver *</label>
+        <select id="admin-reassign-driver" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">Select driver...</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:5px;">Vehicle</label>
+        <select id="admin-reassign-vehicle" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+          <option value="">None</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeAdminReassignModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
+      <button id="admin-reassign-btn" onclick="submitAdminReassign()" style="flex:2;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_search</span> Reassign Driver
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+var _adminReassignDN = '', _adminReassignStaff = [], _adminReassignVehicles = [];
+
+async function openAdminReassignModal(dn, currentDriverId, currentPlate) {
+  _adminReassignDN = dn;
+  document.getElementById('admin-reassign-dn').value = dn;
+  document.getElementById('admin-reassign-err').style.display = 'none';
+  var modal = document.getElementById('modal-admin-reassign');
+
+  // Load staff if needed
+  try {
+    var sr = await apiFetch('/' + _SLUG + '/api/admin/staff');
+    _adminReassignStaff = await sr.json();
+    if (!Array.isArray(_adminReassignStaff)) _adminReassignStaff = [];
+  } catch(e) { _adminReassignStaff = []; }
+
+  // Load vehicles if needed
+  try {
+    var vr = await apiFetch('/' + _SLUG + '/api/admin/vehicles');
+    _adminReassignVehicles = await vr.json();
+    if (!Array.isArray(_adminReassignVehicles)) _adminReassignVehicles = [];
+  } catch(e) { _adminReassignVehicles = []; }
+
+  // Populate driver dropdown
+  var driverSel = document.getElementById('admin-reassign-driver');
+  driverSel.innerHTML = '<option value="">Select driver...</option>';
+  var drivers = _adminReassignStaff.filter(function(s){ return s.role === 'Driver' && s.status === 'active'; });
+  // Build a busy map from current shipments
+  var busyMap = {};
+  (_allShipments||[]).forEach(function(s){ if(s.assigned_driver_id && (s.status==='In-Transit'||s.status==='In Transit'||s.status==='Out for Delivery')) busyMap[s.assigned_driver_id]=true; });
+  drivers.forEach(function(d){
+    var opt = document.createElement('option');
+    var did = d.staff_id || d.id;
+    opt.value = did;
+    var ind = busyMap[did] ? '🟡 ' : '🟢 ';
+    opt.textContent = ind + (d.name || d.full_name) + (busyMap[did] ? ' (busy)' : ' (available)');
+    if (did == currentDriverId) opt.selected = true;
+    driverSel.appendChild(opt);
+  });
+
+  // Populate vehicle dropdown
+  function fillVehicles(selDriverId) {
+    var vehSel = document.getElementById('admin-reassign-vehicle');
+    vehSel.innerHTML = '<option value="">None</option>';
+    var selDriver = selDriverId ? drivers.find(function(d){ return (d.staff_id||d.id) == selDriverId; }) : null;
+    if (selDriver && selDriver.vehicle_plate) {
+      var o = document.createElement('option'); o.value = selDriver.vehicle_plate;
+      o.textContent = selDriver.vehicle_plate + (selDriver.vehicle_type ? ' (' + selDriver.vehicle_type + ')' : '') + ' — Own vehicle';
+      o.selected = true; vehSel.innerHTML = ''; vehSel.appendChild(o); vehSel.disabled = true; return;
+    }
+    vehSel.disabled = false;
+    var busyVehicles = {};
+    (_allShipments||[]).forEach(function(s){ if(s.assigned_vehicle_plate && (s.status==='In-Transit'||s.status==='In Transit'||s.status==='Out for Delivery')) busyVehicles[s.assigned_vehicle_plate]=true; });
+    (_adminReassignVehicles||[]).forEach(function(v){
+      var o = document.createElement('option'); o.value = v.plate_number;
+      var lbl = v.plate_number + (v.vehicle_type ? ' (' + v.vehicle_type + ')' : '');
+      if (busyVehicles[v.plate_number]) { lbl += ' 🔴 In Use'; o.disabled = true; }
+      else if (v.status === 'Maintenance') { lbl += ' 🟡 Maint'; o.disabled = true; }
+      else lbl += ' 🟢 Available';
+      o.textContent = lbl;
+      if (v.plate_number === currentPlate) o.selected = true;
+      vehSel.appendChild(o);
+    });
+  }
+  driverSel.onchange = function(){ fillVehicles(this.value); };
+  fillVehicles(currentDriverId);
+
+  modal.style.display = 'flex';
+  modal.onclick = function(e){ if(e.target===modal) closeAdminReassignModal(); };
+}
+
+function closeAdminReassignModal() {
+  document.getElementById('modal-admin-reassign').style.display = 'none';
+}
+
+async function submitAdminReassign() {
+  var driverId = document.getElementById('admin-reassign-driver').value;
+  var plate = document.getElementById('admin-reassign-vehicle').value;
+  var errEl = document.getElementById('admin-reassign-err');
+  var btn = document.getElementById('admin-reassign-btn');
+  errEl.style.display = 'none';
+  if (!driverId) { errEl.textContent = 'Please select a driver.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Reassigning...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/shipments/' + encodeURIComponent(_adminReassignDN) + '/assign', {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ assigned_driver_id: driverId, assigned_vehicle_plate: plate || null })
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to reassign.');
+    closeAdminReassignModal();
+    loadShipments();
+    alert('✅ ' + (d.message || 'Driver reassigned successfully.'));
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  btn.disabled = false;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_search</span> Reassign Driver';
 }
 </script>
 </body>
