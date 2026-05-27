@@ -306,7 +306,7 @@ export default function Profile() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-3 px-6 pb-8">
+      <div className={`grid ${profile.role === 'driver' ? 'grid-cols-2' : 'grid-cols-3'} gap-3 px-6 pb-8`}>
         {profile.role === 'driver' ? (
           <>
             <div className="bg-white dark:bg-slate-900 shadow-sm p-4 rounded-2xl flex flex-col items-center border border-slate-100 dark:border-slate-800">
@@ -319,10 +319,6 @@ export default function Profile() {
                 <span className="text-orange-600 font-bold text-xl">{driverData?.rating?.toFixed(1) || '0.0'}</span>
               </div>
               <span className="text-orange-600/70 dark:text-orange-600/60 text-[10px] uppercase font-bold tracking-widest mt-1">Rating</span>
-            </div>
-            <div className="bg-white dark:bg-slate-900 shadow-sm p-4 rounded-2xl flex flex-col items-center border border-slate-100 dark:border-slate-800">
-              <Wallet className="text-emerald-500 size-6" />
-              <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">Earnings</span>
             </div>
           </>
         ) : (
