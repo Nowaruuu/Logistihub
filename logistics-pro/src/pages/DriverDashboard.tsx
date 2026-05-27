@@ -266,8 +266,9 @@ export default function DriverDashboard() {
         coords ? coords[1] : null
       );
       await fetchData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error completing delivery:', err);
+      alert(err.message || 'Cannot mark as delivered. Please follow the correct delivery sequence.');
     } finally {
       setCompleting(null);
       setProofPhoto(null);
@@ -550,7 +551,7 @@ export default function DriverDashboard() {
                           try {
                             await deliveryService.updateStatus(assignment.trackingNumber, 'In-Transit', 'Starting pickup');
                             await fetchData();
-                          } catch (err) { console.error(err); }
+                          } catch (err: any) { console.error(err); alert(err.message || 'Failed to update status.'); }
                           finally { setCompleting(null); }
                         }}
                         disabled={completing === assignment.id}
@@ -562,14 +563,14 @@ export default function DriverDashboard() {
                           <><Truck className="size-4" /> Start Pickup</>
                         )}
                       </button>
-                    ) : assignment.status === 'In-Transit' ? (
+                    ) : assignment.status === 'In Transit' ? (
                       <button
                         onClick={async () => {
                           setCompleting(assignment.id);
                           try {
                             await deliveryService.updateStatus(assignment.trackingNumber, 'Out for Delivery', 'Pickup Location');
                             await fetchData();
-                          } catch (err) { console.error(err); }
+                          } catch (err: any) { console.error(err); alert(err.message || 'Failed to update status.'); }
                           finally { setCompleting(null); }
                         }}
                         disabled={completing === assignment.id}
