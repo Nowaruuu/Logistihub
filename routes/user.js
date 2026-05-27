@@ -156,10 +156,19 @@ router.post('/register', async (req, res) => {
 
       return res.status(201).json({
         ok:           true,
-        user_id:      result.insertId,
-        name:         `${first_name} ${last_name}`,
         token:        token,
-        login_email:  loginEmail
+        login_email:  loginEmail,
+        user: {
+          user_id:    result.insertId,
+          uid:        result.insertId,
+          first_name, last_name,
+          fullName:   `${first_name} ${last_name}`,
+          email:      loginEmail,
+          phone:      phone || null,
+          role:       'user',
+          status:     'active',
+          tenant_id:  tenantId,
+        }
       });
     }
 
