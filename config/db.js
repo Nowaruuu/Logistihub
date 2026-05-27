@@ -14,6 +14,10 @@ const pool = mysql.createPool({
   queueLimit:         0,
   timezone:           '+00:00',
   charset:            'utf8mb4',
+  // ── Connection resiliency: prevent ECONNRESET on idle connections ──────
+  enableKeepAlive:      true,
+  keepAliveInitialDelay: 10000,   // ping idle connections every 10s
+  connectTimeout:       20000,    // 20s to establish a connection
 });
 
 // ─── Test connection on startup ───────────────────────────────────────────────
