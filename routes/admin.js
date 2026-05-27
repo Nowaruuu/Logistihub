@@ -738,7 +738,26 @@ router.post('/:slug/api/admin/shipments', requireAdmin, requireSlugMatch, async 
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req, res) => {
-  const [rows] = await query('SELECT *, staff_id AS id FROM STAFF WHERE tenant_id = ? ORDER BY name ASC', [req.tenantId]);
+  const tid = req.tenantId;
+  // Join with shipments + payments to compute driver earnings
+  const [rows] = await query(
+    `SELECT s.*, s.staff_id AS id,
+       COALESCE(e.total_earnings, 0) AS total_earnings,
+       COALESCE(e.delivered_count, 0) AS delivered_count
+     FROM STAFF s
+     LEFT JOIN (
+       SELECT sh.assigned_driver_id,
+              SUM(COALESCE(p.amount, sh.total_fee, 0)) AS total_earnings,
+              COUNT(*) AS delivered_count
+       FROM shipment sh
+       LEFT JOIN payment p ON p.delivery_number = sh.delivery_number AND p.tenant_id = sh.tenant_id AND p.status = 'Paid'
+       WHERE sh.tenant_id = ? AND sh.status = 'Delivered' AND sh.assigned_driver_id IS NOT NULL
+       GROUP BY sh.assigned_driver_id
+     ) e ON e.assigned_driver_id = s.staff_id
+     WHERE s.tenant_id = ?
+     ORDER BY s.name ASC`,
+    [tid, tid]
+  );
   
   const currentUserEmail = req.admin.email;
   const staffWithMeta = rows.map(s => ({

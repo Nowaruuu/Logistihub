@@ -588,7 +588,7 @@ textarea{resize:vertical;}
           <div class="tabs-bar" style="border:none;margin:0;"><button class="tab active" onclick="filterStaffTab('All',this)">All</button><button class="tab" onclick="filterStaffTab('Driver',this)">Driver</button><button class="tab" onclick="filterStaffTab('Document Controller',this)">Doc Controller</button><button class="tab" onclick="filterStaffTab('Manager',this)">Manager</button></div>
           <select class="f-select" onchange="filterStaffStatus(this.value)"><option value="">All Statuses</option><option value="active">Active</option><option value="Available">Available</option><option value="inactive">Inactive</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>Phone</th><th>License Expiry</th><th>License</th><th>Status</th><th></th></tr></thead><tbody id="staff-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>Phone</th><th>Deliveries</th><th>Earnings</th><th>License Expiry</th><th>License</th><th>Status</th><th></th></tr></thead><tbody id="staff-tbody"><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -3106,7 +3106,7 @@ function renderStaff(list) {
 
   var tb = document.getElementById('staff-tbody');
   if(!tb) return;
-  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records found</p></div></td></tr>'; return; }
+  if(!list || !list.length) { tb.innerHTML = '<tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">badge</span><p>No staff records found</p></div></td></tr>'; return; }
   var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
   tb.innerHTML = list.map(function(s) {
     var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
@@ -3137,6 +3137,8 @@ function renderStaff(list) {
       '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'-') + '</span></td>' +
       '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td style="font-size:12px;">' + esc(s.phone || '\u2014') + '</td>' +
+      '<td style="font-size:12px;text-align:center;">' + (s.role === 'Driver' ? '<strong>' + (s.delivered_count || 0) + '</strong>' : '\u2014') + '</td>' +
+      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;">₱' + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'-') + '</span></td>' +
