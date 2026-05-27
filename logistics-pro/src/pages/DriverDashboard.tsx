@@ -562,7 +562,7 @@ export default function DriverDashboard() {
                           <><Truck className="size-4" /> Start Pickup</>
                         )}
                       </button>
-                    ) : assignment.status === 'In Transit' ? (
+                    ) : assignment.status === 'In-Transit' ? (
                       <button
                         onClick={async () => {
                           setCompleting(assignment.id);
