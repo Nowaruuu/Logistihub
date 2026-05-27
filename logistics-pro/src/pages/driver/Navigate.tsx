@@ -188,7 +188,7 @@ export default function DriverNavigate() {
     setCompleting(true);
     setShowProofModal(false);
     try {
-      await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
+      const res = await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({
@@ -197,10 +197,60 @@ export default function DriverNavigate() {
           proof_photo: photo || undefined,
         }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Cannot mark as delivered yet. Complete previous steps first.');
+        return;
+      }
       setCompleted(true);
       setTimeout(() => navigate('/dashboard'), 1800);
     } catch (err) {
       console.error('Failed to complete delivery:', err);
+      alert('Network error. Please try again.');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  // Determine the correct next action based on current status
+  const getNextAction = () => {
+    const status = job?.status || '';
+    if (['Pending', 'Processing', 'In-Transit', 'In Transit'].includes(status)) {
+      return { label: 'Picked Up — Out for Delivery', nextStatus: 'Out for Delivery', color: 'bg-blue-600 shadow-blue-600/30' };
+    }
+    if (status === 'Out for Delivery') {
+      return { label: 'Mark as Delivered', nextStatus: 'Delivered', color: 'bg-green-600 shadow-green-600/30' };
+    }
+    // Default (already In Transit after accept)
+    return { label: 'Picked Up — Out for Delivery', nextStatus: 'Out for Delivery', color: 'bg-blue-600 shadow-blue-600/30' };
+  };
+
+  const handleNextStep = async () => {
+    if (!job) return;
+    const action = getNextAction();
+    if (action.nextStatus === 'Delivered') {
+      setShowProofModal(true);
+      return;
+    }
+    setCompleting(true);
+    try {
+      const res = await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ status: action.nextStatus, location: job.origin || 'Pickup' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to update status.');
+        return;
+      }
+      // Update local job status so button changes
+      if (job) (job as any).status = action.nextStatus;
+      // Force re-render
+      setCompleting(false);
+      setCompleting(false);
+    } catch (err) {
+      alert('Network error. Please try again.');
     } finally {
       setCompleting(false);
     }
@@ -347,19 +397,24 @@ export default function DriverNavigate() {
             <p className="text-white text-sm font-mono font-bold">{job.trackingNumber}</p>
           </div>
 
-          {/* Action button */}
+          {/* Action button — shows correct next step */}
           <div className="px-5 py-4">
-            <button
-              onClick={() => setShowProofModal(true)}
-              disabled={completing || completed}
-              className="w-full flex items-center justify-center gap-2.5 py-4 bg-green-600 text-white font-extrabold text-base rounded-2xl shadow-xl shadow-green-600/30 active:scale-[0.98] transition-all disabled:opacity-60"
-            >
-              {completing ? (
-                <><Loader2 className="size-5 animate-spin" />Updating…</>
-              ) : (
-                <><CheckCircle2 className="size-5" />Mark as Delivered</>
-              )}
-            </button>
+            {(() => {
+              const action = getNextAction();
+              return (
+                <button
+                  onClick={handleNextStep}
+                  disabled={completing || completed}
+                  className={`w-full flex items-center justify-center gap-2.5 py-4 ${action.color} text-white font-extrabold text-base rounded-2xl shadow-xl active:scale-[0.98] transition-all disabled:opacity-60`}
+                >
+                  {completing ? (
+                    <><Loader2 className="size-5 animate-spin" />Updating…</>
+                  ) : (
+                    <><CheckCircle2 className="size-5" />{action.label}</>
+                  )}
+                </button>
+              );
+            })()}
           </div>
         </div>
       </div>
