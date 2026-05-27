@@ -990,16 +990,16 @@ router.get('/driver/earnings', authMiddleware, async (req, res) => {
 
     // This week's earnings
     const [weekRows] = await query(
-      "SELECT COALESCE(SUM(total_fee), 0) AS week_earnings FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered' AND updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
+      "SELECT COALESCE(SUM(total_fee), 0) AS week_earnings FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
       [staffId, tid]
     );
     const weekEarnings = parseFloat(weekRows[0]?.week_earnings || 0);
 
     // Recent completed deliveries as transactions
     const [transactions] = await query(
-      `SELECT delivery_number, total_fee, dropoff_location AS destination, updated_at, created_at
+      `SELECT delivery_number, total_fee, dropoff_location AS destination, created_at
        FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'
-       ORDER BY updated_at DESC LIMIT 20`,
+       ORDER BY created_at DESC LIMIT 20`,
       [staffId, tid]
     );
 
@@ -1014,7 +1014,7 @@ router.get('/driver/earnings', authMiddleware, async (req, res) => {
         amount: parseFloat(t.total_fee || 0),
         type: 'delivery',
         destination: t.destination || '',
-        date: t.updated_at || t.created_at
+        date: t.created_at
       }))
     });
   } catch (err) {
