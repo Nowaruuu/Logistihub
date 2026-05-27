@@ -131,6 +131,7 @@ tr:hover td{background:#f8fafc;}
     <button class="nav-link" onclick="go('deliveries',this)"><span class="material-symbols-outlined">inventory_2</span>Deliveries</button>
     <div class="nav-sec">Account</div>
     <button class="nav-link" onclick="go('profile',this)"><span class="material-symbols-outlined">person</span>Profile</button>
+    <button class="nav-link" onclick="go('vehicle',this);loadVehicle()"><span class="material-symbols-outlined">directions_car</span>My Vehicle</button>
   </nav>
   <div class="sidebar-bottom">
     <div class="user-row">
@@ -256,6 +257,79 @@ tr:hover td{background:#f8fafc;}
       </div>
     </div>
 
+    <!-- VEHICLE -->
+    <div id="s-vehicle" class="screen">
+      <div class="ph-row"><div><h2>My Vehicle</h2><p>Register or update your vehicle</p></div></div>
+
+      <!-- Current vehicle info -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">directions_car</span>Registered Vehicle</span>
+          <span id="veh-license-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#f1f5f9;color:#94a3b8;"></span>
+        </div>
+        <div class="card-body" id="veh-info-body">
+          <div style="text-align:center;padding:20px 0;">
+            <span class="material-symbols-outlined" style="font-size:40px;color:#e2e8f0;">directions_car</span>
+            <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Loading vehicle info...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Register / Update form -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title"><span class="material-symbols-outlined">edit</span><span id="veh-form-title">Register Vehicle</span></span>
+        </div>
+        <div class="card-body">
+          <form id="vehicle-form" onsubmit="submitVehicle(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">Plate Number *</label>
+                <input id="veh-plate" type="text" placeholder="e.g. ABF1234" maxlength="20"
+                  style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;text-transform:uppercase;" required>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">Vehicle Type *</label>
+                <select id="veh-type" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;" required>
+                  <option value="">Select type</option>
+                  <option value="motorcycle">Motorcycle</option>
+                  <option value="sedan">Sedan</option>
+                  <option value="suv">SUV</option>
+                  <option value="van">Van</option>
+                  <option value="pickup">Pickup</option>
+                  <option value="truck">Truck</option>
+                  <option value="trailer">Trailer</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">Model / Description <span style="font-weight:400;text-transform:none;font-size:10px;">(optional)</span></label>
+              <input id="veh-model" type="text" placeholder="e.g. Toyota Vios 2022"
+                style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;">
+            </div>
+            <div style="margin-bottom:20px;">
+              <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">
+                Vehicle Photo &nbsp;<span id="veh-photo-req" style="color:#dc2626;font-weight:400;text-transform:none;font-size:10px;">(required for new vehicles)</span>
+              </label>
+              <input type="file" id="veh-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleVehPhoto(this)">
+              <div id="veh-photo-preview" onclick="document.getElementById('veh-photo-input').click()"
+                style="border:2px dashed #e2e8f0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;">
+                <img id="veh-photo-img" src="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:10px;">
+                <div id="veh-photo-placeholder">
+                  <span class="material-symbols-outlined" style="font-size:32px;color:#94a3b8;">photo_camera</span>
+                  <p style="font-size:12px;color:#94a3b8;margin-top:6px;">Tap to take photo or upload image</p>
+                </div>
+              </div>
+            </div>
+            <div id="veh-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:12px;"></div>
+            <button type="submit" class="btn btn-primary" id="veh-submit-btn" style="width:100%;justify-content:center;padding:13px;font-size:14px;">
+              <span class="material-symbols-outlined">save</span><span id="veh-btn-label">Save Vehicle</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -306,10 +380,11 @@ document.getElementById('sb-company').textContent = TENANT_NAME;
 document.getElementById('prof-company').textContent = TENANT_NAME;
 
 var pageMeta = {
-  dashboard: ['Dashboard','Welcome back'],
-  routes: ['My Routes','Assigned routes'],
+  dashboard:  ['Dashboard','Welcome back'],
+  routes:     ['My Routes','Assigned routes'],
   deliveries: ['Deliveries','Your delivery list'],
-  profile: ['Profile','Account details'],
+  profile:    ['Profile','Account details'],
+  vehicle:    ['My Vehicle','Register or update your vehicle'],
 };
 
 function go(id, btn) {
@@ -376,6 +451,123 @@ async function loadData() {
 }
 
 window.addEventListener('DOMContentLoaded', loadData);
+
+// ── Vehicle ──────────────────────────────────────────────────────────────────
+var _vehPhotoBase64 = null;
+
+function handleVehPhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _vehPhotoBase64 = e.target.result;
+    var img = document.getElementById('veh-photo-img');
+    var ph  = document.getElementById('veh-photo-placeholder');
+    img.src = _vehPhotoBase64;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+    document.getElementById('veh-photo-preview').style.borderColor = '#22c55e';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadVehicle() {
+  var body  = document.getElementById('veh-info-body');
+  var badge = document.getElementById('veh-license-badge');
+  body.innerHTML = '<div style="text-align:center;padding:20px 0;"><span class="material-symbols-outlined" style="font-size:28px;color:#e2e8f0;">hourglass_empty</span><p style="font-size:12px;color:#94a3b8;margin-top:6px;">Loading...</p></div>';
+  try {
+    var res = await apiFetch('/' + SLUG + '/api/mobile/driver/vehicle');
+    var d   = await res.json();
+    // License status badge
+    var licColors = { verified:'background:#dcfce7;color:#15803d', pending_review:'background:#fef9c3;color:#a16207', not_uploaded:'background:#fef2f2;color:#dc2626', expired:'background:#fef2f2;color:#dc2626' };
+    var licLabels = { verified:'\u2713 License Verified', pending_review:'\u23F3 Pending Review', not_uploaded:'\u26A0 No License Uploaded', expired:'\u26A0 License Expired' };
+    var lic = d.license_status || 'not_uploaded';
+    badge.setAttribute('style', 'font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;' + (licColors[lic] || 'background:#f1f5f9;color:#94a3b8'));
+    badge.textContent = licLabels[lic] || lic;
+    if (d.vehicle_plate) {
+      var photoHtml = d.image_url
+        ? '<img src="' + d.image_url + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;" onerror="this.style.display=\'none\'">'
+        : '';
+      body.innerHTML = photoHtml +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+          vTile('Plate Number', d.vehicle_plate || '\u2014', 'pin') +
+          vTile('Vehicle Type', vCap(d.vehicle_type || '\u2014'), 'directions_car') +
+          vTile('Model', d.model || '\u2014', 'build') +
+          vTile('Capacity', (d.capacity_tons ? d.capacity_tons + ' tons' : 'Set by admin'), 'weight') +
+        '</div>';
+      // Pre-fill form
+      document.getElementById('veh-plate').value = d.vehicle_plate || '';
+      document.getElementById('veh-type').value  = (d.vehicle_type || '').toLowerCase();
+      document.getElementById('veh-model').value = d.model || '';
+      document.getElementById('veh-form-title').textContent = 'Update Vehicle';
+      document.getElementById('veh-photo-req').textContent  = '(optional — leave empty to keep current photo)';
+    } else {
+      body.innerHTML = '<div style="text-align:center;padding:24px 0;"><span class="material-symbols-outlined" style="font-size:40px;color:#e2e8f0;">directions_car</span><p style="font-size:12px;color:#94a3b8;margin-top:8px;">No vehicle registered yet.<br>Fill in the form below to register one.</p></div>';
+    }
+  } catch(e) {
+    if (e.message !== 'Session expired') {
+      body.innerHTML = '<p style="color:#94a3b8;font-size:12px;text-align:center;padding:16px;">Could not load vehicle info.</p>';
+    }
+  }
+}
+
+function vTile(label, val, icon) {
+  return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">' +
+    '<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">' +
+      '<span class="material-symbols-outlined" style="font-size:13px;color:#94a3b8;">' + icon + '</span>' +
+      '<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">' + label + '</span>' +
+    '</div>' +
+    '<div style="font-size:13px;font-weight:600;color:#0f2235;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + val + '">' + val + '</div>' +
+  '</div>';
+}
+
+function vCap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '\u2014'; }
+
+async function submitVehicle(ev) {
+  ev.preventDefault();
+  var errEl = document.getElementById('veh-err');
+  var btn   = document.getElementById('veh-submit-btn');
+  var lbl   = document.getElementById('veh-btn-label');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  lbl.textContent = 'Saving...';
+  try {
+    var body = {
+      vehicle_plate: document.getElementById('veh-plate').value.trim().toUpperCase(),
+      vehicle_type:  document.getElementById('veh-type').value,
+      model:         document.getElementById('veh-model').value.trim() || null,
+    };
+    if (_vehPhotoBase64) body.vehicle_photo = _vehPhotoBase64;
+    var res = await apiFetch('/' + SLUG + '/api/mobile/driver/vehicle', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      errEl.textContent   = data.error || 'Failed to save vehicle.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      lbl.textContent = 'Save Vehicle';
+    } else {
+      lbl.textContent = '\u2713 Saved!';
+      btn.style.background = '#16a34a';
+      loadVehicle();
+      setTimeout(function() {
+        lbl.textContent      = 'Save Vehicle';
+        btn.style.background = '';
+        btn.disabled         = false;
+      }, 2500);
+    }
+  } catch(ex) {
+    if (ex.message !== 'Session expired') {
+      errEl.textContent   = 'Network error. Please try again.';
+      errEl.style.display = 'block';
+    }
+    btn.disabled = false;
+    lbl.textContent = 'Save Vehicle';
+  }
+}
 </script>
 <script src="/public/frontend-api.js"></script>
 </body>
