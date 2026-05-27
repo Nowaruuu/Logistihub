@@ -16,6 +16,7 @@ export default function Profile() {
   const [loadingDriver, setLoadingDriver] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
   const [deliveryCounts, setDeliveryCounts] = useState({ total: 0, active: 0 });
   const [editForm, setEditForm] = useState({
     fullName: '',
@@ -86,12 +87,15 @@ export default function Profile() {
   const handleSaveProfile = async () => {
     if (!profile) return;
     setSaving(true);
+    setSaveMsg(null);
     try {
       // 1. Update Core Profile
+      console.log('[Profile] Saving phone:', editForm.phone, 'name:', editForm.fullName);
       await userService.saveProfile(profile.uid, {
         fullName: editForm.fullName,
         phone: editForm.phone
       });
+      console.log('[Profile] Save OK, refreshing profile...');
 
       // 2. Update Driver info if applicable
       if (profile.role === 'driver') {
@@ -107,9 +111,12 @@ export default function Profile() {
 
       setIsEditing(false);
       await refreshProfile();
-    } catch (err) {
-      console.error("Error saving profile:", err);
-      alert('Failed to save profile changes.');
+      console.log('[Profile] Refresh done, new phone:', profile?.phone);
+      setSaveMsg({ type: 'success', text: 'Profile saved successfully!' });
+      setTimeout(() => setSaveMsg(null), 3000);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setSaveMsg({ type: 'error', text: err.message || 'Failed to save profile changes.' });
     } finally {
       setSaving(false);
     }
@@ -246,6 +253,11 @@ export default function Profile() {
                   </>
                 )}
               </button>
+              {saveMsg && (
+                <div className={`mt-3 p-3 rounded-xl text-sm font-bold text-center ${saveMsg.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-600' : 'bg-red-50 dark:bg-red-900/20 text-red-500'}`}>
+                  {saveMsg.text}
+                </div>
+              )}
             </div>
           ) : (
             <>
