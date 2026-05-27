@@ -1545,10 +1545,50 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   const { status, location, proof_photo } = req.body;
   const staffName = req.staff.name || 'Driver';
 
-  const VALID = ['In-Transit', 'Out for Delivery', 'Delivered', 'Failed'];
+  const staffId = req.staff.staff_id;
+  const VALID   = ['In-Transit', 'Out for Delivery', 'Delivered', 'Failed'];
   if (!VALID.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
 
   try {
+    // ── Guard 1: fetch current status + verify assigned driver ──────────────
+    const [shipRows] = await query(
+      'SELECT status, assigned_driver_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+      [dn, tid]
+    );
+    if (!shipRows.length) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Only the assigned driver may push status updates
+    if (shipRows[0].assigned_driver_id !== staffId) {
+      return res.status(403).json({ error: 'You are not the assigned driver for this shipment.' });
+    }
+
+    // ── Guard 2: enforce sequential status transitions ──────────────────────
+    // Accept endpoint already sets In-Transit, so valid pushes from here are:
+    //   In-Transit       → Out for Delivery | Failed
+    //   Out for Delivery → Delivered | Failed
+    const TRANSITIONS = {
+      'In-Transit':       ['Out for Delivery', 'Failed'],
+      'Out for Delivery': ['Delivered', 'Failed'],
+    };
+    const currentStatus = shipRows[0].status;
+    const allowedNext   = TRANSITIONS[currentStatus];
+
+    if (!allowedNext) {
+      const hint = (currentStatus === 'Pending' || currentStatus === 'Queued')
+        ? 'You must accept this shipment first before updating its status.'
+        : `Shipment status "${currentStatus}" cannot be manually updated here.`;
+      return res.status(400).json({ error: hint });
+    }
+    if (!allowedNext.includes(status)) {
+      const HINTS = {
+        'Out for Delivery': `Cannot mark as Out for Delivery — package is currently "${currentStatus}". It must be In-Transit first.`,
+        'Delivered':        `Cannot mark as Delivered — package must be Out for Delivery first (currently "${currentStatus}"). The package has not been picked up yet!`,
+        'In-Transit':       `Cannot move back to In-Transit from "${currentStatus}".`,
+        'Failed':           `Cannot mark as Failed from "${currentStatus}".`,
+      };
+      return res.status(400).json({ error: HINTS[status] || `Cannot transition from "${currentStatus}" to "${status}".` });
+    }
+
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
 
     // Save proof of delivery photo if provided
