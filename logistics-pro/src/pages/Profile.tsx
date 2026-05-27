@@ -99,10 +99,12 @@ export default function Profile() {
 
       // 2. Update Driver info if applicable
       if (profile.role === 'driver') {
+        const { phone: _oldPhone, ...driverRest } = (driverData || {}) as any;
         const updatedDriver = {
-          ...driverData,
+          ...driverRest,
           vehicleModel: editForm.vehicleModel,
           plateNumber: editForm.plateNumber,
+          phone: editForm.phone,  // carry forward the NEW phone, not old
           updatedAt: new Date().toISOString()
         };
         await userService.saveDriver(profile.uid, updatedDriver);
