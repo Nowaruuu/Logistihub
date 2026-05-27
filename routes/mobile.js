@@ -558,6 +558,27 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL'); } catch(_) {}
 
+    // ── Server-side fee computation using tenant pricing config ────────────
+    let computed_total_fee = total_fee || 0;
+    try {
+      const [[pricingTenant]] = await query('SELECT pricing_config FROM TENANT WHERE tenant_id = ?', [tid]);
+      const pc = pricingTenant?.pricing_config
+        ? (typeof pricingTenant.pricing_config === 'string' ? JSON.parse(pricingTenant.pricing_config) : pricingTenant.pricing_config)
+        : null;
+      if (pc) {
+        const baseFee   = parseFloat(pc.base_fee   || 0);
+        const perKm     = parseFloat(pc.per_km      || 0);
+        const wtPerKg   = parseFloat(pc.weight_per_kg || 0);
+        const distKm    = computed_distance_km || 0;
+        const wt        = parseFloat(weight || 0);
+        const sizeFee   = parseFloat((pc.size_fees || {})[size || 'small'] || 0);
+        const minFee    = parseFloat(pc.min_fee || 0);
+        const maxFee    = parseFloat(pc.max_fee || 99999);
+        const serverFee = baseFee + (perKm * distKm) + (wtPerKg * wt) + sizeFee;
+        computed_total_fee = Math.min(maxFee, Math.max(minFee, Math.round(serverFee * 100) / 100));
+      }
+    } catch (_) { /* If pricing calc fails, fall back to client-provided total_fee */ }
+
     await query(
       `INSERT INTO shipment (
         delivery_number, tenant_id, sender_user_id, sender_name, sender_phone, pickup_location, dropoff_location,
@@ -571,7 +592,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
         pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null, computed_distance_km || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
         itemType, vehicle_type || null, weight || null, size || null, shipping_method || 'Standard',
-        total_fee || 0, estimated_arrival || '3-5 business days'
+        computed_total_fee, estimated_arrival || '3-5 business days'
       ]
     );
 
@@ -600,7 +621,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
       'Shipments', deliveryNumber
     );
 
-    res.status(201).json({ ok: true, delivery_number: deliveryNumber });
+    res.status(201).json({ ok: true, delivery_number: deliveryNumber, total_fee: computed_total_fee });
   } catch (err) {
     console.error('[POST /deliveries]', err);
     res.status(500).json({ error: err.message || 'Failed to create shipment.' });
@@ -976,7 +997,7 @@ router.get('/driver/earnings', authMiddleware, async (req, res) => {
 
     // Recent completed deliveries as transactions
     const [transactions] = await query(
-      `SELECT delivery_number, total_fee, destination, updated_at, created_at
+      `SELECT delivery_number, total_fee, dropoff_location AS destination, updated_at, created_at
        FROM shipment WHERE assigned_driver_id = ? AND tenant_id = ? AND status = 'Delivered'
        ORDER BY updated_at DESC LIMIT 20`,
       [staffId, tid]
@@ -992,6 +1013,7 @@ router.get('/driver/earnings', authMiddleware, async (req, res) => {
         label: `Delivery #${t.delivery_number}`,
         amount: parseFloat(t.total_fee || 0),
         type: 'delivery',
+        destination: t.destination || '',
         date: t.updated_at || t.created_at
       }))
     });
