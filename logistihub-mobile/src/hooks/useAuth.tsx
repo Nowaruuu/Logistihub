@@ -12,6 +12,7 @@ interface AuthContextType {
   register: (slug: string, payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   setSlug: (slug: string) => void;
+  updateProfile: (payload: { first_name?: string; last_name?: string; phone?: string }) => Promise<void>;
 }
 
 interface RegisterPayload {
@@ -107,8 +108,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('lh_tenant');
   };
 
+  const updateProfile = async (payload: { first_name?: string; last_name?: string; phone?: string }) => {
+    if (!slug) throw new Error('No workspace');
+    await API.updateProfile(slug, payload);
+    try {
+      const { user: fresh } = await API.getProfile(slug);
+      setUser(fresh);
+      localStorage.setItem('lh_user', JSON.stringify(fresh));
+    } catch (_) {
+      const merged = { ...user, ...payload };
+      setUser(merged as AppUser);
+      localStorage.setItem('lh_user', JSON.stringify(merged));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, login, register, logout, setSlug }}>
+    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, login, register, logout, setSlug, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

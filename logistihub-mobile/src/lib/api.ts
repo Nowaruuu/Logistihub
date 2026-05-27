@@ -1,7 +1,7 @@
 // All API calls go to: https://logistihub.ddns.net/:slug/api/...
 // The slug is derived from the URL path or stored after login.
 
-const BASE_URL = 'https://logistihub.ddns.net';
+const BASE_URL = 'https://logistichub.ddns.net';
 
 function getToken(): string | null {
   return localStorage.getItem('lh_token');
@@ -72,6 +72,16 @@ export async function logout(slug: string) {
 
 export async function getProfile(slug: string) {
   return request<{ user: any }>(`/${slug}/api/me`);
+}
+
+export async function updateProfile(
+  slug: string,
+  payload: { first_name?: string; last_name?: string; phone?: string }
+) {
+  return request<{ ok: boolean; message: string }>(`/${slug}/api/mobile/profile`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
 }
 
 // ── Tenant info ───────────────────────────────────────────────────────────────
