@@ -1778,7 +1778,10 @@ function loadDashStaff(){
 var _dashMap=null;
 var _dashMapLayers=[];
 function _clearMapLayers(){
-  _dashMapLayers.forEach(function(l){_dashMap.removeLayer(l);});
+  if(!_dashMap) return;
+  if(Array.isArray(_dashMapLayers)) {
+    _dashMapLayers.forEach(function(l){ try { _dashMap.removeLayer(l); } catch(_){} });
+  }
   _dashMapLayers=[];
 }
 function _addDot(lat,lng,color,radius,popup){
@@ -3086,7 +3089,7 @@ function loadStaff() {
     renderStaff(_staffData);
   }).catch(function(){
     var tb = document.getElementById('staff-tbody');
-    if(tb) tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load staff</p></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">error</span><p>Failed to load staff</p></div></td></tr>';
   });
 }
 
