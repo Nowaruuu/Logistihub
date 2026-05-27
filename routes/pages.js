@@ -59,7 +59,33 @@ async function resolveTenant(slug, res) {
     return rows[0]; // FIXED: Added missing return
   } catch (err) {
     console.error("Tenant Resolution Error:", err);
-    res.status(500).send("Internal Server Error");
+    const slug = req.params?.slug || '';
+    const loginLink = slug ? `/${slug}/admin-login` : '/';
+    res.status(503).send(`
+      <html>
+        <head>
+          <title>Service Unavailable — LogistiHub</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+        </head>
+        <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8fafc;font-family:'Segoe UI',sans-serif;">
+          <div style="text-align:center;max-width:420px;padding:40px 24px;">
+            <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+            <h2 style="color:#0f2235;font-size:22px;font-weight:800;margin:0 0 10px;">Temporarily Unavailable</h2>
+            <p style="color:#64748b;font-size:14px;line-height:1.6;margin:0 0 28px;">
+              We couldn't connect to the service right now.<br>
+              This is usually a temporary issue — please try again in a moment.
+            </p>
+            <a href="${loginLink}" style="display:inline-block;background:#0f2235;color:#fff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px;">
+              ← Back to Login
+            </a>
+            <p style="margin-top:20px;font-size:12px;color:#94a3b8;">
+              If this persists, contact your system administrator.
+            </p>
+          </div>
+        </body>
+      </html>
+    `);
     return null;
   }
 }

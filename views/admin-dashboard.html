@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -3244,7 +3244,7 @@ function renderPackageCategories() {
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? 'âœ“' : 'âœ•') + '</span>' + label +
+      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + label +
     '</button>';
   }).join('');
 }
@@ -3256,7 +3256,7 @@ function togglePkgCat(cat) {
 }
 async function savePackageCategories() {
   var btn = document.getElementById('pkg-cat-save-btn');
-  if(btn) { btn.disabled = true; btn.textContent = 'Savingâ€¦'; }
+  if(btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   try {
     await apiFetch('/' + _SLUG + '/api/admin/package-categories', {
       method: 'PUT',
@@ -3732,7 +3732,8 @@ function renderPayments(list) {
     var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>';
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
-    var date = p.paid_at ? new Date(p.paid_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.created_at ? new Date(p.created_at).toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-');
+    var fmtDate = function(d) { return d ? new Date(d).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : null; };
+    var date = fmtDate(p.paid_at) || fmtDate(p.billing_date) || fmtDate(p.created_at) || '-';
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
@@ -3916,7 +3917,7 @@ async function loadPODs() {
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
       // Media — thumbnail with click-to-view, or No Photo badge
       var media = p.photo
-        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" />'
+        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><a href="javascript:void(0)" style="display:none;font-size:11px;color:#3b82f6;font-weight:700;" onclick="window.open(\'' + p.photo + '\')" title="Click to view photo">\uD83D\uDDBC View Photo</a>'
         : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
