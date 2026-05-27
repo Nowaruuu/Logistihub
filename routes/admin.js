@@ -747,7 +747,7 @@ router.get('/:slug/api/admin/staff', requireAdmin, requireSlugMatch, async (req,
      FROM STAFF s
      LEFT JOIN (
        SELECT sh.assigned_driver_id,
-              SUM(COALESCE(p.amount, sh.total_fee, 0)) AS total_earnings,
+              SUM(COALESCE(p.total_amount, sh.total_fee, 0)) AS total_earnings,
               COUNT(*) AS delivered_count
        FROM shipment sh
        LEFT JOIN payment p ON p.delivery_number = sh.delivery_number AND p.tenant_id = sh.tenant_id AND p.status = 'Paid'
