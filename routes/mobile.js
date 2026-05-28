@@ -1910,8 +1910,8 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     let balanceAmount = 0;
 
     if (splitEnabled) {
-      depositAmount = Math.ceil(totalAmount * 0.5 * 100) / 100; // 50%, rounded up to nearest centavo
-      balanceAmount = Math.round((totalAmount - depositAmount) * 100) / 100;
+      depositAmount = Math.ceil(totalAmount * 0.5); // 50%, rounded up (matches frontend)
+      balanceAmount = totalAmount - depositAmount;
       checkoutAmount = depositAmount;
     }
 
