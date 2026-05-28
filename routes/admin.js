@@ -44,7 +44,8 @@ router.post('/:slug/api/admin/login', async (req, res) => {
   });
 
   const userAgent = req.headers['user-agent'] || 'Unknown';
-  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: req.ip, metadata: { user_agent: userAgent, ip: req.ip } });
+  const realIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unknown';
+  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: realIp, metadata: { user_agent: userAgent, ip: realIp } });
 
   res.json({ ok: true, slug, name: staff.name });
 });

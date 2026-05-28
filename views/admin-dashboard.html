@@ -4246,28 +4246,28 @@ function loadNotifPanel() {
       }
     }).catch(function(){});
 
-  // ── Recent logins from other devices ────────────────────
+  // ── Recent logins from OTHER devices only ────────────────
   var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
     .then(function(r){return r.json();})
     .then(function(data){
       if(!data || !data.ok || !data.logins || !data.logins.length) return;
-      var currentUA = navigator.userAgent;
-      var currentDevice = parseDevice(currentUA);
+      var currentDevice = parseDevice(navigator.userAgent);
       data.logins.forEach(function(login, i){
+        // Skip old logins that have no device info stored
+        if(!login.user_agent || login.user_agent === 'Unknown') return;
         var loginDevice = parseDevice(login.user_agent);
-        var isSameDevice = loginDevice.short === currentDevice.short;
+        // ONLY show if device is DIFFERENT from current device
+        if(loginDevice.short === currentDevice.short) return;
         var ago = login.created_at ? timeAgo(new Date(login.created_at)) : '';
-        // Skip only the very first entry if it matches current device (that's this session)
-        if(i === 0 && isSameDevice) return;
         items.push({
-          icon: isSameDevice ? 'login' : 'devices_other',
-          color: isSameDevice ? '#64748b' : '#8b5cf6',
-          text: '<strong>' + esc(login.actor) + '</strong> logged in from <strong>' + esc(loginDevice.label) + '</strong>' + (login.ip && login.ip !== 'Unknown' ? ' <span style="color:#94a3b8;">(' + esc(login.ip) + ')</span>' : ''),
+          icon: 'devices_other',
+          color: '#8b5cf6',
+          text: '<strong>' + esc(login.actor) + '</strong> logged in from <strong>' + esc(loginDevice.label) + '</strong>' + (login.ip && login.ip !== 'Unknown' && !login.ip.includes('127.0.0.1') ? ' <span style="color:#94a3b8;">(' + esc(login.ip) + ')</span>' : ''),
           time: ago,
           id: 'login-' + i + '-' + (login.created_at||''),
           nav: 'audit',
           isLogin: true,
-          isDifferentDevice: !isSameDevice
+          isDifferentDevice: true
         });
       });
     }).catch(function(e){ console.warn('Recent logins fetch failed:', e); });
