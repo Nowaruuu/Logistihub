@@ -1811,8 +1811,19 @@ router.delete('/addresses/:id', authMiddleware, async (req, res) => {
 
 router.put('/notifications/:id/read', authMiddleware, async (req, res) => {
   const userId = req.user?.user_id || req.staff?.staff_id;
+  const rawId = req.params.id;
   try {
-    await query('UPDATE NOTIFICATION SET is_read = TRUE WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+    if (rawId.startsWith('n-')) {
+      // Real NOTIFICATION table entry — strip prefix and update
+      const dbId = rawId.slice(2);
+      await query('UPDATE NOTIFICATION SET is_read = TRUE WHERE id = ? AND user_id = ?', [dbId, userId]);
+    } else if (rawId.startsWith('sh-')) {
+      // SHIPMENT_HISTORY-derived notification — no is_read column to update
+      // Client tracks read state locally; just acknowledge
+    } else {
+      // Legacy / raw numeric ID — try updating NOTIFICATION table directly
+      await query('UPDATE NOTIFICATION SET is_read = TRUE WHERE id = ? AND user_id = ?', [rawId, userId]);
+    }
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
