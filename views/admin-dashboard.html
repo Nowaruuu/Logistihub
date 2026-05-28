@@ -4547,42 +4547,6 @@ function toggleNotifPanel() {
   closeAllPanels();
   if (!wasOpen) { p.classList.add('show'); loadNotifPanel(); }
 }
-function loadNotifPanel() {
-  var el = document.getElementById('notif-list');
-  if (!el) return;
-  var items = [];
-  // Recent shipments (last 5 status changes)
-  (_allShipments || []).slice(0,8).forEach(function(s) {
-    var ico = s.status === 'Delivered' ? 'check_circle' : s.status === 'In Transit' ? 'local_shipping' : 'inventory_2';
-    var col = s.status === 'Delivered' ? '#10b981' : s.status === 'In Transit' ? '#3b82f6' : '#f59e0b';
-    var ago = s.created_at ? timeAgo(new Date(s.created_at)) : '';
-    items.push({
-      icon: ico, color: col,
-      text: '<strong>' + esc(s.delivery_number) + '</strong> is <strong>' + esc(s.status||'Pending') + '</strong>' + (s.driver_name ? ' \u00b7 ' + esc(s.driver_name) : ''),
-      time: ago, id: 'ship-'+s.delivery_number, nav: 'shipments'
-    });
-  });
-  // Pending staff licenses
-  (_staffData || []).filter(function(s){return s.license_status==='pending_review';}).forEach(function(s) {
-    items.push({
-      icon: 'badge', color: '#f97316',
-      text: '<strong>' + esc(s.name) + '</strong> has a license pending review',
-      time: '', id: 'staff-'+s.staff_id, nav: 'staff'
-    });
-  });
-  if (!items.length) {
-    el.innerHTML = '<div class="sr-empty"><span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:6px;color:#cbd5e1;">notifications_off</span>No notifications yet</div>';
-    return;
-  }
-  el.innerHTML = items.map(function(n) {
-    var unread = !_notifRead[n.id] ? ' unread' : '';
-    return '<div class="notif-item'+unread+'" onclick="_notifRead[\''+n.id+'\']=true;this.classList.remove(\'unread\');go(\''+n.nav+'\',null);closeAllPanels()">' +
-      '<div class="notif-ico" style="background:'+n.color+'15;"><span class="material-symbols-outlined" style="font-size:16px;color:'+n.color+';">'+n.icon+'</span></div>' +
-      '<div style="flex:1;min-width:0;"><div class="notif-text">'+n.text+'</div><div class="notif-time">'+n.time+'</div></div></div>';
-  }).join('');
-  // Update dot visibility
-  updateNotifDot();
-}
 function markAllNotifRead() {
   document.querySelectorAll('.notif-item.unread').forEach(function(el) { el.classList.remove('unread'); });
   document.querySelectorAll('.notif-item').forEach(function(el) {
