@@ -1508,6 +1508,7 @@ function logout() {
 var _prevShipmentIds = null;
 var _prevStaffPendingCount = null;
 var _prevVehicleRequestCount = null;
+var _prevLoginCount = null;
 
 function pollNotifications() {
   if (!_SLUG || _sessionExpired) return;
@@ -1522,7 +1523,6 @@ function pollNotifications() {
       var currentIds = shipments.map(function(s){return s.delivery_number + ':' + s.status;}).join(',');
       if (_prevShipmentIds !== null && currentIds !== _prevShipmentIds) {
         newActivity = true;
-        // Update cached shipment data
         _allShipments = shipments.length > _allShipments.length ? shipments : _allShipments;
         var navBadge = document.querySelector('.nav-badge');
         if (navBadge) navBadge.textContent = _allShipments.length;
@@ -1554,12 +1554,27 @@ function pollNotifications() {
       if (badge){badge.textContent=cnt;badge.style.display=cnt>0?'':'none';}
     }).catch(function(){});
 
+  // Poll for new device logins
+  apiFetch('/' + _SLUG + '/api/admin/recent-logins')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if (!data || !data.ok || !data.logins) return;
+      // Count logins from different devices
+      var currentDevice = typeof parseDevice === 'function' ? parseDevice(navigator.userAgent) : {short:''};
+      var diffCount = data.logins.filter(function(l){
+        if (!l.user_agent || l.user_agent === 'Unknown') return false;
+        var ld = typeof parseDevice === 'function' ? parseDevice(l.user_agent) : {short:''};
+        return ld.short !== currentDevice.short;
+      }).length;
+      if (_prevLoginCount !== null && diffCount > _prevLoginCount) newActivity = true;
+      _prevLoginCount = diffCount;
+    }).catch(function(){});
+
   // If something changed, show the notification dot
   setTimeout(function(){
     if (newActivity) {
       var btn = document.getElementById('notif-btn');
       if (btn) btn.classList.add('notif-dot');
-      // If notification panel is already open, refresh it
       var panel = document.getElementById('notif-panel');
       if (panel && panel.classList.contains('show')) loadNotifPanel();
     }
@@ -4308,7 +4323,7 @@ function loadNotifPanel() {
     });
     el.innerHTML = items.map(function(n) {
       var unread = !_notifRead[n.id] ? ' unread' : '';
-      return '<div class="notif-item'+unread+'" onclick="_notifRead[\''+n.id+'\']=true;this.classList.remove(\'unread\');go(\''+n.nav+'\',null);closeAllPanels()">' +
+      return '<div class="notif-item'+unread+'" onclick="_notifRead[\''+n.id+'\']=true;_saveNotifRead();this.classList.remove(\'unread\');go(\''+n.nav+'\',null);closeAllPanels()">' +
         '<div class="notif-ico" style="background:'+n.color+'15;"><span class="material-symbols-outlined" style="font-size:16px;color:'+n.color+';">'+n.icon+'</span></div>' +
         '<div style="flex:1;min-width:0;"><div class="notif-text">'+n.text+'</div><div class="notif-time">'+n.time+'</div></div></div>';
     }).join('');
@@ -4541,6 +4556,8 @@ function globalSearch(q) {
 
 // ── Topbar: Notification Panel ────────────────────────────────
 var _notifRead = {};
+try { _notifRead = JSON.parse(localStorage.getItem('_notifRead_' + (window.__TENANT__?.slug||'')) || '{}'); } catch(e) { _notifRead = {}; }
+function _saveNotifRead() { try { localStorage.setItem('_notifRead_' + (window.__TENANT__?.slug||''), JSON.stringify(_notifRead)); } catch(e){} }
 function toggleNotifPanel() {
   var p = document.getElementById('notif-panel');
   var wasOpen = p.classList.contains('show');
@@ -4553,6 +4570,7 @@ function markAllNotifRead() {
     var m = el.getAttribute('onclick').match(/_notifRead\['([^']+)'\]/);
     if (m) _notifRead[m[1]] = true;
   });
+  _saveNotifRead();
   updateNotifDot();
 }
 function updateNotifDot() {
