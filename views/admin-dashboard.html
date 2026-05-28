@@ -1460,6 +1460,9 @@ function redirectToLogin() {
 function showSessionExpired() {
   if (_sessionExpired) return;
   _sessionExpired = true;
+  // Stop all polling immediately
+  if (_pollIntervalId) { clearInterval(_pollIntervalId); _pollIntervalId = null; }
+  if (_checkSessionIntervalId) { clearInterval(_checkSessionIntervalId); _checkSessionIntervalId = null; }
   var overlay = document.getElementById('session-expired-overlay');
   if (overlay) { overlay.style.display = 'flex'; }
 }
@@ -1491,7 +1494,7 @@ function checkSession() {
   }).catch(function() {});
 }
 checkSession();
-setInterval(checkSession, 4 * 60 * 1000);
+var _checkSessionIntervalId = setInterval(checkSession, 4 * 60 * 1000);
 
 function logout() {
   var slug = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
@@ -1507,7 +1510,7 @@ var _prevStaffPendingCount = null;
 var _prevVehicleRequestCount = null;
 
 function pollNotifications() {
-  if (!_SLUG) return;
+  if (!_SLUG || _sessionExpired) return;
   var newActivity = false;
 
   // Poll shipments for new/changed entries
@@ -1564,8 +1567,9 @@ function pollNotifications() {
 }
 
 // Start polling after initial load
-setTimeout(function(){ pollNotifications(); }, 5000);
-setInterval(pollNotifications, 30000);
+var _pollIntervalId = null;
+setTimeout(function(){ if(!_sessionExpired) pollNotifications(); }, 5000);
+_pollIntervalId = setInterval(function(){ if(!_sessionExpired) pollNotifications(); else if(_pollIntervalId){clearInterval(_pollIntervalId);_pollIntervalId=null;} }, 30000);
 
 </script>
 
@@ -1874,16 +1878,19 @@ var _origGo=go;
 go=function(id,navBtn){
   _origGo(id,navBtn);
   if(id==='app-users') loadAppUsers();
-  if(id==='staff') loadStaff(); // refresh badge and table when navigating to staff
+  if(id==='staff' && typeof loadStaff === 'function') loadStaff(); // refresh badge and table when navigating to staff
   if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}
 };
 // Auto-load on page load
 loadShipments();
-loadStaff();      // updates staff badge via renderStaff()
+if(typeof loadStaff === 'function') loadStaff();      // updates staff badge via renderStaff()
 loadDashStaff();  // also updates staff badge + dashboard widget
 // Refresh staff badge every 30 seconds so it stays current without needing to navigate
-setInterval(function(){
-  apiFetch('/'+_SLUG+'/api/admin/staff').then(function(r){return r.json();}).then(function(list){
+_pollInterval = setInterval(function(){
+  if (typeof _sessionExpired !== 'undefined' && _sessionExpired) { clearInterval(_pollInterval); return; }
+  var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
+  if(!slug)return;
+  apiFetch('/'+slug+'/api/admin/staff').then(function(r){return r.json();}).then(function(list){
     if(!Array.isArray(list)) return;
     var cnt = list.filter(function(s){ return s.role==='Driver' && s.license_status==='pending_review'; }).length;
     var badge = document.getElementById('staff-pending-badge');
@@ -4243,14 +4250,15 @@ function loadNotifPanel() {
   var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
     .then(function(r){return r.json();})
     .then(function(data){
-      if(!data.ok || !data.logins || !data.logins.length) return;
+      if(!data || !data.ok || !data.logins || !data.logins.length) return;
       var currentUA = navigator.userAgent;
       var currentDevice = parseDevice(currentUA);
       data.logins.forEach(function(login, i){
         var loginDevice = parseDevice(login.user_agent);
         var isSameDevice = loginDevice.short === currentDevice.short;
         var ago = login.created_at ? timeAgo(new Date(login.created_at)) : '';
-        if(i === 0 && isSameDevice) return; // skip current session
+        // Skip only the very first entry if it matches current device (that's this session)
+        if(i === 0 && isSameDevice) return;
         items.push({
           icon: isSameDevice ? 'login' : 'devices_other',
           color: isSameDevice ? '#64748b' : '#8b5cf6',
@@ -4262,7 +4270,7 @@ function loadNotifPanel() {
           isDifferentDevice: !isSameDevice
         });
       });
-    }).catch(function(){});
+    }).catch(function(e){ console.warn('Recent logins fetch failed:', e); });
 
   // ── After async calls finish, build panel ────────────────
   Promise.all([subPromise, loginPromise]).then(function(){
