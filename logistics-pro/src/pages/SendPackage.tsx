@@ -150,8 +150,6 @@ export default function SendPackage() {
   const [pricingConfig, setPricingConfig] = useState<any>(null);
   // Split payment support
   const splitEnabled = pricingConfig?.split_payment_enabled === true;
-  const depositAmount = splitEnabled ? Math.ceil(totalFee * 0.5) : totalFee;
-  const balanceAmount = splitEnabled ? totalFee - depositAmount : 0;
 
   // Live-refresh tenant config: on mount, on visibility change, and every 30s
   useEffect(() => {
@@ -298,6 +296,8 @@ export default function SendPackage() {
   const baseFee = pcBaseFee + fuelCost + driverCompensation + weightSurcharge + categorySurcharge + safetySurcharge;
   // Express multiplier
   const totalFee = Math.round(method === 'standard' ? baseFee : baseFee * pcExpressMulti);
+  const depositAmount = splitEnabled ? Math.ceil(totalFee * 0.5) : totalFee;
+  const balanceAmount = splitEnabled ? totalFee - depositAmount : 0;
 
   // Distance limit check
   const isOverDistanceLimit = distKm > maxDistanceKm;

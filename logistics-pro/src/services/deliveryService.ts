@@ -22,7 +22,7 @@ export const deliveryService = {
   /**
    * Create a new delivery shipment
    */
-  async createDelivery(deliveryData: Partial<Delivery> & { item_type_flag?: string; vehicle_type?: string; receiverPhone?: string }): Promise<string> {
+  async createDelivery(deliveryData: Partial<Delivery> & { item_type_flag?: string; vehicle_type?: string; receiverPhone?: string; senderPhone?: string }): Promise<string> {
     const result = await createDelivery({
       pickup_location: deliveryData.origin || '',
       dropoff_location: deliveryData.destination || '',
