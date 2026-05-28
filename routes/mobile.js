@@ -461,6 +461,12 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
         [tid, staffId]
       );
     } else {
+      // Auto-mark overdue balance payments before fetching
+      await query(
+        `UPDATE payment SET status = 'Overdue' WHERE tenant_id = ? AND status = 'Pending' AND payment_type = 'balance' AND due_date IS NOT NULL AND due_date < NOW()`,
+        [tid]
+      ).catch(() => {});
+
       // Customer: their own shipments — include payment status via LEFT JOIN
       [rows] = await query(
         `SELECT s.*,
@@ -483,7 +489,12 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
                  FROM payment pb
                  WHERE pb.delivery_number = s.delivery_number
                    AND pb.tenant_id = s.tenant_id
-                   AND pb.payment_type = 'balance' LIMIT 1) AS balance_amount
+                   AND pb.payment_type = 'balance' LIMIT 1) AS balance_amount,
+                (SELECT pb.due_date
+                 FROM payment pb
+                 WHERE pb.delivery_number = s.delivery_number
+                   AND pb.tenant_id = s.tenant_id
+                   AND pb.payment_type = 'balance' LIMIT 1) AS balance_due_date
          FROM shipment s
          WHERE s.tenant_id = ? AND s.sender_user_id = ?
          ORDER BY s.created_at DESC LIMIT 50`,
@@ -2089,6 +2100,12 @@ router.get('/pay/cancel', async (req, res) => {
 // GET /pay/status/:dn — check payment status
 router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
   try {
+    // Auto-mark overdue balance payments
+    await query(
+      `UPDATE payment SET status = 'Overdue' WHERE tenant_id = ? AND status = 'Pending' AND payment_type = 'balance' AND due_date IS NOT NULL AND due_date < NOW()`,
+      [req.tenantId]
+    ).catch(() => {});
+
     // Fetch ALL payment records for this delivery to detect split payments
     const [allPayments] = await query(
       "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? ORDER BY invoice_id ASC",
@@ -2236,9 +2253,9 @@ router.post('/pay/checkout-balance', authMiddleware, async (req, res) => {
     );
     if (!ship.length) return res.status(404).json({ error: 'Shipment not found.' });
 
-    // Find the pending balance record
+    // Find the pending or overdue balance record
     const [balanceRows] = await query(
-      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND payment_type = 'balance' AND status = 'Pending' LIMIT 1",
+      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND payment_type = 'balance' AND status IN ('Pending','Overdue') LIMIT 1",
       [delivery_number, tid]
     );
     if (!balanceRows.length) {
