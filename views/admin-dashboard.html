@@ -395,13 +395,13 @@ textarea{resize:vertical;}
 
     <div class="nav-sec">Management</div>
     <button class="nav-link" onclick="closeSidebar();go('staff',this)"><span class="material-symbols-outlined">badge</span>Staff<span class="nav-badge" id="staff-pending-badge" style="display:none;">0</span></button>
-    <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles</button>
+    <button class="nav-link" onclick="closeSidebar();go('vehicles',this)"><span class="material-symbols-outlined">directions_car</span>Vehicles<span class="nav-badge" id="vehicles-pending-badge" style="display:none;">0</span></button>
     <button class="nav-link" onclick="closeSidebar();go('app-users',this)"><span class="material-symbols-outlined">manage_accounts</span>App Users</button>
     <div class="nav-sec">Finance</div>
     <button class="nav-link" onclick="closeSidebar();go('payments',this)"><span class="material-symbols-outlined">payments</span>Payments</button>
     <button class="nav-link" onclick="closeSidebar();go('sales-report',this)"><span class="material-symbols-outlined">assessment</span>Sales Report</button>
     <button class="nav-link" onclick="closeSidebar();go('pricing',this)"><span class="material-symbols-outlined">sell</span>Pricing</button>
-    <button class="nav-link" onclick="closeSidebar();go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription</button>
+    <button class="nav-link" onclick="closeSidebar();go('subscription',this)"><span class="material-symbols-outlined">event_repeat</span>Subscription<span id="sub-expiry-badge" style="display:none;margin-left:auto;font-size:14px;line-height:1;"></span></button>
     <button class="nav-link" onclick="closeSidebar();go('pod',this)"><span class="material-symbols-outlined">fact_check</span>Proof of Delivery</button>
     <div class="nav-sec">Config</div>
     <button class="nav-link" onclick="closeSidebar();go('settings',this)"><span class="material-symbols-outlined">settings</span>Settings</button>
@@ -1631,6 +1631,41 @@ function loadShipments(){
           var cnt=staffList.filter(function(s){return s.role==='Driver'&&s.license_status==='pending_review';}).length;
           var badge=document.getElementById('staff-pending-badge');
           if(badge){badge.textContent=cnt;badge.style.display=cnt>0?'':'none';}
+        }).catch(function(){});
+      // Refresh vehicle requests badge
+      apiFetch('/'+slug+'/api/admin/vehicle-requests')
+        .then(function(r3){return r3.json();})
+        .then(function(rows){
+          var pending = Array.isArray(rows) ? rows.filter(function(r){return r.status==='pending';}).length : 0;
+          var vBadge = document.getElementById('vehicles-pending-badge');
+          if(vBadge){vBadge.textContent=pending;vBadge.style.display=pending>0?'':'none';}
+        }).catch(function(){});
+      // Refresh subscription expiry warning badge
+      apiFetch('/'+slug+'/api/admin/subscription')
+        .then(function(r4){return r4.json();})
+        .then(function(subData){
+          if(!subData.ok) return;
+          var tenantCreated = subData.tenant_created_at ? new Date(subData.tenant_created_at) : new Date();
+          var now = new Date();
+          var nextBilling = new Date(tenantCreated);
+          while(nextBilling <= now) nextBilling.setMonth(nextBilling.getMonth() + 1);
+          var daysLeft = Math.ceil((nextBilling - now) / (1000*60*60*24));
+          var sBadge = document.getElementById('sub-expiry-badge');
+          if(sBadge){
+            if(daysLeft <= 3){
+              sBadge.innerHTML = '\u26A0';
+              sBadge.style.display = '';
+              sBadge.style.color = '#ef4444';
+              sBadge.title = daysLeft + ' days left — payment due soon!';
+            } else if(daysLeft <= 7){
+              sBadge.innerHTML = '\u26A0';
+              sBadge.style.display = '';
+              sBadge.style.color = '#fbbf24';
+              sBadge.title = daysLeft + ' days until next billing';
+            } else {
+              sBadge.style.display = 'none';
+            }
+          }
         }).catch(function(){});
     })
     .catch(function(e){console.error('Failed to load shipments:',e);});
@@ -3338,6 +3373,9 @@ function loadVehicleRequests() {
         '<div style="display:flex;gap:6px;flex-shrink:0;">' + approveBtn + denyBtn + '</div>' +
       '</div>';
     }).join('');
+    // Update vehicle sidebar badge
+    var vBadge = document.getElementById('vehicles-pending-badge');
+    if(vBadge){vBadge.textContent=pending.length;vBadge.style.display=pending.length>0?'':'none';}
   }).catch(function(){
     el.innerHTML = '<p style="color:#ef4444;font-size:12px;text-align:center;">Failed to load requests</p>';
   });
@@ -3350,6 +3388,7 @@ async function approveVehicleRequest(id) {
     var d = await r.json();
     if(!r.ok) { alert(d.error || 'Failed'); return; }
     loadVehicles();
+    loadVehicleRequests();
   } catch(e) { alert('Network error.'); }
 }
 
