@@ -795,6 +795,24 @@ textarea{resize:vertical;}
           <div id="sub-since" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
         </div>
       </div>
+      <!-- Pay Now Banner (shown dynamically when payment is due) -->
+      <div id="sub-pay-banner" style="display:none;margin-bottom:16px;">
+        <div style="background:linear-gradient(135deg,#0f2235 0%,#1e3a5f 100%);border-radius:16px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;background:rgba(234,88,12,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span class="material-symbols-outlined" style="font-size:24px;color:#fb923c;">payment</span>
+            </div>
+            <div>
+              <div id="sub-pay-title" style="font-size:15px;font-weight:800;color:#fff;">Subscription Payment Due</div>
+              <div id="sub-pay-desc" style="font-size:12px;color:#94a3b8;margin-top:2px;">Pay your monthly subscription to keep your workspace active.</div>
+            </div>
+          </div>
+          <button id="sub-pay-btn" onclick="paySubscription(this)" style="padding:12px 28px;background:#ea580c;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(234,88,12,0.3);" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ea580c'">
+            <span class="material-symbols-outlined" style="font-size:18px;">credit_card</span>
+            <span id="sub-pay-btn-text">Pay Now</span>
+          </button>
+        </div>
+      </div>
       <!-- Pending Downgrade Notice -->
       <div id="sub-pending-downgrade" style="display:none;margin-bottom:16px;"></div>
       <!-- Billing History -->
@@ -4043,6 +4061,32 @@ async function loadSubscription() {
       }
     }
 
+    // Show Pay Now banner when due within 7 days
+    var payBanner = document.getElementById('sub-pay-banner');
+    var payTitle = document.getElementById('sub-pay-title');
+    var payDesc = document.getElementById('sub-pay-desc');
+    var payBtnText = document.getElementById('sub-pay-btn-text');
+    if (payBanner) {
+      if (daysRemaining <= 7) {
+        payBanner.style.display = 'block';
+        if (daysRemaining <= 0) {
+          if (payTitle) payTitle.textContent = 'Payment Overdue!';
+          if (payDesc) payDesc.textContent = 'Your subscription payment is overdue. Pay now to avoid service interruption.';
+          if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
+        } else if (daysRemaining <= 1) {
+          if (payTitle) payTitle.textContent = 'Payment Due Today';
+          if (payDesc) payDesc.textContent = 'Your \u20b1' + plan.price.toLocaleString() + ' subscription payment is due today.';
+          if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
+        } else {
+          if (payTitle) payTitle.textContent = 'Subscription Payment Due in ' + daysRemaining + ' Days';
+          if (payDesc) payDesc.textContent = 'Pay your \u20b1' + plan.price.toLocaleString() + '/month subscription to keep your workspace active.';
+          if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString();
+        }
+      } else {
+        payBanner.style.display = 'none';
+      }
+    }
+
     if (statusEl) {
       statusEl.textContent = 'Active';
       statusEl.style.color = '#16a34a';
@@ -4125,7 +4169,30 @@ async function cancelDowngrade(btn) {
   }
 }
 
-// â”€â”€ Proof of Delivery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function paySubscription(btn) {
+  var btnText = document.getElementById('sub-pay-btn-text');
+  var origText = btnText ? btnText.textContent : 'Pay Now';
+  btn.disabled = true;
+  if (btnText) btnText.textContent = 'Processing...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/renew', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'}
+    });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to create payment');
+    if (d.checkout_url) {
+      window.location.href = d.checkout_url;
+    } else {
+      throw new Error('No checkout URL returned');
+    }
+  } catch(e) {
+    alert('Payment Error: ' + e.message);
+    btn.disabled = false;
+    if (btnText) btnText.textContent = origText;
+  }
+}
+
 async function loadPODs() {
   var tb = document.querySelector('#s-pod .tbl-wrap tbody');
   if(!tb) return;

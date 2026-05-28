@@ -1663,6 +1663,130 @@ router.get('/:slug/api/admin/upgrade/success', async (req, res) => {
   }
 });
 
+// RENEW PLAN — PayMongo Checkout (pay current plan's monthly fee)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/:slug/api/admin/renew', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const slug = req.params.slug;
+
+  try {
+    const [[tenant]] = await query(
+      `SELECT t.plan, t.company_name, s.username AS admin_email, s.phone AS admin_phone
+       FROM TENANT t
+       LEFT JOIN STAFF s ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
+       WHERE t.tenant_id = ? LIMIT 1`, [tid]);
+
+    const planKey = (tenant?.plan || 'startup').toLowerCase();
+    if (!PLAN_PRICES[planKey]) return res.status(400).json({ error: 'Unknown plan.' });
+
+    const pmKey = process.env.PAYMONGO_SECRET_KEY;
+    if (!pmKey) return res.status(500).json({ error: 'Payment gateway not configured. Contact platform support.' });
+
+    const baseUrl = process.env.BASE_URL || 'https://logistichub.ddns.net';
+
+    // Create a signed token for the success callback
+    const crypto = require('crypto');
+    const jwtSecret = process.env.JWT_SECRET || 'logistihub-upgrade';
+    const token = crypto.createHmac('sha256', jwtSecret).update(`${tid}:renew:${planKey}:${slug}`).digest('hex');
+
+    const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(pmKey + ':').toString('base64'),
+      },
+      body: JSON.stringify({
+        data: {
+          attributes: {
+            billing: {
+              name: tenant?.company_name || slug,
+              ...(tenant?.admin_email && { email: tenant.admin_email }),
+              ...(tenant?.admin_phone && { phone: normalizePHPhone(tenant.admin_phone) })
+            },
+            line_items: [{
+              name: PLAN_PRICES[planKey].label + ' Monthly — ' + (tenant?.company_name || slug),
+              amount: PLAN_PRICES[planKey].amount,
+              currency: 'PHP',
+              quantity: 1,
+            }],
+            payment_method_types: ['gcash', 'card', 'paymaya'],
+            description: `Subscription renewal (${planKey}) for ${slug}`,
+            success_url: `${baseUrl}/${slug}/api/admin/renew/success?plan=${planKey}&token=${token}`,
+            cancel_url: `${baseUrl}/${slug}/admin`,
+            metadata: { tenant_id: String(tid), slug, plan: planKey, type: 'renewal' },
+          }
+        }
+      })
+    });
+    const pmData = await response.json();
+    if (!response.ok) {
+      console.error('[PayMongo renew checkout error]', JSON.stringify(pmData));
+      return res.status(502).json({ error: 'Payment gateway error. Please try again.' });
+    }
+    const checkoutUrl = pmData.data?.attributes?.checkout_url;
+    if (!checkoutUrl) return res.status(502).json({ error: 'Could not create checkout session.' });
+
+    logAudit({ actor: req.admin.email, actor_type: 'admin', action: 'RENEWAL_INITIATED', target: `${planKey} plan renewal`, tenant_slug: slug, ip_address: req.ip });
+    res.json({ ok: true, checkout_url: checkoutUrl });
+  } catch(err) {
+    console.error('[POST /admin/renew]', err);
+    res.status(500).json({ error: 'Failed to create checkout. ' + err.message });
+  }
+});
+
+// Success callback after PayMongo renewal payment
+router.get('/:slug/api/admin/renew/success', async (req, res) => {
+  const { plan, token } = req.query;
+  const slug = req.params.slug;
+
+  if (!plan || !PLAN_PRICES[plan]) return res.redirect(`/${slug}/admin`);
+
+  try {
+    const [[tenant]] = await query('SELECT tenant_id, plan FROM TENANT WHERE slug = ?', [slug]);
+    if (!tenant) return res.redirect(`/${slug}/admin`);
+
+    const crypto = require('crypto');
+    const jwtSecret = process.env.JWT_SECRET || 'logistihub-upgrade';
+    const expectedToken = crypto.createHmac('sha256', jwtSecret).update(`${tenant.tenant_id}:renew:${plan}:${slug}`).digest('hex');
+
+    if (token !== expectedToken) {
+      console.warn('[Renew] Invalid token for', slug, plan);
+      return res.redirect(`/${slug}/admin`);
+    }
+
+    // Record subscription payment
+    try {
+      const pmKey = process.env.PAYMONGO_SECRET_KEY || '';
+      await query(
+        'INSERT INTO SUBSCRIPTION_PAYMENT (tenant_id, plan, amount, currency, status, is_test_mode) VALUES (?, ?, ?, ?, ?, ?)',
+        [tenant.tenant_id, plan, PLAN_PRICES[plan].amount / 100, 'PHP', 'paid', pmKey.startsWith('sk_test') ? 1 : 0]
+      );
+    } catch(_) { /* table might not exist yet */ }
+
+    logAudit({ actor: 'system', actor_type: 'system', action: 'RENEWAL_COMPLETED', target: `${plan} plan renewal`, tenant_slug: slug });
+
+    // Show success page
+    res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Payment Successful</title>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+      <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f1f5f9;}
+      .card{background:#fff;border-radius:20px;padding:48px;text-align:center;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+      .ico{width:64px;height:64px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+      .material-symbols-outlined{font-variation-settings:'FILL' 1;font-size:32px;color:#10b981;}
+      h1{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px;}p{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:24px;}
+      a{display:inline-flex;align-items:center;gap:6px;padding:12px 28px;background:#0f2235;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;}
+      </style></head><body><div class="card">
+      <div class="ico"><span class="material-symbols-outlined">check_circle</span></div>
+      <h1>Payment Successful!</h1>
+      <p>Your <strong style="text-transform:uppercase;color:#0f172a;">${plan}</strong> plan subscription has been renewed successfully.</p>
+      <a href="/${slug}/admin"><span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>Back to Dashboard</a>
+      </div></body></html>`);
+  } catch(err) {
+    console.error('[GET /admin/renew/success]', err);
+    res.redirect(`/${slug}/admin`);
+  }
+});
+
 // ── GET /:slug/api/admin/subscription — subscription payment history ────────
 router.get('/:slug/api/admin/subscription', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
