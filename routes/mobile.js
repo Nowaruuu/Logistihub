@@ -303,9 +303,10 @@ router.get('/driver/fleet-vehicles', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   try {
     const [rows] = await query(
-      `SELECT v.plate_number, v.vehicle_type, v.model, v.capacity_tons, v.supported_item_types
+      `SELECT v.plate_number, v.vehicle_type, v.model, v.capacity_tons, v.supported_item_types, v.ownership_type
        FROM vehicle v
        WHERE v.tenant_id = ? AND v.status = 'Available'
+         AND v.ownership_type = 'employee'
          AND NOT EXISTS (
            SELECT 1 FROM STAFF s WHERE s.vehicle_plate = v.plate_number AND s.tenant_id = v.tenant_id
          )
