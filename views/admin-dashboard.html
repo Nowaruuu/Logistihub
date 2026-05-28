@@ -326,9 +326,10 @@ textarea{resize:vertical;}
 .sidebar-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;margin-right:8px;}
 .sidebar-toggle span{display:block;width:20px;height:2px;background:#334155;margin:4px 0;border-radius:2px;transition:all .3s;}
 @media(max-width:768px){
-  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;height:100dvh;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;}
   .sidebar.open{left:0;}
-  .sidebar nav{overflow-y:auto!important;-webkit-overflow-scrolling:touch;flex:1;min-height:0;touch-action:pan-y;}
+  .sidebar nav{overflow-y:visible!important;flex:none;min-height:auto;}
+  .sidebar-bottom{margin-top:auto;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,14px);}
   .sidebar-toggle{display:block;}
   body{display:block;height:auto;overflow:auto;-webkit-overflow-scrolling:touch;}
   .main{width:100%!important;min-width:0!important;overflow-y:auto!important;height:auto!important;}
@@ -1499,6 +1500,73 @@ function logout() {
     .then(function() { window.location.href = '/' + slug + '/admin-login'; })
     .catch(function() { window.location.href = '/' + slug + '/admin-login'; });
 }
+
+// ── Real-time notification polling (every 30s) ───────────────
+var _prevShipmentIds = null;
+var _prevStaffPendingCount = null;
+var _prevVehicleRequestCount = null;
+
+function pollNotifications() {
+  if (!_SLUG) return;
+  var newActivity = false;
+
+  // Poll shipments for new/changed entries
+  apiFetch('/' + _SLUG + '/api/admin/shipments?limit=10')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var shipments = data.shipments || data || [];
+      if (!Array.isArray(shipments)) return;
+      var currentIds = shipments.map(function(s){return s.delivery_number + ':' + s.status;}).join(',');
+      if (_prevShipmentIds !== null && currentIds !== _prevShipmentIds) {
+        newActivity = true;
+        // Update cached shipment data
+        _allShipments = shipments.length > _allShipments.length ? shipments : _allShipments;
+        var navBadge = document.querySelector('.nav-badge');
+        if (navBadge) navBadge.textContent = _allShipments.length;
+      }
+      _prevShipmentIds = currentIds;
+    }).catch(function(){});
+
+  // Poll vehicle requests
+  apiFetch('/' + _SLUG + '/api/admin/vehicle-requests')
+    .then(function(r){return r.json();})
+    .then(function(rows){
+      var pending = Array.isArray(rows) ? rows.filter(function(r){return r.status==='pending';}).length : 0;
+      if (_prevVehicleRequestCount !== null && pending !== _prevVehicleRequestCount) newActivity = true;
+      _prevVehicleRequestCount = pending;
+      var vBadge = document.getElementById('vehicles-pending-badge');
+      if (vBadge){vBadge.textContent=pending;vBadge.style.display=pending>0?'':'none';}
+    }).catch(function(){});
+
+  // Poll staff for new pending reviews
+  apiFetch('/' + _SLUG + '/api/admin/staff')
+    .then(function(r){return r.json();})
+    .then(function(staffList){
+      if (!Array.isArray(staffList)) return;
+      _staffData = staffList;
+      var cnt = staffList.filter(function(s){return s.role==='Driver'&&s.license_status==='pending_review';}).length;
+      if (_prevStaffPendingCount !== null && cnt !== _prevStaffPendingCount) newActivity = true;
+      _prevStaffPendingCount = cnt;
+      var badge = document.getElementById('staff-pending-badge');
+      if (badge){badge.textContent=cnt;badge.style.display=cnt>0?'':'none';}
+    }).catch(function(){});
+
+  // If something changed, show the notification dot
+  setTimeout(function(){
+    if (newActivity) {
+      var btn = document.getElementById('notif-btn');
+      if (btn) btn.classList.add('notif-dot');
+      // If notification panel is already open, refresh it
+      var panel = document.getElementById('notif-panel');
+      if (panel && panel.classList.contains('show')) loadNotifPanel();
+    }
+  }, 2000);
+}
+
+// Start polling after initial load
+setTimeout(function(){ pollNotifications(); }, 5000);
+setInterval(pollNotifications, 30000);
+
 </script>
 
 <script>
