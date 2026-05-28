@@ -4508,6 +4508,8 @@ function globalSearch(q) {
   clearTimeout(_searchDebounce);
   var panel = document.getElementById('search-results');
   if (!q || q.length < 2) { panel.classList.remove('show'); return; }
+  // Close other panels (notif/help) when typing in search
+  document.querySelectorAll('.tb-dropdown').forEach(function(el) { el.classList.remove('show'); });
   _searchDebounce = setTimeout(function() {
     var term = q.toLowerCase();
     var results = [];
@@ -4598,6 +4600,9 @@ function toggleHelpPanel() {
 // ── Close all panels ──────────────────────────────────────────
 function closeAllPanels() {
   document.querySelectorAll('.tb-dropdown,.search-results').forEach(function(el) { el.classList.remove('show'); });
+  // Blur search input so typing doesn't re-open search results
+  var si = document.getElementById('global-search');
+  if (si && document.activeElement === si) si.blur();
 }
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.tb-right')) closeAllPanels();
