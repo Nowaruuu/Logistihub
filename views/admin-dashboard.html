@@ -302,14 +302,14 @@ textarea{resize:vertical;}
   .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;}
   .sidebar.open{left:0;}
   .sidebar-toggle{display:block;}
-  body{display:block;}
-  .main{width:100%!important;min-width:0!important;}
+  body{display:block;height:auto;overflow:auto;-webkit-overflow-scrolling:touch;}
+  .main{width:100%!important;min-width:0!important;overflow-y:auto!important;height:auto!important;}
   .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
   .grid-2,.grid-3-1{grid-template-columns:1fr!important;}
   .form-grid{grid-template-columns:1fr!important;}
-  .content{padding:14px;overflow-x:hidden;}
+  .content{padding:14px;overflow-x:hidden;overflow-y:visible!important;height:auto!important;}
   .search-bar{display:none;}
-  .topbar{padding:0 12px;}
+  .topbar{padding:0 12px;position:sticky;top:0;z-index:10;}
   .ph-row{flex-direction:column;gap:10px;}
   .filter-bar{flex-direction:column;align-items:stretch;}
   body.sidebar-open{overflow:hidden;}
@@ -331,13 +331,18 @@ textarea{resize:vertical;}
   .tabs-bar::-webkit-scrollbar{display:none;}
   .tab{flex-shrink:0!important;white-space:nowrap!important;}
 
-  /* SHIPMENTS - remove fixed height layout */
-  #s-shipments.active{height:auto!important;overflow:visible!important;display:block!important;}
-  #s-shipments > .card{overflow:visible!important;}
-  #s-shipments > .card > .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
+  /* ALL SECTIONS - remove fixed height on mobile so content scrolls naturally */
+  #s-shipments.active,#s-pricing.active,#s-payments.active,#s-staff.active,
+  #s-vehicles.active,#s-app-users.active,#s-pod.active,#s-settings.active{
+    height:auto!important;overflow:visible!important;display:block!important;
+  }
+  #s-shipments > .card,#s-pricing > div,#s-payments > .card,
+  #s-staff > .card,#s-vehicles > .card,#s-app-users > .card,#s-pod > .card{
+    overflow:visible!important;height:auto!important;
+  }
 
   /* TABLES - force horizontal scroll */
-  .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%!important;display:block!important;}
+  .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%!important;display:block!important;overflow-y:visible!important;}
   .tbl-wrap table{min-width:700px!important;}
 
   /* MAP - shrink on mobile */
@@ -351,6 +356,10 @@ textarea{resize:vertical;}
   /* Reg link box */
   .reg-link-box{flex-direction:column;gap:8px;}
   .copy-btn{align-self:flex-start;}
+
+  /* Pricing grid - stack on mobile */
+  #s-pricing [style*="grid"]{grid-template-columns:1fr!important;height:auto!important;overflow:visible!important;}
+  .form-card{min-height:auto!important;}
 }
 @media(max-width:480px){
   .stat-grid{grid-template-columns:1fr!important;}
@@ -541,7 +550,7 @@ textarea{resize:vertical;}
       <!-- sub-forms -->
       <div id="sf-PACKAGE" class="form-card" style="display:none;"><div class="form-sec">Package Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Length (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Width (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Height (cm)</label><input type="number"/></div><div class="form-group"><label class="form-label">Weight (kg)</label><input type="number"/></div></div><div class="form-group"><label class="form-label">Content Description</label><textarea rows="2"></textarea></div></div>
       <div id="sf-VEHICLE" class="form-card" style="display:none;"><div class="form-sec">Vehicle Cargo Details</div><div class="form-grid"><div class="form-group"><label class="form-label">VIN</label><input type="text"/></div><div class="form-group"><label class="form-label">Make / Model</label><input type="text"/></div><div class="form-group"><label class="form-label">Running Condition</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div><div class="form-group"><label class="form-label">Condition Report</label><textarea rows="2"></textarea></div></div>
-      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-grid"><div class="form-group"><label class="form-label">Required Temp (Ã‚Â°C)</label><input type="number" step="0.1"/></div><div class="form-group"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-group"><label class="form-label">Handling Instructions</label><textarea rows="2"></textarea></div></div>
+      <div id="sf-FOOD" class="form-card" style="display:none;"><div class="form-sec">Food / Cold Chain</div><div class="form-grid"><div class="form-group"><label class="form-label">Required Temp (&deg;C)</label><input type="number" step="0.1"/></div><div class="form-group"><label class="form-label">Expiration Date</label><input type="date"/></div></div><div class="form-group"><label class="form-label">Handling Instructions</label><textarea rows="2"></textarea></div></div>
       <div id="sf-DOC" class="form-card" style="display:none;"><div class="form-sec">Document Details</div><div class="form-grid"><div class="form-group"><label class="form-label">Confidentiality Level</label><select><option value="" disabled selected>Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Strictly Confidential</option></select></div><div class="form-group"><label class="form-label">Recipient ID Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
       <div id="sf-BULK" class="form-card" style="display:none;"><div class="form-sec">Bulk Cargo</div><div class="form-grid"><div class="form-group"><label class="form-label">Pallet Count</label><input type="number"/></div><div class="form-group"><label class="form-label">Stackable</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div><div class="form-group"><label class="form-label">Forklift Required</label><select><option value="" disabled selected>Select</option><option>Yes</option><option>No</option></select></div></div></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -616,9 +625,9 @@ textarea{resize:vertical;}
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
       <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
-        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">â‚±0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">â‚±0</div><div class="stat-note">Fuel + driver labor</div></div>
-        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">â‚±0</div><div class="stat-note" id="pay-net-note">Revenue âˆ’ Expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">₱0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">₱0</div><div class="stat-note">Fuel + driver labor</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">₱0</div><div class="stat-note" id="pay-net-note">Revenue âˆ’ Expenses</div></div>
         <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
       </div>
@@ -645,29 +654,29 @@ textarea{resize:vertical;}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:20px;border-left:4px solid #10b981;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Collected (Paid)</div>
-          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
+          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Total Billed</div>
-          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
+          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #f59e0b;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Est. Expenses</div>
-          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">â‚±0</div>
+          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">₱0</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Fuel + driver labor</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Net Profit</div>
-          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
+          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">After estimated costs</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Avg Per Delivery</div>
-          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
+          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #ea580c;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Pending</div>
-          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">â‚±0</div>
+          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">₱0</div>
           <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
         </div>
       </div>
@@ -720,7 +729,7 @@ textarea{resize:vertical;}
         </div>
         <div class="card" style="padding:20px;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Monthly Cost</div>
-          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">â‚±0.00</div>
+          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">₱0.00</div>
           <div id="sub-plan-cycle" style="font-size:12px;color:#64748b;margin-top:4px;">per month</div>
         </div>
         <div class="card" style="padding:20px;">
@@ -906,17 +915,17 @@ textarea{resize:vertical;}
           <div>
             <div class="form-sec" style="margin-bottom:8px;padding-bottom:5px;">Base Rates</div>
             <div class="form-grid" style="gap:10px;">
-              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Base Fee (â‚±)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50" oninput="calcPreview()"/></div><span class="hint">Flat fee per delivery</span></div>
-              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Driver Labor (â‚±/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15" oninput="calcPreview()"/></div><span class="hint">Driver compensation per km</span></div>
+              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Base Fee (&#8369;)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">payments</span><input id="price-base-fee" type="number" step="1" min="0" value="50" oninput="calcPreview()"/></div><span class="hint">Flat fee per delivery</span></div>
+              <div class="form-group" style="margin-bottom:6px;"><label class="form-label">Driver Labor (&#8369;/km)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">person</span><input id="price-driver-labor" type="number" step="0.5" min="0" value="15" oninput="calcPreview()"/></div><span class="hint">Driver compensation per km</span></div>
             </div>
             <div class="form-grid" style="gap:10px;">
-              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Express Multiplier (Ã—)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8" oninput="calcPreview()"/></div><span class="hint">Express = base Ã— this value</span></div>
-              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Insurance Fee (â‚±)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150" oninput="calcPreview()"/></div><span class="hint">Optional safety surcharge</span></div>
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Express Multiplier (&times;)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">bolt</span><input id="price-express-multi" type="number" step="0.1" min="1" value="1.8" oninput="calcPreview()"/></div><span class="hint">Express = base &times; this value</span></div>
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Insurance Fee (&#8369;)</label><div class="field-wrap"><span class="field-ico material-symbols-outlined">shield</span><input id="price-safety-fee" type="number" step="10" min="0" value="150" oninput="calcPreview()"/></div><span class="hint">Optional safety surcharge</span></div>
             </div>
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (â‚±/km per vehicle)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -927,7 +936,7 @@ textarea{resize:vertical;}
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (â‚±/kg)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0â€“20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21â€“100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -937,7 +946,7 @@ textarea{resize:vertical;}
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (â‚±)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (₱)</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -1017,7 +1026,7 @@ textarea{resize:vertical;}
               <div id="calc-breakdown" style="font-size:11px;color:#64748b;line-height:1.8;"></div>
               <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:8px;padding-top:10px;border-top:1.5px solid #e2e8f0;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Total Fee</span>
-                <span id="calc-total" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</span>
+                <span id="calc-total" style="font-size:24px;font-weight:800;color:#10b981;">&#8369;0</span>
               </div>
             </div>
           </div>
@@ -1063,15 +1072,15 @@ function calcPreview(){
   var total = subtotal + insCost;
   // Breakdown
   var lines = [];
-  lines.push('Base fee: <b>â‚±'+baseFee.toFixed(2)+'</b>');
-  lines.push('Fuel ('+fuelRate+'/km Ã— '+km+'km): <b>â‚±'+fuelCost.toFixed(2)+'</b>');
-  lines.push('Driver labor ('+driverLabor+'/km Ã— '+km+'km): <b>â‚±'+laborCost.toFixed(2)+'</b>');
-  lines.push('Weight ('+wtRate+'/kg Ã— '+kg+'kg): <b>â‚±'+weightCost.toFixed(2)+'</b>');
-  if(catCost>0) lines.push('Category surcharge: <b>â‚±'+catCost.toFixed(2)+'</b>');
-  if(isExpress) lines.push('Express (Ã—'+expressMult+'): <b style="color:#f59e0b;">+â‚±'+expressCost.toFixed(2)+'</b>');
-  if(isInsurance) lines.push('Insurance: <b style="color:#3b82f6;">+â‚±'+insCost.toFixed(2)+'</b>');
+  lines.push('Base fee: <b>\u20b1'+baseFee.toFixed(2)+'</b>');
+  lines.push('Fuel ('+fuelRate+'/km \u00d7 '+km+'km): <b>\u20b1'+fuelCost.toFixed(2)+'</b>');
+  lines.push('Driver labor ('+driverLabor+'/km \u00d7 '+km+'km): <b>\u20b1'+laborCost.toFixed(2)+'</b>');
+  lines.push('Weight ('+wtRate+'/kg \u00d7 '+kg+'kg): <b>\u20b1'+weightCost.toFixed(2)+'</b>');
+  if(catCost>0) lines.push('Category surcharge: <b>\u20b1'+catCost.toFixed(2)+'</b>');
+  if(isExpress) lines.push('Express (\u00d7'+expressMult+'): <b style="color:#f59e0b;">+\u20b1'+expressCost.toFixed(2)+'</b>');
+  if(isInsurance) lines.push('Insurance: <b style="color:#3b82f6;">+\u20b1'+insCost.toFixed(2)+'</b>');
   document.getElementById('calc-breakdown').innerHTML = lines.join('<br>');
-  document.getElementById('calc-total').textContent = 'â‚±'+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('calc-total').textContent = '\u20b1'+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 setTimeout(calcPreview, 100);
 </script>
@@ -1283,9 +1292,9 @@ setTimeout(calcPreview, 100);
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;">â‚±' + cyclePrice + '</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + cyclePrice + '</span>' +
             '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
-            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">â‚±' + p.price + '/mo equivalent</div>' : '') +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">₱' + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +
@@ -1967,7 +1976,7 @@ function loadSalesReport(){
     document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
-    // Expense estimation: â‚±27/km (â‚±15 driver + â‚±12 fuel) or 30% fallback
+    // Expense estimation: ₱27/km (₱15 driver + ₱12 fuel) or 30% fallback
     var totalBilled = Number(data.revenue_total||0);
     var estExpenses = data.total_distance_km ? (Number(data.total_distance_km) * 27) : (totalBilled * 0.30);
     var netProfit = totalBilled - estExpenses;
