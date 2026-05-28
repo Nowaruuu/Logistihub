@@ -807,11 +807,24 @@ router.put('/profile', authMiddleware, async (req, res) => {
       // Also update the combined "name" column if first/last changed
       if (first_name !== undefined || last_name !== undefined) {
         const fullName = `${first_name || ''} ${last_name || ''}`.trim();
-        sets.push('name = ?'); vals.push(fullName);
+        // 'name' column may not exist on all APP_USER schemas — safe add
+        try { sets.push('name = ?'); vals.push(fullName); } catch(_) {}
       }
       if (sets.length === 0) return res.json({ ok: true });
       vals.push(req.user.user_id, req.tenantId);
-      await query(`UPDATE APP_USER SET ${sets.join(', ')} WHERE user_id = ? AND tenant_id = ?`, vals);
+      try {
+        await query(`UPDATE APP_USER SET ${sets.join(', ')} WHERE user_id = ? AND tenant_id = ?`, vals);
+      } catch (dbErr) {
+        // Retry without 'name' column if it doesn't exist
+        if (dbErr.message && dbErr.message.includes("Unknown column 'name'")) {
+          const nameIdx = sets.indexOf('name = ?');
+          if (nameIdx > -1) { sets.splice(nameIdx, 1); vals.splice(nameIdx, 1); }
+          if (sets.length > 0) {
+            vals.pop(); vals.pop(); vals.push(req.user.user_id, req.tenantId);
+            await query(`UPDATE APP_USER SET ${sets.join(', ')} WHERE user_id = ? AND tenant_id = ?`, vals);
+          }
+        } else { throw dbErr; }
+      }
       return res.json({ ok: true, message: 'Profile updated.' });
     }
     if (req.staff) {

@@ -129,6 +129,9 @@ pool.getConnection()
       "ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL",
       "ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL",
       "ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL",
+
+      // APP_USER combined name column for profile updates
+      "ALTER TABLE APP_USER ADD COLUMN name VARCHAR(255) DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {
