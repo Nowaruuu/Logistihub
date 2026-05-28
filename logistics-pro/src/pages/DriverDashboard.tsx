@@ -204,8 +204,9 @@ export default function DriverDashboard() {
       await deliveryService.acceptJob(jobId);
       setActiveTab('active');
       await fetchData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error accepting job:', err);
+      alert(err.message || 'Failed to accept this job. Please try again.');
     } finally {
       setAccepting(null);
     }

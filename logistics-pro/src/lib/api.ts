@@ -177,7 +177,10 @@ export async function acceptJob(deliveryNumber: string) {
     method: 'POST',
     headers: getAuthHeaders()
   });
-  if (!res.ok) throw new Error('Failed to accept job');
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || 'Failed to accept job');
+  }
   return res.json();
 }
 

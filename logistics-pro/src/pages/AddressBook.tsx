@@ -25,13 +25,23 @@ export default function AddressBook() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
 
-    const unsubscribe = addressService.subscribeToAddresses(user.uid, (addrList) => {
-      setAddresses(addrList);
-      setLoading(false);
-    });
+    async function loadAddresses() {
+      try {
+        const addrList = await addressService.getAddresses(user!.uid);
+        if (!cancelled) {
+          setAddresses(addrList);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to load addresses:', err);
+        if (!cancelled) setLoading(false);
+      }
+    }
 
-    return unsubscribe;
+    loadAddresses();
+    return () => { cancelled = true; };
   }, [user]);
 
   const validatePhone = (phone: string) => {
@@ -53,7 +63,7 @@ export default function AddressBook() {
     }
 
     try {
-      await addressService.addAddress(user.uid, formData);
+      await addressService.saveAddress(user.uid, formData);
       setIsAdding(false);
       setPhoneError('');
       setFormData({
@@ -64,6 +74,9 @@ export default function AddressBook() {
         city: '',
         zipCode: ''
       });
+      // Reload addresses
+      const updated = await addressService.getAddresses(user.uid);
+      setAddresses(updated);
     } catch (error) {
       console.error("Error adding address:", error);
     }
@@ -72,7 +85,10 @@ export default function AddressBook() {
   const handleDelete = async (id: string) => {
     if (!user) return;
     try {
-      await addressService.deleteAddress(user.uid, id);
+      await addressService.deleteAddress(id);
+      // Reload addresses
+      const updated = await addressService.getAddresses(user.uid);
+      setAddresses(updated);
     } catch (error) {
       console.error("Error deleting address:", error);
     }
