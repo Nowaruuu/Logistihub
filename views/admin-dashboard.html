@@ -234,6 +234,8 @@ table{width:100%;border-collapse:collapse;}
 #s-sales-report .tbl-wrap.tx-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px;}
 #s-sales-report .tbl-wrap.tx-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
 #s-sales-report .tbl-wrap.tx-scroll thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e2e8f0;}
+#sr-bottom-grid{grid-template-columns:1fr 1fr;}
+@media(max-width:900px){#sr-bottom-grid{grid-template-columns:1fr!important;}}
 th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
 td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
 tr:last-child td{border:none;}
@@ -743,15 +745,15 @@ textarea{resize:vertical;}
             <option value="yearly">Yearly</option>
           </select>
         </div>
-        <div style="padding:20px;"><canvas id="sr-monthly-chart" height="260"></canvas></div>
+        <div style="padding:20px;position:relative;width:100%;min-height:200px;"><canvas id="sr-monthly-chart"></canvas></div>
       </div>
       <!-- Two columns: Revenue by Type + Top Clients -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <div id="sr-bottom-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
         <div class="card" style="padding:0;">
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
             <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;color:#8b5cf6;">pie_chart</span>Revenue by Type</h3>
           </div>
-          <div style="padding:20px;"><canvas id="sr-type-chart" height="220"></canvas></div>
+          <div style="padding:20px;position:relative;width:100%;min-height:200px;"><canvas id="sr-type-chart"></canvas></div>
         </div>
         <div class="card" style="padding:0;">
           <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
@@ -2112,10 +2114,6 @@ function _renderSalesChart(chartData, period){
   if(_srMonthlyChart)_srMonthlyChart.destroy();
   var ctx1=document.getElementById('sr-monthly-chart');
   if(ctx1){
-    // Set explicit pixel size so Chart.js doesn't need to measure the container
-    var w = (ctx1.parentElement ? ctx1.parentElement.clientWidth : 0) || 800;
-    ctx1.width = w;
-    ctx1.height = 260;
     _srMonthlyChart=new Chart(ctx1.getContext('2d'),{
       type:'bar',
       data:{
@@ -2126,7 +2124,8 @@ function _renderSalesChart(chartData, period){
         ]
       },
       options:{
-        responsive:false,
+        responsive:true,
+        maintainAspectRatio:false,
         plugins:{legend:{position:'bottom'}},
         scales:{
           y:{beginAtZero:true,stacked:true,position:'left',ticks:{callback:function(v){return'\u20b1'+v.toLocaleString();}},grid:{color:'#f1f5f9'}},
@@ -2176,16 +2175,13 @@ function loadSalesReport(){
     if(_srTypeChart)_srTypeChart.destroy();
     var ctx2=document.getElementById('sr-type-chart');
     if(ctx2){
-      var w2 = (ctx2.parentElement ? ctx2.parentElement.clientWidth : 0) || 400;
-      ctx2.width = w2;
-      ctx2.height = 220;
       _srTypeChart=new Chart(ctx2.getContext('2d'),{
         type:'doughnut',
         data:{
           labels:typeLabels,
           datasets:[{data:typeValues,backgroundColor:typeColors.slice(0,typeLabels.length),borderWidth:0,hoverOffset:6}]
         },
-        options:{responsive:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+        options:{responsive:true,maintainAspectRatio:true,cutout:'70%',plugins:{legend:{position:'bottom'}}}
       });
     }
 
