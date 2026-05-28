@@ -252,7 +252,8 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
 router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
-    // Only show the LATEST payment record per delivery (deduplicates multiple Pay Now clicks)
+    // Show all payment records — dedup only 'full' type per delivery (multiple Pay Now clicks)
+    // Split payments (deposit + balance) are shown as separate rows
     const [rows] = await query(
       `SELECT p.*,
               COALESCE(u.first_name, '') AS customer_first,
@@ -261,9 +262,9 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
               s.receiver_name, s.total_fee, s.distance_km
        FROM payment p
        INNER JOIN (
-         SELECT delivery_number, MAX(invoice_id) AS latest_id
+         SELECT delivery_number, payment_type, MAX(invoice_id) AS latest_id
          FROM payment WHERE tenant_id = ?
-         GROUP BY delivery_number
+         GROUP BY delivery_number, payment_type
        ) latest ON latest.latest_id = p.invoice_id
        LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
        LEFT JOIN APP_USER u ON u.user_id = s.sender_user_id
@@ -378,7 +379,8 @@ const DEFAULT_PRICING = {
     { max_kg: 500, rate: 2.00 },
     { max_kg: null, rate: 1.50 }
   ],
-  category_surcharges: { PACKAGE: 0, FOOD: 50, DOC: 0, BULK: 300, VEHICLE: 800 }
+  category_surcharges: { PACKAGE: 0, FOOD: 50, DOC: 0, BULK: 300, VEHICLE: 800 },
+  split_payment_enabled: false
 };
 
 router.get('/:slug/api/admin/pricing', requireAdmin, requireSlugMatch, async (req, res) => {

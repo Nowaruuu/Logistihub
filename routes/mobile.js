@@ -1345,8 +1345,9 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Shipment not available or already taken.' });
 
     // Check payment — driver cannot accept unpaid shipments
+    // For split payments: a paid deposit (payment_type='deposit') is sufficient
     const [payRows] = await query(
-      "SELECT 1 FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
+      "SELECT 1 FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' AND payment_type IN ('full','deposit') LIMIT 1",
       [dn, tid]
     );
     if (!payRows.length) {
@@ -1691,6 +1692,31 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
       } catch (qErr) { console.error('[Queue auto-activate]', qErr); }
     }
 
+    // ── Notify customer about pending balance payment on delivery ──
+    if (status === 'Delivered') {
+      try {
+        const [balanceRows] = await query(
+          "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND payment_type = 'balance' AND status = 'Pending' LIMIT 1",
+          [dn, tid]
+        );
+        if (balanceRows.length) {
+          const balAmt = balanceRows[0].total_amount;
+          const [senderRows] = await query(
+            'SELECT sender_user_id FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1',
+            [dn, tid]
+          );
+          if (senderRows[0]?.sender_user_id) {
+            await createNotification(
+              senderRows[0].sender_user_id, 'app_user', tid,
+              'Balance Payment Due',
+              `Your delivery ${dn} has been completed! The remaining balance of ₱${parseFloat(balAmt).toLocaleString('en-PH', {minimumFractionDigits:2})} is now due. Please complete your payment.`,
+              'Payments', dn
+            );
+          }
+        }
+      } catch (balErr) { console.error('[Balance notification]', balErr); }
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -1833,12 +1859,13 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
   if (!req.user) return res.status(403).json({ error: 'Customers only.' });
 
   const { delivery_number, amount, description } = req.body;
+  const tid = req.tenantId;
 
   // Guard: if already Paid, don't create another checkout
   try {
     const [existing] = await query(
-      "SELECT invoice_id FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
-      [delivery_number, req.tenantId]
+      "SELECT invoice_id FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' AND payment_type != 'balance' LIMIT 1",
+      [delivery_number, tid]
     );
     if (existing.length) {
       return res.status(409).json({ error: 'already_paid', message: 'This shipment has already been paid.' });
@@ -1854,9 +1881,15 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     // Verify shipment exists and belongs to user
     const [ship] = await query(
       'SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND sender_user_id = ? LIMIT 1',
-      [delivery_number, req.tenantId, req.user.user_id]
+      [delivery_number, tid, req.user.user_id]
     );
     if (!ship.length) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Check if split payment is enabled for this tenant
+    const [tenantRows] = await query('SELECT pricing_config FROM TENANT WHERE tenant_id = ?', [tid]);
+    let pricingConfig = {};
+    try { pricingConfig = JSON.parse(tenantRows[0]?.pricing_config || '{}'); } catch(e) {}
+    const splitEnabled = pricingConfig.split_payment_enabled === true;
 
     // Fetch billing info from APP_USER
     const [userRows] = await query(
@@ -1868,8 +1901,25 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     const billingEmail = userInfo.email || null;
     const billingPhone = userInfo.phone ? normalizePHPhone(userInfo.phone) : '';
 
-    const amountCentavos = Math.round(parseFloat(amount) * 100);
+    const totalAmount = parseFloat(amount);
     const slug = req.params.slug;
+
+    // Calculate checkout amount based on split payment setting
+    let checkoutAmount = totalAmount;
+    let depositAmount = 0;
+    let balanceAmount = 0;
+
+    if (splitEnabled) {
+      depositAmount = Math.ceil(totalAmount * 0.5 * 100) / 100; // 50%, rounded up to nearest centavo
+      balanceAmount = Math.round((totalAmount - depositAmount) * 100) / 100;
+      checkoutAmount = depositAmount;
+    }
+
+    const amountCentavos = Math.round(checkoutAmount * 100);
+
+    const lineItemName = splitEnabled
+      ? `Shipment ${delivery_number} (50% Deposit)`
+      : `Shipment ${delivery_number}`;
 
     const checkoutBody = {
       data: {
@@ -1882,12 +1932,14 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
           send_email_receipt: true,
           show_description: true,
           show_line_items: true,
-          description: description || `Shipment ${delivery_number}`,
+          description: splitEnabled
+            ? `50% Deposit for Shipment ${delivery_number}`
+            : (description || `Shipment ${delivery_number}`),
           reference_number: delivery_number,
           line_items: [{
             currency: 'PHP',
             amount: amountCentavos,
-            name: `Shipment ${delivery_number}`,
+            name: lineItemName,
             quantity: 1
           }],
           payment_method_types: ['gcash', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
@@ -1895,9 +1947,10 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
           cancel_url:  `https://logistichub.ddns.net/${slug}/api/mobile/pay/cancel?dn=${delivery_number}`,
           metadata: {
             delivery_number,
-            tenant_id: req.tenantId.toString(),
+            tenant_id: tid.toString(),
             user_id:   req.user.user_id.toString(),
-            slug
+            slug,
+            payment_type: splitEnabled ? 'deposit' : 'full'
           }
         }
       }
@@ -1922,18 +1975,40 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     const checkoutId  = data.data.id;
     const checkoutUrl = data.data.attributes.checkout_url;
 
-    // Create payment record (non-fatal)
+    // Create payment record(s) (non-fatal)
     try {
-      await query(
-        `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id)
-         VALUES (?, ?, ?, 'Pending', ?)`,
-        [delivery_number, req.tenantId, amount, checkoutId]
-      );
+      if (splitEnabled) {
+        // Insert DEPOSIT record (linked to PayMongo checkout)
+        await query(
+          `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id, payment_type)
+           VALUES (?, ?, ?, 'Pending', ?, 'deposit')`,
+          [delivery_number, tid, depositAmount, checkoutId]
+        );
+        // Insert BALANCE record (no PayMongo checkout — paid later)
+        await query(
+          `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, payment_type)
+           VALUES (?, ?, ?, 'Pending', 'balance')`,
+          [delivery_number, tid, balanceAmount]
+        );
+      } else {
+        // Full payment — single record
+        await query(
+          `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, paymongo_checkout_id, payment_type)
+           VALUES (?, ?, ?, 'Pending', ?, 'full')`,
+          [delivery_number, tid, totalAmount, checkoutId]
+        );
+      }
     } catch (dbErr) {
       console.error('[PayMongo] DB insert error (non-fatal):', dbErr.message);
     }
 
-    res.json({ checkout_url: checkoutUrl, checkout_id: checkoutId });
+    const responseBody = { checkout_url: checkoutUrl, checkout_id: checkoutId };
+    if (splitEnabled) {
+      responseBody.split = true;
+      responseBody.deposit_amount = depositAmount;
+      responseBody.balance_amount = balanceAmount;
+    }
+    res.json(responseBody);
   } catch (err) {
     console.error('[POST /pay/checkout] Unexpected error:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to create payment.' });
@@ -1945,10 +2020,11 @@ router.get('/pay/success', async (req, res) => {
   const dn = req.query.dn || '';
   const slug = req.params.slug;
 
-  // Best-effort: mark payment as Paid immediately via DB (webhook backup)
+  // Best-effort: mark deposit/full payment as Paid immediately via DB (webhook backup)
+  // Do NOT mark balance records as paid here — those are paid separately on delivery
   try {
     await query(
-      "UPDATE payment SET status = 'Paid' WHERE delivery_number = ? AND status = 'Pending'",
+      "UPDATE payment SET status = 'Paid' WHERE delivery_number = ? AND status = 'Pending' AND payment_type != 'balance'",
       [dn]
     );
   } catch (_) {}
@@ -1977,8 +2053,9 @@ router.get('/pay/cancel', async (req, res) => {
   // Mark payment as Failed so it doesn't stay Pending
   if (dn) {
     try {
+      // Only fail the deposit/full record — balance stays pending
       await query(
-        "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND status = 'Pending'",
+        "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND status = 'Pending' AND payment_type != 'balance'",
         [dn]
       );
     } catch (_) {}
@@ -2010,23 +2087,38 @@ router.get('/pay/cancel', async (req, res) => {
 // GET /pay/status/:dn — check payment status
 router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
   try {
-    // Check for already-Paid record first, then fall back to any Pending record
-    // (no ORDER BY — payment table PK column name is unknown; use status filter instead)
-    const [paidRows] = await query(
-      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Paid' LIMIT 1",
+    // Fetch ALL payment records for this delivery to detect split payments
+    const [allPayments] = await query(
+      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? ORDER BY invoice_id ASC",
       [req.params.dn, req.tenantId]
     );
-    if (paidRows.length) {
-      return res.json({ status: 'Paid', amount: paidRows[0].total_amount, method: paidRows[0].payment_method });
+
+    // Check for already-Paid deposit/full record
+    const paidRecord = allPayments.find(p => p.status === 'Paid' && p.payment_type !== 'balance');
+    const balanceRecord = allPayments.find(p => p.payment_type === 'balance');
+    const depositRecord = allPayments.find(p => p.payment_type === 'deposit');
+
+    if (paidRecord) {
+      const result = { status: 'Paid', amount: paidRecord.total_amount, method: paidRecord.payment_method };
+      // Include split payment info if applicable
+      if (balanceRecord) {
+        result.split = true;
+        result.deposit_amount = parseFloat(paidRecord.total_amount);
+        result.balance_amount = parseFloat(balanceRecord.total_amount);
+        result.balance_status = balanceRecord.status;
+      }
+      return res.json(result);
     }
 
-    const [rows] = await query(
-      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending' LIMIT 1",
-      [req.params.dn, req.tenantId]
-    );
-    if (!rows.length) return res.json({ status: 'none' });
+    // Find a pending record with a checkout session (deposit or full)
+    const pendingRecord = allPayments.find(p => p.status === 'Pending' && p.payment_type !== 'balance');
+    if (!pendingRecord && !allPayments.length) return res.json({ status: 'none' });
+    if (!pendingRecord) {
+      // Only balance records exist (shouldn't happen normally)
+      return res.json({ status: 'none' });
+    }
 
-    const payment = rows[0];
+    const payment = pendingRecord;
 
     // If still Pending, check with PayMongo API directly
     if (payment.paymongo_checkout_id) {
@@ -2038,21 +2130,20 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
           });
           const pmData = await pmRes.json();
           const attrs = pmData?.data?.attributes || {};
-          const pmStatus   = attrs.status;          // 'active', 'expired', etc.
+          const pmStatus   = attrs.status;
           const pmPayments = attrs.payments || [];
 
-          // A payment is paid when the payments array has an entry with status 'paid'
           const paidPayment = pmPayments.find(p => p?.attributes?.status === 'paid');
 
           if (paidPayment) {
             const method = paidPayment?.attributes?.source?.type || 'unknown';
             const pmId   = paidPayment?.id || null;
 
-            // Update DB — use delivery_number+tenant_id since PK is invoice_id
+            // Update only the deposit/full record — NOT balance
             try {
               await query(
-                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ? WHERE delivery_number = ? AND tenant_id = ?",
-                [pmId, method, req.params.dn, req.tenantId]
+                "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ? WHERE invoice_id = ?",
+                [pmId, method, payment.invoice_id]
               );
             } catch (_) {}
 
@@ -2063,25 +2154,42 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
                 [req.params.dn, req.tenantId]
               );
               if (ship[0]?.sender_user_id) {
+                const notifMsg = balanceRecord
+                  ? `Deposit of \u20B1${payment.total_amount} for ${req.params.dn} confirmed via ${method}. Balance of \u20B1${balanceRecord.total_amount} due on delivery.`
+                  : `Payment of \u20B1${payment.total_amount} for ${req.params.dn} confirmed via ${method}.`;
                 await createNotification(
                   ship[0].sender_user_id, 'app_user', req.tenantId,
                   'Payment Confirmed',
-                  `Payment of \u20B1${payment.total_amount} for ${req.params.dn} confirmed via ${method}.`,
+                  notifMsg,
                   'Payments', req.params.dn
                 );
               }
             } catch (_) {}
 
-            return res.json({ status: 'Paid', method, amount: payment.total_amount });
+            const result = { status: 'Paid', method, amount: payment.total_amount };
+            if (balanceRecord) {
+              result.split = true;
+              result.deposit_amount = parseFloat(payment.total_amount);
+              result.balance_amount = parseFloat(balanceRecord.total_amount);
+              result.balance_status = 'Pending';
+            }
+            return res.json(result);
           }
 
-          // If checkout expired or failed, mark payment as Failed
+          // If checkout expired or failed, mark deposit/full as Failed (not balance)
           if (pmStatus === 'expired' || pmStatus === 'cancelled') {
             try {
               await query(
-                "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending'",
-                [req.params.dn, req.tenantId]
+                "UPDATE payment SET status = 'Failed' WHERE invoice_id = ?",
+                [payment.invoice_id]
               );
+              // Also fail the balance record if deposit failed
+              if (balanceRecord && balanceRecord.status === 'Pending') {
+                await query(
+                  "UPDATE payment SET status = 'Failed' WHERE invoice_id = ?",
+                  [balanceRecord.invoice_id]
+                );
+              }
             } catch (_) {}
             return res.json({ status: 'Failed', amount: payment.total_amount });
           }
@@ -2091,7 +2199,14 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
       }
     }
 
-    res.json({ status: payment.status, amount: payment.total_amount, method: payment.payment_method });
+    const result = { status: payment.status, amount: payment.total_amount, method: payment.payment_method };
+    if (balanceRecord) {
+      result.split = true;
+      result.deposit_amount = parseFloat(payment.total_amount);
+      result.balance_amount = parseFloat(balanceRecord.total_amount);
+      result.balance_status = balanceRecord.status;
+    }
+    res.json(result);
   } catch (err) {
     console.error('[GET /pay/status]', err.message);
     res.status(500).json({ error: 'Server error' });
@@ -2119,17 +2234,19 @@ router.paymongoWebhook = async (req, res) => {
       const pmId = pm?.data?.id || null;
 
       if (checkoutId) {
+        // Only update the exact record linked to this checkout (deposit or full — never balance)
         await query(
-          "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ? WHERE paymongo_checkout_id = ?",
+          "UPDATE payment SET status = 'Paid', paymongo_payment_id = ?, payment_method = ?, paid_at = NOW() WHERE paymongo_checkout_id = ?",
           [pmId, method, checkoutId]
         );
 
         // Create notification
         if (metadata.user_id && metadata.tenant_id) {
+          const paymentTypeLabel = metadata.payment_type === 'deposit' ? '50% deposit' : 'payment';
           await createNotification(
             parseInt(metadata.user_id), 'app_user', parseInt(metadata.tenant_id),
             'Payment Confirmed',
-            `Your payment for shipment ${metadata.delivery_number || ''} has been confirmed via ${method}.`,
+            `Your ${paymentTypeLabel} for shipment ${metadata.delivery_number || ''} has been confirmed via ${method}.`,
             'Payments', metadata.delivery_number
           );
         }

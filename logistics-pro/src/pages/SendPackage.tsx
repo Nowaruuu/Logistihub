@@ -148,6 +148,10 @@ export default function SendPackage() {
   const [maxDistanceKm, setMaxDistanceKm] = useState(100);
   // Server-provided pricing config (admin-customizable)
   const [pricingConfig, setPricingConfig] = useState<any>(null);
+  // Split payment support
+  const splitEnabled = pricingConfig?.split_payment_enabled === true;
+  const depositAmount = splitEnabled ? Math.ceil(totalFee * 0.5) : totalFee;
+  const balanceAmount = splitEnabled ? totalFee - depositAmount : 0;
 
   // Live-refresh tenant config: on mount, on visibility change, and every 30s
   useEffect(() => {
@@ -1172,11 +1176,12 @@ export default function SendPackage() {
       <footer className="p-5 mt-auto border-t border-slate-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl sticky bottom-0 z-20">
         <div className="flex items-center justify-between mb-5 px-1">
           <div className="flex flex-col">
-            <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Estimated Total</span>
-            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">₱{totalFee.toLocaleString()}.00</span>
+            <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">{splitEnabled ? '50% Deposit Due Now' : 'Estimated Total'}</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">₱{splitEnabled ? depositAmount.toLocaleString() : totalFee.toLocaleString()}.00</span>
+            {splitEnabled && <span className="text-[10px] text-blue-500 font-semibold mt-0.5">+ ₱{balanceAmount.toLocaleString()}.00 on delivery</span>}
           </div>
           <div className="text-[11px] text-right font-medium text-slate-400 dark:text-slate-500">
-            Includes taxes & fees
+            {splitEnabled ? 'Split Payment' : 'Includes taxes & fees'}
           </div>
         </div>
         <button 
@@ -1290,6 +1295,18 @@ export default function SendPackage() {
                   <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Total Fee</span>
                   <span className="text-2xl font-black text-orange-600">₱{totalFee.toLocaleString()}.00</span>
                 </div>
+                {splitEnabled && (
+                  <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-700/40 space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1">💳 50% Deposit <span className="text-[9px] bg-orange-200 dark:bg-orange-800/50 text-orange-700 dark:text-orange-300 px-1.5 rounded font-bold">Pay Now</span></span>
+                      <span className="font-bold text-orange-600">₱{depositAmount.toLocaleString()}.00</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1">📦 50% Balance <span className="text-[9px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-1.5 rounded font-bold">On Delivery</span></span>
+                      <span className="font-bold text-blue-600">₱{balanceAmount.toLocaleString()}.00</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1303,7 +1320,7 @@ export default function SendPackage() {
                 {loading ? (
                   <><Loader2 className="size-5 animate-spin" /><span>Processing...</span></>
                 ) : (
-                  <><CreditCard className="size-5" /><span>Confirm & Pay • ₱{totalFee.toLocaleString()}.00</span></>
+                  <><CreditCard className="size-5" /><span>{splitEnabled ? `Pay 50% Deposit • ₱${depositAmount.toLocaleString()}.00` : `Confirm & Pay • ₱${totalFee.toLocaleString()}.00`}</span></>
                 )}
               </button>
               <button

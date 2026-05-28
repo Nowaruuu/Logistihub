@@ -629,7 +629,7 @@ textarea{resize:vertical;}
             <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="10"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Type</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -944,6 +944,19 @@ textarea{resize:vertical;}
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Document</label><input id="price-cat-DOC" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Bulk</label><input id="price-cat-BULK" type="number" step="10" min="0" value="300" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Vehicle</label><input id="price-cat-VEHICLE" type="number" step="10" min="0" value="800" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Payment Options</div>
+            <div class="form-group" style="margin:0;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;">
+                <input type="checkbox" id="price-split-payment" style="width:16px;height:16px;accent-color:#0f2235;cursor:pointer;"/>
+                <div>
+                  <span style="font-size:12px;font-weight:600;color:#334155;">Enable Split Payment (50/50)</span>
+                  <span style="display:block;font-size:10px;color:#94a3b8;margin-top:2px;">Customers pay 50% deposit upfront, 50% balance on delivery</span>
+                </div>
+              </label>
             </div>
           </div>
 
@@ -2332,6 +2345,9 @@ function loadSettings() {
           if (el && pc.category_surcharges[c] != null) el.value = pc.category_surcharges[c];
         });
       }
+      // Restore split payment toggle
+      var splitEl = document.getElementById('price-split-payment');
+      if (splitEl) splitEl.checked = pc.split_payment_enabled === true;
     }).catch(function(e){ console.warn('[loadSettings] Pricing load:', e.message); });
 }
 
@@ -2548,7 +2564,8 @@ async function savePricing() {
       DOC: parseFloat(document.getElementById('price-cat-DOC').value) || 0,
       BULK: parseFloat(document.getElementById('price-cat-BULK').value) || 0,
       VEHICLE: parseFloat(document.getElementById('price-cat-VEHICLE').value) || 0
-    }
+    },
+    split_payment_enabled: document.getElementById('price-split-payment').checked
   };
   try {
     var r = await apiFetch('/' + slug + '/api/admin/pricing', {
@@ -3719,7 +3736,7 @@ function renderPayments(list) {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
   if(!tb) return;
   if(!list || !list.length) {
-    tb.innerHTML = '<tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No payment records yet</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No payment records yet</p></div></td></tr>';
     return;
   }
   var statusCl = {'Paid':'b-delivered','Pending':'b-awaiting','Overdue':'b-declined','AwaitingAdmin':'b-pending'};
@@ -3734,6 +3751,12 @@ function renderPayments(list) {
     else if (method) method = method.charAt(0).toUpperCase() + method.slice(1);
     if (!method && p.paymongo_checkout_id) method = 'PayMongo';
     method = esc(method || '-');
+    // Payment type badge
+    var ptype = p.payment_type || 'full';
+    var ptypeBadge = '';
+    if (ptype === 'deposit') ptypeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;">50% Deposit</span>';
+    else if (ptype === 'balance') ptypeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">50% Balance</span>';
+    else ptypeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">Full</span>';
     var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '-');
     var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>';
     var st = p.status || 'Pending';
@@ -3748,6 +3771,7 @@ function renderPayments(list) {
       '<td><strong>' + esc(p.delivery_number||'-') + '</strong></td>' +
       '<td>' + customer + '</td>' +
       '<td><strong>' + amount + '</strong></td>' +
+      '<td>' + ptypeBadge + '</td>' +
       '<td>' + method + '</td>' +
       '<td style="font-family:monospace;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + ref + '">' + ref + '</td>' +
       '<td>' + confirmed + '</td>' +
