@@ -45,9 +45,10 @@ router.post('/:slug/api/admin/login', async (req, res) => {
 
   const userAgent = req.headers['user-agent'] || 'Unknown';
   const realIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unknown';
-  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: realIp, metadata: { user_agent: userAgent, ip: realIp } });
+  const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: realIp, metadata: { user_agent: userAgent, ip: realIp, session_id: sessionId } });
 
-  res.json({ ok: true, slug, name: staff.name });
+  res.json({ ok: true, slug, name: staff.name, session_id: sessionId });
 });
 
 router.post('/:slug/api/admin/logout', (req, res) => {
@@ -87,6 +88,7 @@ router.get('/:slug/api/admin/recent-logins', requireAdmin, requireSlugMatch, asy
         actor: r.actor,
         ip: r.ip_address || meta.ip || 'Unknown',
         user_agent: meta.user_agent || 'Unknown',
+        session_id: meta.session_id || null,
         created_at: r.created_at
       };
     });

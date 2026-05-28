@@ -171,6 +171,7 @@ async function doLogin() {
         });
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error(data.error || 'Login failed.');
+        if(data.session_id) try { sessionStorage.setItem('_login_session_id', data.session_id); } catch(e){}
         window.location.href = '/' + SLUG + '/admin';
     }
   } catch (e) {

@@ -293,9 +293,12 @@ router.post('/staff-login', async (req, res) => {
   // Log login event for audit trail
   const auditType = staff.role === 'Admin' ? 'admin' : staff.role === 'Manager' ? 'manager' : 'staff';
   const auditTarget = staff.role === 'Admin' ? 'Admin Dashboard' : staff.role === 'Manager' ? 'Manager Dashboard' : 'Staff App';
-  logAudit({ actor: email, actor_type: auditType, action: 'LOGIN', target: auditTarget, tenant_slug: slug, ip_address: req.ip });
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const realIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unknown';
+  const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  logAudit({ actor: email, actor_type: auditType, action: 'LOGIN', target: auditTarget, tenant_slug: slug, ip_address: realIp, metadata: { user_agent: userAgent, ip: realIp, session_id: sessionId } });
 
-  res.json({ ok: true, name: staff.name, role: returnRole, slug, token, must_change_password: !!staff.must_change_password });
+  res.json({ ok: true, name: staff.name, role: returnRole, slug, token, must_change_password: !!staff.must_change_password, session_id: sessionId });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

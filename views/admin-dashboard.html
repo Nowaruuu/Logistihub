@@ -1554,17 +1554,17 @@ function pollNotifications() {
       if (badge){badge.textContent=cnt;badge.style.display=cnt>0?'':'none';}
     }).catch(function(){});
 
-  // Poll for new device logins
+  // Poll for new logins from other sessions
+  var _mySessionId = '';
+  try { _mySessionId = sessionStorage.getItem('_login_session_id') || ''; } catch(e){}
   apiFetch('/' + _SLUG + '/api/admin/recent-logins')
     .then(function(r){return r.json();})
     .then(function(data){
       if (!data || !data.ok || !data.logins) return;
-      // Count logins from different devices
-      var currentDevice = typeof parseDevice === 'function' ? parseDevice(navigator.userAgent) : {short:''};
       var diffCount = data.logins.filter(function(l){
         if (!l.user_agent || l.user_agent === 'Unknown') return false;
-        var ld = typeof parseDevice === 'function' ? parseDevice(l.user_agent) : {short:''};
-        return ld.short !== currentDevice.short;
+        if (l.session_id && _mySessionId && l.session_id === _mySessionId) return false;
+        return true;
       }).length;
       if (_prevLoginCount !== null && diffCount > _prevLoginCount) newActivity = true;
       _prevLoginCount = diffCount;
@@ -4261,25 +4261,26 @@ function loadNotifPanel() {
       }
     }).catch(function(){});
 
-  // ── Recent logins from OTHER devices only ────────────────
+  // ── Recent logins from OTHER sessions ────────────────
+  var mySessionId = '';
+  try { mySessionId = sessionStorage.getItem('_login_session_id') || ''; } catch(e){}
   var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
     .then(function(r){return r.json();})
     .then(function(data){
       if(!data || !data.ok || !data.logins || !data.logins.length) return;
-      var currentDevice = parseDevice(navigator.userAgent);
       data.logins.forEach(function(login, i){
-        // Skip old logins that have no device info stored
+        // Skip logins with no device info (old records before tracking)
         if(!login.user_agent || login.user_agent === 'Unknown') return;
+        // Skip THIS session's own login
+        if(login.session_id && mySessionId && login.session_id === mySessionId) return;
         var loginDevice = parseDevice(login.user_agent);
-        // ONLY show if device is DIFFERENT from current device
-        if(loginDevice.short === currentDevice.short) return;
         var ago = login.created_at ? timeAgo(new Date(login.created_at)) : '';
         items.push({
           icon: 'devices_other',
           color: '#8b5cf6',
           text: '<strong>' + esc(login.actor) + '</strong> logged in from <strong>' + esc(loginDevice.label) + '</strong>' + (login.ip && login.ip !== 'Unknown' && !login.ip.includes('127.0.0.1') ? ' <span style="color:#94a3b8;">(' + esc(login.ip) + ')</span>' : ''),
           time: ago,
-          id: 'login-' + i + '-' + (login.created_at||''),
+          id: 'login-' + (login.session_id || i) + '-' + (login.created_at||''),
           nav: 'audit',
           isLogin: true,
           isDifferentDevice: true
