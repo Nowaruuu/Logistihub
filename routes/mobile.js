@@ -1974,10 +1974,10 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
            VALUES (?, ?, ?, 'Pending', ?, 'deposit')`,
           [delivery_number, tid, depositAmount, checkoutId]
         );
-        // Insert BALANCE record (no PayMongo checkout — paid later)
+        // Insert BALANCE record (no PayMongo checkout — paid later, due in 3 days)
         await query(
-          `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, payment_type)
-           VALUES (?, ?, ?, 'Pending', 'balance')`,
+          `INSERT INTO payment (delivery_number, tenant_id, total_amount, status, payment_type, due_date)
+           VALUES (?, ?, ?, 'Pending', 'balance', DATE_ADD(NOW(), INTERVAL 3 DAY))`,
           [delivery_number, tid, balanceAmount]
         );
       } else {

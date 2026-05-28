@@ -283,6 +283,12 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
 router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
+    // Auto-mark overdue: any pending balance payments past their due_date become 'Overdue'
+    await query(
+      `UPDATE payment SET status = 'Overdue' WHERE tenant_id = ? AND status = 'Pending' AND payment_type = 'balance' AND due_date IS NOT NULL AND due_date < NOW()`,
+      [tid]
+    ).catch(() => {});
+
     // Show all payment records — dedup only 'full' type per delivery (multiple Pay Now clicks)
     // Split payments (deposit + balance) are shown as separate rows
     const [rows] = await query(

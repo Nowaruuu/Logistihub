@@ -124,6 +124,8 @@ pool.getConnection()
 
       // Split payment support (50% deposit / 50% balance)
       "ALTER TABLE payment ADD COLUMN payment_type ENUM('full','deposit','balance') DEFAULT 'full'",
+      // Due date for balance payments (overdue tracking)
+      "ALTER TABLE payment ADD COLUMN due_date DATETIME DEFAULT NULL",
 
       // Shipment columns added for mobile booking flow (moved from per-request to migration)
       "ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL",

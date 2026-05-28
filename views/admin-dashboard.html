@@ -3930,7 +3930,7 @@ function renderPayments(list) {
     tb.innerHTML = '<tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No payment records yet</p></div></td></tr>';
     return;
   }
-  var statusCl = {'Paid':'b-delivered','Pending':'b-awaiting','Overdue':'b-declined','AwaitingAdmin':'b-pending'};
+  var statusCl = {'Paid':'b-delivered','Pending':'b-awaiting','Overdue':'b-overdue','AwaitingAdmin':'b-pending'};
   tb.innerHTML = list.map(function(p) {
     var customer = (p.customer_first || p.customer_last)
       ? esc((p.customer_first + ' ' + p.customer_last).trim())
@@ -3954,6 +3954,19 @@ function renderPayments(list) {
     var stCl = statusCl[st] || 'b-pending';
     var fmtDate = function(d) { return d ? new Date(d).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : null; };
     var date = fmtDate(p.paid_at) || fmtDate(p.billing_date) || fmtDate(p.created_at) || '-';
+    // Due date hint for balance payments
+    var dueDateHint = '';
+    if (p.due_date && ptype === 'balance' && st !== 'Paid') {
+      var dueD = new Date(p.due_date);
+      var nowD = new Date();
+      var daysLeft = Math.ceil((dueD - nowD) / (1000*60*60*24));
+      if (st === 'Overdue') {
+        dueDateHint = '<div style="font-size:10px;color:#dc2626;margin-top:2px;">Due ' + fmtDate(p.due_date) + '</div>';
+      } else if (daysLeft <= 1) {
+        dueDateHint = '<div style="font-size:10px;color:#f59e0b;margin-top:2px;">Due ' + (daysLeft <= 0 ? 'today' : 'tomorrow') + '</div>';
+      }
+    }
+    var statusCell = '<span class="badge ' + stCl + '">' + esc(st) + '</span>' + dueDateHint;
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
@@ -3966,7 +3979,7 @@ function renderPayments(list) {
       '<td>' + method + '</td>' +
       '<td style="font-family:monospace;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + ref + '">' + ref + '</td>' +
       '<td>' + confirmed + '</td>' +
-      '<td><span class="badge ' + stCl + '">' + esc(st) + '</span></td>' +
+      '<td>' + statusCell + '</td>' +
       '<td>' + date + '</td>' +
       '<td>' + confirmBtn + '</td>' +
     '</tr>';
