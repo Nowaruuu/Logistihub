@@ -99,9 +99,36 @@ nav::-webkit-scrollbar{display:none;}
 .tb-btn:hover{background:#f1f5f9;}
 .notif-wrap{position:relative;}
 .notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid #fff;}
-.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;}
+.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;position:relative;}
 .search-bar input{border:none;background:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
 .search-bar .material-symbols-outlined{color:#94a3b8;font-size:16px;}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:100;display:none;scrollbar-width:thin;}
+.search-results.show{display:block;}
+.sr-empty{padding:24px 16px;text-align:center;color:#94a3b8;font-size:12px;}
+.sr-group{padding:6px 12px 2px;font-size:9px;font-weight:800;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;}
+.sr-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .1s;}
+.sr-item:hover{background:#f8fafc;}
+.sr-item .material-symbols-outlined{font-size:16px;color:#64748b;}
+.sr-title{font-size:12px;font-weight:600;color:#0f172a;}
+.sr-sub{font-size:10px;color:#94a3b8;}
+.tb-dropdown{position:absolute;top:calc(100% + 6px);right:0;width:340px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:100;display:none;scrollbar-width:thin;}
+.tb-dropdown.show{display:block;}
+.tb-dropdown-head{padding:14px 16px 10px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
+.tb-dropdown-head h4{font-size:13px;font-weight:800;color:#0f172a;margin:0;}
+.tb-dropdown-head button{border:none;background:none;font-size:11px;color:#3b82f6;cursor:pointer;font-family:inherit;font-weight:600;}
+.notif-item{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid #f8fafc;cursor:pointer;transition:background .1s;}
+.notif-item:hover{background:#f8fafc;}
+.notif-item.unread{background:#f0f9ff;}
+.notif-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.notif-text{font-size:12px;color:#334155;line-height:1.4;}
+.notif-text strong{font-weight:700;color:#0f172a;}
+.notif-time{font-size:10px;color:#94a3b8;margin-top:2px;}
+.help-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s;}
+.help-item:hover{background:#f8fafc;}
+.help-item .material-symbols-outlined{font-size:18px;color:#64748b;}
+.help-label{font-size:12px;font-weight:600;color:#0f172a;}
+.help-desc{font-size:10px;color:#94a3b8;}
+.help-kbd{margin-left:auto;font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;}
 
 .content{padding:22px;flex:1;min-width:0;overflow-x:hidden;}
 .screen{display:none;}
@@ -433,10 +460,33 @@ textarea{resize:vertical;}
       <div class="page-sub" id="page-sub">Welcome back</div>
     </div>
     <div class="tb-right">
-      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspace…"/></div>
-      <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
-
-      <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
+      <div class="search-bar" id="search-wrap">
+        <span class="material-symbols-outlined">search</span>
+        <input id="global-search" placeholder="Search within your workspace\u2026" oninput="globalSearch(this.value)" onfocus="this.value&&globalSearch(this.value)" autocomplete="off"/>
+        <div class="search-results" id="search-results"></div>
+      </div>
+      <div class="notif-wrap" style="position:relative;">
+        <button class="tb-btn notif-dot" id="notif-btn" onclick="toggleNotifPanel()"><span class="material-symbols-outlined">notifications</span></button>
+        <div class="tb-dropdown" id="notif-panel">
+          <div class="tb-dropdown-head"><h4>Notifications</h4><button onclick="markAllNotifRead()">Mark all read</button></div>
+          <div id="notif-list"><div class="sr-empty">Loading\u2026</div></div>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <button class="tb-btn" id="help-btn" onclick="toggleHelpPanel()"><span class="material-symbols-outlined">help_outline</span></button>
+        <div class="tb-dropdown" id="help-panel" style="width:280px;">
+          <div class="tb-dropdown-head"><h4>Help &amp; Shortcuts</h4></div>
+          <div class="help-item" onclick="go('dashboard',null);closeAllPanels()"><span class="material-symbols-outlined">dashboard</span><div><div class="help-label">Dashboard</div><div class="help-desc">Overview &amp; stats</div></div><span class="help-kbd">D</span></div>
+          <div class="help-item" onclick="go('shipments',null);closeAllPanels()"><span class="material-symbols-outlined">local_shipping</span><div><div class="help-label">Shipments</div><div class="help-desc">Manage all deliveries</div></div><span class="help-kbd">S</span></div>
+          <div class="help-item" onclick="go('staff',null);closeAllPanels()"><span class="material-symbols-outlined">badge</span><div><div class="help-label">Staff</div><div class="help-desc">Drivers &amp; personnel</div></div><span class="help-kbd">T</span></div>
+          <div class="help-item" onclick="go('vehicles',null);closeAllPanels()"><span class="material-symbols-outlined">directions_car</span><div><div class="help-label">Vehicles</div><div class="help-desc">Fleet management</div></div><span class="help-kbd">V</span></div>
+          <div class="help-item" onclick="go('payments',null);closeAllPanels()"><span class="material-symbols-outlined">payments</span><div><div class="help-label">Payments</div><div class="help-desc">Transaction history</div></div><span class="help-kbd">P</span></div>
+          <div style="border-top:1px solid #f1f5f9;padding:10px 16px;">
+            <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">TIPS</div>
+            <div style="font-size:11px;color:#64748b;line-height:1.6;">\u2022 Press <kbd style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;">/</kbd> to focus search<br>\u2022 Use keyboard shortcuts to navigate<br>\u2022 Click notification bell for updates</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4232,6 +4282,153 @@ async function submitAdminReassign() {
   btn.disabled = false;
   btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_search</span> Reassign Driver';
 }
+</script>
+<script>
+// ── Topbar: Global Search ─────────────────────────────────────
+var _searchDebounce = null;
+function globalSearch(q) {
+  clearTimeout(_searchDebounce);
+  var panel = document.getElementById('search-results');
+  if (!q || q.length < 2) { panel.classList.remove('show'); return; }
+  _searchDebounce = setTimeout(function() {
+    var term = q.toLowerCase();
+    var results = [];
+    // Search shipments
+    (_allShipments || []).forEach(function(s) {
+      if ((s.delivery_number||'').toLowerCase().includes(term) ||
+          (s.client_name||s.sender_name||'').toLowerCase().includes(term) ||
+          (s.driver_name||'').toLowerCase().includes(term) ||
+          (s.status||'').toLowerCase().includes(term)) {
+        results.push({ type:'Shipments', icon:'local_shipping', title:s.delivery_number, sub:esc(s.client_name||s.sender_name||'')+ ' \u00b7 ' +esc(s.status||''), nav:'shipments' });
+      }
+    });
+    // Search staff
+    (_staffData || []).forEach(function(s) {
+      if ((s.name||'').toLowerCase().includes(term) ||
+          (s.email||'').toLowerCase().includes(term) ||
+          (s.role||'').toLowerCase().includes(term)) {
+        results.push({ type:'Staff', icon:'badge', title:esc(s.name), sub:esc(s.role)+' \u00b7 '+esc(s.email||''), nav:'staff' });
+      }
+    });
+    // Search vehicles
+    (_vehicleData || []).forEach(function(v) {
+      if ((v.plate_number||'').toLowerCase().includes(term) ||
+          (v.model||'').toLowerCase().includes(term) ||
+          (v.type||'').toLowerCase().includes(term)) {
+        results.push({ type:'Vehicles', icon:'directions_car', title:esc(v.plate_number), sub:esc(v.type||'')+' \u00b7 '+esc(v.model||''), nav:'vehicles' });
+      }
+    });
+    // Render
+    if (!results.length) {
+      panel.innerHTML = '<div class="sr-empty"><span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:6px;color:#cbd5e1;">search_off</span>No results for "' + esc(q) + '"</div>';
+    } else {
+      var grouped = {};
+      results.slice(0,20).forEach(function(r) { (grouped[r.type] = grouped[r.type] || []).push(r); });
+      var html = '';
+      for (var g in grouped) {
+        html += '<div class="sr-group">' + g + '</div>';
+        grouped[g].forEach(function(r) {
+          html += '<div class="sr-item" onclick="go(\''+r.nav+'\',null);closeAllPanels()"><span class="material-symbols-outlined">'+r.icon+'</span><div><div class="sr-title">'+r.title+'</div><div class="sr-sub">'+r.sub+'</div></div></div>';
+        });
+      }
+      panel.innerHTML = html;
+    }
+    panel.classList.add('show');
+  }, 200);
+}
+
+// ── Topbar: Notification Panel ────────────────────────────────
+var _notifRead = {};
+function toggleNotifPanel() {
+  var p = document.getElementById('notif-panel');
+  var wasOpen = p.classList.contains('show');
+  closeAllPanels();
+  if (!wasOpen) { p.classList.add('show'); loadNotifPanel(); }
+}
+function loadNotifPanel() {
+  var el = document.getElementById('notif-list');
+  if (!el) return;
+  var items = [];
+  // Recent shipments (last 5 status changes)
+  (_allShipments || []).slice(0,8).forEach(function(s) {
+    var ico = s.status === 'Delivered' ? 'check_circle' : s.status === 'In Transit' ? 'local_shipping' : 'inventory_2';
+    var col = s.status === 'Delivered' ? '#10b981' : s.status === 'In Transit' ? '#3b82f6' : '#f59e0b';
+    var ago = s.created_at ? timeAgo(new Date(s.created_at)) : '';
+    items.push({
+      icon: ico, color: col,
+      text: '<strong>' + esc(s.delivery_number) + '</strong> is <strong>' + esc(s.status||'Pending') + '</strong>' + (s.driver_name ? ' \u00b7 ' + esc(s.driver_name) : ''),
+      time: ago, id: 'ship-'+s.delivery_number, nav: 'shipments'
+    });
+  });
+  // Pending staff licenses
+  (_staffData || []).filter(function(s){return s.license_status==='pending_review';}).forEach(function(s) {
+    items.push({
+      icon: 'badge', color: '#f97316',
+      text: '<strong>' + esc(s.name) + '</strong> has a license pending review',
+      time: '', id: 'staff-'+s.staff_id, nav: 'staff'
+    });
+  });
+  if (!items.length) {
+    el.innerHTML = '<div class="sr-empty"><span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:6px;color:#cbd5e1;">notifications_off</span>No notifications yet</div>';
+    return;
+  }
+  el.innerHTML = items.map(function(n) {
+    var unread = !_notifRead[n.id] ? ' unread' : '';
+    return '<div class="notif-item'+unread+'" onclick="_notifRead[\''+n.id+'\']=true;this.classList.remove(\'unread\');go(\''+n.nav+'\',null);closeAllPanels()">' +
+      '<div class="notif-ico" style="background:'+n.color+'15;"><span class="material-symbols-outlined" style="font-size:16px;color:'+n.color+';">'+n.icon+'</span></div>' +
+      '<div style="flex:1;min-width:0;"><div class="notif-text">'+n.text+'</div><div class="notif-time">'+n.time+'</div></div></div>';
+  }).join('');
+  // Update dot visibility
+  updateNotifDot();
+}
+function markAllNotifRead() {
+  document.querySelectorAll('.notif-item.unread').forEach(function(el) { el.classList.remove('unread'); });
+  document.querySelectorAll('.notif-item').forEach(function(el) {
+    var m = el.getAttribute('onclick').match(/_notifRead\['([^']+)'\]/);
+    if (m) _notifRead[m[1]] = true;
+  });
+  updateNotifDot();
+}
+function updateNotifDot() {
+  var btn = document.getElementById('notif-btn');
+  var hasUnread = document.querySelectorAll('.notif-item.unread').length > 0;
+  if (btn) { if (hasUnread) btn.classList.add('notif-dot'); else btn.classList.remove('notif-dot'); }
+}
+function timeAgo(d) {
+  var s = Math.floor((new Date() - d) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+// ── Topbar: Help Panel ────────────────────────────────────────
+function toggleHelpPanel() {
+  var p = document.getElementById('help-panel');
+  var wasOpen = p.classList.contains('show');
+  closeAllPanels();
+  if (!wasOpen) p.classList.add('show');
+}
+
+// ── Close all panels ──────────────────────────────────────────
+function closeAllPanels() {
+  document.querySelectorAll('.tb-dropdown,.search-results').forEach(function(el) { el.classList.remove('show'); });
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.tb-right')) closeAllPanels();
+});
+
+// ── Keyboard shortcuts ───────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    if (e.key === 'Escape') { closeAllPanels(); e.target.blur(); }
+    return;
+  }
+  var map = { 'd':'dashboard', 's':'shipments', 't':'staff', 'v':'vehicles', 'p':'payments' };
+  if (map[e.key] && !e.ctrlKey && !e.metaKey && !e.altKey) { go(map[e.key], null); }
+  if (e.key === '/') { e.preventDefault(); var si = document.getElementById('global-search'); if(si) si.focus(); }
+  if (e.key === 'Escape') closeAllPanels();
+});
 </script>
 </body>
 </html>
