@@ -4511,6 +4511,14 @@ function globalSearch(q) {
   _searchDebounce = setTimeout(function() {
     var term = q.toLowerCase();
     var results = [];
+    // Search staff (prioritized at top)
+    (_staffData || []).forEach(function(s) {
+      if ((s.name||'').toLowerCase().includes(term) ||
+          (s.email||'').toLowerCase().includes(term) ||
+          (s.role||'').toLowerCase().includes(term)) {
+        results.push({ type:'Staff', icon:'badge', title:esc(s.name), sub:esc(s.role)+' \u00b7 '+esc(s.email||''), nav:'staff' });
+      }
+    });
     // Search shipments
     (_allShipments || []).forEach(function(s) {
       if ((s.delivery_number||'').toLowerCase().includes(term) ||
@@ -4518,14 +4526,6 @@ function globalSearch(q) {
           (s.driver_name||'').toLowerCase().includes(term) ||
           (s.status||'').toLowerCase().includes(term)) {
         results.push({ type:'Shipments', icon:'local_shipping', title:s.delivery_number, sub:esc(s.client_name||s.sender_name||'')+ ' \u00b7 ' +esc(s.status||''), nav:'shipments' });
-      }
-    });
-    // Search staff
-    (_staffData || []).forEach(function(s) {
-      if ((s.name||'').toLowerCase().includes(term) ||
-          (s.email||'').toLowerCase().includes(term) ||
-          (s.role||'').toLowerCase().includes(term)) {
-        results.push({ type:'Staff', icon:'badge', title:esc(s.name), sub:esc(s.role)+' \u00b7 '+esc(s.email||''), nav:'staff' });
       }
     });
     // Search vehicles
