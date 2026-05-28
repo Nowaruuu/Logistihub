@@ -43,7 +43,8 @@ router.post('/:slug/api/admin/login', async (req, res) => {
     maxAge:   8 * 60 * 60 * 1000,
   });
 
-  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: req.ip });
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  logAudit({ actor: email, actor_type: 'admin', action: 'LOGIN', target: 'Admin Dashboard', tenant_slug: slug, ip_address: req.ip, metadata: { user_agent: userAgent, ip: req.ip } });
 
   res.json({ ok: true, slug, name: staff.name });
 });
@@ -66,6 +67,33 @@ router.post('/:slug/api/admin/logout', (req, res) => {
 
 router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, (req, res) => {
   res.json({ admin: req.admin, tenant: req.tenant });
+});
+
+// Recent login sessions (for notification panel device detection)
+router.get('/:slug/api/admin/recent-logins', requireAdmin, requireSlugMatch, async (req, res) => {
+  try {
+    const [rows] = await query(
+      `SELECT actor, ip_address, metadata, created_at
+       FROM AUDIT_LOG
+       WHERE tenant_slug = ? AND action = 'LOGIN' AND actor_type = 'admin'
+       ORDER BY created_at DESC LIMIT 10`,
+      [req.params.slug]
+    );
+    const logins = rows.map(r => {
+      let meta = {};
+      try { meta = r.metadata ? (typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata) : {}; } catch(_) {}
+      return {
+        actor: r.actor,
+        ip: r.ip_address || meta.ip || 'Unknown',
+        user_agent: meta.user_agent || 'Unknown',
+        created_at: r.created_at
+      };
+    });
+    res.json({ ok: true, logins });
+  } catch (err) {
+    console.error('[GET /admin/recent-logins]', err);
+    res.status(500).json({ error: 'Failed to load login history.' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

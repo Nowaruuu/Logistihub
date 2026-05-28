@@ -4141,6 +4141,131 @@ function clearDocUpload() {
   </div>
 </div>
 <script>
+function loadNotifPanel() {
+  var el = document.getElementById('notif-list');
+  if (!el) return;
+  el.innerHTML = '<div class="sr-empty">Loading\u2026</div>';
+  var items = [];
+
+  // ── Subscription expiry warning ────────────────────────
+  var subPromise = apiFetch('/' + _SLUG + '/api/admin/subscription')
+    .then(function(r){return r.json();})
+    .then(function(subData){
+      if(!subData.ok) return;
+      var tenantCreated = subData.tenant_created_at ? new Date(subData.tenant_created_at) : new Date();
+      var now = new Date();
+      var nextBilling = new Date(tenantCreated);
+      while(nextBilling <= now) nextBilling.setMonth(nextBilling.getMonth() + 1);
+      var daysLeft = Math.ceil((nextBilling - now) / (1000*60*60*24));
+      if(daysLeft <= 7){
+        var urgent = daysLeft <= 3;
+        items.unshift({
+          icon: 'event_busy', color: urgent ? '#ef4444' : '#f59e0b',
+          text: urgent
+            ? '<strong>Subscription payment due in ' + daysLeft + ' day' + (daysLeft!==1?'s':'') + '!</strong> Renew now to avoid service interruption.'
+            : '<strong>Subscription renews in ' + daysLeft + ' days.</strong> Ensure your payment method is up to date.',
+          time: nextBilling.toLocaleDateString(undefined,{month:'short',day:'numeric'}),
+          id: 'sub-expiry', nav: 'subscription', priority: true
+        });
+      }
+    }).catch(function(){});
+
+  // ── Recent logins from other devices ────────────────────
+  var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data.ok || !data.logins || !data.logins.length) return;
+      var currentUA = navigator.userAgent;
+      var currentDevice = parseDevice(currentUA);
+      data.logins.forEach(function(login, i){
+        var loginDevice = parseDevice(login.user_agent);
+        var isSameDevice = loginDevice.short === currentDevice.short;
+        var ago = login.created_at ? timeAgo(new Date(login.created_at)) : '';
+        if(i === 0 && isSameDevice) return; // skip current session
+        items.push({
+          icon: isSameDevice ? 'login' : 'devices_other',
+          color: isSameDevice ? '#64748b' : '#8b5cf6',
+          text: '<strong>' + esc(login.actor) + '</strong> logged in from <strong>' + esc(loginDevice.label) + '</strong>' + (login.ip && login.ip !== 'Unknown' ? ' <span style="color:#94a3b8;">(' + esc(login.ip) + ')</span>' : ''),
+          time: ago,
+          id: 'login-' + i + '-' + (login.created_at||''),
+          nav: 'audit',
+          isLogin: true,
+          isDifferentDevice: !isSameDevice
+        });
+      });
+    }).catch(function(){});
+
+  // ── After async calls finish, build panel ────────────────
+  Promise.all([subPromise, loginPromise]).then(function(){
+    // Shipments
+    (_allShipments || []).slice(0,6).forEach(function(s) {
+      var ico = s.status === 'Delivered' ? 'check_circle' : s.status === 'In Transit' ? 'local_shipping' : 'inventory_2';
+      var col = s.status === 'Delivered' ? '#10b981' : s.status === 'In Transit' ? '#3b82f6' : '#f59e0b';
+      var ago = s.created_at ? timeAgo(new Date(s.created_at)) : '';
+      items.push({
+        icon: ico, color: col,
+        text: '<strong>' + esc(s.delivery_number) + '</strong> is <strong>' + esc(s.status||'Pending') + '</strong>' + (s.driver_name ? ' \u00b7 ' + esc(s.driver_name) : ''),
+        time: ago, id: 'ship-'+s.delivery_number, nav: 'shipments'
+      });
+    });
+    // Pending staff licenses
+    (_staffData || []).filter(function(s){return s.license_status==='pending_review';}).forEach(function(s) {
+      items.push({
+        icon: 'badge', color: '#f97316',
+        text: '<strong>' + esc(s.name) + '</strong> has a license pending review',
+        time: '', id: 'staff-'+s.staff_id, nav: 'staff'
+      });
+    });
+
+    if (!items.length) {
+      el.innerHTML = '<div class="sr-empty"><span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:6px;color:#cbd5e1;">notifications_off</span>No notifications yet</div>';
+      return;
+    }
+    // Sort: priority first (subscription), then login alerts, then rest
+    items.sort(function(a,b){
+      if(a.priority && !b.priority) return -1;
+      if(!a.priority && b.priority) return 1;
+      if(a.isDifferentDevice && !b.isDifferentDevice) return -1;
+      if(!a.isDifferentDevice && b.isDifferentDevice) return 1;
+      return 0;
+    });
+    el.innerHTML = items.map(function(n) {
+      var unread = !_notifRead[n.id] ? ' unread' : '';
+      return '<div class="notif-item'+unread+'" onclick="_notifRead[\''+n.id+'\']=true;this.classList.remove(\'unread\');go(\''+n.nav+'\',null);closeAllPanels()">' +
+        '<div class="notif-ico" style="background:'+n.color+'15;"><span class="material-symbols-outlined" style="font-size:16px;color:'+n.color+';">'+n.icon+'</span></div>' +
+        '<div style="flex:1;min-width:0;"><div class="notif-text">'+n.text+'</div><div class="notif-time">'+n.time+'</div></div></div>';
+    }).join('');
+    updateNotifDot();
+  });
+}
+
+// Parse User-Agent to get human-readable device info
+function parseDevice(ua) {
+  if (!ua || ua === 'Unknown') return { label: 'Unknown Device', short: 'unknown' };
+  var browser = 'Browser';
+  var os = 'Unknown OS';
+  // Browser detection
+  if (ua.includes('Edg/')) browser = 'Edge';
+  else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
+  else if (ua.includes('Chrome/') && !ua.includes('Edg/')) browser = 'Chrome';
+  else if (ua.includes('Firefox/')) browser = 'Firefox';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari';
+  // OS detection
+  if (ua.includes('Windows NT 10')) os = 'Windows';
+  else if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac OS X')) os = 'macOS';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  // Mobile check
+  var mobile = /Mobile|Android|iPhone|iPad/i.test(ua);
+  var deviceType = mobile ? 'Mobile' : 'Desktop';
+  return {
+    label: browser + ' on ' + os + ' (' + deviceType + ')',
+    short: browser + '-' + os + '-' + deviceType
+  };
+}
+
 var _adminReassignDN = '', _adminReassignStaff = [], _adminReassignVehicles = [], _adminReassignStatus = '';
 
 async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipStatus) {
@@ -4149,7 +4274,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
   document.getElementById('admin-reassign-dn').value = dn;
   document.getElementById('admin-reassign-err').style.display = 'none';
 
-  // â”€â”€ Dynamic title/subtitle/button based on whether it's an assign or reassign
+  // Dynamic title/subtitle/button based on whether it's an assign or reassign
   var isReassign = (_adminReassignStatus === 'Declined');
   document.getElementById('admin-reassign-title').textContent = isReassign ? 'Reassign Driver' : 'Assign Driver';
   var subtitle = document.getElementById('admin-reassign-subtitle');
