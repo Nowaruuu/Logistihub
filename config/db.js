@@ -121,8 +121,14 @@ pool.getConnection()
       // #6 — Driver's license required columns (already exist from previous migrations, adding OR/CR for staff)
       "ALTER TABLE STAFF ADD COLUMN or_cr_url LONGTEXT DEFAULT NULL",
 
+
       // Split payment support (50% deposit / 50% balance)
       "ALTER TABLE payment ADD COLUMN payment_type ENUM('full','deposit','balance') DEFAULT 'full'",
+
+      // Shipment columns added for mobile booking flow (moved from per-request to migration)
+      "ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL",
+      "ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL",
+      "ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {

@@ -120,6 +120,8 @@ function mapShipmentToDelivery(row: any): Delivery {
     createdAt: row.created_at || new Date().toISOString(),
     isPaid: row.is_paid === 1 || row.is_paid === true,
     paymentMethod: row.paid_method || undefined,
+    balanceStatus: row.balance_status || undefined,
+    balanceAmount: row.balance_amount ? parseFloat(row.balance_amount) : undefined,
   };
 }
 

@@ -7,7 +7,7 @@ import {
   Search, Truck, Package as PackageIcon, ChevronRight,
   CheckCircle, Clock, CreditCard, Star, MapPin, Box
 } from 'lucide-react';
-import { createCheckout } from '../lib/api';
+import { createCheckout, createBalanceCheckout } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
@@ -194,6 +194,44 @@ function MyPackagesInner() {
     }
   };
 
+  // ── Pay Balance handler (split payments) ─────────────────────────────────
+  const handlePayBalance = async (e: React.MouseEvent, delivery: Delivery) => {
+    e.stopPropagation();
+    const tn = delivery.trackingNumber || '';
+    if (paying === tn) return;
+    setPaying(tn);
+
+    const prePopup = !Capacitor.isNativePlatform()
+      ? window.open('', 'paymongo_checkout', 'width=520,height=720,top=50,left=50,scrollbars=yes')
+      : null;
+
+    try {
+      const r = await createBalanceCheckout(tn);
+      if (r?.checkout_url) {
+        await openPaymentInApp(
+          r.checkout_url, tn,
+          () => {
+            setDeliveries(prev => prev.map(d =>
+              d.trackingNumber === tn ? { ...d, balanceStatus: 'Paid' } : d
+            ));
+            setPaying(null);
+            fetchDeliveries();
+          },
+          () => setPaying(null),
+          prePopup
+        );
+      } else {
+        prePopup?.close();
+        alert('Balance payment not available.');
+        setPaying(null);
+      }
+    } catch (err: any) {
+      prePopup?.close();
+      alert('Balance payment failed: ' + (err?.message || 'Unknown error'));
+      setPaying(null);
+    }
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-full bg-white dark:bg-slate-900 p-8">
       <div className="size-12 rounded-full border-4 border-orange-600 border-t-transparent animate-spin mb-4" />
@@ -288,6 +326,7 @@ function MyPackagesInner() {
             tab={activeTab}
             paying={paying}
             onPay={handlePayNow}
+            onPayBalance={handlePayBalance}
             onClick={() => delivery.trackingNumber && navigate(`/track/${delivery.trackingNumber}`)}
           />
         ))}
@@ -298,17 +337,19 @@ function MyPackagesInner() {
 
 // ── Delivery Card ──────────────────────────────────────────────────────────────
 function DeliveryCard({
-  delivery, tab, paying, onPay, onClick
+  delivery, tab, paying, onPay, onPayBalance, onClick
 }: {
   delivery: Delivery;
   tab: TabId;
   paying: string | null;
   onPay: (e: React.MouseEvent, d: Delivery) => void;
+  onPayBalance: (e: React.MouseEvent, d: Delivery) => void;
   onClick: () => void;
 }) {
   const tn  = delivery.trackingNumber || '';
   const fee = Number(delivery.totalFee || 0).toFixed(2);
   const isLoading = paying === tn;
+  const hasBalanceDue = delivery.balanceStatus === 'Pending' && delivery.balanceAmount && delivery.balanceAmount > 0;
 
   // Status badge color
   const statusColor: Record<string, string> = {
@@ -407,7 +448,27 @@ function DeliveryCard({
       )}
 
       {tab === 'torate' && (
-        <div className="px-4 pb-4 pt-1">
+        <div className="px-4 pb-4 pt-1 space-y-2">
+          {/* Balance payment banner for split payments */}
+          {hasBalanceDue && (
+            <div className="w-full rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-blue-700 dark:text-blue-300">50% Balance Due</p>
+                  <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-0.5">Pay the remaining balance for this delivery</p>
+                </div>
+                <span className="text-sm font-extrabold text-blue-600">₱{delivery.balanceAmount!.toLocaleString()}.00</span>
+              </div>
+              <button
+                onClick={e => onPayBalance(e, delivery)}
+                disabled={isLoading}
+                className="w-full mt-2 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-[0.97] transition-all disabled:opacity-50 shadow-sm shadow-blue-200 dark:shadow-none"
+              >
+                <CreditCard className="size-3.5" />
+                {isLoading ? 'Opening payment...' : `Pay Balance • ₱${delivery.balanceAmount!.toLocaleString()}.00`}
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-green-600">
               <CheckCircle className="size-3.5" />

@@ -473,7 +473,17 @@ router.get('/deliveries', authMiddleware, async (req, res) => {
                  FROM payment p
                  WHERE p.delivery_number = s.delivery_number
                    AND p.tenant_id = s.tenant_id
-                   AND p.status = 'Paid' LIMIT 1) AS paid_method
+                   AND p.status = 'Paid' LIMIT 1) AS paid_method,
+                (SELECT pb.status
+                 FROM payment pb
+                 WHERE pb.delivery_number = s.delivery_number
+                   AND pb.tenant_id = s.tenant_id
+                   AND pb.payment_type = 'balance' LIMIT 1) AS balance_status,
+                (SELECT pb.total_amount
+                 FROM payment pb
+                 WHERE pb.delivery_number = s.delivery_number
+                   AND pb.tenant_id = s.tenant_id
+                   AND pb.payment_type = 'balance' LIMIT 1) AS balance_amount
          FROM shipment s
          WHERE s.tenant_id = ? AND s.sender_user_id = ?
          ORDER BY s.created_at DESC LIMIT 50`,
@@ -554,10 +564,6 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
   }
 
    try {
-    // Auto-add columns if they don't exist
-    try { await query('ALTER TABLE shipment ADD COLUMN vehicle_type VARCHAR(50) DEFAULT NULL'); } catch(_) {}
-    try { await query('ALTER TABLE shipment ADD COLUMN sender_name VARCHAR(255) DEFAULT NULL'); } catch(_) {}
-    try { await query('ALTER TABLE shipment ADD COLUMN sender_phone VARCHAR(20) DEFAULT NULL'); } catch(_) {}
 
     // ── Server-side fee computation using tenant pricing config ────────────
     let computed_total_fee = total_fee || 0;
@@ -1743,30 +1749,7 @@ router.put('/driver/location/:dn', authMiddleware, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROFILE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.put('/profile', authMiddleware, async (req, res) => {
-  const { phone, first_name, last_name, address } = req.body;
-  try {
-    if (req.user) {
-      await query(
-        'UPDATE APP_USER SET phone = ?, first_name = ?, last_name = ?, address = ? WHERE user_id = ? AND tenant_id = ?',
-        [phone || null, first_name || null, last_name || null, address || null, req.user.user_id, req.tenantId]
-      );
-    } else if (req.staff) {
-      const name = [first_name, last_name].filter(Boolean).join(' ');
-      await query(
-        'UPDATE STAFF SET name = ?, phone = ? WHERE staff_id = ? AND tenant_id = ?',
-        [name || null, phone || null, req.staff.staff_id, req.tenantId]
-      );
-    }
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update profile.' });
-  }
-});
+// (Profile route defined above at ~L791 — removed duplicate here)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADDRESS BOOK
@@ -1811,24 +1794,7 @@ router.delete('/addresses/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NOTIFICATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.get('/notifications', authMiddleware, async (req, res) => {
-  const userId = req.user?.user_id || req.staff?.staff_id;
-  const userType = req.user ? 'app_user' : 'staff';
-  try {
-    const [rows] = await query(
-      `SELECT * FROM NOTIFICATION WHERE user_id = ? AND user_type = ? AND tenant_id = ?
-       ORDER BY created_at DESC LIMIT 50`,
-      [userId, userType, req.tenantId]
-    );
-    res.json({ notifications: rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+// (Notifications route defined above at ~L1101 — removed duplicate here)
 
 router.put('/notifications/:id/read', authMiddleware, async (req, res) => {
   const userId = req.user?.user_id || req.staff?.staff_id;
@@ -2022,10 +1988,16 @@ router.get('/pay/success', async (req, res) => {
 
   // Best-effort: mark deposit/full payment as Paid immediately via DB (webhook backup)
   // Do NOT mark balance records as paid here — those are paid separately on delivery
+  // Resolve tenant_id from slug to ensure cross-tenant isolation
+  let successTid = null;
+  try {
+    const [tenantRows] = await query("SELECT tenant_id FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1", [slug]);
+    successTid = tenantRows[0]?.tenant_id || null;
+  } catch (_) {}
   try {
     await query(
-      "UPDATE payment SET status = 'Paid' WHERE delivery_number = ? AND status = 'Pending' AND payment_type != 'balance'",
-      [dn]
+      "UPDATE payment SET status = 'Paid' WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending' AND payment_type != 'balance'",
+      [dn, successTid]
     );
   } catch (_) {}
 
@@ -2051,12 +2023,18 @@ router.get('/pay/cancel', async (req, res) => {
   const dn = req.query.dn || '';
 
   // Mark payment as Failed so it doesn't stay Pending
+  const cancelSlug = req.params.slug;
+  let cancelTid = null;
+  try {
+    const [tenantRows] = await query("SELECT tenant_id FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1", [cancelSlug]);
+    cancelTid = tenantRows[0]?.tenant_id || null;
+  } catch (_) {}
   if (dn) {
     try {
       // Only fail the deposit/full record — balance stays pending
       await query(
-        "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND status = 'Pending' AND payment_type != 'balance'",
-        [dn]
+        "UPDATE payment SET status = 'Failed' WHERE delivery_number = ? AND tenant_id = ? AND status = 'Pending' AND payment_type != 'balance'",
+        [dn, cancelTid]
       );
     } catch (_) {}
   }
@@ -2210,6 +2188,147 @@ router.get('/pay/status/:dn', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[GET /pay/status]', err.message);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /pay/checkout-balance — create PayMongo checkout for the remaining 50% balance
+router.post('/pay/checkout-balance', authMiddleware, async (req, res) => {
+  if (!req.user) return res.status(403).json({ error: 'Customers only.' });
+
+  const { delivery_number } = req.body;
+  const tid = req.tenantId;
+  const slug = req.params.slug;
+
+  if (!delivery_number) return res.status(400).json({ error: 'delivery_number is required.' });
+
+  const secretKey = process.env.PAYMONGO_SECRET_KEY;
+  if (!secretKey) return res.status(500).json({ error: 'Payment gateway not configured.' });
+
+  try {
+    // Verify shipment exists and belongs to user
+    const [ship] = await query(
+      'SELECT * FROM shipment WHERE delivery_number = ? AND tenant_id = ? AND sender_user_id = ? LIMIT 1',
+      [delivery_number, tid, req.user.user_id]
+    );
+    if (!ship.length) return res.status(404).json({ error: 'Shipment not found.' });
+
+    // Find the pending balance record
+    const [balanceRows] = await query(
+      "SELECT * FROM payment WHERE delivery_number = ? AND tenant_id = ? AND payment_type = 'balance' AND status = 'Pending' LIMIT 1",
+      [delivery_number, tid]
+    );
+    if (!balanceRows.length) {
+      return res.status(400).json({ error: 'No pending balance payment found for this shipment.' });
+    }
+
+    // Verify deposit was paid
+    const [depositRows] = await query(
+      "SELECT 1 FROM payment WHERE delivery_number = ? AND tenant_id = ? AND payment_type = 'deposit' AND status = 'Paid' LIMIT 1",
+      [delivery_number, tid]
+    );
+    if (!depositRows.length) {
+      return res.status(400).json({ error: 'Deposit must be paid before paying the balance.' });
+    }
+
+    // Check if balance already has a checkout session (avoid duplicates)
+    if (balanceRows[0].paymongo_checkout_id) {
+      // Check if the existing checkout is still active
+      try {
+        const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${balanceRows[0].paymongo_checkout_id}`, {
+          headers: { 'Authorization': 'Basic ' + Buffer.from(secretKey + ':').toString('base64') }
+        });
+        const pmData = await pmRes.json();
+        const pmStatus = pmData?.data?.attributes?.status;
+        if (pmStatus === 'active') {
+          // Reuse existing active checkout
+          return res.json({
+            checkout_url: pmData.data.attributes.checkout_url,
+            checkout_id: balanceRows[0].paymongo_checkout_id,
+            balance_amount: parseFloat(balanceRows[0].total_amount)
+          });
+        }
+      } catch (_) { /* existing checkout expired — create new one */ }
+    }
+
+    const balanceAmount = parseFloat(balanceRows[0].total_amount);
+    const amountCentavos = Math.round(balanceAmount * 100);
+
+    // Fetch billing info from APP_USER
+    const [userRows] = await query(
+      'SELECT first_name, last_name, email, phone FROM APP_USER WHERE user_id = ? LIMIT 1',
+      [req.user.user_id]
+    );
+    const userInfo = userRows[0] || {};
+    const billingName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(' ') || 'Customer';
+    const billingEmail = userInfo.email || null;
+    const billingPhone = userInfo.phone ? normalizePHPhone(userInfo.phone) : '';
+
+    const checkoutBody = {
+      data: {
+        attributes: {
+          billing: {
+            name: billingName,
+            ...(billingEmail && { email: billingEmail }),
+            phone: billingPhone || ''
+          },
+          send_email_receipt: true,
+          show_description: true,
+          show_line_items: true,
+          description: `50% Balance Payment for Shipment ${delivery_number}`,
+          reference_number: `${delivery_number}-BAL`,
+          line_items: [{
+            currency: 'PHP',
+            amount: amountCentavos,
+            name: `Shipment ${delivery_number} (50% Balance)`,
+            quantity: 1
+          }],
+          payment_method_types: ['gcash', 'paymaya', 'card', 'dob', 'dob_ubp', 'brankas_bdo', 'brankas_landbank', 'brankas_metrobank'],
+          success_url: `https://logistichub.ddns.net/${slug}/api/mobile/pay/success?dn=${delivery_number}`,
+          cancel_url:  `https://logistichub.ddns.net/${slug}/api/mobile/pay/cancel?dn=${delivery_number}`,
+          metadata: {
+            delivery_number,
+            tenant_id: tid.toString(),
+            user_id: req.user.user_id.toString(),
+            slug,
+            payment_type: 'balance'
+          }
+        }
+      }
+    };
+
+    const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(secretKey + ':').toString('base64')
+      },
+      body: JSON.stringify(checkoutBody)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('[PayMongo] Balance checkout error:', JSON.stringify(data?.errors || data));
+      const pmErr = data?.errors?.[0]?.detail || 'Payment gateway error.';
+      return res.status(500).json({ error: pmErr });
+    }
+
+    const checkoutId  = data.data.id;
+    const checkoutUrl = data.data.attributes.checkout_url;
+
+    // Update balance record with checkout ID
+    try {
+      await query(
+        "UPDATE payment SET paymongo_checkout_id = ? WHERE invoice_id = ?",
+        [checkoutId, balanceRows[0].invoice_id]
+      );
+    } catch (dbErr) {
+      console.error('[PayMongo] Balance DB update error (non-fatal):', dbErr.message);
+    }
+
+    res.json({ checkout_url: checkoutUrl, checkout_id: checkoutId, balance_amount: balanceAmount });
+  } catch (err) {
+    console.error('[POST /pay/checkout-balance] Unexpected error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to create balance payment.' });
   }
 });
 

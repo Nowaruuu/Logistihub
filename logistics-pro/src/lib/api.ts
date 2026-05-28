@@ -303,6 +303,19 @@ export async function getPaymentStatus(deliveryNumber: string) {
   return res.json();
 }
 
+export async function createBalanceCheckout(deliveryNumber: string) {
+  const res = await fetch(mobileUrl('/pay/checkout-balance'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ delivery_number: deliveryNumber })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error || 'Failed to create balance payment');
+  }
+  return res.json();
+}
+
 export async function updateDriverLocation(deliveryNumber: string, lat: number, lng: number) {
   try {
     await fetch(mobileUrl(`/driver/location/${deliveryNumber}`), {

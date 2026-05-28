@@ -173,7 +173,7 @@ export default function SendPackage() {
     document.addEventListener('visibilitychange', onVisibility);
 
     // Poll every 30 seconds for near-real-time updates
-    const interval = setInterval(refreshConfig, 15_000);
+    const interval = setInterval(refreshConfig, 30_000);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);

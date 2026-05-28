@@ -68,6 +68,8 @@ export interface Delivery {
   createdAt: string;
   isPaid?: boolean;       // true if a 'Paid' payment record exists in DB
   paymentMethod?: string; // e.g. 'gcash', 'card'
+  balanceStatus?: string; // 'Pending' | 'Paid' | null (only for split payments)
+  balanceAmount?: number; // balance amount due (only for split payments)
 }
 
 export interface Notification {
