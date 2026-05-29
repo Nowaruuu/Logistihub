@@ -401,6 +401,23 @@ router.post('/:slug/api/admin/payments/:id/confirm', requireAdmin, requireSlugMa
   }
 });
 
+// Admin deletes a stale/failed payment record (only Pending or Failed)
+router.delete('/:slug/api/admin/payments/:id', requireAdmin, requireSlugMatch, async (req, res) => {
+  const tid = req.tenantId;
+  const { id } = req.params;
+  try {
+    const [result] = await query(
+      "DELETE FROM payment WHERE invoice_id = ? AND tenant_id = ? AND status IN ('Pending', 'Failed')",
+      [id, tid]
+    );
+    if (result.affectedRows === 0) return res.status(400).json({ error: 'Cannot delete — only Pending/Failed payments can be removed.' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[DELETE /admin/payments]', err);
+    res.status(500).json({ error: err.message || 'Failed to delete payment.' });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PRICING CONFIG
 // ─────────────────────────────────────────────────────────────────────────────

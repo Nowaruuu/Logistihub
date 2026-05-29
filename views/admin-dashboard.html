@@ -4014,7 +4014,8 @@ function renderPayments(list) {
     }
     var statusCell = '<span class="badge ' + stCl + '">' + esc(st) + '</span>' + dueDateHint;
     var confirmBtn = (st !== 'Paid')
-      ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
+      ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button> '
+        + '<button onclick="deletePayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #ef4444;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#ef4444;" title="Remove this record">Remove</button>'
       : '';
     return '<tr>' +
       '<td><strong style="font-family:monospace;">#' + esc(String(p.invoice_id||'')) + '</strong></td>' +
@@ -4041,6 +4042,17 @@ async function confirmPayment(invoiceId, btn) {
     if(!r.ok) throw new Error(d.error || 'Failed');
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
+}
+
+async function deletePayment(invoiceId, btn) {
+  if(!confirm('Remove payment record #' + invoiceId + '? This cannot be undone.')) return;
+  btn.disabled = true; btn.textContent = 'Removing...';
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/payments/' + invoiceId, { method: 'DELETE' });
+    var d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Failed');
+    btn.closest('tr').remove();
+  } catch(e) { btn.disabled=false; btn.textContent='Remove'; alert('Error: '+e.message); }
 }
 // â”€â”€ Subscription â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSubscription() {
