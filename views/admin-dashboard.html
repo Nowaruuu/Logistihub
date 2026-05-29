@@ -1008,9 +1008,9 @@ textarea{resize:vertical;}
           <div>
             <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0â€“20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21â€“100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
-              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101â€“500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0~20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21~100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
+              <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">101~500 kg</label><input id="price-wt-3" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">500+ kg</label><input id="price-wt-4" type="number" step="0.5" min="0" value="1.50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
             </div>
           </div>
@@ -4049,36 +4049,67 @@ async function loadSubscription() {
     if (descEl) descEl.textContent = plan.desc;
     if (priceEl) priceEl.textContent = '\u20b1' + plan.price.toLocaleString() + '.00';
 
-    // Calculate next billing based on monthly cycle from creation
-    var nextBilling = new Date(tenantCreated);
-    while (nextBilling <= now) {
-      nextBilling.setMonth(nextBilling.getMonth() + 1);
-    }
-    if (nextEl) nextEl.textContent = nextBilling.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-    var daysRemaining = Math.ceil((nextBilling - now) / (1000 * 60 * 60 * 24));
-    if (daysEl) {
-      if (daysRemaining <= 3) {
-        daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700;">' + daysRemaining + ' days remaining \u2014 payment due soon</span>';
-      } else {
-        daysEl.textContent = daysRemaining + ' days remaining';
-      }
+    // Calculate billing cycle dates
+    // Find current cycle start and due date
+    var cycleStart = new Date(tenantCreated);
+    var cycleDue = new Date(cycleStart);
+    cycleDue.setMonth(cycleDue.getMonth() + 1);
+    while (cycleDue <= now) {
+      cycleStart = new Date(cycleDue);
+      cycleDue = new Date(cycleStart);
+      cycleDue.setMonth(cycleDue.getMonth() + 1);
     }
 
-    // Show Pay Now banner when due within 7 days
+    // Check if current cycle is paid (skip first cycle — covered by initial upgrade)
+    var firstCycleEnd = new Date(tenantCreated);
+    firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+    var isFirstCycle = cycleStart.getTime() < firstCycleEnd.getTime();
+
+    // Check payments for current cycle
+    var hasCyclePayment = isFirstCycle; // first cycle is always 'paid' by upgrade
+    if (!isFirstCycle && d.payments && d.payments.length) {
+      var csDate = cycleStart.toISOString().split('T')[0];
+      var cdDate = cycleDue.toISOString().split('T')[0];
+      hasCyclePayment = d.payments.some(function(p) {
+        if (p.status !== 'paid') return false;
+        var pDate = (p.created_at || '').split('T')[0];
+        return pDate >= csDate && pDate < cdDate;
+      });
+    }
+
+    if (hasCyclePayment) {
+      // Current cycle paid — show NEXT billing date
+      if (nextEl) nextEl.textContent = cycleDue.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      var daysRemaining = Math.ceil((cycleDue - now) / (1000 * 60 * 60 * 24));
+      if (daysEl) daysEl.textContent = daysRemaining + ' days remaining';
+    } else {
+      // Current cycle NOT paid — show DUE date with warning
+      if (nextEl) {
+        nextEl.innerHTML = '<span style="color:#ef4444">' + cycleStart.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + '</span>';
+      }
+      var daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
+      var daysRemaining = 0;
+      if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue by ' + daysOverdue + ' day(s)</span>';
+    }
+
+    // Show Pay Now banner based on payment status
     var payBanner = document.getElementById('sub-pay-banner');
     var payTitle = document.getElementById('sub-pay-title');
     var payDesc = document.getElementById('sub-pay-desc');
     var payBtnText = document.getElementById('sub-pay-btn-text');
     if (payBanner) {
-      if (daysRemaining <= 7) {
+      if (!hasCyclePayment) {
+        // NOT PAID — show overdue banner
         payBanner.style.display = 'block';
-        if (daysRemaining <= 0) {
-          if (payTitle) payTitle.textContent = 'Payment Overdue!';
-          if (payDesc) payDesc.textContent = 'Your subscription payment is overdue. Pay now to avoid service interruption.';
-          if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
-        } else if (daysRemaining <= 1) {
-          if (payTitle) payTitle.textContent = 'Payment Due Today';
-          if (payDesc) payDesc.textContent = 'Your \u20b1' + plan.price.toLocaleString() + ' subscription payment is due today.';
+        if (payTitle) payTitle.textContent = 'Payment Overdue!';
+        if (payDesc) payDesc.textContent = 'Your subscription payment is overdue. Pay now to avoid service suspension.';
+        if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
+      } else if (daysRemaining <= 7) {
+        // PAID but due soon
+        payBanner.style.display = 'block';
+        if (daysRemaining <= 1) {
+          if (payTitle) payTitle.textContent = 'Payment Due Tomorrow';
+          if (payDesc) payDesc.textContent = 'Your \u20b1' + plan.price.toLocaleString() + ' subscription payment is due soon.';
           if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
         } else {
           if (payTitle) payTitle.textContent = 'Subscription Payment Due in ' + daysRemaining + ' Days';
@@ -4091,8 +4122,13 @@ async function loadSubscription() {
     }
 
     if (statusEl) {
-      statusEl.textContent = 'Active';
-      statusEl.style.color = '#16a34a';
+      if (!hasCyclePayment) {
+        statusEl.textContent = 'Overdue';
+        statusEl.style.color = '#ef4444';
+      } else {
+        statusEl.textContent = 'Active';
+        statusEl.style.color = '#16a34a';
+      }
     }
     if (sinceEl) {
       sinceEl.textContent = 'Since ' + tenantCreated.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
