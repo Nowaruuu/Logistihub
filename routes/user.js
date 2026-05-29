@@ -256,7 +256,7 @@ router.post('/staff-login', async (req, res) => {
   const { email, password } = req.body;
 
   const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
-  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
+  if (!tenants.length || (tenants[0].status !== 'active' && tenants[0].status !== 'suspended')) return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
 
   const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1", [tenantId, email]);

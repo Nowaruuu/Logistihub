@@ -41,10 +41,11 @@ function readView(filename) {
     return fs.readFileSync(path.join(__dirname, '../views/', filename), 'utf-8');
 }
 
-async function resolveTenant(slug, res) {
+async function resolveTenant(slug, res, opts = {}) {
   try {
+    // Also load suspended tenants so we can show payment page
     const [rows] = await query(
-      "SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1",
+      "SELECT * FROM TENANT WHERE slug = ? AND status IN ('active', 'suspended') LIMIT 1",
       [slug]
     );
     if (!rows || !rows.length) {
@@ -56,10 +57,39 @@ async function resolveTenant(slug, res) {
       `);
       return null;
     }
-    return rows[0]; // FIXED: Added missing return
+    const tenant = rows[0];
+
+    // If tenant is suspended for non-payment, show payment-required page
+    // (allow login page and API routes to still work)
+    if (tenant.status === 'suspended' && !opts.allowSuspended) {
+      res.status(403).send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Account Suspended</title>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+        <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);}
+        .card{background:#fff;border-radius:24px;padding:48px 40px;text-align:center;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+        .ico{width:72px;height:72px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
+        .material-symbols-outlined{font-variation-settings:'FILL' 1;}
+        h1{font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;}p{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:24px;}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;font-weight:800;font-size:14px;text-decoration:none;transition:all .15s;cursor:pointer;border:none;font-family:inherit;}
+        .btn-pay{background:#ea580c;color:#fff;box-shadow:0 4px 16px rgba(234,88,12,0.3);}.btn-pay:hover{background:#dc2626;}
+        .btn-login{background:#f1f5f9;color:#0f172a;margin-left:8px;}.btn-login:hover{background:#e2e8f0;}
+        .company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:20px;}
+        </style></head><body><div class="card">
+        <div class="company">${tenant.company_name || slug}</div>
+        <div class="ico"><span class="material-symbols-outlined" style="font-size:36px;color:#ef4444;">block</span></div>
+        <h1>Account Suspended</h1>
+        <p>Your workspace has been suspended due to an overdue subscription payment.<br>Please pay your outstanding balance to restore access.</p>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+          <a href="/${slug}/admin-login" class="btn btn-login"><span class="material-symbols-outlined" style="font-size:18px;">login</span>Admin Login</a>
+        </div>
+        <p style="margin-top:24px;font-size:12px;color:#94a3b8;">Contact support if you believe this is an error.</p>
+        </div></body></html>`);
+      return null;
+    }
+
+    return tenant;
   } catch (err) {
     console.error("Tenant Resolution Error:", err);
-    const slug = req.params?.slug || '';
     const loginLink = slug ? `/${slug}/admin-login` : '/';
     res.status(503).send(`
       <html>
@@ -109,7 +139,7 @@ router.get('/onboarding', (req, res) => {
 });
 
 router.get('/:slug/admin', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
+  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
   if (!tenant) return;
   res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
 });
@@ -121,7 +151,7 @@ router.get('/:slug/login', async (req, res) => {
 });
 
 router.get('/:slug/admin-login', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
+  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
   if (!tenant) return;
   res.send(injectTenantData(readView('admin-login.html'), tenant));
 });

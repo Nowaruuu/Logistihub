@@ -1763,6 +1763,14 @@ router.get('/:slug/api/admin/renew/success', async (req, res) => {
       );
     } catch(_) { /* table might not exist yet */ }
 
+    // Re-activate tenant if suspended for non-payment
+    try {
+      await query(
+        "UPDATE TENANT SET status = 'active', suspended_at = NULL, suspension_reason = NULL WHERE tenant_id = ? AND status = 'suspended'",
+        [tenant.tenant_id]
+      );
+    } catch(_) {}
+
     logAudit({ actor: 'system', actor_type: 'system', action: 'RENEWAL_COMPLETED', target: `${plan} plan renewal`, tenant_slug: slug });
 
     // Show success page

@@ -34,9 +34,9 @@ async function requireAdmin(req, res, next) {
       return res.status(403).json({ error: 'Forbidden.' });
     }
 
-    // Verify tenant still exists and is active
+    // Verify tenant still exists and is active (or suspended — admin can still pay)
     const tenant = await getTenantById(payload.tenant_id);
-    if (!tenant || tenant.status !== 'active') {
+    if (!tenant || (tenant.status !== 'active' && tenant.status !== 'suspended')) {
       return res.status(403).json({ error: 'Workspace is inactive or does not exist.' });
     }
 

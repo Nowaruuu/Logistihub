@@ -198,6 +198,67 @@ app.listen(PORT, async () => {
     } catch(e) { console.error('Distance backfill error:', e.message); }
 
     console.log('   ✅ Schema columns verified');
+
+    // ── Subscription Billing Enforcement ─────────────────────────────
+    // Runs on startup and then every hour
+    async function checkSubscriptionBilling() {
+      try {
+        // Ensure suspension columns exist
+        try { await query('ALTER TABLE TENANT ADD COLUMN suspended_at DATETIME DEFAULT NULL'); } catch(_) {}
+        try { await query('ALTER TABLE TENANT ADD COLUMN suspension_reason VARCHAR(255) DEFAULT NULL'); } catch(_) {}
+
+        // Get all active tenants with a paid plan
+        const [tenants] = await query(
+          "SELECT tenant_id, slug, plan, created_at, status FROM TENANT WHERE status = 'active' AND plan IS NOT NULL AND plan != 'free'"
+        );
+
+        const now = new Date();
+        for (const t of tenants) {
+          const planKey = (t.plan || '').toLowerCase();
+          if (!planKey || planKey === 'free') continue;
+
+          // Calculate current billing cycle start
+          const created = new Date(t.created_at);
+          let cycleStart = new Date(created);
+          while (cycleStart <= now) {
+            const next = new Date(cycleStart);
+            next.setMonth(next.getMonth() + 1);
+            if (next > now) break;
+            cycleStart = next;
+          }
+
+          // Check if there's a payment for the current billing cycle
+          const [payments] = await query(
+            "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ?",
+            [t.tenant_id, cycleStart.toISOString().split('T')[0]]
+          );
+
+          if (payments[0].cnt > 0) continue; // Current cycle is paid
+
+          // Calculate days overdue
+          const daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
+
+          // Grace period: 7 days — after that, suspend
+          if (daysOverdue >= 7) {
+            await query(
+              "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
+              [t.tenant_id]
+            );
+            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue)`);
+          }
+        }
+      } catch (err) {
+        console.error('   Billing check error:', err.message);
+      }
+    }
+
+    // Run immediately on startup
+    await checkSubscriptionBilling();
+    console.log('   ✅ Subscription billing checked');
+
+    // Then run every hour
+    setInterval(checkSubscriptionBilling, 60 * 60 * 1000);
+
   } catch (e) { console.error('Cleanup error:', e.message); }
 });
 
