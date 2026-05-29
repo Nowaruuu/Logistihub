@@ -68,7 +68,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f
 
 /* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
-.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);transition:box-shadow .3s;}
+.sidebar-logo.overdue-glow{animation:overdueGlow 1.5s ease-in-out infinite;}
+@keyframes overdueGlow{0%,100%{box-shadow:0 0 8px 2px rgba(239,68,68,.15);}50%{box-shadow:0 0 22px 6px rgba(239,68,68,.5);}}
 .tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
 .tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
 .tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
@@ -1827,19 +1829,23 @@ function loadShipments(){
           }
           var daysLeft = Math.ceil((cycleDue - now) / (1000*60*60*24));
           var sBadge = document.getElementById('sub-expiry-badge');
+          var sLogo = document.querySelector('.sidebar-logo');
           if(sBadge){
             if(!hasCyclePayment){
               sBadge.innerHTML = '\u26A0';
               sBadge.style.display = '';
               sBadge.style.color = '#ef4444';
               sBadge.title = 'Payment overdue! Renew now to avoid suspension.';
+              if(sLogo) sLogo.classList.add('overdue-glow');
             } else if(daysLeft <= 7){
               sBadge.innerHTML = '\u26A0';
               sBadge.style.display = '';
               sBadge.style.color = daysLeft <= 3 ? '#ef4444' : '#fbbf24';
               sBadge.title = daysLeft + ' days until next billing';
+              if(sLogo) sLogo.classList.remove('overdue-glow');
             } else {
               sBadge.style.display = 'none';
+              if(sLogo) sLogo.classList.remove('overdue-glow');
             }
           }
         }).catch(function(){});
