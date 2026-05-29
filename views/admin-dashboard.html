@@ -69,8 +69,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f
 /* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
 .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
-#sub-expiry-badge.overdue-glow{animation:overdueGlow 1.5s ease-in-out infinite;text-shadow:0 0 8px rgba(239,68,68,.6);}
-@keyframes overdueGlow{0%,100%{opacity:.4;text-shadow:0 0 4px rgba(239,68,68,.3);}50%{opacity:1;text-shadow:0 0 14px rgba(239,68,68,.8);}}
+#sub-expiry-badge.overdue-glow{animation:overdueGlow 1s ease-in-out infinite;}
+@keyframes overdueGlow{0%,100%{transform:scale(1);text-shadow:0 0 4px rgba(239,68,68,.4);color:#ef4444;}50%{transform:scale(1.5);text-shadow:0 0 20px rgba(239,68,68,1),0 0 40px rgba(239,68,68,.6);color:#ff2020;}}
 .tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
 .tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
 .tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
