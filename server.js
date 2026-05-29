@@ -246,8 +246,8 @@ app.listen(PORT, async () => {
           // Calculate days overdue from cycle start
           const daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
 
-          // Grace period: 7 days — after that, suspend
-          if (daysOverdue >= 7) {
+          // Grace period: 3 days — after that, suspend
+          if (daysOverdue >= 3) {
             await query(
               "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
               [t.tenant_id]
