@@ -217,25 +217,33 @@ app.listen(PORT, async () => {
           const planKey = (t.plan || '').toLowerCase();
           if (!planKey || planKey === 'free') continue;
 
-          // Calculate current billing cycle start
+          // Calculate current billing cycle window [cycleStart, cycleEnd)
           const created = new Date(t.created_at);
           let cycleStart = new Date(created);
-          while (cycleStart <= now) {
-            const next = new Date(cycleStart);
-            next.setMonth(next.getMonth() + 1);
-            if (next > now) break;
-            cycleStart = next;
+          let cycleEnd = new Date(cycleStart);
+          cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+
+          while (cycleEnd <= now) {
+            cycleStart = new Date(cycleEnd);
+            cycleEnd = new Date(cycleStart);
+            cycleEnd.setMonth(cycleEnd.getMonth() + 1);
           }
 
-          // Check if there's a payment for the current billing cycle
+          // Skip the first billing cycle — the initial upgrade payment covers it
+          const firstCycleEnd = new Date(created);
+          firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+          if (cycleStart.getTime() < firstCycleEnd.getTime()) continue;
+
+          // Check if there's a RENEWAL payment for the current billing cycle
+          // Use bounded date range so old payments don't leak across cycles
           const [payments] = await query(
-            "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ?",
-            [t.tenant_id, cycleStart.toISOString().split('T')[0]]
+            "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ? AND created_at < ?",
+            [t.tenant_id, cycleStart.toISOString().split('T')[0], cycleEnd.toISOString().split('T')[0]]
           );
 
           if (payments[0].cnt > 0) continue; // Current cycle is paid
 
-          // Calculate days overdue
+          // Calculate days overdue from cycle start
           const daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
 
           // Grace period: 7 days — after that, suspend
@@ -244,7 +252,7 @@ app.listen(PORT, async () => {
               "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
               [t.tenant_id]
             );
-            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue)`);
+            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue, cycle: ${cycleStart.toISOString().split('T')[0]} to ${cycleEnd.toISOString().split('T')[0]})`);
           }
         }
       } catch (err) {

@@ -1886,6 +1886,19 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     );
     if (!ship.length) return res.status(404).json({ error: 'Shipment not found.' });
 
+    // Use the AUTHORITATIVE total_fee from the shipment record (not the client-sent amount)
+    // This prevents the ₱50 bug where client sends stale/wrong fee
+    const dbFee = parseFloat(ship[0].total_fee || 0);
+    const actualAmount = dbFee > 0 ? dbFee : parseFloat(amount);
+
+    // Clean up any previous Failed payment records for this shipment (from cancelled PayMongo checkouts)
+    try {
+      await query(
+        "DELETE FROM payment WHERE delivery_number = ? AND tenant_id = ? AND status IN ('Failed', 'Pending') AND payment_type != 'balance'",
+        [delivery_number, tid]
+      );
+    } catch(_) {}
+
     // Check if split payment is enabled for this tenant
     const [tenantRows] = await query('SELECT pricing_config FROM TENANT WHERE tenant_id = ?', [tid]);
     let pricingConfig = {};
@@ -1902,7 +1915,7 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     const billingEmail = userInfo.email || null;
     const billingPhone = userInfo.phone ? normalizePHPhone(userInfo.phone) : '';
 
-    const totalAmount = parseFloat(amount);
+    const totalAmount = actualAmount;
     const slug = req.params.slug;
 
     // Calculate checkout amount based on split payment setting

@@ -3953,7 +3953,10 @@ function renderPayments(list) {
     var customer = (p.customer_first || p.customer_last)
       ? esc((p.customer_first + ' ' + p.customer_last).trim())
       : esc(p.receiver_name || '-');
-    var amount = p.total_amount ? '\u20B1' + parseFloat(p.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-';
+    var displayAmount = (p.total_fee && parseFloat(p.total_fee) > 0) ? parseFloat(p.total_fee) : parseFloat(p.total_amount || 0);
+    // For split payments (deposit/balance), use payment amount since it's the half
+    if (p.payment_type === 'deposit' || p.payment_type === 'balance') displayAmount = parseFloat(p.total_amount || 0);
+    var amount = displayAmount ? '\u20B1' + displayAmount.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-';
     var method = p.payment_method || '';
     var methodLabels = {'gcash':'GCash','card':'Card','paymaya':'PayMaya','grab_pay':'GrabPay','billease':'BillEase','dob':'Online Banking'};
     if (method && methodLabels[method.toLowerCase()]) method = methodLabels[method.toLowerCase()];
