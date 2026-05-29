@@ -1803,20 +1803,40 @@ function loadShipments(){
           if(!subData.ok) return;
           var tenantCreated = subData.tenant_created_at ? new Date(subData.tenant_created_at) : new Date();
           var now = new Date();
-          var nextBilling = new Date(tenantCreated);
-          while(nextBilling <= now) nextBilling.setMonth(nextBilling.getMonth() + 1);
-          var daysLeft = Math.ceil((nextBilling - now) / (1000*60*60*24));
+          // Calculate current billing cycle
+          var cycleStart = new Date(tenantCreated);
+          var cycleDue = new Date(cycleStart);
+          cycleDue.setMonth(cycleDue.getMonth() + 1);
+          while (cycleDue <= now) {
+            cycleStart = new Date(cycleDue);
+            cycleDue = new Date(cycleStart);
+            cycleDue.setMonth(cycleDue.getMonth() + 1);
+          }
+          var firstCycleEnd = new Date(tenantCreated);
+          firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+          var isFirstCycle = cycleStart.getTime() < firstCycleEnd.getTime();
+          var hasCyclePayment = isFirstCycle;
+          if (!isFirstCycle && subData.payments && subData.payments.length) {
+            var csDate = cycleStart.toISOString().split('T')[0];
+            var cdDate = cycleDue.toISOString().split('T')[0];
+            hasCyclePayment = subData.payments.some(function(p) {
+              if (p.status !== 'paid') return false;
+              var pDate = (p.created_at || '').split('T')[0];
+              return pDate >= csDate && pDate < cdDate;
+            });
+          }
+          var daysLeft = Math.ceil((cycleDue - now) / (1000*60*60*24));
           var sBadge = document.getElementById('sub-expiry-badge');
           if(sBadge){
-            if(daysLeft <= 3){
+            if(!hasCyclePayment){
               sBadge.innerHTML = '\u26A0';
               sBadge.style.display = '';
               sBadge.style.color = '#ef4444';
-              sBadge.title = daysLeft + ' days left — payment due soon!';
+              sBadge.title = 'Payment overdue! Renew now to avoid suspension.';
             } else if(daysLeft <= 7){
               sBadge.innerHTML = '\u26A0';
               sBadge.style.display = '';
-              sBadge.style.color = '#fbbf24';
+              sBadge.style.color = daysLeft <= 3 ? '#ef4444' : '#fbbf24';
               sBadge.title = daysLeft + ' days until next billing';
             } else {
               sBadge.style.display = 'none';
@@ -4364,17 +4384,46 @@ function loadNotifPanel() {
       if(!subData.ok) return;
       var tenantCreated = subData.tenant_created_at ? new Date(subData.tenant_created_at) : new Date();
       var now = new Date();
-      var nextBilling = new Date(tenantCreated);
-      while(nextBilling <= now) nextBilling.setMonth(nextBilling.getMonth() + 1);
-      var daysLeft = Math.ceil((nextBilling - now) / (1000*60*60*24));
-      if(daysLeft <= 7){
-        var urgent = daysLeft <= 3;
+      // Calculate current billing cycle
+      var cycleStart = new Date(tenantCreated);
+      var cycleDue = new Date(cycleStart);
+      cycleDue.setMonth(cycleDue.getMonth() + 1);
+      while (cycleDue <= now) {
+        cycleStart = new Date(cycleDue);
+        cycleDue = new Date(cycleStart);
+        cycleDue.setMonth(cycleDue.getMonth() + 1);
+      }
+      var firstCycleEnd = new Date(tenantCreated);
+      firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+      var isFirstCycle = cycleStart.getTime() < firstCycleEnd.getTime();
+      var hasCyclePayment = isFirstCycle;
+      if (!isFirstCycle && subData.payments && subData.payments.length) {
+        var csDate = cycleStart.toISOString().split('T')[0];
+        var cdDate = cycleDue.toISOString().split('T')[0];
+        hasCyclePayment = subData.payments.some(function(p) {
+          if (p.status !== 'paid') return false;
+          var pDate = (p.created_at || '').split('T')[0];
+          return pDate >= csDate && pDate < cdDate;
+        });
+      }
+      var daysLeft = Math.ceil((cycleDue - now) / (1000*60*60*24));
+
+      if(!hasCyclePayment){
+        // OVERDUE — not paid for current cycle
+        var daysOverdue = Math.floor((now - cycleStart) / (1000*60*60*24));
         items.unshift({
-          icon: 'event_busy', color: urgent ? '#ef4444' : '#f59e0b',
-          text: urgent
+          icon: 'error', color: '#ef4444',
+          text: '<strong>Subscription payment overdue!</strong> Your payment is ' + daysOverdue + ' day(s) overdue. Pay now to avoid service suspension.',
+          time: 'Due ' + cycleStart.toLocaleDateString(undefined,{month:'short',day:'numeric'}),
+          id: 'sub-overdue', nav: 'subscription', priority: true
+        });
+      } else if(daysLeft <= 7){
+        items.unshift({
+          icon: 'event_busy', color: daysLeft <= 3 ? '#ef4444' : '#f59e0b',
+          text: daysLeft <= 3
             ? '<strong>Subscription payment due in ' + daysLeft + ' day' + (daysLeft!==1?'s':'') + '!</strong> Renew now to avoid service interruption.'
             : '<strong>Subscription renews in ' + daysLeft + ' days.</strong> Ensure your payment method is up to date.',
-          time: nextBilling.toLocaleDateString(undefined,{month:'short',day:'numeric'}),
+          time: cycleDue.toLocaleDateString(undefined,{month:'short',day:'numeric'}),
           id: 'sub-expiry', nav: 'subscription', priority: true
         });
       }

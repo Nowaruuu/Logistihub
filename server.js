@@ -246,6 +246,35 @@ app.listen(PORT, async () => {
           // Calculate days overdue from cycle start
           const daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
 
+          // Send overdue notification to admin (once per day — check if already sent today)
+          const todayStr = now.toISOString().split('T')[0];
+          const [existingNotif] = await query(
+            "SELECT COUNT(*) AS cnt FROM NOTIFICATION WHERE tenant_id = ? AND type = 'billing_overdue' AND DATE(created_at) = ?",
+            [t.tenant_id, todayStr]
+          ).catch(() => [[{ cnt: 1 }]]); // If table doesn't exist, skip
+
+          if (existingNotif[0].cnt === 0) {
+            // Get admin staff to notify
+            const [admins] = await query(
+              "SELECT staff_id FROM STAFF WHERE tenant_id = ? AND role IN ('admin','manager') AND status = 'active'",
+              [t.tenant_id]
+            ).catch(() => [[]]);
+
+            for (const admin of admins) {
+              await query(
+                `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, is_read, created_at)
+                 VALUES (?, 'staff', ?, ?, ?, 'billing_overdue', 0, NOW())`,
+                [
+                  admin.staff_id, t.tenant_id,
+                  daysOverdue >= 3 ? '⛔ Account Suspended' : '⚠️ Payment Overdue',
+                  daysOverdue >= 3
+                    ? `Your workspace has been suspended due to ${daysOverdue} days of overdue payment. Please renew your subscription to restore access.`
+                    : `Your subscription payment is ${daysOverdue} day(s) overdue. Please pay within ${3 - daysOverdue} day(s) to avoid suspension.`
+                ]
+              ).catch(() => {});
+            }
+          }
+
           // Grace period: 3 days — after that, suspend
           if (daysOverdue >= 3) {
             await query(
