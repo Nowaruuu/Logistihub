@@ -4114,7 +4114,17 @@ async function loadSubscription() {
       }
       var daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
       var daysRemaining = 0;
-      if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue by ' + daysOverdue + ' day(s)</span>';
+      // Calculate suspension date (3-day grace period from cycle start)
+      var suspendDate = new Date(cycleStart);
+      suspendDate.setDate(suspendDate.getDate() + 3);
+      var suspendStr = suspendDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      var daysUntilSuspend = Math.ceil((suspendDate - now) / (1000 * 60 * 60 * 24));
+
+      if (daysUntilSuspend <= 0) {
+        if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue by ' + daysOverdue + ' day(s) \u2014 suspension imminent!</span>';
+      } else {
+        if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue \u2014 suspended on ' + suspendStr + ' (' + daysUntilSuspend + ' day' + (daysUntilSuspend!==1?'s':'') + ' left)</span>';
+      }
     }
 
     // Show Pay Now banner based on payment status
@@ -4124,10 +4134,19 @@ async function loadSubscription() {
     var payBtnText = document.getElementById('sub-pay-btn-text');
     if (payBanner) {
       if (!hasCyclePayment) {
-        // NOT PAID — show overdue banner
+        // NOT PAID — show overdue banner with suspension warning
         payBanner.style.display = 'block';
-        if (payTitle) payTitle.textContent = 'Payment Overdue!';
-        if (payDesc) payDesc.textContent = 'Your subscription payment is overdue. Pay now to avoid service suspension.';
+        var suspendDate2 = new Date(cycleStart);
+        suspendDate2.setDate(suspendDate2.getDate() + 3);
+        var daysUntil2 = Math.ceil((suspendDate2 - now) / (1000 * 60 * 60 * 24));
+        var suspendStr2 = suspendDate2.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        if (daysUntil2 <= 0) {
+          if (payTitle) payTitle.textContent = 'Payment Overdue \u2014 Suspension Imminent!';
+          if (payDesc) payDesc.textContent = 'Your workspace will be suspended any moment. Pay now to keep your service running.';
+        } else {
+          if (payTitle) payTitle.textContent = 'Payment Overdue!';
+          if (payDesc) payDesc.textContent = 'Your workspace will be suspended on ' + suspendStr2 + ' (' + daysUntil2 + ' day' + (daysUntil2!==1?'s':'') + ' left). Pay now to avoid disruption.';
+        }
         if (payBtnText) payBtnText.textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
       } else if (daysRemaining <= 7) {
         // PAID but due soon
