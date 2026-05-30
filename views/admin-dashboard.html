@@ -3900,9 +3900,9 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      // Geolocation  show as Google Maps link if coordinates present
+      // Geolocation — show as clickable Google Maps link with location icon
       var geo = (p.latitude && p.longitude)
-        ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;" title="Open in Google Maps">' + parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;vertical-align:middle;\">open_in_new</span></a>'
+        ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" rel="noopener" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="View delivery location on Google Maps">' + parseFloat(p.latitude).toFixed(4) + ',&nbsp;' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;\">open_in_new</span></a>'
         : '<span style="color:#94a3b8;font-size:11px;">-</span>';
       var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
       // Capture type badge
@@ -3910,9 +3910,9 @@ async function loadPODs() {
       var typeColor = ct === 'Photo' ? 'background:#dcfce7;color:#15803d' : 'background:#f1f5f9;color:#94a3b8';
       var typeIcon = ct === 'Photo' ? 'photo_camera' : 'hide_image';
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
-      // Media  thumbnail with click-to-view, or No Photo badge
+      // Media — thumbnail with click-to-zoom lightbox
       var media = p.photo
-        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><a href="javascript:void(0)" style="display:none;font-size:11px;color:#3b82f6;font-weight:700;" onclick="window.open(\'' + p.photo + '\')" title="Click to view photo">\uD83D\uDDBC View Photo</a>'
+        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:transform .15s;" onclick="viewPODPhoto(this.src,\'' + esc(p.delivery_number || '') + '\')" onmouseover="this.style.transform=\'scale(1.1)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Click to zoom" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><span style="display:none;font-size:11px;color:#dc2626;font-weight:700;">Image Error</span>'
         : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
@@ -3927,6 +3927,24 @@ async function loadPODs() {
     tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
   }
 }
+
+// POD Photo Lightbox
+function viewPODPhoto(src, deliveryNum) {
+  var overlay = document.getElementById('pod-photo-lightbox');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'pod-photo-lightbox';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;opacity:0;transition:opacity .25s;cursor:pointer;backdrop-filter:blur(4px);';
+    overlay.innerHTML = '<div id="pod-title" style="color:#fff;font-size:14px;font-weight:700;letter-spacing:.03em;"></div><img id="pod-img" src="" style="max-width:85vw;max-height:75vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.5);object-fit:contain;"><div style="color:#94a3b8;font-size:12px;margin-top:4px;">Click anywhere to close</div>';
+    overlay.onclick = function() { overlay.style.opacity = '0'; setTimeout(function(){ overlay.style.display = 'none'; }, 250); };
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('pod-title').textContent = deliveryNum ? 'POD — ' + deliveryNum : 'Proof of Delivery';
+  document.getElementById('pod-img').src = src;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function(){ overlay.style.opacity = '1'; });
+}
+
 loadPODs();
 </script>
 
