@@ -538,7 +538,7 @@ async function handleStep1Next() {
       var res = await OnboardingAPI.checkoutApproved(approvalToken, selectedPlan.id);
       window.location.href = res.checkout_url;
     } catch (e) {
-      alert(e.message || 'Failed to initiate payment.');
+      showToast(e.message || 'Failed to initiate payment.', 'error');
       btn.disabled = false;
       btn.innerHTML = 'Continue with ' + selectedPlan.name + ' <span class="material-symbols-outlined">arrow_forward</span>';
     }
@@ -824,7 +824,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Handle PayMongo error
   if (urlParams.get('error')) {
-    alert(urlParams.get('error'));
+    showToast(urlParams.get('error'), 'error');
     window.history.replaceState({}, document.title, '/onboarding');
   }
 

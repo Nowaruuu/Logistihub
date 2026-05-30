@@ -211,7 +211,7 @@ async function submitPrompt() {
   if (!target) return;
 
   if (type === 'password' && target.includes('@') && !target.endsWith('@' + SLUG + '.com')) {
-    alert("Please enter your workspace username ending in @" + SLUG + ".com, not your personal email!");
+    showToast('Please enter your workspace username, not personal email.', 'error');
     return;
   }
 

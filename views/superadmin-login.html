@@ -194,7 +194,7 @@ async function submitSaForceChangePassword() {
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed to change password.');
     document.getElementById('sa-fcp-modal').style.display = 'none';
-    alert('Password changed successfully! Please sign in with your new password.');
+    showToast('Password changed!');
     document.getElementById('password').value = '';
     document.getElementById('password').focus();
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }

@@ -1008,7 +1008,7 @@ setTimeout(calcPreview, 100);
           throw new Error('No checkout URL returned.');
         }
       } catch(e) {
-        alert('Error: ' + e.message);
+        showToast('Error: ' + e.message, 'error');
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">upgrade</span> Try Again';
       }
@@ -1026,10 +1026,10 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to schedule downgrade.');
-        alert('' + d.message);
+        showToast(d.message);
         renderPlansGrid();
       } catch(e) {
-        alert('Error: ' + e.message);
+        showToast('Error: ' + e.message, 'error');
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">arrow_downward</span> Downgrade to ' + planLabel;
       }
@@ -1046,10 +1046,10 @@ setTimeout(calcPreview, 100);
         });
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed to cancel downgrade.');
-        alert('' + d.message);
+        showToast(d.message);
         renderPlansGrid();
       } catch(e) {
-        alert('Error: ' + e.message);
+        showToast('Error: ' + e.message, 'error');
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">close</span> Cancel Downgrade';
       }
@@ -2367,10 +2367,10 @@ async function resetToDefaults() {
       setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 300); }, 2500);
       loadSettings();
     } else {
-      alert('Failed to reset settings.');
+      showToast('Failed to reset settings.', 'error');
     }
   } catch(e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
   }
 }
 
@@ -2417,11 +2417,11 @@ async function savePricing() {
       if (btn) { btn.textContent = 'Saved!'; btn.style.background = '#16a34a'; }
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Pricing'; btn.style.background=''; } }, 2000);
     } else {
-      alert('Failed to save pricing.');
+      showToast('Failed to save pricing.', 'error');
       if (btn) { btn.disabled = false; btn.textContent = 'Save Pricing'; }
     }
   } catch(e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Save Pricing'; }
   }
 }
@@ -2467,7 +2467,7 @@ async function saveSettings() {
       body: JSON.stringify(payload)
     });
     if (_sessionExpired) return; // modal already shown, stop
-    if (r.status && r.status >= 400) { alert('Failed to save. Please check your connection.'); return; }
+    if (r.status && r.status >= 400) { showToast('Failed to save.', 'error'); return; }
     var d = await r.json();
     if (d.success) {
       if (btn) { btn.textContent = 'Saved!'; btn.style.background = '#16a34a'; }
@@ -2487,10 +2487,10 @@ async function saveSettings() {
       setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Save Changes'; btn.style.background=''; } }, 2000);
       return;
     } else {
-      alert(d.error || 'Failed to save');
+      showToast(d.error || 'Failed to save', 'error');
     }
   } catch(e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
@@ -3133,7 +3133,7 @@ async function savePackageCategories() {
     }, 2000);
   } catch(e) {
     if(btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
-    alert('Failed to save. Please try again.');
+    showToast('Failed to save.', 'error');
   }
 }
 
@@ -3181,19 +3181,19 @@ async function approveVehicleRequest(id) {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicle-requests/' + id + '/approve', { method: 'PUT' });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || 'Failed'); return; }
+    if(!r.ok) { showToast(d.error || 'Failed', 'error'); return; }
     loadVehicles();
     loadVehicleRequests();
-  } catch(e) { alert('Network error.'); }
+  } catch(e) { showToast('Network error.', 'error'); }
 }
 
 async function denyVehicleRequest(id) {
   if(!confirm('Deny this request?')) return;
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicle-requests/' + id + '/deny', { method: 'PUT' });
-    if(!r.ok) { alert('Failed to deny.'); return; }
+    if(!r.ok) { showToast('Failed to deny.', 'error'); return; }
     loadVehicleRequests();
-  } catch(e) { alert('Network error.'); }
+  } catch(e) { showToast('Network error.', 'error'); }
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Assign Vehicle to Driver modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -3209,7 +3209,7 @@ async function openAssignVehicleModal(plate) {
     } catch(e) { _staffData = []; }
   }
   var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && !s.vehicle_plate;});
-  if(!drivers.length) { alert('No unassigned drivers found. All drivers already have vehicles assigned.'); return; }
+  if(!drivers.length) { showToast('No unassigned drivers found. All drivers already have vehicles assigned.'); return; }
   var opts = drivers.map(function(d){return '<option value="'+d.staff_id+'">'+esc(d.name)+'</option>';}).join('');
   var html = '<div style="padding:28px 24px 24px;">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +
@@ -3251,9 +3251,9 @@ async function deleteStaff(id, btn) {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/staff/' + id, { method: 'DELETE' });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    if(!r.ok) { showToast(d.error || 'Delete failed.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
     loadStaff();
-  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+  } catch(e) { showToast('Network error.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
 }
 
 async function toggleSuspend(id, isSuspended) {
@@ -3266,9 +3266,9 @@ async function toggleSuspend(id, isSuspended) {
       body: JSON.stringify({ suspended: !isSuspended })
     });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || actionStr + ' failed.'); return; }
+    if(!r.ok) { showToast(d.error || actionStr + ' failed.', 'error'); return; }
     loadStaff();
-  } catch(e) { alert('Network error.'); }
+  } catch(e) { showToast('Network error.', 'error'); }
 }
 
 async function deleteVehicle(id, btn) {
@@ -3277,9 +3277,9 @@ async function deleteVehicle(id, btn) {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + id, { method: 'DELETE' });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    if(!r.ok) { showToast(d.error || 'Delete failed.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
     loadVehicles();
-  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+  } catch(e) { showToast('Network error.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
 }
 
 // Hook navigation to load staff/vehicles
@@ -3326,7 +3326,7 @@ async function submitAddStaff() {
     if(!r.ok) throw new Error(d.error || 'Failed to add staff.');
     closeStaffModal();
     loadStaff();
-    alert('Staff added! A welcome email with login credentials has been sent to ' + email + '.');
+    showToast('Staff added! Credentials sent to ' + email);
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
@@ -3336,7 +3336,7 @@ var _licenseStaffId = null;
 function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
   var s = _staffData.find(function(x) { return String(x.staff_id || x.id) === String(staffId); });
-  if (!s) return alert('Staff not found.');
+  if (!s) return showToast('Staff not found.', 'error');
   document.getElementById('license-driver-name').textContent = (s.name || 'Driver') + ' - ' + (s.role || '');
   var statusLabels = { not_uploaded: 'Not Uploaded', pending_review: 'Pending Review', verified: 'Verified', expired: 'Expired' };
   document.getElementById('license-cur-status').textContent = statusLabels[s.license_status] || s.license_status || 'Unknown';
@@ -3367,8 +3367,8 @@ async function licenseAction(action) {
     if (!r.ok) throw new Error(d.error || 'Failed.');
     closeLicenseModal();
     loadStaff();
-    alert('' + d.message);
-  } catch (e) { alert(' ' + e.message); }
+    showToast(d.message);
+  } catch (e) { showToast(e.message, 'error'); }
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -3423,7 +3423,7 @@ async function submitAddVehicle() {
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
     closeVehicleModal();
     loadVehicles();
-    alert('Vehicle ' + plate.toUpperCase() + ' added successfully!');
+    showToast('Vehicle ' + plate.toUpperCase() + ' added!');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
@@ -3652,7 +3652,7 @@ async function confirmPayment(invoiceId, btn) {
     var d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Failed');
     loadPayments();
-  } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
+  } catch(e) { showToast(e.message, 'error'); btn.disabled=false; btn.textContent='Confirm'; }
 }
 // Ã¢â€â‚¬Ã¢â€â‚¬ Subscription Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 async function loadSubscription() {
@@ -3852,13 +3852,13 @@ async function cancelDowngrade(btn) {
     });
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed');
-    alert('' + d.message);
+    showToast(d.message);
     // Hide the notice and reload subscription
     var container = document.getElementById('sub-pending-downgrade');
     if (container) container.style.display = 'none';
     loadSubscription();
   } catch(e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
     btn.disabled = false;
     btn.textContent = 'Cancel Downgrade';
   }
@@ -3882,7 +3882,7 @@ async function paySubscription(btn) {
       throw new Error('No checkout URL returned');
     }
   } catch(e) {
-    alert('Payment Error: ' + e.message);
+    showToast('Payment error: ' + e.message, 'error');
     btn.disabled = false;
     if (btnText) btnText.textContent = origText;
   }
@@ -3948,7 +3948,7 @@ function handleDocDrop(e) {
 }
 
 function processDocFile(file) {
-  if (file.size > 5 * 1024 * 1024) { alert('File too large. Maximum 5MB.'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('File too large. Maximum 5MB.', 'error'); return; }
   var reader = new FileReader();
   reader.onload = function(ev) {
     window._vehicleDocBase64 = ev.target.result;
@@ -4299,7 +4299,7 @@ async function submitAdminReassign() {
     if (!r.ok) throw new Error(d.error || 'Failed to reassign.');
     closeAdminReassignModal();
     loadShipments();
-    alert('' + (d.message || 'Driver reassigned successfully.'));
+    showToast(d.message || 'Driver reassigned successfully.');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false;
   btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_search</span> Reassign Driver';

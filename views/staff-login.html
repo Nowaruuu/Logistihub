@@ -239,7 +239,7 @@ async function submitForceChangePassword() {
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed to change password.');
     document.getElementById('fcp-modal').style.display = 'none';
-    alert('✅ Password changed successfully! Please sign in with your new password.');
+    showToast('Password changed!');
     document.getElementById('password').value = '';
     document.getElementById('password').focus();
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
@@ -276,7 +276,7 @@ async function submitPrompt() {
   if (!target) return;
 
   if (type === 'password' && target.includes('@') && !target.endsWith('@' + SLUG + '.com')) {
-    alert("Please enter your workspace username ending in @" + SLUG + ".com, not your personal email!");
+    showToast('Please enter your workspace username, not personal email.', 'error');
     return;
   }
 

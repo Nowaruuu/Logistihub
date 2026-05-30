@@ -967,16 +967,16 @@
     async function setTenantStatus(id, status) {
       if (!confirm(`Set tenant to "${status}"?`)) return;
       try { await SuperadminAPI.setTenantStatus(id, status); loadAll(); }
-      catch(e) { alert('Failed: ' + e.message); }
+      catch(e) { showToast('Failed: ' + e.message, 'error'); }
     }
 
     async function inviteTenant() {
       const email   = document.getElementById('invite-email')?.value?.trim();
       const company = document.getElementById('invite-company')?.value?.trim();
       const notes   = document.getElementById('invite-notes')?.value?.trim();
-      if (!email || !company) { alert('Email and company name required.'); return; }
-      try { await SuperadminAPI.inviteTenant(email, company, notes); alert('Invitation sent!'); loadTenants(); }
-      catch(e) { alert('Failed: ' + e.message); }
+      if (!email || !company) { showToast('Email and company name required.', 'error'); return; }
+      try { await SuperadminAPI.inviteTenant(email, company, notes); showToast('Invitation sent!'); loadTenants(); }
+      catch(e) { showToast('Failed: ' + e.message, 'error'); }
     }
 
     async function loadSales() {
@@ -1424,9 +1424,9 @@ async function approveApp(id) {
   if (!confirm('Approve this application? An email with the payment link will be sent to the applicant.')) return;
   try {
     var res = await SuperadminAPI.approveApp(id);
-    alert(res.message || 'Application approved!');
+    showToast(res.message || 'Application approved!');
     loadApplications();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 function openRejectModal(id) {
@@ -1438,13 +1438,13 @@ function closeRejectModal() { document.getElementById('reject-modal').style.disp
 
 async function confirmReject() {
   var reason = document.getElementById('reject-reason').value.trim();
-  if (!reason) { alert('Please provide a rejection reason.'); return; }
+  if (!reason) { showToast('Please provide a rejection reason.', 'error'); return; }
   try {
     var res = await SuperadminAPI.rejectApp(_rejectAppId, reason);
-    alert(res.message || 'Application rejected.');
+    showToast(res.message || 'Application rejected.');
     closeRejectModal();
     loadApplications();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 // Load pending count on dashboard init

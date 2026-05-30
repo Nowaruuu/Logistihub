@@ -993,7 +993,7 @@ async function changePassword() {
     });
     var d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed to update password.');
-    alert('Ã¢Å“â€¦ ' + d.message);
+    showToast(d.message);
     document.getElementById('set-current-pw').value = '';
     document.getElementById('set-new-pw').value = '';
   } catch(e) {
@@ -1280,9 +1280,9 @@ async function deleteStaff(id, btn) {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/staff/' + id, { method: 'DELETE' });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    if(!r.ok) { showToast(d.error || 'Delete failed.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
     loadStaff();
-  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+  } catch(e) { showToast('Network error.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
 }
 
 async function deleteVehicle(id, btn) {
@@ -1291,9 +1291,9 @@ async function deleteVehicle(id, btn) {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + id, { method: 'DELETE' });
     var d = await r.json();
-    if(!r.ok) { alert(d.error || 'Delete failed.'); btn.disabled = false; btn.style.opacity = '1'; return; }
+    if(!r.ok) { showToast(d.error || 'Delete failed.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
     loadVehicles();
-  } catch(e) { alert('Network error.'); btn.disabled = false; btn.style.opacity = '1'; }
+  } catch(e) { showToast('Network error.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
 }
 
 // Hook navigation to load staff/vehicles
@@ -1337,7 +1337,7 @@ async function submitAddStaff() {
     if(!r.ok) throw new Error(d.error || 'Failed to add staff.');
     closeStaffModal();
     loadStaff();
-    alert('Ã¢Å“â€¦ Staff added! A welcome email with login credentials has been sent to ' + email + '.');
+    showToast('Staff added!');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
@@ -1376,7 +1376,7 @@ async function submitAddVehicle() {
     if(!r.ok) throw new Error(d.error || 'Failed to add vehicle.');
     closeVehicleModal();
     loadVehicles();
-    alert('Ã¢Å“â€¦ Vehicle ' + plate.toUpperCase() + ' added successfully!');
+    showToast('Vehicle ' + plate.toUpperCase() + ' added!');
   } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">directions_car</span> Add Vehicle';
 }
@@ -1514,7 +1514,7 @@ async function submitAssignDriver() {
   errEl.style.display='none'; btn.disabled=true; btn.textContent='Assigning...';
   try {
     var r=await apiFetch('/'+_SLUG+'/api/admin/shipments/'+encodeURIComponent(dn)+'/assign',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({assigned_driver_id:driverId||null,assigned_vehicle_plate:plate||null})});
-    var d=await r.json(); if(!r.ok) throw new Error(d.error||'Failed'); closeAssignModal(); loadShipments(); alert('✅ '+(d.message||'Driver assigned.'));
+    var d=await r.json(); if(!r.ok) throw new Error(d.error||'Failed'); closeAssignModal(); loadShipments(); showToast(d.message||'Driver assigned.');
   } catch(e){ errEl.textContent=e.message; errEl.style.display='block'; }
   btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Assign';
 }
@@ -1589,7 +1589,7 @@ window._vehicleDocBase64 = null;
 function handleDocSelect(input) { if(input.files&&input.files[0]) processDocFile(input.files[0]); }
 function handleDocDrop(e) { e.preventDefault(); var z=document.getElementById('v-doc-zone'); z.style.borderColor='#e2e8f0'; z.style.background='#fafbfc'; if(e.dataTransfer.files&&e.dataTransfer.files[0]) processDocFile(e.dataTransfer.files[0]); }
 function processDocFile(file) {
-  if(file.size>5*1024*1024){alert('File too large. Maximum 5MB.');return;}
+  if(file.size>5*1024*1024){showToast('File too large. Max 5MB.', 'error');return;}
   var reader=new FileReader();
   reader.onload=function(ev){window._vehicleDocBase64=ev.target.result;document.getElementById('v-doc-filename').textContent=file.name;document.getElementById('v-doc-preview').style.display='flex';document.getElementById('v-doc-zone').style.display='none';};
   reader.readAsDataURL(file);
