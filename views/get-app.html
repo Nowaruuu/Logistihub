@@ -7,48 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;min-height:100vh;background:#f1f5f9;display:flex;align-items:center;justify-content:center;padding:20px;}
-.card{background:#fff;border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,0.08);width:100%;max-width:400px;overflow:hidden;}
-.card-header{padding:32px 32px 24px;text-align:center;}
-.logo-box{width:72px;height:72px;border-radius:20px;background:var(--brand,#0a1628);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
-.logo-box .material-symbols-outlined{color:#fff;font-size:36px;}
-.company-name{font-size:22px;font-weight:800;color:#0a1628;margin-bottom:4px;}
-.powered{font-size:11px;color:#94a3b8;font-family:'DM Mono',monospace;}
-.card-body{padding:0 32px 32px;}
-.divider{height:1px;background:#f1f5f9;margin-bottom:24px;}
+<link rel="stylesheet" href="/css/get-app.css"/>
 
-/* QR section */
-.qr-section{text-align:center;margin-bottom:24px;}
-.qr-label{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
-.qr-box{display:inline-block;padding:16px;background:#fff;border:2px solid #e2e8f0;border-radius:16px;}
-
-/* Download button */
-.btn-download{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--brand,#0a1628);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;transition:opacity .2s;}
-.btn-download:hover{opacity:.87;}
-.btn-download .material-symbols-outlined{font-size:22px;}
-.btn-sub{text-align:center;font-size:12px;color:#94a3b8;margin-top:10px;}
-
-/* Steps */
-.steps{background:#f8fafc;border-radius:14px;padding:16px 18px;margin-bottom:20px;}
-.step{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
-.step:last-child{margin-bottom:0;}
-.step-num{width:24px;height:24px;border-radius:50%;background:var(--brand,#0a1628);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.step-text{font-size:13px;color:#475569;line-height:1.5;}
-.step-text strong{color:#0a1628;}
-
-/* Unavailable state */
-.unavailable{text-align:center;padding:20px;background:#fef2f2;border-radius:14px;margin-bottom:20px;}
-.unavailable .material-symbols-outlined{font-size:32px;color:#ef4444;margin-bottom:8px;}
-.unavailable p{font-size:13px;color:#dc2626;}
-@media (max-width: 480px) {
-  body { padding: 12px; }
-  .card-header { padding: 24px 20px 18px; }
-  .card-body { padding: 0 20px 24px; }
-  .company-name { font-size: 19px; }
-}
-</style>
 </head>
 <body>
 <div class="card">
