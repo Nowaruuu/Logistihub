@@ -9,397 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-.lh-dot{background:none!important;border:none!important;}
-/* â”€â”€ GUI Scale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-/* Small */
-.scale-sm .content { font-size: 11px; }
-.scale-sm .content .stat-value { font-size: 16px; }
-.scale-sm .content .stat-card { padding: 8px 10px; min-height: auto; }
-.scale-sm .content .stat-label { font-size: 9px; }
-.scale-sm .content .stat-note { font-size: 9px; }
-.scale-sm .content h2 { font-size: 13px; }
-.scale-sm .content .card { padding: 0; }
-.scale-sm .content td, .scale-sm .content th { padding: 5px 8px; font-size: 10px; }
-.scale-sm .content .form-label { font-size: 10px; }
-.scale-sm .content input, .scale-sm .content select, .scale-sm .content textarea { font-size: 11px; padding: 6px 8px; }
-.scale-sm .content .btn { font-size: 10px; padding: 5px 10px; }
-.scale-sm .content .ph-row h2 { font-size: 13px; }
-.scale-sm .content .ph-row p { font-size: 10px; }
-.scale-sm .content .form-sec { font-size: 9px; }
-.scale-sm .content .hint { font-size: 9px; }
-.scale-sm .content .badge { font-size: 9px; padding: 2px 6px; }
-.scale-sm .content .card-head { padding: 8px 12px; }
-.scale-sm .content .tabs-bar .tab { font-size: 10px; padding: 6px 10px; }
-.scale-sm .page-title { font-size: 12px; }
-.scale-sm .page-sub { font-size: 9px; }
-.scale-sm .nav-link { font-size: 11px; padding: 7px 10px; }
-.scale-sm .nav-link .material-symbols-outlined { font-size: 16px; }
-.scale-sm .nav-sec { font-size: 8px; }
-.scale-sm .sidebar { width: 190px; }
-
-/* Medium (default) */
-.scale-md .content { font-size: 14px; }
-.scale-md .content .stat-value { font-size: 26px; }
-
-/* Large */
-.scale-lg .content { font-size: 17px; }
-.scale-lg .content .stat-value { font-size: 36px; }
-.scale-lg .content .stat-card { padding: 26px 24px; }
-.scale-lg .content .stat-label { font-size: 14px; }
-.scale-lg .content h2 { font-size: 24px; }
-.scale-lg .content .card { margin-bottom: 24px; }
-.scale-lg .content td, .scale-lg .content th { padding: 16px 18px; font-size: 15px; }
-.scale-lg .content .form-label { font-size: 16px; }
-.scale-lg .content input, .scale-lg .content select, .scale-lg .content textarea { font-size: 16px; padding: 13px 16px; }
-.scale-lg .content .btn { font-size: 15px; padding: 12px 22px; }
-.scale-lg .content .form-sec { font-size: 13px; }
-.scale-lg .content .hint { font-size: 13px; }
-.scale-lg .content .ph-row h2 { font-size: 24px; }
-.scale-lg .content .ph-row p { font-size: 15px; }
-.scale-lg .page-title { font-size: 20px; }
-.scale-lg .page-sub { font-size: 14px; }
-.scale-lg .nav-link { font-size: 15px; padding: 12px 14px; }
-.scale-lg .nav-link .material-symbols-outlined { font-size: 19px; }
-.scale-lg .nav-sec { font-size: 11px; }
-body{font-family:'DM Sans',sans-serif;background:var(--app-bg,#f1f5f9);color:#0f172a;height:100vh;display:flex;overflow:hidden;}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
-
-/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.sidebar{width:224px;background:var(--sidebar-bg,#0f2235);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;}
-.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
-#sub-expiry-badge.overdue-glow{animation:overdueGlow 1s ease-in-out infinite;}
-@keyframes overdueGlow{0%,100%{transform:scale(1);text-shadow:0 0 4px rgba(239,68,68,.4);color:#ef4444;}50%{transform:scale(1.2);text-shadow:0 0 20px rgba(239,68,68,1),0 0 40px rgba(239,68,68,.6);color:#ff2020;}}
-.tenant-name{font-weight:800;font-size:14px;color:#fff;line-height:1.2;}
-.tenant-sub{font-size:10px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:2px;}
-.tenant-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em;}
-.tenant-badge .material-symbols-outlined{font-size:11px;}
-
-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}
-nav::-webkit-scrollbar{display:none;}
-.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;padding:11px 10px 4px;}
-.nav-link{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.nav-link:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);}
-.nav-link.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
-.nav-link .material-symbols-outlined{font-size:17px;}
-.nav-badge{margin-left:auto;background:rgba(251,191,36,.18);color:#fbbf24;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'DM Mono',monospace;}
-.sidebar-bottom{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,.07);}
-.user-row{display:flex;align-items:center;gap:9px;padding:9px 10px;}
-.uavatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;}
-.uavatar .material-symbols-outlined{font-size:15px;color:rgba(255,255,255,.6);}
-.uname{font-size:12px;font-weight:600;color:#fff;}
-.uemail{font-size:10px;color:rgba(255,255,255,.3);}
-
-/* â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-width:0;}
-.topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10;flex-shrink:0;}
-.page-title{font-weight:700;font-size:15px;color:#0f2235;}
-.page-sub{font-size:11px;color:#94a3b8;margin-top:1px;}
-.tb-right{display:flex;align-items:center;gap:8px;}
-.tb-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#94a3b8;}
-.tb-btn:hover{background:#f1f5f9;}
-.notif-wrap{position:relative;}
-.notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid #fff;}
-.search-bar{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 11px;width:200px;position:relative;}
-.search-bar input{border:none;background:none;outline:none;font-size:12px;font-family:'DM Sans',sans-serif;color:#0f172a;width:100%;}
-.search-bar .material-symbols-outlined{color:#94a3b8;font-size:16px;}
-.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:100;display:none;scrollbar-width:thin;}
-.search-results.show{display:block;}
-.sr-empty{padding:24px 16px;text-align:center;color:#94a3b8;font-size:12px;}
-.sr-group{padding:6px 12px 2px;font-size:9px;font-weight:800;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;}
-.sr-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .1s;}
-.sr-item:hover{background:#f8fafc;}
-.sr-item .material-symbols-outlined{font-size:16px;color:#64748b;}
-.sr-title{font-size:12px;font-weight:600;color:#0f172a;}
-.sr-sub{font-size:10px;color:#94a3b8;}
-.tb-dropdown{position:absolute;top:calc(100% + 6px);right:0;width:340px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:100;display:none;scrollbar-width:thin;}
-.tb-dropdown.show{display:block;}
-.tb-dropdown-head{padding:14px 16px 10px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
-.tb-dropdown-head h4{font-size:13px;font-weight:800;color:#0f172a;margin:0;}
-.tb-dropdown-head button{border:none;background:none;font-size:11px;color:#3b82f6;cursor:pointer;font-family:inherit;font-weight:600;}
-.notif-item{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid #f8fafc;cursor:pointer;transition:background .1s;}
-.notif-item:hover{background:#f8fafc;}
-.notif-item.unread{background:#f0f9ff;}
-.notif-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.notif-text{font-size:12px;color:#334155;line-height:1.4;}
-.notif-text strong{font-weight:700;color:#0f172a;}
-.notif-time{font-size:10px;color:#94a3b8;margin-top:2px;}
-.help-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s;}
-.help-item:hover{background:#f8fafc;}
-.help-item .material-symbols-outlined{font-size:18px;color:#64748b;}
-.help-label{font-size:12px;font-weight:600;color:#0f172a;}
-.help-desc{font-size:10px;color:#94a3b8;}
-.help-kbd{margin-left:auto;font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;}
-
-.content{padding:22px;flex:1;min-width:0;overflow-x:hidden;}
-.screen{display:none;}
-.screen.active{display:block;}
-
-/* â”€â”€ STAT GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;}
-.stat-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.stat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
-.stat-icon .material-symbols-outlined{font-size:15px;}
-.si-b{background:#eff6ff;}.si-b .material-symbols-outlined{color:#3b82f6;}
-.si-g{background:#f0fdf4;}.si-g .material-symbols-outlined{color:#22c55e;}
-.si-a{background:#fffbeb;}.si-a .material-symbols-outlined{color:#f59e0b;}
-.si-r{background:#fff1f2;}.si-r .material-symbols-outlined{color:#f43f5e;}
-.si-p{background:#f5f3ff;}.si-p .material-symbols-outlined{color:#8b5cf6;}
-.stat-value{font-size:26px;font-weight:800;color:#0f2235;line-height:1;}
-.stat-note{font-size:10px;color:#94a3b8;margin-top:3px;}
-
-/* â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px;max-width:100%;}
-.card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-weight:700;font-size:13px;color:#0f2235;display:flex;align-items:center;gap:6px;}
-.card-title .material-symbols-outlined{font-size:15px;color:#94a3b8;}
-.card-body{padding:14px 16px;}
-.card-action{font-size:12px;color:#3b82f6;font-weight:600;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;}
-.card-action:hover{text-decoration:underline;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
-
-/* â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.tbl-wrap{overflow-x:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-.tbl-wrap::-webkit-scrollbar{height:8px;}
-.tbl-wrap::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px;margin:0 8px;}
-.tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#3b4f6b,#1e293b);border-radius:8px;border:2px solid #f1f5f9;}
-.tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#4a6382,#2d3f56);}
-[data-theme="dark"] .tbl-wrap{scrollbar-color:#4a6382 #1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-track{background:#1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4a6382,#64748b);border-color:#1e293b;}
-[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#5b7a9e,#7c8fa3);}
-table{width:100%;border-collapse:collapse;}
-#s-pricing.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-pricing .ph-row{flex-shrink:0;}
-#s-pricing > div[style*="grid"]{flex:1;min-height:0;overflow-y:auto;}
-#s-pricing .form-card{display:flex;flex-direction:column;justify-content:space-between;min-height:100%;}
-#s-payments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-payments .ph-row{flex-shrink:0;}
-#s-payments .stat-grid{flex-shrink:0;}
-#s-payments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-payments > .card > .card-head{flex-shrink:0;}
-#s-payments > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-staff.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-staff .ph-row{flex-shrink:0;}
-#s-staff > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-staff > .card > .card-head{flex-shrink:0;}
-#s-staff > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-vehicles.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-vehicles .ph-row{flex-shrink:0;}
-#s-vehicles > .card{flex-shrink:0;}
-#s-vehicles > .card:last-of-type{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-vehicles > .card:last-of-type > .card-head{flex-shrink:0;}
-#s-vehicles > .card:last-of-type > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-app-users.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-app-users .ph-row{flex-shrink:0;}
-#s-app-users > .card:first-of-type{flex-shrink:0;}
-#s-app-users > .card:last-of-type{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-app-users > .card:last-of-type > .card-head{flex-shrink:0;}
-#s-app-users > .card:last-of-type > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-pod.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-pod .ph-row{flex-shrink:0;}
-#s-pod > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-pod > .card > .card-head{flex-shrink:0;}
-#s-pod > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-subscription.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-subscription .ph-row{flex-shrink:0;}
-#s-subscription > div[style*="grid"]{flex-shrink:0;}
-#s-subscription > #sub-pending-downgrade{flex-shrink:0;}
-#s-subscription > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-subscription > .card > div:first-child{flex-shrink:0;}
-#s-subscription > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-shipments.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-shipments .ph-row{flex-shrink:0;}
-#s-shipments > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-shipments > .card > .card-head{flex-shrink:0;}
-#s-shipments > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-shipments .tbl-wrap::-webkit-scrollbar{width:6px;height:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
-#s-shipments .tbl-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a6382,#2d3f56);}
-#s-shipments thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e2e8f0;}
-/* Audit Logs full-height scroll */
-#s-audit.active{display:flex;flex-direction:column;height:calc(100vh - 100px);overflow:hidden;}
-#s-audit > .card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-#s-audit > .card > div:first-child{flex-shrink:0;}
-#s-audit > .card > .tbl-wrap{flex:1;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-audit .tbl-wrap::-webkit-scrollbar{width:6px;height:6px;}
-#s-audit .tbl-wrap::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px;}
-#s-audit .tbl-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
-#s-audit thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e2e8f0;}
-/* Recent Transactions scrollable */
-#s-sales-report .card .tbl-wrap.tx-scroll{max-height:420px;overflow-y:auto;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#3b4f6b #f1f5f9;}
-#s-sales-report .tbl-wrap.tx-scroll::-webkit-scrollbar{width:6px;height:6px;}
-#s-sales-report .tbl-wrap.tx-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px;}
-#s-sales-report .tbl-wrap.tx-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4f6b,#1e293b);border-radius:6px;}
-#s-sales-report .tbl-wrap.tx-scroll thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e2e8f0;}
-th{padding:8px 13px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
-td{padding:11px 13px;font-size:12px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle;}
-tr:last-child td{border:none;}
-tr:hover td{background:#f8fafc;}
-
-/* â”€â”€ BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
-.b-pending{background:#fef9c3;color:#a16207;}
-.b-transit{background:#dbeafe;color:#1d4ed8;}
-.b-delivered{background:#dcfce7;color:#15803d;}
-.b-declined{background:#fee2e2;color:#b91c1c;}
-.b-available{background:#dcfce7;color:#15803d;}
-.b-onduty{background:#dbeafe;color:#1d4ed8;}
-.b-maint{background:#fef9c3;color:#a16207;}
-.b-paid{background:#dcfce7;color:#15803d;}
-.b-overdue{background:#fee2e2;color:#b91c1c;}
-.b-awaiting{background:#fef3c7;color:#92400e;}
-.type-pill{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
-.t-pkg{background:#ede9fe;color:#6d28d9;}
-.t-veh{background:#dbeafe;color:#1d4ed8;}
-.t-food{background:#fef9c3;color:#92400e;}
-.t-doc{background:#f0fdf4;color:#15803d;}
-.t-bulk{background:#f8fafc;color:#475569;}
-
-/* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.btn-primary{background:#0f2235;color:#fff;}
-.btn-primary:hover{opacity:.86;}
-.btn-ghost{background:none;color:#64748b;}
-.btn-ghost:hover{background:#f1f5f9;}
-.btn-sm{padding:5px 11px;font-size:11px;}
-.btn .material-symbols-outlined{font-size:14px;}
-
-/* â”€â”€ EMPTY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.empty{padding:44px 20px;text-align:center;}
-.empty .material-symbols-outlined{font-size:40px;color:#e2e8f0;display:block;margin-bottom:7px;}
-.empty p{font-size:12px;color:#94a3b8;}
-.empty .esub{font-size:11px;color:#cbd5e1;margin-top:3px;}
-
-/* â”€â”€ FORMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:14px;}
-.form-sec{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #f1f5f9;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.form-label{font-size:11px;font-weight:600;color:#475569;}
-.field-wrap{position:relative;}
-.field-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:16px;pointer-events:none;}
-.field-wrap input,.field-wrap select{padding-left:32px!important;}
-input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;background:#fff;color:#0f172a;}
-input:focus,select:focus,textarea:focus{border-color:#0f2235;box-shadow:0 0 0 3px rgba(15,34,53,.07);}
-select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;padding-right:26px;}
-textarea{resize:vertical;}
-.hint{font-size:10px;color:#94a3b8;font-style:italic;}
-.tabs-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:14px;}
-.tab{padding:8px 13px;font-size:12px;font-weight:500;color:#94a3b8;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s;}
-.tab.active{color:#0f2235;font-weight:700;border-bottom-color:#0f2235;}
-.filter-bar{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
-.f-select{padding:6px 24px 6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3e%3cpath fill='%2394a3b8' d='M128,188a11.91,11.91,0,0,1-8.49-3.51l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17l-80,80A11.91,11.91,0,0,1,128,188Z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 6px center;background-size:13px;}
-.f-input{padding:6px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;}
-.f-input:focus{border-color:#0f2235;}
-
-/* page header */
-.ph-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
-.ph-row h2{font-size:18px;font-weight:800;color:#0f2235;}
-.ph-row p{font-size:12px;color:#64748b;margin-top:3px;}
-
-/* type bars */
-.type-bar-list{display:flex;flex-direction:column;gap:10px;}
-.type-bar-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
-.type-bar-name{font-weight:600;color:#334155;}
-.type-bar-ct{color:#94a3b8;font-family:'DM Mono',monospace;font-size:11px;}
-.bar-track{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:99px;}
-
-/* map placeholder */
-.map-ph{height:200px;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#94a3b8;}
-.map-ph .material-symbols-outlined{font-size:38px;color:#cbd5e1;}
-.map-ph p{font-size:12px;}
-
-/* user reg link box */
-.reg-link-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.reg-link-text{font-size:12px;color:#15803d;line-height:1.6;}
-.reg-link-text strong{color:#14532d;display:block;margin-bottom:3px;}
-.reg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:#15803d;word-break:break-all;}
-.copy-btn{flex-shrink:0;padding:6px 12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:700;color:#15803d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
-.copy-btn:hover{background:#bbf7d0;}
-.copy-btn .material-symbols-outlined{font-size:14px;}
-.sidebar-overlay{display:none;position:fixed;top:0;right:0;bottom:0;left:224px;background:rgba(0,0,0,0.5);z-index:40;}
-.sidebar-overlay.show{display:block;}
-.sidebar-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;margin-right:8px;}
-.sidebar-toggle span{display:block;width:20px;height:2px;background:#334155;margin:4px 0;border-radius:2px;transition:all .3s;}
-@media(max-width:768px){
-  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .3s;height:100vh;height:100dvh;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;}
-  .sidebar.open{left:0;}
-  .sidebar nav{overflow-y:visible!important;flex:none;min-height:auto;}
-  .sidebar-bottom{margin-top:auto;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,14px);}
-  .sidebar-toggle{display:block;}
-  body{display:block;height:auto;overflow:auto;-webkit-overflow-scrolling:touch;}
-  .main{width:100%!important;min-width:0!important;overflow-y:auto!important;height:auto!important;}
-  .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
-  .grid-2,.grid-3-1{grid-template-columns:1fr!important;}
-  .form-grid{grid-template-columns:1fr!important;}
-  .content{padding:14px;overflow-x:hidden;overflow-y:visible!important;height:auto!important;}
-  .search-bar{display:none;}
-  .topbar{padding:0 12px;position:sticky;top:0;z-index:10;}
-  .ph-row{flex-direction:column;gap:10px;}
-  .filter-bar{flex-direction:column;align-items:stretch;}
-  body.sidebar-open{overflow:hidden;}
-
-  /* Override ALL inline grid styles */
-  [style*="grid-template-columns:repeat(5"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2,1fr)!important;}
-  [style*="grid-template-columns:repeat(auto"]{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns: repeat"]{grid-template-columns:repeat(2,1fr)!important;}
-
-  /* CARDS - remove overflow:hidden so children can scroll */
-  .card{overflow:visible!important;max-width:100%;}
-  .card-head{flex-direction:column;gap:8px;align-items:stretch!important;overflow:visible!important;padding:10px 12px!important;}
-
-  /* TABS BAR - horizontal scroll with touch */
-  .tabs-bar{overflow-x:auto!important;-webkit-overflow-scrolling:touch;white-space:nowrap!important;flex-wrap:nowrap!important;padding-bottom:4px;display:flex!important;gap:0!important;scrollbar-width:none;}
-  .tabs-bar::-webkit-scrollbar{display:none;}
-  .tab{flex-shrink:0!important;white-space:nowrap!important;}
-
-  /* ALL SECTIONS - remove fixed height on mobile so content scrolls naturally */
-  #s-shipments.active,#s-pricing.active,#s-payments.active,#s-staff.active,
-  #s-vehicles.active,#s-app-users.active,#s-pod.active,#s-settings.active{
-    height:auto!important;overflow:visible!important;display:block!important;
-  }
-  #s-shipments > .card,#s-pricing > div,#s-payments > .card,
-  #s-staff > .card,#s-vehicles > .card,#s-app-users > .card,#s-pod > .card{
-    overflow:visible!important;height:auto!important;
-  }
-
-  /* TABLES - force horizontal scroll */
-  .tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%!important;display:block!important;overflow-y:visible!important;}
-  .tbl-wrap table{min-width:700px!important;}
-
-  /* MAP - shrink on mobile */
-  #dash-live-map{height:250px!important;}
-  .map-ph{height:150px!important;}
-  [style*="height:500px"]{height:250px!important;}
-
-  /* LIVE PREVIEW - inline on mobile instead of fixed overlay */
-  #lp-panel{position:relative!important;right:auto!important;top:auto!important;width:100%!important;margin-bottom:16px;}
-
-  /* Reg link box */
-  .reg-link-box{flex-direction:column;gap:8px;}
-  .copy-btn{align-self:flex-start;}
-
-  /* Pricing grid - stack on mobile */
-  #s-pricing [style*="grid"]{grid-template-columns:1fr!important;height:auto!important;overflow:visible!important;}
-  .form-card{min-height:auto!important;}
-}
-@media(max-width:480px){
-  .stat-grid{grid-template-columns:1fr!important;}
-  [style*="grid-template-columns"]{grid-template-columns:1fr!important;}
-  .stat-value{font-size:20px;}
-  #dash-live-map{height:200px!important;}
-  [style*="height:500px"]{height:200px!important;}
-}
-</style>
+<link rel="stylesheet" href="/css/admin-dashboard.css">
 </head>
 <script src="/public/frontend-api.js"></script>
 <body>
@@ -456,8 +66,8 @@ textarea{resize:vertical;}
 </aside>
 
 <!-- MAIN -->
-<div class="main">
-  <div class="topbar">
+<main class="main">
+  <header class="topbar">
     <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
     <div>
       <div class="page-title" id="page-title">Dashboard</div>
@@ -492,7 +102,7 @@ textarea{resize:vertical;}
         </div>
       </div>
     </div>
-  </div>
+  </header>
 
   <div class="content">
 
@@ -518,7 +128,7 @@ textarea{resize:vertical;}
       <div class="card">
         <div class="card-head">
           <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-          <button class="card-action" onclick="go('shipments',null)">View all →’</button>
+          <button class="card-action" onclick="go('shipments',null)">View all â†’â€™</button>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -530,11 +140,11 @@ textarea{resize:vertical;}
 
       <div class="grid-2">
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →’</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage â†’â€™</button></div>
           <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →’</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage â†’â€™</button></div>
           <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
@@ -545,7 +155,7 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- Ã¢•ÂÃ¢•Â SHIPMENTS Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â SHIPMENTS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-shipments" class="screen">
       <div class="ph-row">
         <div><h2>Shipments</h2><p>All deliveries within your workspace.</p></div>
@@ -566,14 +176,14 @@ textarea{resize:vertical;}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup ←’ Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
-            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments…</p></div></td></tr></tbody>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup â†â€™ Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
+            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipmentsâ€¦</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- Ã¢•ÂÃ¢•Â NEW SHIPMENT Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â NEW SHIPMENT ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-new-shipment" class="screen">
       <div class="ph-row">
         <div><h2>New Shipment</h2><p>Create a delivery record within your workspace.</p></div>
@@ -616,7 +226,7 @@ textarea{resize:vertical;}
 
 
 
-    <!-- ═”═ VEHICLES ══════════════════════════════ -->
+    <!-- â•â€â•Â VEHICLES â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
 
       <!-- Vehicle Requests Panel -->
@@ -636,7 +246,7 @@ textarea{resize:vertical;}
           <button id="pkg-cat-save-btn" onclick="savePackageCategories()" class="btn btn-primary btn-sm" style="font-size:12px;padding:6px 16px;">Save Changes</button>
         </div>
         <div id="pkg-cat-list" style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:10px;">
-          <p style="color:var(--text-muted);font-size:12px;">Loading…</p>
+          <p style="color:var(--text-muted);font-size:12px;">Loadingâ€¦</p>
         </div>
       </div>
 
@@ -644,7 +254,7 @@ textarea{resize:vertical;}
     </div>
 
 
-    <!-- ════ STAFF ══════════════════════════════  -->
+    <!-- â•Ââ•Ââ•Ââ•Â STAFF â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â  -->
     <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
       <div class="card">
         <div class="card-head">
@@ -656,7 +266,7 @@ textarea{resize:vertical;}
     </div>
 
 
-    <!-- Ã¢•ÂÃ¢•Â APP USERS Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â APP USERS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-app-users" class="screen">
       <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
       <div class="reg-link-box" style="margin-bottom:14px;">
@@ -671,17 +281,17 @@ textarea{resize:vertical;}
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
           <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading…</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loadingâ€¦</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
-    <!-- Ã¢•ÂÃ¢•Â PAYMENTS Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â PAYMENTS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
       <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
-        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">₱0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">₱0</div><div class="stat-note">Fuel + driver labor</div></div>
-        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">₱0</div><div class="stat-note" id="pay-net-note">Revenue âˆ’ Expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">â‚±0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">â‚±0</div><div class="stat-note">Fuel + driver labor</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">â‚±0</div><div class="stat-note" id="pay-net-note">Revenue Ã¢Ë†â€™ Expenses</div></div>
         <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
       </div>
@@ -696,7 +306,7 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- ══ SALES REPORT ══════════════════ -->
+    <!-- â•Ââ•Â SALES REPORT â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-sales-report" class="screen">
       <div class="ph-row" style="display:flex;justify-content:flex-end;align-items:center;">
         <div style="display:flex;gap:10px;">
@@ -708,29 +318,29 @@ textarea{resize:vertical;}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:20px;border-left:4px solid #10b981;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Collected (Paid)</div>
-          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
+          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Total Billed</div>
-          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #f59e0b;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Est. Expenses</div>
-          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">₱0</div>
+          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">â‚±0</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Fuel + driver labor</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Net Profit</div>
-          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">₱0</div>
+          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">After estimated costs</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Avg Per Delivery</div>
-          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">₱0</div>
+          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #ea580c;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Pending</div>
-          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">₱0</div>
+          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">â‚±0</div>
           <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
         </div>
       </div>
@@ -771,7 +381,7 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- ══ SUBSCRIPTION ══════════════════ -->
+    <!-- â•Ââ•Â SUBSCRIPTION â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-subscription" class="screen">
       <div class="ph-row"><div><h2>Subscription</h2><p>Monitor your plan billing and upcoming payments.</p></div></div>
       <!-- Plan Summary Cards -->
@@ -783,7 +393,7 @@ textarea{resize:vertical;}
         </div>
         <div class="card" style="padding:20px;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Monthly Cost</div>
-          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">₱0.00</div>
+          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">â‚±0.00</div>
           <div id="sub-plan-cycle" style="font-size:12px;color:#64748b;margin-top:4px;">per month</div>
         </div>
         <div class="card" style="padding:20px;">
@@ -831,7 +441,7 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- Ã¢•ÂÃ¢•Â PROOF OF DELIVERY Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â PROOF OF DELIVERY ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-pod" class="screen">
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
@@ -840,10 +450,10 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- Ã¢•ÂÃ¢•Â USER REGISTRATION Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â USER REGISTRATION ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
 
 
-    <!-- Ã¢•ÂÃ¢•Â SETTINGS Ã¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•ÂÃ¢•Â -->
+    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â SETTINGS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
     <div id="s-settings" class="screen">
       <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
       <div class="form-card" style="max-width:700px;">
@@ -897,7 +507,7 @@ textarea{resize:vertical;}
                   <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
                 </button>
                 <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
-                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">✕ Remove</button>
+                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">âœ• Remove</button>
               </div>
             </div>
             <!-- Color mode -->
@@ -977,7 +587,7 @@ textarea{resize:vertical;}
       </div>
     </div>
 
-    <!-- ══ PRICING ═══════════════════════════════ -->
+    <!-- â•Ââ•Â PRICING â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-pricing" class="screen">
       <div class="ph-row"><div><h2>Delivery Pricing</h2><p>Customize how delivery fees are calculated for your customers.</p></div></div>
       <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
@@ -997,7 +607,7 @@ textarea{resize:vertical;}
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (₱/km per vehicle)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (â‚±/km per vehicle)</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -1008,7 +618,7 @@ textarea{resize:vertical;}
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (₱/kg)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (â‚±/kg)</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0~20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21~100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -1018,7 +628,7 @@ textarea{resize:vertical;}
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (₱)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (â‚±)</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -1157,7 +767,7 @@ function calcPreview(){
 setTimeout(calcPreview, 100);
 </script>
 
-    <!-- ══ AUDIT LOGS ═════════════════════════ -->
+    <!-- â•Ââ•Â AUDIT LOGS â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-audit" class="screen">
       <div class="card" style="padding:0;overflow:hidden;">
         <div style="padding:20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
@@ -1182,7 +792,7 @@ setTimeout(calcPreview, 100);
       </div>
     </div>
 
-    <!-- ══ UPGRADE PLAN ═════════════════════════ -->
+    <!-- â•Ââ•Â UPGRADE PLAN â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
     <div id="s-upgrade" class="screen">
 
       <!-- Hero Banner -->
@@ -1240,7 +850,7 @@ setTimeout(calcPreview, 100);
           <span class="material-symbols-outlined" style="font-size:14px;">lock</span> Secured by PayMongo
         </div>
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash · Card · Maya
+          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash Â· Card Â· Maya
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
           <span class="material-symbols-outlined" style="font-size:14px;">autorenew</span> Cancel anytime
@@ -1366,9 +976,9 @@ setTimeout(calcPreview, 100);
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + cyclePrice + '</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;">â‚±' + cyclePrice + '</span>' +
             '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
-            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">₱' + p.price + '/mo equivalent</div>' : '') +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">â‚±' + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +
@@ -1447,7 +1057,7 @@ setTimeout(calcPreview, 100);
     </script>
 
   </div>
-</div>
+</main>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
@@ -1468,7 +1078,7 @@ setTimeout(calcPreview, 100);
 <script>
 function toggleSidebar(){var s=document.querySelector('.sidebar');var o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('show');document.body.classList.toggle('sidebar-open');}
 function closeSidebar(){document.querySelector('.sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.classList.remove('sidebar-open');}
-// â”€â”€ Global session expiry handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Global session expiry handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _sessionExpired = false;
 
 function redirectToLogin() {
@@ -1524,7 +1134,7 @@ function logout() {
     .catch(function() { window.location.href = '/' + slug + '/admin-login'; });
 }
 
-// ── Real-time notification polling (every 30s) ───────────────
+// â”€â”€ Real-time notification polling (every 30s) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _prevShipmentIds = null;
 var _prevStaffPendingCount = null;
 var _prevVehicleRequestCount = null;
@@ -1766,7 +1376,7 @@ function filterAppUsers(){
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// â”€â”€ Shipment loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Shipment loading Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _allShipments=[];
 function loadShipments(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -1866,7 +1476,7 @@ function updateStatCards(){
   cards[2].querySelector('.stat-note').textContent=delivered?delivered+' completed':'No data yet';
   cards[3].querySelector('.stat-value').textContent=pending;
   cards[3].querySelector('.stat-note').textContent=pending?pending+' awaiting':'No data yet';
-  // Nav badge — Shipments count
+  // Nav badge â€” Shipments count
   var navBadge=document.querySelector('.nav-badge');
   if(navBadge)navBadge.textContent=total;
 }
@@ -1956,7 +1566,7 @@ _pollInterval = setInterval(function(){
   }).catch(function(){});
 }, 30000);
 
-// â”€â”€ Dashboard Fleet Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Fleet Status Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function loadDashFleet(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1971,7 +1581,7 @@ function loadDashFleet(){
       vehicles.slice(0,5).forEach(function(v){
         var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
         html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
-        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' · '+esc(v.model):'')+'</div></div></div>';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' Â· '+esc(v.model):'')+'</div></div></div>';
         html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span>';
         html+='</div>';
       });
@@ -1981,7 +1591,7 @@ function loadDashFleet(){
     }).catch(function(){});
 }
 
-// â”€â”€ Dashboard Staff On Duty â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Staff On Duty Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function loadDashStaff(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1990,13 +1600,13 @@ function loadDashStaff(){
     .then(function(data){
       var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
 
-      // ── Update Staff nav badge (pending license reviews) ──────────────────
+      // â”€â”€ Update Staff nav badge (pending license reviews) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       var pendingCount = staff.filter(function(s){
         return s.role === 'Driver' && s.license_status === 'pending_review';
       }).length;
       var badge = document.getElementById('staff-pending-badge');
       if(badge){ badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
-      // ─────────────────────────────────────────────────────────────────────
+      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
       var el=document.getElementById('dash-staff-body');
       if(!el)return;
@@ -2017,7 +1627,7 @@ function loadDashStaff(){
     }).catch(function(){});
 }
 
-// â”€â”€ Dashboard Live Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Live Map Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _dashMap=null;
 var _dashMapLayers=[];
 function _clearMapLayers(){
@@ -2056,7 +1666,7 @@ function loadDashMap(){
   if(!_dashMap){
     var phBounds=L.latLngBounds([4.2,116.5],[21.3,127.0]);
     _dashMap=L.map(mapEl,{scrollWheelZoom:true,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:6,maxZoom:18}).setView([12.5,122.0],6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(_dashMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'Â© OpenStreetMap'}).addTo(_dashMap);
     setTimeout(function(){_dashMap.invalidateSize();},200);
 
   }
@@ -2072,13 +1682,13 @@ function loadDashMap(){
     if(!hasPickup&&!hasDrop)return;
     var isActive=(s.status==='In Transit'||s.status==='Out for Delivery');
     var typeLabel=s.item_type_flag||'PKG';
-    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
+    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' Â· '+esc(s.driver_name):'';
     if(hasPickup){
-      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">â–² Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">Ã¢â€“Â² Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
       allPts.push([pLat,pLng]);
     }
     if(hasDrop){
-      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">â–¼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">Ã¢â€“Â¼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
       allPts.push([dLat,dLng]);
     }
     if(hasPickup&&hasDrop){
@@ -2091,7 +1701,7 @@ function loadDashMap(){
 }
 
 
-// â”€â”€ Sales Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Sales Report Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _srMonthlyChart=null, _srTypeChart=null;
 var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -2197,7 +1807,7 @@ function loadSalesReport(){
     document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
-    // Expense estimation: ₱27/km (₱15 driver + ₱12 fuel) or 30% fallback
+    // Expense estimation: â‚±27/km (â‚±15 driver + â‚±12 fuel) or 30% fallback
     var totalBilled = Number(data.revenue_total||0);
     var estExpenses = data.total_distance_km ? (Number(data.total_distance_km) * 27) : (totalBilled * 0.30);
     var netProfit = totalBilled - estExpenses;
@@ -2884,7 +2494,7 @@ async function saveSettings() {
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
-// â”€â”€ FillList init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ FillList init Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
@@ -3102,7 +2712,7 @@ setInterval(function() {
 })();
 </script>
 
-<!-- ══ ADD STAFF MODAL ═══════════════════════════════════════════ -->
+<!-- â•Ââ•Â ADD STAFF MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
 <div id="modal-staff" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -3144,7 +2754,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ LICENSE REVIEW MODAL ═══════════════════════════════════════ -->
+<!-- â•Ââ•Â LICENSE REVIEW MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
 <div id="modal-license" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:520px;box-shadow:0 24px 60px rgba(0,0,0,0.25);max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -3173,7 +2783,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ ADD VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- â•Ââ•Â ADD VEHICLE MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
 <div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -3257,7 +2867,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- ══ UPDATE VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- â•Ââ•Â UPDATE VEHICLE MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
 <div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -3327,7 +2937,7 @@ setInterval(function() {
 </div>
 
 <script>
-// â”€â”€ Staff & Vehicle Data Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Staff & Vehicle Data Loading Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
@@ -3342,7 +2952,7 @@ function loadStaff() {
 }
 
 function renderStaff(list) {
-  // ── Always update the nav badge FIRST, before any early-return checks
+  // â”€â”€ Always update the nav badge FIRST, before any early-return checks
   var pendingCount = Array.isArray(list) ? list.filter(function(s){
     return s.role === 'Driver' && s.license_status === 'pending_review';
   }).length : 0;
@@ -3386,7 +2996,7 @@ function renderStaff(list) {
       '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td style="font-size:12px;">' + esc(s.phone || '\u2014') + '</td>' +
       '<td style="font-size:12px;text-align:center;">' + (s.role === 'Driver' ? '<strong>' + (s.delivered_count || 0) + '</strong>' : '\u2014') + '</td>' +
-      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;">₱' + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
+      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;">â‚±' + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'-') + '</span></td>' +
@@ -3447,7 +3057,7 @@ function renderVehicles(list) {
   }).join('');
 }
 
-// â”€â”€ Vehicle Image Lightbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Image Lightbox Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function viewVehicleImage(url, plate) {
   var overlay = document.getElementById('vehicle-img-lightbox');
   if (!overlay) {
@@ -3478,7 +3088,7 @@ function showNoImageToast() {
   window._noImgTimer = setTimeout(function() { t.style.opacity = '0'; setTimeout(function(){ t.style.display = 'none'; }, 300); }, 2500);
 }
 
-// â”€â”€ Package Categories (global tenant-level) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Package Categories (global tenant-level) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
 // Display labels - internal DB keys stay the same so mobile mapping works
 var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
@@ -3498,7 +3108,7 @@ function renderPackageCategories() {
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + label +
+      '<span style="font-size:14px;">' + (on ? 'âœ“' : 'âœ•') + '</span>' + label +
     '</button>';
   }).join('');
 }
@@ -3527,7 +3137,7 @@ async function savePackageCategories() {
   }
 }
 
-// â”€â”€ Vehicle Requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Requests Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function loadVehicleRequests() {
   var el = document.getElementById('vehicle-requests-list');
   if(!el) return;
@@ -3540,20 +3150,20 @@ function loadVehicleRequests() {
     el.innerHTML = pending.map(function(r) {
       var isAssignment = r.request_type === 'staff_assignment';
       var flagHtml = r.refusal_count >= 3
-        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">âš  ' + r.refusal_count + 'x refused</span>'
+        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">Ã¢Å¡Â  ' + r.refusal_count + 'x refused</span>'
         : (r.refusal_count > 0 ? '<span style="background:#fff7ed;color:#ea580c;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">' + r.refusal_count + 'x refused</span>' : '');
       var typeLabel = isAssignment
         ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
         : '<span style="background:#dbeafe;color:#1d4ed8;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">DRIVER REQUEST</span>';
       var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">Approve</button>' : '';
-      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">✕ Deny</button>';
+      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">âœ• Deny</button>';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
             typeLabel + flagHtml +
             '<strong style="font-family:monospace;font-size:13px;">' + esc(r.vehicle_plate) + '</strong>' +
           '</div>' +
-          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' · ' + esc(r.vehicle_type) + (r.model ? ' · ' + esc(r.model) : '') + '</p>' +
+          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' Â· ' + esc(r.vehicle_type) + (r.model ? ' Â· ' + esc(r.model) : '') + '</p>' +
         '</div>' +
         '<div style="display:flex;gap:6px;flex-shrink:0;">' + approveBtn + denyBtn + '</div>' +
       '</div>';
@@ -3586,7 +3196,7 @@ async function denyVehicleRequest(id) {
   } catch(e) { alert('Network error.'); }
 }
 
-// â”€â”€ Assign Vehicle to Driver modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Assign Vehicle to Driver modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _assignVehiclePlate = '';
 async function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
@@ -3680,7 +3290,7 @@ window.go = function(id, btn) {
   if(id === 'vehicles') loadVehicles();
 };
 
-// â”€â”€ Staff Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Staff Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function openStaffModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-email').value = '';
@@ -3721,7 +3331,7 @@ async function submitAddStaff() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
 
-// â”€â”€ License Review Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ License Review Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 var _licenseStaffId = null;
 function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
@@ -3761,7 +3371,7 @@ async function licenseAction(action) {
   } catch (e) { alert(' ' + e.message); }
 }
 
-// â”€â”€ Vehicle Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
@@ -3877,7 +3487,7 @@ async function submitUpdateVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
 }
 
-// â”€â”€ AUDIT LOGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ AUDIT LOGS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 async function loadAuditLogs() {
   var tb = document.getElementById('audit-logs-tbody');
   if(!tb) return;
@@ -3911,7 +3521,7 @@ async function loadAuditLogs() {
     tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load audit logs.</p></div></td></tr>';
   }
 }
-// â”€â”€ PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ PAYMENTS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 async function loadPayments() {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
   if(tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
@@ -3948,7 +3558,7 @@ async function loadPayments() {
     el = document.getElementById('pay-net');
     if(el) { el.textContent = (netProfit < 0 ? '-' : '') + fmt(netProfit); el.style.color = netProfit >= 0 ? '#16a34a' : '#dc2626'; }
     el = document.getElementById('pay-net-note');
-    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue âˆ’ Expenses';
+    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue Ã¢Ë†â€™ Expenses';
 
     // Pending
     el = document.getElementById('pay-pending');
@@ -4044,7 +3654,7 @@ async function confirmPayment(invoiceId, btn) {
     loadPayments();
   } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='Confirm'; }
 }
-// â”€â”€ Subscription â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Subscription Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 async function loadSubscription() {
   var plans = {
     'startup':    { label: 'Padala',       price: 1499,  desc: 'Up to 10 riders / drivers, local deliveries' },
@@ -4087,7 +3697,7 @@ async function loadSubscription() {
       cycleDue.setMonth(cycleDue.getMonth() + 1);
     }
 
-    // Check if current cycle is paid (skip first cycle — covered by initial upgrade)
+    // Check if current cycle is paid (skip first cycle â€” covered by initial upgrade)
     var firstCycleEnd = new Date(tenantCreated);
     firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
     var isFirstCycle = cycleStart.getTime() < firstCycleEnd.getTime();
@@ -4105,12 +3715,12 @@ async function loadSubscription() {
     }
 
     if (hasCyclePayment) {
-      // Current cycle paid — show NEXT billing date
+      // Current cycle paid â€” show NEXT billing date
       if (nextEl) nextEl.textContent = cycleDue.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
       var daysRemaining = Math.ceil((cycleDue - now) / (1000 * 60 * 60 * 24));
       if (daysEl) daysEl.textContent = daysRemaining + ' days remaining';
     } else {
-      // Current cycle NOT paid — show DUE date with warning
+      // Current cycle NOT paid â€” show DUE date with warning
       if (nextEl) {
         nextEl.innerHTML = '<span style="color:#ef4444">' + cycleStart.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + '</span>';
       }
@@ -4136,7 +3746,7 @@ async function loadSubscription() {
     var payBtnText = document.getElementById('sub-pay-btn-text');
     if (payBanner) {
       if (!hasCyclePayment) {
-        // NOT PAID — show overdue banner with suspension warning
+        // NOT PAID â€” show overdue banner with suspension warning
         payBanner.style.display = 'block';
         var suspendDate2 = new Date(cycleStart);
         suspendDate2.setDate(suspendDate2.getDate() + 3);
@@ -4291,7 +3901,7 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      // Geolocation — show as Google Maps link if coordinates present
+      // Geolocation â€” show as Google Maps link if coordinates present
       var geo = (p.latitude && p.longitude)
         ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;" title="Open in Google Maps">' + parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;vertical-align:middle;\">open_in_new</span></a>'
         : '<span style="color:#94a3b8;font-size:11px;">-</span>';
@@ -4301,7 +3911,7 @@ async function loadPODs() {
       var typeColor = ct === 'Photo' ? 'background:#dcfce7;color:#15803d' : 'background:#f1f5f9;color:#94a3b8';
       var typeIcon = ct === 'Photo' ? 'photo_camera' : 'hide_image';
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
-      // Media — thumbnail with click-to-view, or No Photo badge
+      // Media â€” thumbnail with click-to-view, or No Photo badge
       var media = p.photo
         ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><a href="javascript:void(0)" style="display:none;font-size:11px;color:#3b82f6;font-weight:700;" onclick="window.open(\'' + p.photo + '\')" title="Click to view photo">\uD83D\uDDBC View Photo</a>'
         : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
@@ -4322,7 +3932,7 @@ loadPODs();
 </script>
 
 <script>
-// â”€â”€ Vehicle CR/OR Document Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle CR/OR Document Upload Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 window._vehicleDocBase64 = null;
 
 function handleDocSelect(input) {
@@ -4358,7 +3968,7 @@ function clearDocUpload() {
 }
 </script>
 
-<!-- ══ ADMIN REASSIGN DRIVER MODAL ════════════════════════════════════════════ -->
+<!-- â•Ââ•Â ADMIN REASSIGN DRIVER MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
 <div id="modal-admin-reassign" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -4387,7 +3997,7 @@ function clearDocUpload() {
         </select>
       </div>
     </div>
-    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">ðŸ”’ Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
+    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">Ã°Å¸â€â€™ Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeAdminReassignModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
       <button id="admin-reassign-btn" onclick="submitAdminReassign()" style="flex:2;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -4403,7 +4013,7 @@ function loadNotifPanel() {
   el.innerHTML = '<div class="sr-empty">Loading\u2026</div>';
   var items = [];
 
-  // ── Subscription expiry warning ────────────────────────
+  // â”€â”€ Subscription expiry warning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   var subPromise = apiFetch('/' + _SLUG + '/api/admin/subscription')
     .then(function(r){return r.json();})
     .then(function(subData){
@@ -4435,7 +4045,7 @@ function loadNotifPanel() {
       var daysLeft = Math.ceil((cycleDue - now) / (1000*60*60*24));
 
       if(!hasCyclePayment){
-        // OVERDUE — not paid for current cycle
+        // OVERDUE â€” not paid for current cycle
         var daysOverdue = Math.floor((now - cycleStart) / (1000*60*60*24));
         items.unshift({
           icon: 'error', color: '#ef4444',
@@ -4455,7 +4065,7 @@ function loadNotifPanel() {
       }
     }).catch(function(){});
 
-  // ── Recent logins from OTHER sessions ────────────────
+  // â”€â”€ Recent logins from OTHER sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   var mySessionId = '';
   try { mySessionId = sessionStorage.getItem('_login_session_id') || ''; } catch(e){}
   var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
@@ -4482,7 +4092,7 @@ function loadNotifPanel() {
       });
     }).catch(function(e){ console.warn('Recent logins fetch failed:', e); });
 
-  // ── After async calls finish, build panel ────────────────
+  // â”€â”€ After async calls finish, build panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Promise.all([subPromise, loginPromise]).then(function(){
     // Shipments
     (_allShipments || []).slice(0,6).forEach(function(s) {
@@ -4630,7 +4240,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
       // No driver selected yet - show placeholder
       vehSel.disabled = true;
       var ph = document.createElement('option'); ph.value = ''; ph.disabled = true;
-      ph.textContent = '← Select a driver first'; vehSel.appendChild(ph);
+      ph.textContent = 'â†Â Select a driver first'; vehSel.appendChild(ph);
       return;
     }
     vehSel.disabled = false;
@@ -4648,16 +4258,16 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     (_adminReassignVehicles||[]).forEach(function(v){
       var o = document.createElement('option'); o.value = v.plate_number;
       var lbl = v.plate_number + (v.vehicle_type ? ' (' + v.vehicle_type + ')' : '');
-      if (busyVehicles[v.plate_number]) { lbl += ' ðŸ”´ In Use'; o.disabled = true; }
-      else if (v.status === 'Maintenance') { lbl += ' ðŸŸ¡ Maint'; o.disabled = true; }
-      else lbl += ' ðŸŸ¢ Available';
+      if (busyVehicles[v.plate_number]) { lbl += ' Ã°Å¸â€Â´ In Use'; o.disabled = true; }
+      else if (v.status === 'Maintenance') { lbl += ' Ã°Å¸Å¸Â¡ Maint'; o.disabled = true; }
+      else lbl += ' Ã°Å¸Å¸Â¢ Available';
       o.textContent = lbl;
       if (v.plate_number === currentPlate) o.selected = true;
       vehSel.appendChild(o); fleetCount++;
     });
     if (fleetCount === 0) {
       var no = document.createElement('option'); no.value = ''; no.disabled = true;
-      no.textContent = 'âš  No fleet vehicles - driver needs to register their vehicle';
+      no.textContent = 'Ã¢Å¡Â  No fleet vehicles - driver needs to register their vehicle';
       vehSel.appendChild(no);
     }
   }
@@ -4696,7 +4306,7 @@ async function submitAdminReassign() {
 }
 </script>
 <script>
-// ── Topbar: Global Search ─────────────────────────────────────
+// â”€â”€ Topbar: Global Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _searchDebounce = null;
 function globalSearch(q) {
   clearTimeout(_searchDebounce);
@@ -4751,7 +4361,7 @@ function globalSearch(q) {
   }, 200);
 }
 
-// ── Topbar: Notification Panel ────────────────────────────────
+// â”€â”€ Topbar: Notification Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _notifRead = {};
 try { _notifRead = JSON.parse(localStorage.getItem('_notifRead_' + (window.__TENANT__?.slug||'')) || '{}'); } catch(e) { _notifRead = {}; }
 function _saveNotifRead() { try { localStorage.setItem('_notifRead_' + (window.__TENANT__?.slug||''), JSON.stringify(_notifRead)); } catch(e){} }
@@ -4783,7 +4393,7 @@ function timeAgo(d) {
   return Math.floor(s/86400) + 'd ago';
 }
 
-// ── Topbar: Help Panel ────────────────────────────────────────
+// â”€â”€ Topbar: Help Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function toggleHelpPanel() {
   var p = document.getElementById('help-panel');
   var wasOpen = p.classList.contains('show');
@@ -4791,7 +4401,7 @@ function toggleHelpPanel() {
   if (!wasOpen) p.classList.add('show');
 }
 
-// ── Close all panels ──────────────────────────────────────────
+// â”€â”€ Close all panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function closeAllPanels() {
   document.querySelectorAll('.tb-dropdown,.search-results').forEach(function(el) { el.classList.remove('show'); });
   // Blur search input so typing doesn't re-open search results
@@ -4802,7 +4412,7 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.tb-right')) closeAllPanels();
 });
 
-// ── Keyboard shortcuts ───────────────────────────────────────
+// â”€â”€ Keyboard shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 document.addEventListener('keydown', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
     if (e.key === 'Escape') { closeAllPanels(); e.target.blur(); }

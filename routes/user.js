@@ -220,6 +220,7 @@ router.get('/staff-login', (req, res) => res.json({ message: 'Use POST for staff
 // POST /login (Customer)
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
+  try {
   const { slug } = req.params;
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
@@ -257,12 +258,14 @@ router.post('/login', async (req, res) => {
       tenant_id:  tenantId,
     }
   });
+  } catch (err) { console.error('Login error:', err); res.status(500).json({ error: 'Server error.' }); }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /staff-login
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/staff-login', async (req, res) => {
+  try {
   const { slug } = req.params;
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
@@ -311,12 +314,14 @@ router.post('/staff-login', async (req, res) => {
   logAudit({ actor: email, actor_type: auditType, action: 'LOGIN', target: auditTarget, tenant_slug: slug, ip_address: realIp, metadata: { user_agent: userAgent, ip: realIp, session_id: sessionId } });
 
   res.json({ ok: true, name: staff.name, role: returnRole, slug, token, must_change_password: !!staff.must_change_password, session_id: sessionId });
+  } catch (err) { console.error('Staff login error:', err); res.status(500).json({ error: 'Server error.' }); }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /change-password  — force change from temp password
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/change-password', async (req, res) => {
+  try {
   const { slug } = req.params;
   const { username, current_password, new_password } = req.body;
   if (!username || !current_password || !new_password) return res.status(400).json({ error: 'All fields are required.' });
@@ -338,6 +343,7 @@ router.post('/change-password', async (req, res) => {
 
   logAudit({ actor: username, actor_type: staff.role === 'Admin' ? 'admin' : 'staff', action: 'CHANGE_PASSWORD', target: 'Password Changed', tenant_slug: slug, ip_address: req.ip });
   res.json({ ok: true, message: 'Password changed successfully. Please sign in again.' });
+  } catch (err) { console.error('Change password error:', err); res.status(500).json({ error: 'Server error.' }); }
 });
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /me  (PROTECTED)

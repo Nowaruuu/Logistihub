@@ -6,35 +6,7 @@
   <title>Client Registration — LogistiHub</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1">
-  <style>
-    :root { --primary: #0a1628; --bg: #f8fafc; --text: #0f172a; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh; padding: 20px; }
-    .card { background: #fff; padding: 32px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); width: 100%; max-width: 420px; text-align: center; }
-    .logo { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -0.02em; }
-    h1 { font-size: 22px; margin-bottom: 8px; font-weight: 800; color: #0a1628; }
-    p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
-    .form-group { text-align: left; margin-bottom: 16px; }
-    .label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; }
-    input { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: inherit; outline: none; transition: all 0.2s; box-sizing: border-box; }
-    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(10, 22, 40, 0.05); }
-    .pw-wrap { position: relative; }
-    .pw-wrap input { padding-right: 44px; }
-    .pw-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #cbd5e1; display: flex; align-items: center; padding: 0; font-size: 18px; }
-    .pw-toggle:hover { color: #64748b; }
-    .btn { background: #0a1628; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; display: block; width: 100%; font-size: 15px; margin-top: 8px; transition: opacity 0.2s; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .success-box { display: none; }
-    .err { color: #dc2626; font-size: 13px; margin-bottom: 16px; display: none; background:#fef2f2; padding:10px; border-radius:8px; }
-    #qr-container { padding: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; display: inline-block; margin-top: 10px; }
-    .dl-btn { display:inline-block; margin-top:14px; background:#0a1628; color:#fff; padding:12px 28px; border-radius:12px; font-weight:700; font-size:14px; text-decoration:none; }
-    .email-note { font-size: 12px; color: #16a34a; background: #dcfce7; padding: 8px 12px; border-radius: 8px; margin-top: 12px; }
-    @media (max-width: 480px) {
-      body { padding: 12px; }
-      .card { padding: 24px 18px; border-radius: 16px; }
-      h1 { font-size: 19px; }
-      p { font-size: 13px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/css/client-register.css">
 
   <script>
     // Apply tenant branding from server-injected window.__TENANT__
@@ -66,6 +38,7 @@
   </script>
 </head>
 <body>
+  <main>
   <div class="card" id="reg-card">
     <div class="logo">
       <span class="material-symbols-outlined" style="font-size:28px;">package_2</span>
@@ -77,6 +50,7 @@
       <h1>Join the Network</h1>
       <p>Register to track your shipments and manage orders seamlessly via our mobile app.</p>
 
+      <div id="error-box" style="display:none;background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;border:1px solid #fecaca;"></div>
       <div id="error-msg" class="err"></div>
 
       <div class="form-group">
@@ -153,6 +127,7 @@
       </div>
     </div>
   </div>
+  </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
@@ -171,15 +146,16 @@
       const pwc   = document.getElementById('pw-confirm').value;
       const otp   = document.getElementById('otp') ? document.getElementById('otp').value.trim() : '';
 
-      if (!fname || !lname || !email || !phone || !user || !pw) return alert('Please fill all fields.');
-      if (phone.replace(/\s/g,'').length < 10) return alert('Please enter a valid phone number.');
-      if (!isOtpStep && pw.length < 8) return alert('Password must be at least 8 characters.');
-      if (!isOtpStep && pw !== pwc) return alert('Passwords do not match. Please check and try again.');
-      if (isOtpStep && !otp) return alert('Please enter the verification code sent to your email.');
+      if (!fname || !lname || !email || !phone || !user || !pw) { document.getElementById('error-box').textContent = 'Please fill all fields.'; document.getElementById('error-box').style.display = 'block'; return; }
+      if (phone.replace(/\s/g,'').length < 10) { document.getElementById('error-box').textContent = 'Please enter a valid phone number.'; document.getElementById('error-box').style.display = 'block'; return; }
+      if (!isOtpStep && pw.length < 8) { document.getElementById('error-box').textContent = 'Password must be at least 8 characters.'; document.getElementById('error-box').style.display = 'block'; return; }
+      if (!isOtpStep && pw !== pwc) { document.getElementById('error-box').textContent = 'Passwords do not match. Please check and try again.'; document.getElementById('error-box').style.display = 'block'; return; }
+      if (isOtpStep && !otp) { document.getElementById('error-box').textContent = 'Please enter the verification code sent to your email.'; document.getElementById('error-box').style.display = 'block'; return; }
 
       btn.disabled    = true;
       btn.textContent = isOtpStep ? 'Verifying...' : 'Sending Code...';
       err.style.display = 'none';
+      document.getElementById('error-box').style.display = 'none';
 
       try {
         const payload = { first_name: fname, last_name: lname, email, phone, username: user, password: pw, role: 'Other' };
@@ -211,7 +187,11 @@
 
           btn.textContent = 'Verify & Create Account';
           btn.disabled = false;
-          alert('A 6-digit code was sent to ' + email + '.');
+          document.getElementById('error-box').style.display = 'none';
+          var otpNotice = document.getElementById('error-box');
+          otpNotice.style.background = '#f0fdf4'; otpNotice.style.color = '#16a34a'; otpNotice.style.border = '1px solid #bbf7d0';
+          otpNotice.textContent = 'A 6-digit code was sent to ' + email + '.';
+          otpNotice.style.display = 'block';
           return;
         }
 
