@@ -283,6 +283,13 @@ router.get('/:slug/api/admin/sales-report', requireAdmin, requireSlugMatch, asyn
 router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (req, res) => {
   const tid = req.tenantId;
   try {
+    // Auto-cleanup: delete bogus ₱50 test payments from failed PayMongo checkouts
+    // (minimum real shipment fee is ₱80+ so ₱50 payments are always test artifacts)
+    await query(
+      "DELETE FROM payment WHERE tenant_id = ? AND total_amount <= 50 AND status = 'Paid' AND payment_type IN ('full','deposit')",
+      [tid]
+    ).catch(() => {});
+
     // Auto-mark overdue: any pending balance payments past their due_date become 'Overdue'
     await query(
       `UPDATE payment SET status = 'Overdue' WHERE tenant_id = ? AND status = 'Pending' AND payment_type = 'balance' AND due_date IS NOT NULL AND due_date < NOW()`,
