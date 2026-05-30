@@ -15,7 +15,7 @@
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- SIDEBAR -->
+<!-- ══ SIDEBAR ══ -->
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
@@ -65,7 +65,7 @@
   </div>
 </aside>
 
-<!-- MAIN -->
+<!-- ══ MAIN ══ -->
 <main class="main">
   <header class="topbar">
     <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
@@ -106,7 +106,7 @@
 
   <div class="content">
 
-    <!-- DASHBOARD -->
+    <!-- ══ DASHBOARD ══ -->
     <div id="s-dashboard" class="screen active">
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Shipments<div class="stat-icon si-b"><span class="material-symbols-outlined">inventory_2</span></div></div><div class="stat-value">0</div><div class="stat-note">No data yet</div></div>
@@ -128,7 +128,7 @@
       <div class="card">
         <div class="card-head">
           <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-          <button class="card-action" onclick="go('shipments',null)">View all â†’â€™</button>
+          <button class="card-action" onclick="go('shipments',null)">View all →</button>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -140,11 +140,11 @@
 
       <div class="grid-2">
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage â†’â€™</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage →</button></div>
           <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage â†’â€™</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage →</button></div>
           <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
@@ -155,7 +155,7 @@
       </div>
     </div>
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â SHIPMENTS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ SHIPMENTS ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-shipments" class="screen">
       <div class="ph-row">
         <div><h2>Shipments</h2><p>All deliveries within your workspace.</p></div>
@@ -176,14 +176,14 @@
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup â†â€™ Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
-            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipmentsâ€¦</p></div></td></tr></tbody>
+            <thead><tr><th>Delivery #</th><th>AWB</th><th>Sender</th><th>Receiver</th><th>Type</th><th>Pickup  Dropoff</th><th>Driver</th><th>Vehicle</th><th>Plate #</th><th>Status</th><th>Date Ordered</th><th>Date Delivered</th><th></th></tr></thead>
+            <tbody id="admin-shipments-tbody"><tr><td colspan="13"><div class="empty"><span class="material-symbols-outlined">local_shipping</span><p>Loading shipments</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â NEW SHIPMENT ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ NEW SHIPMENT ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-new-shipment" class="screen">
       <div class="ph-row">
         <div><h2>New Shipment</h2><p>Create a delivery record within your workspace.</p></div>
@@ -226,7 +226,7 @@
 
 
 
-    <!-- â•â€â•Â VEHICLES â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ═"═ VEHICLES ══════════════════════════════ -->
     <div id="s-vehicles" class="screen"><div class="ph-row"><div><h2>Vehicles</h2><p>Fleet registered to your company.</p></div><button class="btn btn-primary btn-sm" onclick="openVehicleModal()"><span class="material-symbols-outlined">add</span>Add Vehicle</button></div>
 
       <!-- Vehicle Requests Panel -->
@@ -246,7 +246,7 @@
           <button id="pkg-cat-save-btn" onclick="savePackageCategories()" class="btn btn-primary btn-sm" style="font-size:12px;padding:6px 16px;">Save Changes</button>
         </div>
         <div id="pkg-cat-list" style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:10px;">
-          <p style="color:var(--text-muted);font-size:12px;">Loadingâ€¦</p>
+          <p style="color:var(--text-muted);font-size:12px;">Loading</p>
         </div>
       </div>
 
@@ -254,7 +254,7 @@
     </div>
 
 
-    <!-- â•Ââ•Ââ•Ââ•Â STAFF â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â  -->
+    <!-- ════ STAFF ══════════════════════════════  -->
     <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
       <div class="card">
         <div class="card-head">
@@ -266,7 +266,7 @@
     </div>
 
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â APP USERS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ APP USERS ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-app-users" class="screen">
       <div class="ph-row"><div><h2>App Users</h2><p>Registered users associated with your company.</p></div></div>
       <div class="reg-link-box" style="margin-bottom:14px;">
@@ -281,17 +281,17 @@
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
           <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loadingâ€¦</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â PAYMENTS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ PAYMENTS ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-payments" class="screen">
       <div class="ph-row"><div><h2>Payments</h2><p>Invoices and payment records for your company.</p></div></div>
       <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
-        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross">â‚±0</div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
-        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses">â‚±0</div><div class="stat-note">Fuel + driver labor</div></div>
-        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net">â‚±0</div><div class="stat-note" id="pay-net-note">Revenue Ã¢Ë†â€™ Expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross"></div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses"></div><div class="stat-note">Fuel + driver labor</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net"></div><div class="stat-note" id="pay-net-note">Revenue Ã¢Ë†' Expenses</div></div>
         <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
       </div>
@@ -302,11 +302,11 @@
             <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Type</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Customer</th><th>Amount</th><th>Type</th><th>Method</th><th>Reference</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="11"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
-    <!-- â•Ââ•Â SALES REPORT â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ══ SALES REPORT ══════════════════ -->
     <div id="s-sales-report" class="screen">
       <div class="ph-row" style="display:flex;justify-content:flex-end;align-items:center;">
         <div style="display:flex;gap:10px;">
@@ -318,29 +318,29 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:20px;border-left:4px solid #10b981;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Collected (Paid)</div>
-          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
+          <div id="sr-rev-ytd" style="font-size:24px;font-weight:800;color:#10b981;"></div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #3b82f6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Total Billed</div>
-          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
+          <div id="sr-rev-all" style="font-size:24px;font-weight:800;color:#0f2235;"></div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #f59e0b;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Est. Expenses</div>
-          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;">â‚±0</div>
+          <div id="sr-expenses" style="font-size:24px;font-weight:800;color:#f59e0b;"></div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Fuel + driver labor</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Net Profit</div>
-          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;">â‚±0</div>
+          <div id="sr-net-profit" style="font-size:24px;font-weight:800;color:#10b981;"></div>
           <div style="font-size:11px;color:#94a3b8;margin-top:2px;">After estimated costs</div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #8b5cf6;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Avg Per Delivery</div>
-          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;">â‚±0</div>
+          <div id="sr-avg-del" style="font-size:24px;font-weight:800;color:#0f2235;"></div>
         </div>
         <div class="card" style="padding:20px;border-left:4px solid #ea580c;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Pending</div>
-          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;">â‚±0</div>
+          <div id="sr-pending" style="font-size:24px;font-weight:800;color:#ea580c;"></div>
           <div id="sr-pending-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">0 invoices</div>
         </div>
       </div>
@@ -381,7 +381,7 @@
       </div>
     </div>
 
-    <!-- â•Ââ•Â SUBSCRIPTION â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ══ SUBSCRIPTION ══════════════════ -->
     <div id="s-subscription" class="screen">
       <div class="ph-row"><div><h2>Subscription</h2><p>Monitor your plan billing and upcoming payments.</p></div></div>
       <!-- Plan Summary Cards -->
@@ -393,7 +393,7 @@
         </div>
         <div class="card" style="padding:20px;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:8px;">Monthly Cost</div>
-          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">â‚±0.00</div>
+          <div id="sub-plan-price" style="font-size:22px;font-weight:800;color:#ea580c;">00</div>
           <div id="sub-plan-cycle" style="font-size:12px;color:#64748b;margin-top:4px;">per month</div>
         </div>
         <div class="card" style="padding:20px;">
@@ -441,7 +441,7 @@
       </div>
     </div>
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â PROOF OF DELIVERY ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ PROOF OF DELIVERY ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-pod" class="screen">
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
@@ -450,10 +450,10 @@
       </div>
     </div>
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â USER REGISTRATION ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ USER REGISTRATION ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
 
 
-    <!-- ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â SETTINGS ÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚ÂÃƒÂ¢â€¢Ã‚Â -->
+    <!-- ══•══•══ SETTINGS ══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══ -->
     <div id="s-settings" class="screen">
       <div class="ph-row"><div><h2>Settings</h2><p>Your isolated workspace configuration.</p></div></div>
       <div class="form-card" style="max-width:700px;">
@@ -507,7 +507,7 @@
                   <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">upload</span> Upload BG
                 </button>
                 <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Desktop Wallpaper (High Res)</div>
-                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">âœ• Remove</button>
+                <button type="button" onclick="clearBgImage()" style="display:block;margin-top:3px;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">✕ Remove</button>
               </div>
             </div>
             <!-- Color mode -->
@@ -587,7 +587,7 @@
       </div>
     </div>
 
-    <!-- â•Ââ•Â PRICING â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ══ PRICING ═══════════════════════════════ -->
     <div id="s-pricing" class="screen">
       <div class="ph-row"><div><h2>Delivery Pricing</h2><p>Customize how delivery fees are calculated for your customers.</p></div></div>
       <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
@@ -607,7 +607,7 @@
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (â‚±/km per vehicle)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Fuel Rates (m per vehicle)</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Motorcycle</label><input id="price-fuel-motorcycle" type="number" step="0.1" min="0" value="2.20" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Sedan</label><input id="price-fuel-sedan" type="number" step="0.1" min="0" value="4.70" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -618,7 +618,7 @@
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (â‚±/kg)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Weight Surcharge Tiers (g)</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">0~20 kg</label><input id="price-wt-1" type="number" step="0.5" min="0" value="2.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">21~100 kg</label><input id="price-wt-2" type="number" step="0.5" min="0" value="3.00" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -628,7 +628,7 @@
           </div>
 
           <div>
-            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (â‚±)</div>
+            <div class="form-sec" style="margin-bottom:6px;padding-bottom:5px;font-size:11px;">Category Surcharges (</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Package</label><input id="price-cat-PACKAGE" type="number" step="10" min="0" value="0" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
               <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Food</label><input id="price-cat-FOOD" type="number" step="10" min="0" value="50" oninput="calcPreview()" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;"/></div>
@@ -767,7 +767,7 @@ function calcPreview(){
 setTimeout(calcPreview, 100);
 </script>
 
-    <!-- â•Ââ•Â AUDIT LOGS â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ══ AUDIT LOGS ═════════════════════════ -->
     <div id="s-audit" class="screen">
       <div class="card" style="padding:0;overflow:hidden;">
         <div style="padding:20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
@@ -792,7 +792,7 @@ setTimeout(calcPreview, 100);
       </div>
     </div>
 
-    <!-- â•Ââ•Â UPGRADE PLAN â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+    <!-- ══ UPGRADE PLAN ═════════════════════════ -->
     <div id="s-upgrade" class="screen">
 
       <!-- Hero Banner -->
@@ -850,7 +850,7 @@ setTimeout(calcPreview, 100);
           <span class="material-symbols-outlined" style="font-size:14px;">lock</span> Secured by PayMongo
         </div>
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash Â· Card Â· Maya
+          <span class="material-symbols-outlined" style="font-size:14px;">credit_card</span> GCash · Card · Maya
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
           <span class="material-symbols-outlined" style="font-size:14px;">autorenew</span> Cancel anytime
@@ -976,9 +976,9 @@ setTimeout(calcPreview, 100);
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;">â‚±' + cyclePrice + '</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;"> + cyclePrice + '</span>' +
             '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
-            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">â‚±' + p.price + '/mo equivalent</div>' : '') +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;"> + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +
@@ -1061,7 +1061,7 @@ setTimeout(calcPreview, 100);
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
-<!-- SESSION EXPIRY MODAL -->
+<!-- ══ SESSION EXPIRY MODAL ══ -->
 <div id="session-expired-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:20px;padding:40px 36px;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
     <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
@@ -1078,7 +1078,7 @@ setTimeout(calcPreview, 100);
 <script>
 function toggleSidebar(){var s=document.querySelector('.sidebar');var o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('show');document.body.classList.toggle('sidebar-open');}
 function closeSidebar(){document.querySelector('.sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.classList.remove('sidebar-open');}
-// Ã¢â€â‚¬Ã¢â€â‚¬ Global session expiry handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Global session expiry handler Ã¢"""""""""""""""""""""""""""""""""""""""""""""
 var _sessionExpired = false;
 
 function redirectToLogin() {
@@ -1134,7 +1134,7 @@ function logout() {
     .catch(function() { window.location.href = '/' + slug + '/admin-login'; });
 }
 
-// â”€â”€ Real-time notification polling (every 30s) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Real-time notification polling (every 30s) €€€€€€€
 var _prevShipmentIds = null;
 var _prevStaffPendingCount = null;
 var _prevVehicleRequestCount = null;
@@ -1376,7 +1376,7 @@ function filterAppUsers(){
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Shipment loading Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Shipment loading Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 var _allShipments=[];
 function loadShipments(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -1476,7 +1476,7 @@ function updateStatCards(){
   cards[2].querySelector('.stat-note').textContent=delivered?delivered+' completed':'No data yet';
   cards[3].querySelector('.stat-value').textContent=pending;
   cards[3].querySelector('.stat-note').textContent=pending?pending+' awaiting':'No data yet';
-  // Nav badge â€” Shipments count
+  // Nav badge  Shipments count
   var navBadge=document.querySelector('.nav-badge');
   if(navBadge)navBadge.textContent=total;
 }
@@ -1566,7 +1566,7 @@ _pollInterval = setInterval(function(){
   }).catch(function(){});
 }, 30000);
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Fleet Status Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Dashboard Fleet Status Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""
 function loadDashFleet(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1581,7 +1581,7 @@ function loadDashFleet(){
       vehicles.slice(0,5).forEach(function(v){
         var sc=v.status==='Available'?'b-available':v.status==='On Duty'?'b-onduty':'b-maint';
         html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;">';
-        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' Â· '+esc(v.model):'')+'</div></div></div>';
+        html+='<div style="display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="font-size:16px;color:#64748b;">directions_car</span><div><div style="font-size:12px;font-weight:700;color:#0f172a;">'+esc(v.plate_number||'N/A')+'</div><div style="font-size:10px;color:#94a3b8;">'+esc(v.vehicle_type||v.type||'')+(v.model?' · '+esc(v.model):'')+'</div></div></div>';
         html+='<span class="badge '+sc+'">'+esc(v.status||'Unknown')+'</span>';
         html+='</div>';
       });
@@ -1591,7 +1591,7 @@ function loadDashFleet(){
     }).catch(function(){});
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Staff On Duty Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Dashboard Staff On Duty Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""
 function loadDashStaff(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1600,13 +1600,13 @@ function loadDashStaff(){
     .then(function(data){
       var staff=Array.isArray(data)?data:Array.isArray(data.staff)?data.staff:[];
 
-      // â”€â”€ Update Staff nav badge (pending license reviews) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // € Update Staff nav badge (pending license reviews) €€€€€€€€€
       var pendingCount = staff.filter(function(s){
         return s.role === 'Driver' && s.license_status === 'pending_review';
       }).length;
       var badge = document.getElementById('staff-pending-badge');
       if(badge){ badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
-      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
 
       var el=document.getElementById('dash-staff-body');
       if(!el)return;
@@ -1627,7 +1627,7 @@ function loadDashStaff(){
     }).catch(function(){});
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard Live Map Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Dashboard Live Map Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 var _dashMap=null;
 var _dashMapLayers=[];
 function _clearMapLayers(){
@@ -1666,7 +1666,7 @@ function loadDashMap(){
   if(!_dashMap){
     var phBounds=L.latLngBounds([4.2,116.5],[21.3,127.0]);
     _dashMap=L.map(mapEl,{scrollWheelZoom:true,zoomControl:true,maxBounds:phBounds,maxBoundsViscosity:1.0,minZoom:6,maxZoom:18}).setView([12.5,122.0],6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'Â© OpenStreetMap'}).addTo(_dashMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(_dashMap);
     setTimeout(function(){_dashMap.invalidateSize();},200);
 
   }
@@ -1682,13 +1682,13 @@ function loadDashMap(){
     if(!hasPickup&&!hasDrop)return;
     var isActive=(s.status==='In Transit'||s.status==='Out for Delivery');
     var typeLabel=s.item_type_flag||'PKG';
-    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' Â· '+esc(s.driver_name):'';
+    var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
     if(hasPickup){
-      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">Ã¢â€“Â² Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">Ã¢ Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
       allPts.push([pLat,pLng]);
     }
     if(hasDrop){
-      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">Ã¢â€“Â¼ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">Ã¢ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
       allPts.push([dLat,dLng]);
     }
     if(hasPickup&&hasDrop){
@@ -1701,7 +1701,7 @@ function loadDashMap(){
 }
 
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Sales Report Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Sales Report Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 var _srMonthlyChart=null, _srTypeChart=null;
 var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1807,7 +1807,7 @@ function loadSalesReport(){
     document.getElementById('sr-avg-del').textContent='\u20b1'+avgDel.toLocaleString();
     document.getElementById('sr-pending').textContent='\u20b1'+Number(data.pending_amount||0).toLocaleString();
     document.getElementById('sr-pending-count').textContent=(data.pending_count||0)+' invoice'+(data.pending_count===1?'':'s');
-    // Expense estimation: â‚±27/km (â‚±15 driver + â‚±12 fuel) or 30% fallback
+    // Expense estimation: /km ( driver +  fuel) or 30% fallback
     var totalBilled = Number(data.revenue_total||0);
     var estExpenses = data.total_distance_km ? (Number(data.total_distance_km) * 27) : (totalBilled * 0.30);
     var netProfit = totalBilled - estExpenses;
@@ -2494,7 +2494,7 @@ async function saveSettings() {
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
-// Ã¢â€â‚¬Ã¢â€â‚¬ FillList init Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" FillList init Ã¢""""""""""""""""""""""""""""""""""""
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
@@ -2559,7 +2559,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- LIVE PREVIEW PANEL -->
+<!-- ══ LIVE PREVIEW PANEL ══ -->
 <div id="lp-panel" style="display:none;position:fixed;right:24px;top:72px;width:520px;z-index:9999;font-family:'DM Sans',sans-serif;max-width:calc(100vw - 48px);">
   <div style="background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1.5px solid #e2e8f0;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f1f5f9;">
@@ -2712,7 +2712,7 @@ setInterval(function() {
 })();
 </script>
 
-<!-- â•Ââ•Â ADD STAFF MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+<!-- ══ ADD STAFF MODAL ═══════════════════════════════════════════ -->
 <div id="modal-staff" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2754,7 +2754,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- â•Ââ•Â LICENSE REVIEW MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+<!-- ══ LICENSE REVIEW MODAL ═══════════════════════════════════════ -->
 <div id="modal-license" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:520px;box-shadow:0 24px 60px rgba(0,0,0,0.25);max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2783,7 +2783,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- â•Ââ•Â ADD VEHICLE MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+<!-- ══ ADD VEHICLE MODAL ══════════════════════════════════════════ -->
 <div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2867,7 +2867,7 @@ setInterval(function() {
   </div>
 </div>
 
-<!-- â•Ââ•Â UPDATE VEHICLE MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+<!-- ══ UPDATE VEHICLE MODAL ══════════════════════════════════════════ -->
 <div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -2937,7 +2937,7 @@ setInterval(function() {
 </div>
 
 <script>
-// Ã¢â€â‚¬Ã¢â€â‚¬ Staff & Vehicle Data Loading Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Staff & Vehicle Data Loading Ã¢"""""""""""""""""""""""""""""""""""""""""""""""
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
@@ -2952,7 +2952,7 @@ function loadStaff() {
 }
 
 function renderStaff(list) {
-  // â”€â”€ Always update the nav badge FIRST, before any early-return checks
+  // € Always update the nav badge FIRST, before any early-return checks
   var pendingCount = Array.isArray(list) ? list.filter(function(s){
     return s.role === 'Driver' && s.license_status === 'pending_review';
   }).length : 0;
@@ -2996,7 +2996,7 @@ function renderStaff(list) {
       '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td style="font-size:12px;">' + esc(s.phone || '\u2014') + '</td>' +
       '<td style="font-size:12px;text-align:center;">' + (s.role === 'Driver' ? '<strong>' + (s.delivered_count || 0) + '</strong>' : '\u2014') + '</td>' +
-      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;">â‚±' + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
+      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;"> + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'-') + '</span></td>' +
@@ -3057,7 +3057,7 @@ function renderVehicles(list) {
   }).join('');
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Image Lightbox Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Vehicle Image Lightbox Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""
 function viewVehicleImage(url, plate) {
   var overlay = document.getElementById('vehicle-img-lightbox');
   if (!overlay) {
@@ -3088,7 +3088,7 @@ function showNoImageToast() {
   window._noImgTimer = setTimeout(function() { t.style.opacity = '0'; setTimeout(function(){ t.style.display = 'none'; }, 300); }, 2500);
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Package Categories (global tenant-level) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Package Categories (global tenant-level) Ã¢""""""""""""""""""""""""""""""""""
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
 // Display labels - internal DB keys stay the same so mobile mapping works
 var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
@@ -3108,7 +3108,7 @@ function renderPackageCategories() {
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? 'âœ“' : 'âœ•') + '</span>' + label +
+      '<span style="font-size:14px;">' + (on ? ' : '✕') + '</span>' + label +
     '</button>';
   }).join('');
 }
@@ -3137,7 +3137,7 @@ async function savePackageCategories() {
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Requests Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Vehicle Requests Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function loadVehicleRequests() {
   var el = document.getElementById('vehicle-requests-list');
   if(!el) return;
@@ -3150,20 +3150,20 @@ function loadVehicleRequests() {
     el.innerHTML = pending.map(function(r) {
       var isAssignment = r.request_type === 'staff_assignment';
       var flagHtml = r.refusal_count >= 3
-        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">Ã¢Å¡Â  ' + r.refusal_count + 'x refused</span>'
+        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">Ã¢Å¡  ' + r.refusal_count + 'x refused</span>'
         : (r.refusal_count > 0 ? '<span style="background:#fff7ed;color:#ea580c;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">' + r.refusal_count + 'x refused</span>' : '');
       var typeLabel = isAssignment
         ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
         : '<span style="background:#dbeafe;color:#1d4ed8;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">DRIVER REQUEST</span>';
       var approveBtn = !isAssignment ? '<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px;" onclick="approveVehicleRequest(' + r.id + ')">Approve</button>' : '';
-      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">âœ• Deny</button>';
+      var denyBtn = '<button class="btn btn-sm" style="font-size:11px;padding:4px 12px;background:var(--bg-2);" onclick="denyVehicleRequest(' + r.id + ')">✕ Deny</button>';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
             typeLabel + flagHtml +
             '<strong style="font-family:monospace;font-size:13px;">' + esc(r.vehicle_plate) + '</strong>' +
           '</div>' +
-          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' Â· ' + esc(r.vehicle_type) + (r.model ? ' Â· ' + esc(r.model) : '') + '</p>' +
+          '<p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">' + esc(r.driver_name) + ' · ' + esc(r.vehicle_type) + (r.model ? ' · ' + esc(r.model) : '') + '</p>' +
         '</div>' +
         '<div style="display:flex;gap:6px;flex-shrink:0;">' + approveBtn + denyBtn + '</div>' +
       '</div>';
@@ -3196,7 +3196,7 @@ async function denyVehicleRequest(id) {
   } catch(e) { showToast('Network error.', 'error'); }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Assign Vehicle to Driver modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Assign Vehicle to Driver modal Ã¢"""""""""""""""""""""""""""""""""""""""""""
 var _assignVehiclePlate = '';
 async function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
@@ -3290,7 +3290,7 @@ window.go = function(id, btn) {
   if(id === 'vehicles') loadVehicles();
 };
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Staff Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Staff Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function openStaffModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-email').value = '';
@@ -3331,7 +3331,7 @@ async function submitAddStaff() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ License Review Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" License Review Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""
 var _licenseStaffId = null;
 function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
@@ -3371,7 +3371,7 @@ async function licenseAction(action) {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Vehicle Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
@@ -3487,7 +3487,7 @@ async function submitUpdateVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ AUDIT LOGS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" AUDIT LOGS Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 async function loadAuditLogs() {
   var tb = document.getElementById('audit-logs-tbody');
   if(!tb) return;
@@ -3521,7 +3521,7 @@ async function loadAuditLogs() {
     tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load audit logs.</p></div></td></tr>';
   }
 }
-// Ã¢â€â‚¬Ã¢â€â‚¬ PAYMENTS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" PAYMENTS Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 async function loadPayments() {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
   if(tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
@@ -3558,7 +3558,7 @@ async function loadPayments() {
     el = document.getElementById('pay-net');
     if(el) { el.textContent = (netProfit < 0 ? '-' : '') + fmt(netProfit); el.style.color = netProfit >= 0 ? '#16a34a' : '#dc2626'; }
     el = document.getElementById('pay-net-note');
-    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue Ã¢Ë†â€™ Expenses';
+    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue Ã¢Ë†' Expenses';
 
     // Pending
     el = document.getElementById('pay-pending');
@@ -3607,7 +3607,7 @@ function renderPayments(list) {
     else if (ptype === 'balance') ptypeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">50% Balance</span>';
     else ptypeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">Full</span>';
     var ref = esc(p.reference_code || p.paymongo_payment_id || p.paymongo_checkout_id || '-');
-    var confirmed = p.admin_confirmed ? '<span style="color:#16a34a;font-size:12px;">&#10003; Yes</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>';
+
     var st = p.status || 'Pending';
     var stCl = statusCl[st] || 'b-pending';
     var fmtDate = function(d) { return d ? new Date(d).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : null; };
@@ -3636,7 +3636,7 @@ function renderPayments(list) {
       '<td>' + ptypeBadge + '</td>' +
       '<td>' + method + '</td>' +
       '<td style="font-family:monospace;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + ref + '">' + ref + '</td>' +
-      '<td>' + confirmed + '</td>' +
+
       '<td>' + statusCell + '</td>' +
       '<td>' + date + '</td>' +
       '<td>' + confirmBtn + '</td>' +
@@ -3645,7 +3645,7 @@ function renderPayments(list) {
 }
 
 async function confirmPayment(invoiceId, btn) {
-  if(!confirm('Mark invoice #' + invoiceId + ' as Paid?')) return;
+  if(!confirm('Mark invoice #' + invoiceId + ' as Paid?')) return; // confirm() intentional for destructive action
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/payments/' + invoiceId + '/confirm', { method: 'POST' });
@@ -3654,7 +3654,7 @@ async function confirmPayment(invoiceId, btn) {
     loadPayments();
   } catch(e) { showToast(e.message, 'error'); btn.disabled=false; btn.textContent='Confirm'; }
 }
-// Ã¢â€â‚¬Ã¢â€â‚¬ Subscription Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Subscription Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 async function loadSubscription() {
   var plans = {
     'startup':    { label: 'Padala',       price: 1499,  desc: 'Up to 10 riders / drivers, local deliveries' },
@@ -3697,7 +3697,7 @@ async function loadSubscription() {
       cycleDue.setMonth(cycleDue.getMonth() + 1);
     }
 
-    // Check if current cycle is paid (skip first cycle â€” covered by initial upgrade)
+    // Check if current cycle is paid (skip first cycle  covered by initial upgrade)
     var firstCycleEnd = new Date(tenantCreated);
     firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
     var isFirstCycle = cycleStart.getTime() < firstCycleEnd.getTime();
@@ -3715,12 +3715,12 @@ async function loadSubscription() {
     }
 
     if (hasCyclePayment) {
-      // Current cycle paid â€” show NEXT billing date
+      // Current cycle paid  show NEXT billing date
       if (nextEl) nextEl.textContent = cycleDue.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
       var daysRemaining = Math.ceil((cycleDue - now) / (1000 * 60 * 60 * 24));
       if (daysEl) daysEl.textContent = daysRemaining + ' days remaining';
     } else {
-      // Current cycle NOT paid â€” show DUE date with warning
+      // Current cycle NOT paid  show DUE date with warning
       if (nextEl) {
         nextEl.innerHTML = '<span style="color:#ef4444">' + cycleStart.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + '</span>';
       }
@@ -3746,7 +3746,7 @@ async function loadSubscription() {
     var payBtnText = document.getElementById('sub-pay-btn-text');
     if (payBanner) {
       if (!hasCyclePayment) {
-        // NOT PAID â€” show overdue banner with suspension warning
+        // NOT PAID  show overdue banner with suspension warning
         payBanner.style.display = 'block';
         var suspendDate2 = new Date(cycleStart);
         suspendDate2.setDate(suspendDate2.getDate() + 3);
@@ -3901,7 +3901,7 @@ async function loadPODs() {
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      // Geolocation â€” show as Google Maps link if coordinates present
+      // Geolocation  show as Google Maps link if coordinates present
       var geo = (p.latitude && p.longitude)
         ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;" title="Open in Google Maps">' + parseFloat(p.latitude).toFixed(4) + ', ' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;vertical-align:middle;\">open_in_new</span></a>'
         : '<span style="color:#94a3b8;font-size:11px;">-</span>';
@@ -3911,7 +3911,7 @@ async function loadPODs() {
       var typeColor = ct === 'Photo' ? 'background:#dcfce7;color:#15803d' : 'background:#f1f5f9;color:#94a3b8';
       var typeIcon = ct === 'Photo' ? 'photo_camera' : 'hide_image';
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
-      // Media â€” thumbnail with click-to-view, or No Photo badge
+      // Media  thumbnail with click-to-view, or No Photo badge
       var media = p.photo
         ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);" onclick="window.open(this.src)" title="Click to view full photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><a href="javascript:void(0)" style="display:none;font-size:11px;color:#3b82f6;font-weight:700;" onclick="window.open(\'' + p.photo + '\')" title="Click to view photo">\uD83D\uDDBC View Photo</a>'
         : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
@@ -3932,7 +3932,7 @@ loadPODs();
 </script>
 
 <script>
-// Ã¢â€â‚¬Ã¢â€â‚¬ Vehicle CR/OR Document Upload Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"" Vehicle CR/OR Document Upload Ã¢"""""""""""""""""""""""""""""""""""""""""""""
 window._vehicleDocBase64 = null;
 
 function handleDocSelect(input) {
@@ -3968,7 +3968,7 @@ function clearDocUpload() {
 }
 </script>
 
-<!-- â•Ââ•Â ADMIN REASSIGN DRIVER MODAL â•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Ââ•Â -->
+<!-- ══ ADMIN REASSIGN DRIVER MODAL ════════════════════════════════════════════ -->
 <div id="modal-admin-reassign" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -3997,7 +3997,7 @@ function clearDocUpload() {
         </select>
       </div>
     </div>
-    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">Ã°Å¸â€â€™ Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
+    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">Ã°Å¸"' Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeAdminReassignModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
       <button id="admin-reassign-btn" onclick="submitAdminReassign()" style="flex:2;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -4013,7 +4013,7 @@ function loadNotifPanel() {
   el.innerHTML = '<div class="sr-empty">Loading\u2026</div>';
   var items = [];
 
-  // â”€â”€ Subscription expiry warning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // € Subscription expiry warning €€€€€€€€€€€€
   var subPromise = apiFetch('/' + _SLUG + '/api/admin/subscription')
     .then(function(r){return r.json();})
     .then(function(subData){
@@ -4045,7 +4045,7 @@ function loadNotifPanel() {
       var daysLeft = Math.ceil((cycleDue - now) / (1000*60*60*24));
 
       if(!hasCyclePayment){
-        // OVERDUE â€” not paid for current cycle
+        // OVERDUE  not paid for current cycle
         var daysOverdue = Math.floor((now - cycleStart) / (1000*60*60*24));
         items.unshift({
           icon: 'error', color: '#ef4444',
@@ -4065,7 +4065,7 @@ function loadNotifPanel() {
       }
     }).catch(function(){});
 
-  // â”€â”€ Recent logins from OTHER sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // € Recent logins from OTHER sessions €€€€€€€€
   var mySessionId = '';
   try { mySessionId = sessionStorage.getItem('_login_session_id') || ''; } catch(e){}
   var loginPromise = apiFetch('/' + _SLUG + '/api/admin/recent-logins')
@@ -4092,7 +4092,7 @@ function loadNotifPanel() {
       });
     }).catch(function(e){ console.warn('Recent logins fetch failed:', e); });
 
-  // â”€â”€ After async calls finish, build panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // € After async calls finish, build panel €€€€€€€€
   Promise.all([subPromise, loginPromise]).then(function(){
     // Shipments
     (_allShipments || []).slice(0,6).forEach(function(s) {
@@ -4240,7 +4240,7 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
       // No driver selected yet - show placeholder
       vehSel.disabled = true;
       var ph = document.createElement('option'); ph.value = ''; ph.disabled = true;
-      ph.textContent = 'â†Â Select a driver first'; vehSel.appendChild(ph);
+      ph.textContent = ' Select a driver first'; vehSel.appendChild(ph);
       return;
     }
     vehSel.disabled = false;
@@ -4258,16 +4258,16 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     (_adminReassignVehicles||[]).forEach(function(v){
       var o = document.createElement('option'); o.value = v.plate_number;
       var lbl = v.plate_number + (v.vehicle_type ? ' (' + v.vehicle_type + ')' : '');
-      if (busyVehicles[v.plate_number]) { lbl += ' Ã°Å¸â€Â´ In Use'; o.disabled = true; }
-      else if (v.status === 'Maintenance') { lbl += ' Ã°Å¸Å¸Â¡ Maint'; o.disabled = true; }
-      else lbl += ' Ã°Å¸Å¸Â¢ Available';
+      if (busyVehicles[v.plate_number]) { lbl += ' Ã°Å¸"´ In Use'; o.disabled = true; }
+      else if (v.status === 'Maintenance') { lbl += ' Ã°Å¸Å¸¡ Maint'; o.disabled = true; }
+      else lbl += ' Ã°Å¸Å¸¢ Available';
       o.textContent = lbl;
       if (v.plate_number === currentPlate) o.selected = true;
       vehSel.appendChild(o); fleetCount++;
     });
     if (fleetCount === 0) {
       var no = document.createElement('option'); no.value = ''; no.disabled = true;
-      no.textContent = 'Ã¢Å¡Â  No fleet vehicles - driver needs to register their vehicle';
+      no.textContent = 'Ã¢Å¡  No fleet vehicles - driver needs to register their vehicle';
       vehSel.appendChild(no);
     }
   }
@@ -4306,7 +4306,7 @@ async function submitAdminReassign() {
 }
 </script>
 <script>
-// â”€â”€ Topbar: Global Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Topbar: Global Search €€€€€€€€€€€€€€€€€€
 var _searchDebounce = null;
 function globalSearch(q) {
   clearTimeout(_searchDebounce);
@@ -4361,7 +4361,7 @@ function globalSearch(q) {
   }, 200);
 }
 
-// â”€â”€ Topbar: Notification Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Topbar: Notification Panel €€€€€€€€€€€€€€€€
 var _notifRead = {};
 try { _notifRead = JSON.parse(localStorage.getItem('_notifRead_' + (window.__TENANT__?.slug||'')) || '{}'); } catch(e) { _notifRead = {}; }
 function _saveNotifRead() { try { localStorage.setItem('_notifRead_' + (window.__TENANT__?.slug||''), JSON.stringify(_notifRead)); } catch(e){} }
@@ -4393,7 +4393,7 @@ function timeAgo(d) {
   return Math.floor(s/86400) + 'd ago';
 }
 
-// â”€â”€ Topbar: Help Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Topbar: Help Panel €€€€€€€€€€€€€€€€€€€€
 function toggleHelpPanel() {
   var p = document.getElementById('help-panel');
   var wasOpen = p.classList.contains('show');
@@ -4401,7 +4401,7 @@ function toggleHelpPanel() {
   if (!wasOpen) p.classList.add('show');
 }
 
-// â”€â”€ Close all panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Close all panels €€€€€€€€€€€€€€€€€€€€€
 function closeAllPanels() {
   document.querySelectorAll('.tb-dropdown,.search-results').forEach(function(el) { el.classList.remove('show'); });
   // Blur search input so typing doesn't re-open search results
@@ -4412,7 +4412,7 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.tb-right')) closeAllPanels();
 });
 
-// â”€â”€ Keyboard shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// € Keyboard shortcuts €€€€€€€€€€€€€€€€€€€
 document.addEventListener('keydown', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
     if (e.key === 'Escape') { closeAllPanels(); e.target.blur(); }
