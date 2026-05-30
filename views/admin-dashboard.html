@@ -3627,7 +3627,7 @@ function renderPayments(list) {
     var confirmBtn = (st !== 'Paid')
       ? '<button onclick="confirmPayment(' + p.invoice_id + ',this)" style="font-size:11px;padding:3px 10px;border:1.5px solid #0f2235;border-radius:6px;background:none;cursor:pointer;font-weight:600;color:#0f2235;" title="Mark as Paid">Confirm</button>'
       : '';
-    return '<tr>' +
+    return '<tr data-dn="' + esc(p.delivery_number||'') + '">' +
       '<td><strong style="font-family:monospace;">#' + esc(String(p.invoice_id||'')) + '</strong></td>' +
       '<td><strong>' + esc(p.delivery_number||'-') + '</strong></td>' +
       '<td>' + customer + '</td>' +
@@ -3642,6 +3642,38 @@ function renderPayments(list) {
     '</tr>';
   }).join('');
 }
+
+// Navigate to Payments and highlight a specific delivery number
+function goToPayment(dn) {
+  if (!dn) return;
+  window._highlightPaymentDN = dn;
+  go('payments', null);
+}
+
+// After payments render, check if we need to highlight a row
+var _origRenderPayments = renderPayments;
+renderPayments = function(list) {
+  _origRenderPayments(list);
+  if (window._highlightPaymentDN) {
+    var dn = window._highlightPaymentDN;
+    window._highlightPaymentDN = null;
+    setTimeout(function() {
+      var rows = document.querySelectorAll('#s-payments .tbl-wrap tbody tr[data-dn]');
+      var found = false;
+      rows.forEach(function(row) {
+        if (row.getAttribute('data-dn') === dn) {
+          found = true;
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.style.transition = 'background 0.3s';
+          row.style.background = '#fef9c3';
+          setTimeout(function() { row.style.background = '#fefce8'; }, 600);
+          setTimeout(function() { row.style.background = ''; }, 3000);
+        }
+      });
+      if (!found) showToast('No payment found for ' + dn, 'error');
+    }, 300);
+  }
+};
 
 async function confirmPayment(invoiceId, btn) {
   if(!confirm('Mark invoice #' + invoiceId + ' as Paid?')) return; // confirm() intentional for destructive action
@@ -3913,7 +3945,7 @@ async function loadPODs() {
         : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
-        '<td><strong style="color:#3b82f6;">' + esc(p.delivery_number || '-') + '</strong></td>' +
+        '<td><a href="javascript:void(0)" onclick="goToPayment(\'' + esc(p.delivery_number || '') + '\')" style="color:#3b82f6;font-weight:700;text-decoration:none;cursor:pointer;" title="View in Payments">' + esc(p.delivery_number || '-') + '</a></td>' +
         '<td>' + type + '</td>' +
 
         '<td style="font-size:11px;color:#64748b;">' + ts + '</td>' +
