@@ -446,7 +446,7 @@
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
         <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
-        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Geolocation</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -3890,20 +3890,17 @@ async function paySubscription(btn) {
 async function loadPODs() {
   var tb = document.querySelector('#s-pod .tbl-wrap tbody');
   if(!tb) return;
-  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
+  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
   try {
     var res = await apiFetch('/' + _SLUG + '/api/admin/pods');
     var d = await res.json();
     var pods = d.pods || [];
     if(!pods.length) {
-      tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">task</span><p>No PODs yet</p></div></td></tr>';
+      tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">task</span><p>No PODs yet</p></div></td></tr>';
       return;
     }
     tb.innerHTML = pods.map(function(p) {
-      // Geolocation — show as clickable Google Maps link with location icon
-      var geo = (p.latitude && p.longitude)
-        ? '<a href="https://maps.google.com/?q=' + parseFloat(p.latitude).toFixed(6) + ',' + parseFloat(p.longitude).toFixed(6) + '" target="_blank" rel="noopener" style="color:#3b82f6;font-family:monospace;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="View delivery location on Google Maps">' + parseFloat(p.latitude).toFixed(4) + ',&nbsp;' + parseFloat(p.longitude).toFixed(4) + ' <span class=\"material-symbols-outlined\" style=\"font-size:11px;\">open_in_new</span></a>'
-        : '<span style="color:#94a3b8;font-size:11px;">-</span>';
+
       var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
       // Capture type badge
       var ct = p.capture_type || 'Photo';
@@ -3918,13 +3915,13 @@ async function loadPODs() {
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
         '<td><strong style="color:#3b82f6;">' + esc(p.delivery_number || '-') + '</strong></td>' +
         '<td>' + type + '</td>' +
-        '<td>' + geo + '</td>' +
+
         '<td style="font-size:11px;color:#64748b;">' + ts + '</td>' +
         '<td>' + media + '</td>' +
       '</tr>';
     }).join('');
   } catch(e) {
-    tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="5"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
   }
 }
 
