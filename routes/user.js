@@ -222,7 +222,7 @@ router.get('/staff-login', (req, res) => res.json({ message: 'Use POST for staff
 router.post('/login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
-
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
   const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
   const tenantId = tenants[0].tenant_id;
@@ -265,6 +265,7 @@ router.post('/login', async (req, res) => {
 router.post('/staff-login', async (req, res) => {
   const { slug } = req.params;
   const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
   const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || (tenants[0].status !== 'active' && tenants[0].status !== 'suspended')) return res.status(404).json({ error: 'Workspace not found.' });
