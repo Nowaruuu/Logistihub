@@ -291,7 +291,7 @@
       <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
         <div class="stat-card"><div class="stat-label">Gross Revenue<div class="stat-icon si-g"><span class="material-symbols-outlined">paid</span></div></div><div class="stat-value" id="pay-gross"></div><div class="stat-note" id="pay-gross-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Est. Expenses<div class="stat-icon si-a"><span class="material-symbols-outlined">local_gas_station</span></div></div><div class="stat-value" id="pay-expenses"></div><div class="stat-note">Fuel + driver labor</div></div>
-        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net"></div><div class="stat-note" id="pay-net-note">Revenue Ã¢Ë†' Expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Net Profit<div class="stat-icon si-g"><span class="material-symbols-outlined">trending_up</span></div></div><div class="stat-value" id="pay-net"></div><div class="stat-note" id="pay-net-note">Revenue \u2212 Expenses</div></div>
         <div class="stat-card"><div class="stat-label">Pending<div class="stat-icon si-a"><span class="material-symbols-outlined">pending</span></div></div><div class="stat-value" id="pay-pending">0</div><div class="stat-note" id="pay-pending-note">No data yet</div></div>
         <div class="stat-card"><div class="stat-label">Overdue<div class="stat-icon si-r"><span class="material-symbols-outlined">warning</span></div></div><div class="stat-value" id="pay-overdue">0</div><div class="stat-note" id="pay-overdue-note">No data yet</div></div>
       </div>
@@ -976,9 +976,9 @@ setTimeout(calcPreview, 100);
             '<div><div style="font-size:14px;font-weight:800;color:#0f172a;">' + p.label + '</div></div>' +
           '</div>' +
           '<div style="margin-bottom:20px;">' +
-            '<span style="font-size:36px;font-weight:800;color:#0f172a;"> + cyclePrice + '</span>' +
+            '<span style="font-size:36px;font-weight:800;color:#0f172a;">₱' + cyclePrice + '</span>' +
             '<span style="font-size:13px;color:#94a3b8;font-weight:500;">' + _cycleLabels[_billingCycle] + '</span>' +
-            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;"> + p.price + '/mo equivalent</div>' : '') +
+            (_billingCycle !== 'monthly' ? '<div style="font-size:11px;color:#16a34a;margin-top:2px;">₱' + p.price + '/mo equivalent</div>' : '') +
           '</div>' +
           '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:16px;">' +
             featuresHtml + noFeaturesHtml +
@@ -1059,7 +1059,6 @@ setTimeout(calcPreview, 100);
   </div>
 </main>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
 <!-- ══ SESSION EXPIRY MODAL ══ -->
 <div id="session-expired-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;">
@@ -1078,7 +1077,7 @@ setTimeout(calcPreview, 100);
 <script>
 function toggleSidebar(){var s=document.querySelector('.sidebar');var o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('show');document.body.classList.toggle('sidebar-open');}
 function closeSidebar(){document.querySelector('.sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.classList.remove('sidebar-open');}
-// Ã¢"" Global session expiry handler Ã¢"""""""""""""""""""""""""""""""""""""""""""""
+// ── Global session expiry handler ──
 var _sessionExpired = false;
 
 function redirectToLogin() {
@@ -1376,7 +1375,7 @@ function filterAppUsers(){
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// Ã¢"" Shipment loading Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Shipment loading ──
 var _allShipments=[];
 function loadShipments(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
@@ -1566,7 +1565,7 @@ _pollInterval = setInterval(function(){
   }).catch(function(){});
 }, 30000);
 
-// Ã¢"" Dashboard Fleet Status Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Dashboard Fleet Status ──
 function loadDashFleet(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1591,7 +1590,7 @@ function loadDashFleet(){
     }).catch(function(){});
 }
 
-// Ã¢"" Dashboard Staff On Duty Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Dashboard Staff On Duty ──
 function loadDashStaff(){
   var slug=(window.__TENANT__&&window.__TENANT__.slug)?window.__TENANT__.slug:'';
   if(!slug)return;
@@ -1627,7 +1626,7 @@ function loadDashStaff(){
     }).catch(function(){});
 }
 
-// Ã¢"" Dashboard Live Map Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Dashboard Live Map ──
 var _dashMap=null;
 var _dashMapLayers=[];
 function _clearMapLayers(){
@@ -1684,11 +1683,11 @@ function loadDashMap(){
     var typeLabel=s.item_type_flag||'PKG';
     var driverInfo=s.driver_name&&s.driver_name!=='Unassigned'?' · '+esc(s.driver_name):'';
     if(hasPickup){
-      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;">Ã¢ Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
+      _addDot(pLat,pLng,'#22c55e',8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:#22c55e;font-weight:700;"> Pickup</span><br>'+esc(s.pickup_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+typeLabel+driverInfo+'</span></div>');
       allPts.push([pLat,pLng]);
     }
     if(hasDrop){
-      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;">Ã¢ '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
+      _addDot(dLat,dLng,isActive?'#3b82f6':'#ef4444',isActive?10:8,'<div style="font-size:12px;line-height:1.5;min-width:140px;"><strong>'+esc(s.delivery_number||'')+'</strong><br><span style="color:'+(isActive?'#3b82f6':'#ef4444')+';font-weight:700;"> '+(isActive?'In Transit':'Dropoff')+'</span><br>'+esc(s.dropoff_location||'')+'<br><span style="font-size:10px;color:#94a3b8;">'+esc(s.status||'')+driverInfo+'</span></div>');
       allPts.push([dLat,dLng]);
     }
     if(hasPickup&&hasDrop){
@@ -1701,7 +1700,7 @@ function loadDashMap(){
 }
 
 
-// Ã¢"" Sales Report Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Sales Report ──
 var _srMonthlyChart=null, _srTypeChart=null;
 var _srMonthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var _srMonthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -2494,7 +2493,7 @@ async function saveSettings() {
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }</script><script src="/public/gradient-picker.js"></script><script>
-// Ã¢"" FillList init Ã¢""""""""""""""""""""""""""""""""""""
+// ── FillList init ──
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
@@ -2937,7 +2936,7 @@ setInterval(function() {
 </div>
 
 <script>
-// Ã¢"" Staff & Vehicle Data Loading Ã¢"""""""""""""""""""""""""""""""""""""""""""""""
+// ── Staff & Vehicle Data Loading ──
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
@@ -2996,7 +2995,7 @@ function renderStaff(list) {
       '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td style="font-size:12px;">' + esc(s.phone || '\u2014') + '</td>' +
       '<td style="font-size:12px;text-align:center;">' + (s.role === 'Driver' ? '<strong>' + (s.delivered_count || 0) + '</strong>' : '\u2014') + '</td>' +
-      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;"> + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
+      '<td style="font-size:12px;">' + (s.role === 'Driver' ? '<span style="color:#10b981;font-weight:700;">₱' + Number(s.total_earnings || 0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>' : '\u2014') + '</td>' +
       '<td>' + exp + '</td>' +
       '<td>' + licBadge + '</td>' +
       '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':(isSuspended?'b-declined':'b-pending')) + '">' + esc(s.status||'-') + '</span></td>' +
@@ -3057,7 +3056,7 @@ function renderVehicles(list) {
   }).join('');
 }
 
-// Ã¢"" Vehicle Image Lightbox Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Vehicle Image Lightbox ──
 function viewVehicleImage(url, plate) {
   var overlay = document.getElementById('vehicle-img-lightbox');
   if (!overlay) {
@@ -3088,7 +3087,7 @@ function showNoImageToast() {
   window._noImgTimer = setTimeout(function() { t.style.opacity = '0'; setTimeout(function(){ t.style.display = 'none'; }, 300); }, 2500);
 }
 
-// Ã¢"" Package Categories (global tenant-level) Ã¢""""""""""""""""""""""""""""""""""
+// "" Package Categories (global tenant-level) """"""""""""""""""""""""""""""""""
 var _ALL_PKG_CATS = ['Package','Food','Document','Bulk','Vehicle'];
 // Display labels - internal DB keys stay the same so mobile mapping works
 var _PKG_CAT_LABELS = { Package: 'Standard Package', Food: 'Food', Document: 'Document', Bulk: 'Bulk Freight', Vehicle: 'Vehicle' };
@@ -3137,7 +3136,7 @@ async function savePackageCategories() {
   }
 }
 
-// Ã¢"" Vehicle Requests Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Vehicle Requests ──
 function loadVehicleRequests() {
   var el = document.getElementById('vehicle-requests-list');
   if(!el) return;
@@ -3150,7 +3149,7 @@ function loadVehicleRequests() {
     el.innerHTML = pending.map(function(r) {
       var isAssignment = r.request_type === 'staff_assignment';
       var flagHtml = r.refusal_count >= 3
-        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">Ã¢Å¡  ' + r.refusal_count + 'x refused</span>'
+        ? '<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;">⚠ ' + r.refusal_count + 'x refused</span>'
         : (r.refusal_count > 0 ? '<span style="background:#fff7ed;color:#ea580c;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;">' + r.refusal_count + 'x refused</span>' : '');
       var typeLabel = isAssignment
         ? '<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;">STAFF ASSIGNED</span>'
@@ -3196,7 +3195,7 @@ async function denyVehicleRequest(id) {
   } catch(e) { showToast('Network error.', 'error'); }
 }
 
-// Ã¢"" Assign Vehicle to Driver modal Ã¢"""""""""""""""""""""""""""""""""""""""""""
+// ── Assign Vehicle to Driver modal ──
 var _assignVehiclePlate = '';
 async function openAssignVehicleModal(plate) {
   _assignVehiclePlate = plate;
@@ -3290,7 +3289,7 @@ window.go = function(id, btn) {
   if(id === 'vehicles') loadVehicles();
 };
 
-// Ã¢"" Staff Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Staff Modal ──
 function openStaffModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-email').value = '';
@@ -3331,7 +3330,7 @@ async function submitAddStaff() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
 
-// Ã¢"" License Review Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── License Review Modal ──
 var _licenseStaffId = null;
 function openLicenseModal(staffId) {
   _licenseStaffId = staffId;
@@ -3371,7 +3370,7 @@ async function licenseAction(action) {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
-// Ã¢"" Vehicle Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Vehicle Modal ──
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
@@ -3487,7 +3486,7 @@ async function submitUpdateVehicle() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">save</span> Save Changes';
 }
 
-// Ã¢"" AUDIT LOGS Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── AUDIT LOGS ──
 async function loadAuditLogs() {
   var tb = document.getElementById('audit-logs-tbody');
   if(!tb) return;
@@ -3521,7 +3520,7 @@ async function loadAuditLogs() {
     tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load audit logs.</p></div></td></tr>';
   }
 }
-// Ã¢"" PAYMENTS Ã¢"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── PAYMENTS ──
 async function loadPayments() {
   var tb = document.querySelector('#s-payments .tbl-wrap tbody');
   if(tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
@@ -3558,7 +3557,7 @@ async function loadPayments() {
     el = document.getElementById('pay-net');
     if(el) { el.textContent = (netProfit < 0 ? '-' : '') + fmt(netProfit); el.style.color = netProfit >= 0 ? '#16a34a' : '#dc2626'; }
     el = document.getElementById('pay-net-note');
-    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue Ã¢Ë†' Expenses';
+    if(el) el.textContent = totalKm > 0 ? totalKm.toFixed(1) + ' km total distance' : 'Revenue \u2212 Expenses';
 
     // Pending
     el = document.getElementById('pay-pending');
@@ -3654,7 +3653,7 @@ async function confirmPayment(invoiceId, btn) {
     loadPayments();
   } catch(e) { showToast(e.message, 'error'); btn.disabled=false; btn.textContent='Confirm'; }
 }
-// Ã¢"" Subscription Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Subscription ──
 async function loadSubscription() {
   var plans = {
     'startup':    { label: 'Padala',       price: 1499,  desc: 'Up to 10 riders / drivers, local deliveries' },
@@ -3932,7 +3931,7 @@ loadPODs();
 </script>
 
 <script>
-// Ã¢"" Vehicle CR/OR Document Upload Ã¢"""""""""""""""""""""""""""""""""""""""""""""
+// ── Vehicle CR/OR Document Upload ──
 window._vehicleDocBase64 = null;
 
 function handleDocSelect(input) {
@@ -3997,7 +3996,7 @@ function clearDocUpload() {
         </select>
       </div>
     </div>
-    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">Ã°Å¸"' Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
+    <div id="admin-reassign-license-note" style="display:none;background:#fefce8;border:1px solid #fde047;border-radius:9px;padding:8px 12px;font-size:11px;color:#854d0e;margin-bottom:14px;">🚗 Drivers with <strong>Pending Review</strong> or <strong>unverified</strong> licenses are hidden. Only verified drivers can be assigned.</div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeAdminReassignModal()" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:inherit;">Cancel</button>
       <button id="admin-reassign-btn" onclick="submitAdminReassign()" style="flex:2;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -4258,16 +4257,16 @@ async function openAdminReassignModal(dn, currentDriverId, currentPlate, shipSta
     (_adminReassignVehicles||[]).forEach(function(v){
       var o = document.createElement('option'); o.value = v.plate_number;
       var lbl = v.plate_number + (v.vehicle_type ? ' (' + v.vehicle_type + ')' : '');
-      if (busyVehicles[v.plate_number]) { lbl += ' Ã°Å¸"´ In Use'; o.disabled = true; }
-      else if (v.status === 'Maintenance') { lbl += ' Ã°Å¸Å¸¡ Maint'; o.disabled = true; }
-      else lbl += ' Ã°Å¸Å¸¢ Available';
+      if (busyVehicles[v.plate_number]) { lbl += ' 🔴 In Use'; o.disabled = true; }
+      else if (v.status === 'Maintenance') { lbl += ' 🟡 Maint'; o.disabled = true; }
+      else lbl += ' 🟢 Available';
       o.textContent = lbl;
       if (v.plate_number === currentPlate) o.selected = true;
       vehSel.appendChild(o); fleetCount++;
     });
     if (fleetCount === 0) {
       var no = document.createElement('option'); no.value = ''; no.disabled = true;
-      no.textContent = 'Ã¢Å¡  No fleet vehicles - driver needs to register their vehicle';
+      no.textContent = '⚠ No fleet vehicles - driver needs to register their vehicle';
       vehSel.appendChild(no);
     }
   }

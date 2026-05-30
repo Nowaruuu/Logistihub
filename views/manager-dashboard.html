@@ -242,7 +242,7 @@
             <select class="f-select" id="pay-status-filter" onchange="renderPayments()"><option value="">All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th></tr></thead><tbody id="payments-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">payments</span><p>Loading invoices…</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Paid At</th></tr></thead><tbody id="payments-tbody"><tr><td colspan="8"><div class="empty"><span class="material-symbols-outlined">payments</span><p>Loading invoices…</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -294,7 +294,6 @@
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
 <!-- ══ SESSION EXPIRY MODAL ══ -->
 <div id="session-expired-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;">
@@ -752,7 +751,7 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<!-- ══ ADD VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- ══ ADD VEHICLE MODAL ══ -->
 <div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -799,7 +798,7 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<!-- ══ UPDATE VEHICLE MODAL ══════════════════════════════════════════ -->
+<!-- ══ UPDATE VEHICLE MODAL ══ -->
 <div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -846,7 +845,7 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<!-- ══ ASSIGN DRIVER MODAL ════════════════════════════════════════ -->
+<!-- ══ ASSIGN DRIVER MODAL ══ -->
 <div id="modal-assign-driver" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -1427,7 +1426,6 @@ function renderPayments() {
     var sc = payStatusCls[p.status] || 'b-pending';
     var amt = '\u20B1' + (p.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
     var paidAt = p.paid_at ? new Date(p.paid_at).toLocaleDateString() + ' ' + new Date(p.paid_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '\u2014';
-    var confirmed = p.admin_confirmed ? '<span class="badge b-delivered">Yes</span>' : '<span class="badge b-pending">No</span>';
     return '<tr><td><strong>' + esc(p.invoice_number || ('INV-' + p.invoice_id)) + '</strong></td><td>' + esc(p.delivery_number || '\u2014') + '</td><td>' + amt + '</td><td>' + esc(p.payment_method || '\u2014') + '</td><td style="font-size:11px;">' + esc(p.reference_number || p.paymongo_payment_id || '\u2014') + '</td><td>' + confirmed + '</td><td><span class="badge ' + sc + '">' + esc(p.status || 'Pending') + '</span></td><td style="white-space:nowrap;font-size:11px;">' + paidAt + '</td></tr>';
   }).join('');
 }

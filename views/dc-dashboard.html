@@ -63,7 +63,7 @@
       <div class="page-sub" id="page-sub">Welcome back</div>
     </div>
     <div class="tb-right">
-      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspaceÃ¢"/></div>
+      <div class="search-bar"><span class="material-symbols-outlined">search</span><input placeholder="Search within your workspace"/></div>
       <div class="notif-wrap"><button class="tb-btn notif-dot"><span class="material-symbols-outlined">notifications</span></button></div>
       <button class="tb-btn"><span class="material-symbols-outlined">help_outline</span></button>
     </div>
@@ -94,7 +94,7 @@
         <div class="card">
           <div class="card-head">
             <span class="card-title"><span class="material-symbols-outlined">inventory_2</span>Recent Shipments</span>
-            <button class="card-action" onclick="go('shipments',null)">View all Ã¢ '</button>
+            <button class="card-action" onclick="go('shipments',null)">View all ● '</button>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -119,11 +119,11 @@
 
       <div class="grid-2">
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage Ã¢ '</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">directions_car</span>Fleet Status</span><button class="card-action" onclick="go('vehicles',null)">Manage ● '</button></div>
           <div id="dash-fleet-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">directions_car</span><p>Loading fleet...</p></div></div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage Ã¢ '</button></div>
+          <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">badge</span>Staff On Duty</span><button class="card-action" onclick="go('staff',null)">Manage ● '</button></div>
           <div id="dash-staff-body" class="card-body" style="padding:0;"><div class="empty" style="padding:28px;"><span class="material-symbols-outlined">badge</span><p>Loading staff...</p></div></div>
         </div>
       </div>
@@ -245,7 +245,7 @@
       </div>
     </div>
 
-<!-- ══ ══  STAFF ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══ ══  -->
+<!-- ══ STAFF ══ -->
     <div id="s-staff" class="screen"><div class="ph-row"><div><h2>Staff</h2><p>Drivers, managers, and document controllers in your company.</p></div><button class="btn btn-primary btn-sm" onclick="openStaffModal()"><span class="material-symbols-outlined">person_add</span>Add Staff</button></div>
       <div class="card">
         <div class="card-head">
@@ -269,7 +269,7 @@
           <span class="card-title"><span class="material-symbols-outlined">manage_accounts</span>Registered App Users</span>
           <select class="f-select" id="app-users-role-filter" onchange="filterAppUsers()"><option value="">All Roles</option><option value="Driver">Driver</option><option value="Document Controller">Document Controller</option><option value="Admin">Admin</option></select>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>LoadingÃ¢</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Contact Email</th><th>Role</th><th>Registered</th><th>Status</th></tr></thead><tbody id="app-users-tbody"><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">manage_accounts</span><p>Loading</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -288,7 +288,7 @@
             <select class="f-select"><option>All Statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option><option>AwaitingAdmin</option></select>
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Admin Confirmed</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice #</th><th>Delivery #</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Paid At</th><th></th></tr></thead><tbody><tr><td colspan="9"><div class="empty"><span class="material-symbols-outlined">payments</span><p>No invoices yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -368,7 +368,6 @@
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
 <!-- ══ SESSION EXPIRY MODAL ══ -->
 <div id="session-expired-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;">
@@ -689,7 +688,7 @@ function previewBackground(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-// FillList handles color inputs Ã¢ native inputs removed
+// FillList handles color inputs ● native inputs removed
 function updateColorPreview() {
   var bar = document.getElementById('color-preview-bar');
   var app = (document.getElementById('set-bg-app-hex') || {}).value || '#f1f5f9';
@@ -719,7 +718,7 @@ function loadSettings() {
       if (d.slug) document.getElementById('set-slug').value = d.slug;
       if (d.name) document.getElementById('set-name').value = d.name;
       if (d.email) document.getElementById('set-email').value = d.email;
-      // App & Sidebar colors Ã¢ load into FillList + hidden inputs
+      // App & Sidebar colors ● load into FillList + hidden inputs
       if (d.brand_color) {
         document.getElementById('set-brand-color-hex').value = d.brand_color;
         if (typeof _brandFL !== 'undefined' && _brandFL) _brandFL.setValue(d.brand_color);
@@ -794,7 +793,7 @@ async function changePassword() {
     errEl.style.display = 'block';
   }
 }</script><script src="/public/gradient-picker.js"></script><script>
-// Ã¢"" FillList init Ã¢""""""""""""""""""""""""""""""""""""
+// ── FillList init ──
 var _heroFL, _pageFL, _appFL, _sidebarFL, _brandFL;
 window.addEventListener('load', function() {
   if(typeof FillList === 'undefined') return;
@@ -844,7 +843,7 @@ window.addEventListener('load', function() {
 
 
 
-<!-- Ã¢•══• ADD STAFF MODAL Ã¢•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══• -->
+<!-- ── ADD STAFF MODAL ── -->
 <div id="modal-staff" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -881,7 +880,7 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<!-- Ã¢•══• ADD VEHICLE MODAL Ã¢•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══• -->
+<!-- ── ADD VEHICLE MODAL ── -->
 <div id="modal-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -943,7 +942,7 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<!-- Ã¢•══• UPDATE VEHICLE MODAL Ã¢•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══•══• -->
+<!-- ── UPDATE VEHICLE MODAL ── -->
 <div id="modal-update-vehicle" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -991,7 +990,7 @@ window.addEventListener('load', function() {
 </div>
 
 <script>
-// Ã¢"" Staff & Vehicle Data Loading Ã¢"""""""""""""""""""""""""""""""""""""""""""""""
+// ── Staff & Vehicle Data Loading ──
 var _staffData = [], _vehicleData = [], _staffTabFilter = 'All';
 var _SLUG = (window.__TENANT__ && window.__TENANT__.slug) ? window.__TENANT__.slug : '';
 
@@ -1012,15 +1011,15 @@ function renderStaff(list) {
   var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
   tb.innerHTML = list.map(function(s) {
     var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
-    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : 'Ã¢;
+    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : ';
     var sid = s.staff_id || s.id || '';
     var delBtn = (sid && !s.is_current_user) ? '<button onclick="deleteStaff(\'' + sid + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     return '<tr>' +
-      '<td><strong>' + esc(s.name || s.first_name || 'Ã¢) + '</strong></td>' +
-      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'Ã¢) + '</span></td>' +
-      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'Ã¢) + '</td>' +
+      '<td><strong>' + esc(s.name || s.first_name || ') + '</strong></td>' +
+      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||') + '</span></td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||') + '</td>' +
       '<td>' + exp + '</td>' +
-      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':'b-declined') + '">' + esc(s.status||'Ã¢) + '</span></td>' +
+      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':'b-declined') + '">' + esc(s.status||') + '</span></td>' +
       '<td>' + delBtn + '</td></tr>';
   }).join('');
 }
@@ -1058,11 +1057,11 @@ function renderVehicles(list) {
     var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     return '<tr>' +
-      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'Ã¢) + '</strong></td>' +
-      '<td>' + esc(v.vehicle_type||'Ã¢) + '</td>' +
-      '<td>' + (v.capacity_tons || 'Ã¢) + '</td>' +
-      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'Ã¢) + '</span></td>' +
-      '<td>' + esc(v.assigned_route||'Ã¢) + '</td>' +
+      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||') + '</strong></td>' +
+      '<td>' + esc(v.vehicle_type||') + '</td>' +
+      '<td>' + (v.capacity_tons || ') + '</td>' +
+      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||') + '</span></td>' +
+      '<td>' + esc(v.assigned_route||') + '</td>' +
       '<td><div style="display:flex;gap:4px;">' + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }
@@ -1097,7 +1096,7 @@ window.go = function(id, btn) {
   if(id === 'vehicles') loadVehicles();
 };
 
-// Ã¢"" Staff Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Staff Modal ──
 function openStaffModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-email').value = '';
@@ -1135,7 +1134,7 @@ async function submitAddStaff() {
   btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">person_add</span> Add & Send Email';
 }
 
-// Ã¢"" Vehicle Modal Ã¢""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ── Vehicle Modal ──
 function openVehicleModal() {
   document.getElementById('v-plate').value = '';
   document.getElementById('v-type').value = '';
@@ -1354,7 +1353,7 @@ function loadSalesReport() {
 }
 function exportSalesCSV() {
   var rows = [['Delivery #','Client','Type','Vehicle','Fee','Status','Paid','Date']];
-  _allShipments.forEach(function(s){ rows.push([s.delivery_number,s.sender_name||s.client_name||'',s.item_type_flag||'',s.vehicle_type||'',(parseFloat(s.total_fee)||0).toFixed(2),s.status,s.is_paid?'Yes':'No',s.created_at||'']); });
+  _allShipments.forEach(function(s){ rows.push([s.delivery_number,s.sender_name||s.client_name||'',s.item_type_flag||'',s.vehicle_type||'₱',(parseFloat(s.total_fee)||0).toFixed(2),s.status,s.is_paid?'Yes':'No',s.created_at||'']); });
   var csv = rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
   var blob = new Blob([csv], {type:'text/csv'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sales_report_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
