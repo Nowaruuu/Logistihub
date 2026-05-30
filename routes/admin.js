@@ -284,9 +284,12 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
   const tid = req.tenantId;
   try {
     // Auto-cleanup: delete bogus ₱50 test payments from failed PayMongo checkouts
-    // (minimum real shipment fee is ₱80+ so ₱50 payments are always test artifacts)
+    // Check BOTH payment.total_amount AND shipment.total_fee since display uses whichever is available
     await query(
-      "DELETE FROM payment WHERE tenant_id = ? AND total_amount <= 50 AND status = 'Paid' AND payment_type IN ('full','deposit')",
+      `DELETE p FROM payment p
+       LEFT JOIN shipment s ON s.delivery_number = p.delivery_number AND s.tenant_id = p.tenant_id
+       WHERE p.tenant_id = ? AND p.status = 'Paid' AND p.payment_type IN ('full','deposit')
+         AND (p.total_amount <= 50 OR (s.total_fee IS NOT NULL AND s.total_fee <= 50))`,
       [tid]
     ).catch(() => {});
 
@@ -318,10 +321,17 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
       [tid, tid]
     );
 
+    // Safety net: filter out any remaining ₱50 payments that the DELETE didn't catch
+    const filteredRows = rows.filter(function(p) {
+      var displayAmt = (p.total_fee && parseFloat(p.total_fee) > 0) ? parseFloat(p.total_fee) : parseFloat(p.total_amount || 0);
+      if (p.payment_type === 'deposit' || p.payment_type === 'balance') displayAmt = parseFloat(p.total_amount || 0);
+      return displayAmt > 50;
+    });
+
     // Enrich payments missing method/date from PayMongo API
     const pmKey = process.env.PAYMONGO_SECRET_KEY;
     if (pmKey) {
-      for (const p of rows) {
+      for (const p of filteredRows) {
         if (p.paymongo_checkout_id && (!p.payment_method || !p.paid_at)) {
           try {
             const pmRes = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${p.paymongo_checkout_id}`, {
@@ -385,7 +395,7 @@ router.get('/:slug/api/admin/payments', requireAdmin, requireSlugMatch, async (r
       total_expenses += km * (fuelRate + DRIVER_LABOR_PER_KM);
     }
     total_expenses = Math.round(total_expenses * 100) / 100;
-    res.json({ payments: rows, total_revenue, pending_count, total_distance, total_expenses });
+    res.json({ payments: filteredRows, total_revenue, pending_count, total_distance, total_expenses });
   } catch (err) {
     console.error('[GET /admin/payments]', err);
     res.status(500).json({ error: err.message || 'Failed to load payments.' });
