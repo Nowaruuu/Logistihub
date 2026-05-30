@@ -105,6 +105,17 @@ router.post('/register', async (req, res) => {
     if (!first_name || !last_name || !email || !password || !username) {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    // Validate phone length
+    if (phone && phone.replace(/\s/g, '').length > 11) {
+      return res.status(400).json({ error: 'Phone number must be 11 digits or less.' });
+    }
 
     const safeUsername = username.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
     const loginEmail = `${safeUsername}@${slug}.com`;
