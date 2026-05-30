@@ -1891,6 +1891,12 @@ router.post('/pay/checkout', authMiddleware, async (req, res) => {
     const dbFee = parseFloat(ship[0].total_fee || 0);
     const actualAmount = dbFee > 0 ? dbFee : parseFloat(amount);
 
+    // Hard guard: reject suspiciously low amounts (minimum base_fee is ₱80)
+    if (!actualAmount || actualAmount <= 50) {
+      console.error('[PayMongo] Rejected checkout with suspicious amount:', actualAmount, 'for', delivery_number);
+      return res.status(400).json({ error: 'Invalid payment amount. Please recalculate your shipment fee.' });
+    }
+
     // Clean up any previous Failed payment records for this shipment (from cancelled PayMongo checkouts)
     try {
       await query(

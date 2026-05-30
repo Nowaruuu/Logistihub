@@ -198,6 +198,16 @@ app.listen(PORT, async () => {
       }
     } catch(e) { console.error('Distance backfill error:', e.message); }
 
+    // ── Cleanup: Remove bogus ₱50 test payments from failed PayMongo checkouts ──
+    try {
+      const [deleted] = await query(
+        "DELETE FROM payment WHERE total_amount <= 50 AND status = 'Paid' AND payment_type IN ('full','deposit')"
+      );
+      if (deleted.affectedRows > 0) {
+        console.log(`   🧹 Cleaned up ${deleted.affectedRows} bogus ₱50 test payment(s)`);
+      }
+    } catch(e) { /* table may not exist yet */ }
+
     console.log('   ✅ Schema columns verified');
 
     // ── Subscription Billing Enforcement ─────────────────────────────
