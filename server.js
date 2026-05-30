@@ -37,6 +37,7 @@ app.use(cors({
 
 // Serve uploaded files / public assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITING
