@@ -1011,15 +1011,15 @@ function renderStaff(list) {
   var roleColors = {'Driver':'#ede9fe;color:#7c3aed','Document Controller':'#dcfce7;color:#15803d','Manager':'#dbeafe;color:#1d4ed8','Admin':'#fef3c7;color:#b45309'};
   tb.innerHTML = list.map(function(s) {
     var rc = roleColors[s.role] || '#f1f5f9;color:#64748b';
-    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : ';
+    var exp = s.license_expiry ? new Date(s.license_expiry).toLocaleDateString() : '\u2014';
     var sid = s.staff_id || s.id || '';
     var delBtn = (sid && !s.is_current_user) ? '<button onclick="deleteStaff(\'' + sid + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     return '<tr>' +
-      '<td><strong>' + esc(s.name || s.first_name || ') + '</strong></td>' +
-      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||') + '</span></td>' +
-      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||') + '</td>' +
+      '<td><strong>' + esc(s.name || s.first_name || '\u2014') + '</strong></td>' +
+      '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'\u2014') + '</span></td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'\u2014') + '</td>' +
       '<td>' + exp + '</td>' +
-      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':'b-declined') + '">' + esc(s.status||') + '</span></td>' +
+      '<td><span class="badge ' + (s.status==='active'||s.status==='Available'?'b-delivered':'b-declined') + '">' + esc(s.status||'\u2014') + '</span></td>' +
       '<td>' + delBtn + '</td></tr>';
   }).join('');
 }
@@ -1057,11 +1057,11 @@ function renderVehicles(list) {
     var delBtn = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     return '<tr>' +
-      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||') + '</strong></td>' +
-      '<td>' + esc(v.vehicle_type||') + '</td>' +
-      '<td>' + (v.capacity_tons || ') + '</td>' +
-      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||') + '</span></td>' +
-      '<td>' + esc(v.assigned_route||') + '</td>' +
+      '<td><strong style="font-family:monospace;">' + esc(v.plate_number||'\u2014') + '</strong></td>' +
+      '<td>' + esc(v.vehicle_type||'\u2014') + '</td>' +
+      '<td>' + (v.capacity_tons || '\u2014') + '</td>' +
+      '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'\u2014') + '</span></td>' +
+      '<td>' + esc(v.assigned_route||'\u2014') + '</td>' +
       '<td><div style="display:flex;gap:4px;">' + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }

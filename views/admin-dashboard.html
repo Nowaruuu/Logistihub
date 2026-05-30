@@ -3107,7 +3107,7 @@ function renderPackageCategories() {
     return '<button onclick="togglePkgCat(\'' + cat + '\')" style="' +
       'display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;' +
       (on ? 'background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,0.3);' : 'background:#f1f5f9;color:#94a3b8;') + '">' +
-      '<span style="font-size:14px;">' + (on ? ' : '✕') + '</span>' + label +
+      '<span style="font-size:14px;">' + (on ? '✓' : '✕') + '</span>' + label +
     '</button>';
   }).join('');
 }
