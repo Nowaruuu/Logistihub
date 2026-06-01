@@ -1260,6 +1260,11 @@ var pageMeta={
 };
 
 function go(id,navBtn){
+  // ── SUSPENSION GATE: block all pages except subscription ──
+  if (window.__TENANT__ && window.__TENANT__.status === 'suspended' && id !== 'subscription') {
+    go('subscription');
+    return;
+  }
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   var el=document.getElementById('s-'+id);
   if(el)el.classList.add('active');
@@ -1548,10 +1553,14 @@ go=function(id,navBtn){
   if(id==='staff' && typeof loadStaff === 'function') loadStaff(); // refresh badge and table when navigating to staff
   if(id==='shipments'||id==='dashboard'){loadShipments();loadDashFleet();loadDashStaff();setTimeout(loadDashMap,300);}
 };
-// Auto-load on page load
-loadShipments();
-if(typeof loadStaff === 'function') loadStaff();      // updates staff badge via renderStaff()
-loadDashStaff();  // also updates staff badge + dashboard widget
+// Auto-load on page load (skip if suspended — go() gate will redirect to subscription)
+if (window.__TENANT__ && window.__TENANT__.status === 'suspended') {
+  go('subscription');
+} else {
+  loadShipments();
+  if(typeof loadStaff === 'function') loadStaff();      // updates staff badge via renderStaff()
+  loadDashStaff();  // also updates staff badge + dashboard widget
+}
 // Refresh staff badge every 30 seconds so it stays current without needing to navigate
 _pollInterval = setInterval(function(){
   if (typeof _sessionExpired !== 'undefined' && _sessionExpired) { clearInterval(_pollInterval); return; }
@@ -3763,7 +3772,10 @@ async function loadSubscription() {
       var suspendStr = suspendDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
       var daysUntilSuspend = Math.ceil((suspendDate - now) / (1000 * 60 * 60 * 24));
 
-      if (daysUntilSuspend <= 0) {
+      var isSuspended = window.__TENANT__ && window.__TENANT__.status === 'suspended';
+      if (isSuspended) {
+        if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">⛔ Account SUSPENDED \u2014 pay now to restore access</span>';
+      } else if (daysUntilSuspend <= 0) {
         if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue by ' + daysOverdue + ' day(s) \u2014 suspension imminent!</span>';
       } else {
         if (daysEl) daysEl.innerHTML = '<span style="color:#ef4444;font-weight:700">Payment overdue \u2014 suspended on ' + suspendStr + ' (' + daysUntilSuspend + ' day' + (daysUntilSuspend!==1?'s':'') + ' left)</span>';
@@ -3783,7 +3795,12 @@ async function loadSubscription() {
         suspendDate2.setDate(suspendDate2.getDate() + 3);
         var daysUntil2 = Math.ceil((suspendDate2 - now) / (1000 * 60 * 60 * 24));
         var suspendStr2 = suspendDate2.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-        if (daysUntil2 <= 0) {
+        var isSuspended2 = window.__TENANT__ && window.__TENANT__.status === 'suspended';
+        if (isSuspended2) {
+          if (payTitle) payTitle.textContent = '⛔ Account Suspended';
+          if (payDesc) payDesc.textContent = 'Your workspace has been suspended due to overdue payment. All operations are frozen. Pay now to restore access immediately.';
+          payBanner.style.background = 'linear-gradient(135deg, #7f1d1d, #991b1b)';
+        } else if (daysUntil2 <= 0) {
           if (payTitle) payTitle.textContent = 'Payment Overdue \u2014 Suspension Imminent!';
           if (payDesc) payDesc.textContent = 'Your workspace will be suspended any moment. Pay now to keep your service running.';
         } else {
@@ -3809,7 +3826,12 @@ async function loadSubscription() {
     }
 
     if (statusEl) {
-      if (!hasCyclePayment) {
+      var isSusp = window.__TENANT__ && window.__TENANT__.status === 'suspended';
+      if (isSusp) {
+        statusEl.textContent = '⛔ Suspended';
+        statusEl.style.color = '#ef4444';
+        statusEl.style.fontWeight = '800';
+      } else if (!hasCyclePayment) {
         statusEl.textContent = 'Overdue';
         statusEl.style.color = '#ef4444';
       } else {

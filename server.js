@@ -223,70 +223,48 @@ app.listen(PORT, async () => {
           "SELECT tenant_id, slug, plan, created_at, status FROM TENANT WHERE status = 'active' AND plan IS NOT NULL AND plan != 'free'"
         );
 
-        console.log(`   [BILLING] Found ${tenants.length} active paid tenants`);
         const now = new Date();
         for (const t of tenants) {
           const planKey = (t.plan || '').toLowerCase();
           if (!planKey || planKey === 'free') continue;
 
-          // Calculate current billing cycle window [cycleStart, cycleEnd)
           const created = new Date(t.created_at);
           let cycleStart = new Date(created);
           let cycleEnd = new Date(cycleStart);
           cycleEnd.setMonth(cycleEnd.getMonth() + 1);
-
           while (cycleEnd <= now) {
             cycleStart = new Date(cycleEnd);
             cycleEnd = new Date(cycleStart);
             cycleEnd.setMonth(cycleEnd.getMonth() + 1);
           }
 
-          // Skip the first billing cycle — the initial upgrade payment covers it
           const firstCycleEnd = new Date(created);
           firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
-          
-          console.log(`   [BILLING] ${t.slug}: plan=${t.plan}, created=${created.toISOString()}, cycle=${cycleStart.toISOString().split('T')[0]} to ${cycleEnd.toISOString().split('T')[0]}, firstCycleEnd=${firstCycleEnd.toISOString().split('T')[0]}, skip=${cycleStart.getTime() < firstCycleEnd.getTime()}`);
-          
           if (cycleStart.getTime() < firstCycleEnd.getTime()) continue;
 
-          // Check if there's a RENEWAL payment for the current billing cycle
           const csDate = cycleStart.toISOString().split('T')[0];
           const ceDate = cycleEnd.toISOString().split('T')[0];
           const [payments] = await query(
             "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ? AND created_at < ?",
             [t.tenant_id, csDate, ceDate]
           );
+          if (payments[0].cnt > 0) continue;
 
-          console.log(`   [BILLING] ${t.slug}: payments in [${csDate}, ${ceDate}) = ${payments[0].cnt}`);
-          if (payments[0].cnt > 0) continue; // Current cycle is paid
-
-          // Calculate days overdue from cycle start (date-only, ignore time-of-day)
           const cycleStartDate = new Date(csDate);
           const todayDate = new Date(now.toISOString().split('T')[0]);
           const daysOverdue = Math.floor((todayDate - cycleStartDate) / (1000 * 60 * 60 * 24));
 
-          console.log(`   [BILLING] ${t.slug}: daysOverdue=${daysOverdue}`);
-
-          // Grace period: 3 days — after that, suspend
           if (daysOverdue >= 3) {
-            console.log(`   [BILLING] ⛔ SUSPENDING ${t.slug} NOW!`);
             try {
-              await query(
-                "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
-                [t.tenant_id]
-              );
+              await query("UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'", [t.tenant_id]);
             } catch (colErr) {
-              console.log(`   [BILLING] Fallback UPDATE: ${colErr.message}`);
-              await query(
-                "UPDATE TENANT SET status = 'suspended' WHERE tenant_id = ? AND status = 'active'",
-                [t.tenant_id]
-              );
+              await query("UPDATE TENANT SET status = 'suspended' WHERE tenant_id = ? AND status = 'active'", [t.tenant_id]);
             }
-            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue, cycle: ${csDate} to ${ceDate})`);
+            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue)`);
           }
         }
       } catch (err) {
-        console.error('   Billing check error:', err.message, err.stack);
+        console.error('   Billing check error:', err.message);
       }
     }
 

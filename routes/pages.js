@@ -16,6 +16,7 @@ window.__TENANT__ = ${JSON.stringify({
     company_name:     tenantData.company_name,
     slug:             tenantData.slug,
     plan:             tenantData.plan,
+    status:           tenantData.status,
     brand_color:      tenantData.brand_color || '#3b82f6',
     logo_url:         tenantData.logo_url || '',
     bg_app_color:     tenantData.bg_app_color || '#f1f5f9',
