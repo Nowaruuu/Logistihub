@@ -40,6 +40,48 @@ async function requireAdmin(req, res, next) {
       return res.status(403).json({ error: 'Workspace is inactive or does not exist.' });
     }
 
+    // Real-time subscription enforcement: auto-suspend if overdue >= 3 days
+    if (tenant.status === 'active' && tenant.plan && tenant.plan !== 'free') {
+      try {
+        const { query: dbQuery } = require('../config/db');
+        const created = new Date(tenant.created_at);
+        const now = new Date();
+        let cycleStart = new Date(created);
+        let cycleEnd = new Date(cycleStart);
+        cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+        while (cycleEnd <= now) {
+          cycleStart = new Date(cycleEnd);
+          cycleEnd = new Date(cycleStart);
+          cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+        }
+        // Skip first billing cycle (covered by initial payment)
+        const firstCycleEnd = new Date(created);
+        firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+        if (cycleStart.getTime() >= firstCycleEnd.getTime()) {
+          const [pmts] = await dbQuery(
+            "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ? AND created_at < ?",
+            [tenant.tenant_id, cycleStart.toISOString().split('T')[0], cycleEnd.toISOString().split('T')[0]]
+          );
+          if (pmts[0].cnt === 0) {
+            const cycleStartDate = new Date(cycleStart.toISOString().split('T')[0]);
+            const todayDate = new Date(now.toISOString().split('T')[0]);
+            const daysOverdue = Math.floor((todayDate - cycleStartDate) / (1000 * 60 * 60 * 24));
+            if (daysOverdue >= 3) {
+              await dbQuery(
+                "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
+                [tenant.tenant_id]
+              );
+              tenant.status = 'suspended';
+              console.log(`[AUTH] Auto-suspended tenant ${tenant.slug} (${daysOverdue} days overdue)`);
+            }
+          }
+        }
+      } catch (billingErr) {
+        // Non-blocking — don't prevent admin access if billing check fails
+        console.error('[AUTH] Billing check error:', billingErr.message);
+      }
+    }
+
     req.admin   = payload;
     req.tenant  = tenant;
     req.tenantId = tenant.tenant_id;
