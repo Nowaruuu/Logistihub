@@ -543,6 +543,7 @@
       // Reset any search-hidden rows on all screens
       document.querySelectorAll('tbody tr').forEach(function(r) { r.style.display = ''; });
       if (screenId === 'dashboard') loadDashboard();
+      if (screenId === 'reports')   loadReports();
       if (screenId === 'tenants')   loadAll();
       if (screenId === 'applications') loadApplications();
       if (screenId === 'sales')     loadSales();
