@@ -119,7 +119,7 @@ router.get('/tenant-config', async (req, res) => {
       );
       capRows.forEach((r) => {
         const mapped = typeMap[r.vtype];
-        if (mapped && r.max_cap) {
+        if (mapped && r.max_cap && parseFloat(r.max_cap) > 0) {
           const kg = parseFloat(r.max_cap) * 1000;
           if (!capacityMap[mapped] || kg > capacityMap[mapped]) capacityMap[mapped] = kg;
         }
@@ -306,7 +306,7 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
       // New plate — insert into fleet
       await query(
         `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc, image_url)
-         VALUES (?, ?, ?, ?, 0, 'Available', ?, ?)`,
+         VALUES (?, ?, ?, ?, NULL, 'Available', ?, ?)`,
         [tid, plate, vehicle_type, model || null, `Registered by driver: ${driverName}`, vehicle_photo]
       );
     } else {

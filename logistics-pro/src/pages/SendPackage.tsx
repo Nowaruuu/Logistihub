@@ -435,7 +435,7 @@ export default function SendPackage() {
     if (!PH_PHONE_REGEX.test(receiverPhone.trim())) { setError('Receiver phone must be a valid PH number (e.g. 09171234567)'); return; }
     if (!weight || rawWeight <= 0) { setError('Weight must be greater than 0'); return; }
     // Weight limit check against selected vehicle capacity
-    const effectiveMaxKg = tenantCapacities[vehicle] ?? selectedVehicle?.maxKg ?? 200;
+    const effectiveMaxKg = tenantCapacities[vehicle] || selectedVehicle?.maxKg || 200;
     if (weightKg > effectiveMaxKg) {
       const unitDisplay = weightKg >= 1000 ? `${(weightKg/1000).toFixed(2)} tons` : `${weightKg} kg`;
       setError(
@@ -876,7 +876,7 @@ export default function SendPackage() {
                 const Icon = v.icon;
                 const isSelected = vehicle === v.id;
                 // Use staff-configured capacity if available, else fall back to hardcoded
-                const maxKg = tenantCapacities[v.id] ?? v.maxKg;
+                const maxKg = tenantCapacities[v.id] || v.maxKg;
                 const overWeight = weightKg > 0 && weightKg > maxKg;
                 return (
                   <button key={v.id}
