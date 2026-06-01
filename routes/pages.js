@@ -60,9 +60,10 @@ async function resolveTenant(slug, res, opts = {}) {
     }
     const tenant = rows[0];
 
-    // If tenant is suspended, serve the dedicated suspension page (with payment)
+    // If tenant is suspended, serve the appropriate suspension page
     if (tenant.status === 'suspended' && !opts.allowSuspended) {
-      res.status(403).send(injectTenantData(readView('suspended.html'), tenant));
+      const view = opts.suspendedView === 'admin' ? 'suspended.html' : 'suspended-public.html';
+      res.status(403).send(injectTenantData(readView(view), tenant));
       return null;
     }
 
@@ -118,7 +119,7 @@ router.get('/onboarding', (req, res) => {
 });
 
 router.get('/:slug/admin', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res);
+  const tenant = await resolveTenant(req.params.slug, res, { suspendedView: 'admin' });
   if (!tenant) return;
   res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
 });
@@ -135,7 +136,7 @@ router.get('/:slug/admin-login', async (req, res) => {
   res.send(injectTenantData(readView('admin-login.html'), tenant));
 });
 router.get('/:slug/staff-login', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
+  const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('staff-login.html'), tenant));
 });
@@ -150,18 +151,18 @@ router.get('/:slug/manager-dashboard', async (req, res) => {
   res.send(injectTenantData(readView('manager-dashboard.html'), tenant));
 });
 router.get('/:slug/register', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
+  const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('client-register.html'), tenant));
 });
 router.get('/:slug/get-app', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
+  const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('get-app.html'), tenant));
 });
 
 router.get('/:slug', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
+  const tenant = await resolveTenant(req.params.slug, res);
   if (!tenant) return;
   res.send(injectTenantData(readView('tenant-landing.html'), tenant));
 });

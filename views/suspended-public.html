@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Suspended — LogistiHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-up {
+            opacity: 0;
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .del-1 { animation-delay: 0.1s; }
+        .del-2 { animation-delay: 0.25s; }
+
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 5%; }
+
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 32px 0; border-bottom: 1px solid #f1f5f9;
+        }
+        .logo { font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; }
+        .logo-box { width: 36px; height: 36px; background: var(--primary); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+        .logo-box .material-symbols-rounded { color: white; font-size: 20px; }
+
+        .suspend-section {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 120px 0 60px;
+            text-align: center;
+        }
+        .suspend-icon {
+            width: 88px; height: 88px;
+            border-radius: 50%;
+            background: #fef2f2;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 28px;
+            border: 3px solid #fecaca;
+        }
+        .suspend-icon .material-symbols-rounded { font-size: 44px; color: #ef4444; }
+
+        h1 { font-size: 42px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; }
+        .sub {
+            font-size: 17px; color: var(--text-muted);
+            max-width: 520px; margin: 0 auto 28px; line-height: 1.8;
+        }
+        .info-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 28px 36px;
+            max-width: 460px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .info-card p {
+            font-size: 14px; color: #64748b; line-height: 1.7;
+        }
+        .info-card .highlight {
+            font-weight: 700; color: #0f172a;
+        }
+
+        footer {
+            padding: 40px 0; text-align: center;
+            border-top: 1px solid #f1f5f9; color: var(--text-muted); font-size: 13px;
+            margin-top: 80px;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 28px; }
+            .suspend-section { padding: 80px 0 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="animate-up">
+            <a href="#" class="logo">
+                <div class="logo-box" id="logo-box"><span class="material-symbols-rounded">package_2</span></div>
+                <span id="nav-brand">LogistiHub</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <section class="suspend-section animate-up del-1">
+            <div class="suspend-icon">
+                <span class="material-symbols-rounded">gpp_bad</span>
+            </div>
+            <h1>Workspace Unavailable</h1>
+            <p class="sub">
+                This workspace has been temporarily suspended by <strong>LogistiHub</strong> due to an overdue subscription payment.
+            </p>
+        </section>
+
+        <div class="animate-up del-2">
+            <div class="info-card">
+                <p>
+                    Services for <span class="highlight" id="company-name"></span> are currently unavailable.
+                    If you are an employee or client of this company, please contact your company administrator for more information.
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 LogistiHub. Powered by LogistiHub.
+        </footer>
+    </div>
+
+    <script>
+        var T = window.__TENANT__ || {};
+        document.getElementById('nav-brand').textContent = T.company_name || 'LogistiHub';
+        document.getElementById('company-name').textContent = T.company_name || 'this workspace';
+        if (T.logo_url) {
+            document.getElementById('logo-box').innerHTML = '<img src="' + T.logo_url + '" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">';
+        }
+    </script>
+</body>
+</html>
