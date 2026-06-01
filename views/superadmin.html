@@ -926,6 +926,114 @@
       } catch(e) { showToast('Save failed: ' + e.message, 'error'); }
     }
 
+    // ── Applications ──────────────────────────────────────────────────────
+    async function loadApplications() {
+      const tb = document.getElementById('applications-tbody');
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+      try {
+        const resp = await fetch('/api/superadmin/applications', { credentials: 'include' });
+        if (!resp.ok) throw new Error('Failed to load');
+        const apps = await resp.json();
+
+        // Update badge
+        const pending = apps.filter(a => a.status === 'pending').length;
+        const badge = document.getElementById('app-badge');
+        if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-block' : 'none'; }
+
+        if (!apps.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No applications yet</td></tr>'; return; }
+        tb.innerHTML = apps.map(a => {
+          const date = new Date(a.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+          const statusClass = a.status === 'pending' ? 'bg-pending' : a.status === 'approved' ? 'bg-active' : 'bg-suspended';
+          let actions = '';
+          if (a.status === 'pending') {
+            actions = `<div style="display:flex;gap:6px;">
+              ${a.permit_filename ? `<button class="btn btn-secondary btn-sm" onclick="viewPermit(${a.application_id})"><span class="material-symbols-rounded" style="font-size:14px;">description</span></button>` : ''}
+              <button class="btn btn-primary btn-sm" onclick="approveApplication(${a.application_id},'${(a.company_name||'').replace(/'/g,"\\'")}')"><span class="material-symbols-rounded" style="font-size:14px;">check</span> Approve</button>
+              <button class="btn btn-danger btn-sm" onclick="openRejectModal(${a.application_id},'${(a.company_name||'').replace(/'/g,"\\'")}')"><span class="material-symbols-rounded" style="font-size:14px;">close</span> Reject</button>
+            </div>`;
+          } else if (a.status === 'approved') {
+            actions = '<span style="font-size:12px;color:#16a34a;">✓ Approved</span>';
+          } else {
+            actions = `<span style="font-size:12px;color:#dc2626;" title="${(a.rejection_reason||'').replace(/"/g,'&quot;')}">✗ Rejected</span>`;
+          }
+          return `<tr>
+            <td><strong>${a.company_name || '-'}</strong></td>
+            <td>${a.name || '-'}</td>
+            <td style="font-size:12px;color:#64748b;">${a.email || '-'}</td>
+            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">${a.slug || '-'}</code></td>
+            <td style="font-size:12px;color:#64748b;">${date}</td>
+            <td><span class="badge ${statusClass}">${a.status}</span></td>
+            <td>${actions}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        console.error('loadApplications error:', e);
+        tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Failed to load applications</td></tr>';
+      }
+    }
+
+    async function approveApplication(id, name) {
+      if (!confirm('Approve application for "' + name + '"? A payment link will be emailed to them.')) return;
+      try {
+        const r = await fetch('/api/superadmin/applications/' + id + '/approve', { method: 'PUT', credentials: 'include' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error);
+        showToast('✅ ' + (d.message || 'Approved!'));
+        loadApplications();
+      } catch(e) { showToast('Approve failed: ' + e.message, 'error'); }
+    }
+
+    let _rejectAppId = null;
+    function openRejectModal(id, name) {
+      _rejectAppId = id;
+      document.getElementById('reject-reason').value = '';
+      const modal = document.getElementById('reject-modal');
+      modal.style.display = 'flex';
+    }
+    function closeRejectModal() {
+      document.getElementById('reject-modal').style.display = 'none';
+      _rejectAppId = null;
+    }
+    async function confirmReject() {
+      const reason = document.getElementById('reject-reason').value.trim();
+      if (!reason) { showToast('Please provide a rejection reason.', 'error'); return; }
+      const btn = document.getElementById('btn-confirm-reject');
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/superadmin/applications/' + _rejectAppId + '/reject', {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error);
+        showToast('Application rejected.');
+        closeRejectModal();
+        loadApplications();
+      } catch(e) { showToast('Reject failed: ' + e.message, 'error'); }
+      btn.disabled = false;
+    }
+
+    async function viewPermit(id) {
+      try {
+        const r = await fetch('/api/superadmin/applications/' + id + '/permit', { credentials: 'include' });
+        const d = await r.json();
+        if (!r.ok || !d.file) throw new Error(d.error || 'Permit not found');
+        const viewer = document.getElementById('permit-viewer');
+        if (d.mimetype && d.mimetype.startsWith('image/')) {
+          viewer.innerHTML = '<img src="' + d.file + '" style="max-width:100%;border-radius:8px;" alt="Business Permit">';
+        } else if (d.mimetype === 'application/pdf') {
+          viewer.innerHTML = '<iframe src="' + d.file + '" style="width:100%;height:60vh;border:none;border-radius:8px;"></iframe>';
+        } else {
+          viewer.innerHTML = '<a href="' + d.file + '" download="' + (d.filename || 'permit') + '" class="btn btn-primary">Download File</a>';
+        }
+        document.getElementById('permit-modal').style.display = 'flex';
+      } catch(e) { showToast('Failed to load permit: ' + e.message, 'error'); }
+    }
+    function closePermitModal() {
+      document.getElementById('permit-modal').style.display = 'none';
+    }
+
     async function loadPlatformSettings() {
       try {
         const s = await fetch('/api/superadmin/platform-settings', { credentials: 'include' }).then(r => r.json());
