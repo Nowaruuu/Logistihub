@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const { query, logAudit } = require('../config/db');
 const { requireSuperadmin } = require('../middleware/auth');
-const { sendInviteEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail } = require('../config/mailer');
+const { sendInviteEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendStaffWelcomeEmail } = require('../config/mailer');
 
 const PLATFORM_FILE = path.join(__dirname, '../config/platform.json');
 function readPlatform() {
@@ -165,7 +165,12 @@ router.post('/developers', requireSuperadmin, async (req, res) => {
       [name, email, hash, req.superadmin.superadmin_id || null]
     );
     logAudit({ actor: req.superadmin.email, actor_type: 'superadmin', action: 'ADD_DEVELOPER', target: `${name} <${email}>`, ip_address: req.ip });
-    res.json({ ok: true, message: `Developer "${name}" added successfully.`, temp_password: tempPassword });
+    res.json({ ok: true, message: `Developer "${name}" added successfully. Credentials sent to ${email}.`, temp_password: tempPassword });
+
+    // Send welcome email with credentials (fire-and-forget)
+    const loginUrl = (process.env.BASE_URL || 'https://logistichub.ddns.net') + '/superadmin';
+    sendStaffWelcomeEmail(email, name, email, tempPassword, 'Developer (Superadmin)', 'LogistiHub Platform', loginUrl)
+      .catch(e => console.warn('[developer-create] Email failed:', e.message));
   } catch(e) {
     res.status(500).json({ error: 'Failed to add developer. ' + e.message });
   }
