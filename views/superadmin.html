@@ -61,8 +61,22 @@
     <header class="topbar">
       <div class="page-title" id="topbar-title">Dashboard Overview</div>
       <div class="topbar-actions">
-        <button class="icon-btn" title="Refresh Data" onclick="location.reload()"><span class="material-symbols-rounded">refresh</span></button>
-        <button class="icon-btn" title="Notifications"><span class="material-symbols-rounded">notifications</span></button>
+        <div style="position:relative;">
+          <input type="text" id="global-search" class="form-control" placeholder="Search tenants, logs..." oninput="handleGlobalSearch(this.value)" style="width:240px;padding:8px 14px 8px 36px;font-size:12px;border-radius:99px;border:1.5px solid var(--border);background:#f8fafc;">
+          <span class="material-symbols-rounded" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;color:#94a3b8;pointer-events:none;">search</span>
+        </div>
+        <button class="icon-btn" id="refresh-btn" title="Refresh Data" onclick="refreshCurrentScreen()"><span class="material-symbols-rounded">refresh</span></button>
+        <div style="position:relative;">
+          <button class="icon-btn" id="notif-btn" title="Notifications" onclick="toggleNotifications()"><span class="material-symbols-rounded">notifications</span></button>
+          <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #fff;"></span>
+          <div id="notif-dropdown" style="display:none;position:absolute;right:0;top:44px;width:360px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.12);z-index:100;overflow:hidden;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;font-weight:700;">Notifications</span>
+              <button onclick="markAllRead()" style="font-size:11px;color:var(--primary);font-weight:600;border:none;background:none;cursor:pointer;">Mark all read</button>
+            </div>
+            <div id="notif-list" style="max-height:320px;overflow-y:auto;"></div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -517,18 +531,128 @@
       settings:  'Global Settings'
     };
 
+    var _currentScreen = 'dashboard';
     function nav(screenId, btnEl) {
+      _currentScreen = screenId;
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       document.getElementById('screen-' + screenId).classList.add('active');
       btnEl.classList.add('active');
       document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
+      document.getElementById('global-search').value = '';
       if (screenId === 'dashboard') loadDashboard();
       if (screenId === 'tenants')   loadAll();
       if (screenId === 'applications') loadApplications();
       if (screenId === 'sales')     loadSales();
       if (screenId === 'audit')     loadAuditLogs();
       if (screenId === 'settings')  loadDevelopers();
+    }
+
+    // ── REFRESH (no page reload) ──────────────────────────────────────────
+    function refreshCurrentScreen() {
+      var btn = document.getElementById('refresh-btn');
+      btn.querySelector('.material-symbols-rounded').style.animation = 'spin 0.6s linear';
+      setTimeout(function() { btn.querySelector('.material-symbols-rounded').style.animation = ''; }, 600);
+      switch (_currentScreen) {
+        case 'dashboard': loadDashboard2 ? loadDashboard2() : loadDashboard(); break;
+        case 'tenants': loadAll(); break;
+        case 'applications': loadApplications(); break;
+        case 'sales': loadSales(); break;
+        case 'audit': loadAuditLogs(); break;
+        case 'reports': loadReports(); break;
+        case 'settings': loadDevelopers(); loadPlatformSettings(); break;
+        default: loadDashboard2 ? loadDashboard2() : loadDashboard();
+      }
+      showToast('Data refreshed!');
+    }
+
+    // ── SEARCH ─────────────────────────────────────────────────────────────
+    function handleGlobalSearch(q) {
+      q = q.toLowerCase().trim();
+      // Search visible tables on the active screen
+      var activeScreen = document.querySelector('.screen.active');
+      if (!activeScreen) return;
+      var tables = activeScreen.querySelectorAll('tbody');
+      tables.forEach(function(tbody) {
+        var rows = tbody.querySelectorAll('tr');
+        var anyVisible = false;
+        rows.forEach(function(row) {
+          if (row.querySelector('td[colspan]') && rows.length === 1) return; // skip empty-state rows
+          var text = row.textContent.toLowerCase();
+          if (!q || text.indexOf(q) !== -1) {
+            row.style.display = '';
+            anyVisible = true;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // ── NOTIFICATIONS ──────────────────────────────────────────────────────
+    var _notifOpen = false;
+    function toggleNotifications() {
+      _notifOpen = !_notifOpen;
+      document.getElementById('notif-dropdown').style.display = _notifOpen ? 'block' : 'none';
+      if (_notifOpen) loadNotifications();
+    }
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+      if (_notifOpen && !e.target.closest('#notif-btn') && !e.target.closest('#notif-dropdown')) {
+        _notifOpen = false;
+        document.getElementById('notif-dropdown').style.display = 'none';
+      }
+    });
+    async function loadNotifications() {
+      var list = document.getElementById('notif-list');
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Loading...</div>';
+      try {
+        var rows = await fetch('/api/superadmin/audit-logs', { credentials:'include' }).then(r => r.json());
+        if (!Array.isArray(rows) || !rows.length) {
+          list.innerHTML = '<div style="padding:30px;text-align:center;color:#94a3b8;font-size:12px;"><span class="material-symbols-rounded" style="font-size:24px;display:block;margin-bottom:8px;">notifications_off</span>No recent activity</div>';
+          document.getElementById('notif-badge').style.display = 'none';
+          return;
+        }
+        var recent = rows.slice(0, 10);
+        document.getElementById('notif-badge').style.display = recent.length > 0 ? 'block' : 'none';
+        list.innerHTML = recent.map(function(l) {
+          var icon = 'info';
+          var color = '#3b82f6';
+          if (l.action && l.action.indexOf('SUSPEND') !== -1) { icon = 'block'; color = '#ef4444'; }
+          else if (l.action && l.action.indexOf('ACTIVE') !== -1) { icon = 'check_circle'; color = '#10b981'; }
+          else if (l.action && l.action.indexOf('DELETE') !== -1) { icon = 'delete'; color = '#ef4444'; }
+          else if (l.action && l.action.indexOf('LOGIN') !== -1) { icon = 'login'; color = '#8b5cf6'; }
+          else if (l.action && l.action.indexOf('APPROVE') !== -1) { icon = 'check'; color = '#10b981'; }
+          else if (l.action && l.action.indexOf('REJECT') !== -1) { icon = 'close'; color = '#ef4444'; }
+          var time = new Date(l.created_at);
+          var ago = timeAgo(time);
+          return '<div style="padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">' +
+            '<span class="material-symbols-rounded" style="font-size:18px;color:' + color + ';margin-top:1px;flex-shrink:0;">' + icon + '</span>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:12px;font-weight:600;color:#0f172a;">' + (l.action || 'Activity').replace(/_/g, ' ') + '</div>' +
+              '<div style="font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (l.target || l.actor || '') + (l.tenant_slug ? ' · ' + l.tenant_slug : '') + '</div>' +
+            '</div>' +
+            '<span style="font-size:10px;color:#94a3b8;flex-shrink:0;white-space:nowrap;">' + ago + '</span>' +
+          '</div>';
+        }).join('');
+      } catch(e) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:12px;">Failed to load</div>';
+      }
+    }
+    function markAllRead() {
+      document.getElementById('notif-badge').style.display = 'none';
+      showToast('All notifications marked as read');
+    }
+    function timeAgo(date) {
+      var seconds = Math.floor((new Date() - date) / 1000);
+      if (seconds < 60) return 'just now';
+      var minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return minutes + 'm ago';
+      var hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + 'h ago';
+      var days = Math.floor(hours / 24);
+      if (days < 7) return days + 'd ago';
+      return date.toLocaleDateString();
     }
 
     function setTab(tabId, btnEl) {

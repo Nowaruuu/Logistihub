@@ -149,12 +149,19 @@
   .chart-container { height: 300px; width: 100%; position: relative; }
 
   /* TABLES */
-  .table-responsive { overflow-x: auto; }
+  .table-responsive { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+  .table-responsive thead { position: sticky; top: 0; z-index: 2; }
+  .table-responsive::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-responsive::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 6px; }
+  .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+  .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   table { width: 100%; border-collapse: collapse; text-align: left; }
   th { padding: 12px 24px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); background: #f8fafc; }
   td { padding: 16px 24px; font-size: 13px; font-weight: 500; color: #334155; border-bottom: 1px solid var(--border); vertical-align: middle; }
   tbody tr { transition: var(--transition); }
   tbody tr:hover { background: #f8fafc; }
+
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   
   .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
   .bg-active { background: #dcfce7; color: #166534; }
