@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { AppUser, Tenant } from '../types';
 import * as API from '../lib/api';
+import { SuspendedError } from '../lib/api';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -8,6 +9,8 @@ interface AuthContextType {
   slug: string | null;
   token: string | null;
   isLoading: boolean;
+  isSuspended: boolean;
+  suspendedCompany: string;
   login: (slug: string, email: string, password: string) => Promise<void>;
   register: (slug: string, payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
@@ -32,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [slug, setSlugState] = useState<string | null>(() => localStorage.getItem('lh_slug'));
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('lh_token'));
   const [isLoading, setIsLoading] = useState(true);
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [suspendedCompany, setSuspendedCompany] = useState('');
 
   // Restore session on mount
   useEffect(() => {
@@ -47,6 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(JSON.parse(savedUser));
         if (savedTenant) setTenant(JSON.parse(savedTenant));
       } catch (_) {}
+
+      // Re-validate tenant status on app open
+      API.getTenantInfo(savedSlug)
+        .then(({ tenant: t }) => {
+          setTenant(t);
+          localStorage.setItem('lh_tenant', JSON.stringify(t));
+          setIsSuspended(false);
+        })
+        .catch((err) => {
+          if (err instanceof SuspendedError) {
+            setIsSuspended(true);
+            setSuspendedCompany(err.companyName);
+          }
+        });
     }
     setIsLoading(false);
   }, []);
@@ -54,13 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setSlug = (s: string) => {
     setSlugState(s);
     localStorage.setItem('lh_slug', s);
-    // Also fetch tenant info
+    setIsSuspended(false);
     API.getTenantInfo(s)
       .then(({ tenant: t }) => {
         setTenant(t);
         localStorage.setItem('lh_tenant', JSON.stringify(t));
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err instanceof SuspendedError) {
+          setIsSuspended(true);
+          setSuspendedCompany(err.companyName);
+        }
+      });
   };
 
   const login = async (s: string, email: string, password: string) => {
@@ -123,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, login, register, logout, setSlug, updateProfile }}>
+    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, isSuspended, suspendedCompany, login, register, logout, setSlug, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

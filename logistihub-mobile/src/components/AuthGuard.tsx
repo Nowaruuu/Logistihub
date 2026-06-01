@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Suspended from '../pages/Suspended';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSuspended, suspendedCompany } = useAuth();
   const { slug } = useParams<{ slug: string }>();
 
   if (isLoading) {
@@ -17,6 +18,10 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         </span>
       </div>
     );
+  }
+
+  if (isSuspended) {
+    return <Suspended companyName={suspendedCompany} />;
   }
 
   if (!user) {

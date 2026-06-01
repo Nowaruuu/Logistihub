@@ -23,10 +23,13 @@ router.get('/tenant-info', async (req, res) => {
   try {
     const { slug } = req.params;
     const [rows] = await query(
-      'SELECT tenant_id, company_name, business_type, slug, plan, status, logo_url FROM TENANT WHERE slug = ? AND status = "active" LIMIT 1',
+      'SELECT tenant_id, company_name, business_type, slug, plan, status, logo_url FROM TENANT WHERE slug = ? AND status IN ("active", "suspended") LIMIT 1',
       [slug]
     );
     if (!rows.length) return res.status(404).json({ message: 'Workspace not found.' });
+    if (rows[0].status === 'suspended') {
+      return res.status(403).json({ message: 'This workspace has been temporarily suspended by LogistiHub.', suspended: true, tenant: rows[0] });
+    }
     res.json({ tenant: rows[0] });
   } catch (err) {
     console.error('tenant-info error:', err);
@@ -95,8 +98,11 @@ router.post('/register', async (req, res) => {
       "SELECT tenant_id, company_name, status FROM TENANT WHERE slug = ? LIMIT 1",
       [slug]
     );
-    if (!tenants.length || tenants[0].status !== 'active') {
+    if (!tenants.length || (tenants[0].status !== 'active' && tenants[0].status !== 'suspended')) {
       return res.status(404).json({ error: 'Workspace not found.' });
+    }
+    if (tenants[0].status === 'suspended') {
+      return res.status(403).json({ error: 'This workspace has been temporarily suspended by LogistiHub. Registration is currently unavailable.', suspended: true });
     }
     const tenantId      = tenants[0].tenant_id;
     const companyName   = tenants[0].company_name;
@@ -225,7 +231,8 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
   const [tenants] = await query("SELECT tenant_id, status FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
-  if (!tenants.length || tenants[0].status !== 'active') return res.status(404).json({ error: 'Workspace not found.' });
+  if (!tenants.length || (tenants[0].status !== 'active' && tenants[0].status !== 'suspended')) return res.status(404).json({ error: 'Workspace not found.' });
+  if (tenants[0].status === 'suspended') return res.status(403).json({ error: 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.', suspended: true });
   const tenantId = tenants[0].tenant_id;
 
   const [rows] = await query("SELECT * FROM APP_USER WHERE tenant_id = ? AND email = ? AND status = 'active' LIMIT 1", [tenantId, email]);

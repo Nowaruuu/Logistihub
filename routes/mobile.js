@@ -58,11 +58,18 @@ router.get('/tenant-config', async (req, res) => {
   try {
     // Only select columns guaranteed to exist — avoid crashing on missing columns
     const [rows] = await query(
-      `SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1`,
+      `SELECT * FROM TENANT WHERE slug = ? AND status IN ('active', 'suspended') LIMIT 1`,
       [slug]
     );
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
     const t = rows[0];
+    if (t.status === 'suspended') {
+      return res.status(403).json({
+        error: 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.',
+        suspended: true,
+        company_name: t.company_name || slug
+      });
+    }
     const tid = t.tenant_id;
 
     // ── Vehicle types from fleet ──

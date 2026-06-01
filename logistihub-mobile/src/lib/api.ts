@@ -3,6 +3,16 @@
 
 const BASE_URL = 'https://logistichub.ddns.net';
 
+// Custom error for suspended workspaces
+export class SuspendedError extends Error {
+  public companyName: string;
+  constructor(message: string, companyName?: string) {
+    super(message);
+    this.name = 'SuspendedError';
+    this.companyName = companyName || '';
+  }
+}
+
 function getToken(): string | null {
   return localStorage.getItem('lh_token');
 }
@@ -27,6 +37,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    // Detect suspended workspace
+    if (res.status === 403 && (data?.suspended === true)) {
+      throw new SuspendedError(
+        data?.message || data?.error || 'This workspace has been suspended.',
+        data?.company_name || ''
+      );
+    }
     throw new Error(data?.message || data?.error || `Request failed (${res.status})`);
   }
 

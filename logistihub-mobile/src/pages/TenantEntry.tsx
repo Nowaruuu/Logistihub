@@ -24,8 +24,13 @@ export default function TenantEntry() {
     setErr('');
     try {
       const res = await fetch('https://logistihub.ddns.net/' + s + '/api/tenant-info');
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403 && data?.suspended) {
+        setErr(data?.message || 'This workspace has been temporarily suspended by LogistiHub.');
+        setLoading(false);
+        return;
+      }
       if (!res.ok) throw new Error('Workspace not found.');
-      const data = await res.json();
       if (!data.tenant) throw new Error('Workspace not found.');
       setSlug(s);
       navigate('/' + s + '/login');
