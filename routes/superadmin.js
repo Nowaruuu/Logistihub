@@ -273,7 +273,7 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
   try {
     const [rows] = await query(`
       SELECT
-        t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at,
+        t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.suspension_reason, t.created_at,
         ANY_VALUE(s.username) AS admin_email,
         COUNT(DISTINCT u.user_id)  AS user_count,
         COUNT(DISTINCT sh.delivery_number) AS shipment_count
@@ -281,7 +281,7 @@ router.get('/tenants', requireSuperadmin, async (req, res) => {
       LEFT JOIN STAFF s  ON s.tenant_id = t.tenant_id AND s.role = 'Admin'
       LEFT JOIN APP_USER u ON u.tenant_id = t.tenant_id
       LEFT JOIN shipment sh ON sh.tenant_id = t.tenant_id
-      GROUP BY t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.created_at
+      GROUP BY t.tenant_id, t.company_name, t.slug, t.plan, t.status, t.suspension_reason, t.created_at
       ORDER BY t.created_at DESC
     `);
     res.json(rows);

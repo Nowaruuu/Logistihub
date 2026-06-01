@@ -39,7 +39,7 @@ const SuperadminAPI = {
   getTenants:      ()                 => api('GET',  '/api/superadmin/tenants'),
   inviteTenant:    (email, company_name, notes) =>
                      api('POST', '/api/superadmin/tenants/invite', { email, company_name, notes }),
-  setTenantStatus: (id, status)       => api('PATCH', `/api/superadmin/tenants/${id}/status`, { status }),
+  setTenantStatus: (id, status, reason) => api('PATCH', `/api/superadmin/tenants/${id}/status`, { status, reason }),
   deleteTenant:    (id)               => api('DELETE', `/api/superadmin/tenants/${id}`),
   getSubscriptions:()                 => api('GET',  '/api/superadmin/subscriptions'),
   getApplications: ()                 => api('GET',  '/api/superadmin/applications'),

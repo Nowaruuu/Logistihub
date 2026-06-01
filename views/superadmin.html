@@ -774,9 +774,16 @@
     }
 
     async function setTenantStatus(id, status) {
-      if (!confirm(`Set tenant to "${status}"?`)) return;
-      try { await SuperadminAPI.setTenantStatus(id, status); loadAll(); }
-      catch(e) { showToast('Failed: ' + e.message, 'error'); }
+      if (status === 'suspended') {
+        const reason = prompt('Suspension reason (will be shown to the tenant):');
+        if (reason === null) return; // cancelled
+        try { await SuperadminAPI.setTenantStatus(id, status, reason || 'Suspended by administrator'); loadAll(); showToast('Tenant suspended.'); }
+        catch(e) { showToast('Failed: ' + e.message, 'error'); }
+      } else {
+        if (!confirm('Reactivate this tenant?')) return;
+        try { await SuperadminAPI.setTenantStatus(id, status); loadAll(); showToast('Tenant reactivated.'); }
+        catch(e) { showToast('Failed: ' + e.message, 'error'); }
+      }
     }
 
     async function inviteTenant() {
@@ -873,7 +880,7 @@
             <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
             <td>${t.admin_email || 'N/A'}</td>
             <td><span class="badge ${planBadge}">${t.plan || 'trial'}</span></td>
-            <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span></td>
+            <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span>${t.status==='suspended' && t.suspension_reason ? '<br><span style="font-size:10px;color:#94a3b8;font-style:italic;">' + t.suspension_reason + '</span>' : ''}</td>
             <td>${new Date(t.created_at).toLocaleDateString()}</td>
             <td style="display:flex;gap:6px;">
               ${t.status==='active'
