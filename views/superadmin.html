@@ -943,7 +943,7 @@
           document.getElementById('val-pending-inv').textContent = data.pendingCount || 0;
         const tb = document.getElementById('sales-top-tenants-tbody');
         if (tb && data.topTenants)
-          tb.innerHTML = data.topTenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>₱${Number(t.revenue||0).toLocaleString()}</td><td><span class="badge bg-active">${t.status}</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No data</td></tr>';
+          tb.innerHTML = data.topTenants.map(t => `<tr><td>${t.company_name}</td><td>${t.plan||'trial'}</td><td>₱${Number(t.revenue||0).toLocaleString()}</td><td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No data</td></tr>';
       } catch(e) { console.error('Sales error:', e); }
     }
 
