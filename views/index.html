@@ -149,12 +149,16 @@
             // Apply primary color
             if (s.primary_color) {
                 document.documentElement.style.setProperty('--primary', s.primary_color);
-                // Recompute box shadows based on new color
+                // Parse hex to RGB
                 const hex = s.primary_color.replace('#','');
                 const r = parseInt(hex.substring(0,2),16);
                 const g = parseInt(hex.substring(2,4),16);
                 const b = parseInt(hex.substring(4,6),16);
                 document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+                // Compute contrast color: dark text on light backgrounds, white on dark
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                const contrastColor = luminance > 0.6 ? '#111827' : '#ffffff';
+                document.documentElement.style.setProperty('--primary-contrast', contrastColor);
             }
             // Apply text settings
             if (s.hero_title)     document.getElementById('hero-title').textContent      = s.hero_title;
