@@ -904,12 +904,7 @@ export default function SendPackage() {
                         }
                       </p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                        <Fuel className="size-3" />
-                        <span>₱{v.fuelRate}/km</span>
-                      </div>
-                    </div>
+
                   </button>
                 );
               })}
@@ -1068,17 +1063,7 @@ export default function SendPackage() {
                   <p className="text-xs text-slate-400">3-7 business days</p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600">Best Value</span>
                 </div>
-                {distKm > 0 && method === 'standard' && (
-                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
-                    <span className="text-[10px] text-slate-400">Fuel ({selectedVehicle?.fuelType})</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost)} ({fuelRate}/km)</span>
-                    <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(weightSurcharge)}</span>
-                    {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{categorySurcharge}</span></>}
-                    <span className="text-[10px] text-slate-400">Base fee</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱50</span>
-                  </div>
-                )}
+
               </div>
             </div>
           </button>
@@ -1113,17 +1098,7 @@ export default function SendPackage() {
                 {isSelectedSunday && (
                   <p className="text-[10px] text-amber-500 font-semibold mt-1">📌 Sunday order — will be delivered Monday</p>
                 )}
-                {distKm > 0 && method === 'express' && (
-                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-4 gap-y-0.5">
-                    <span className="text-[10px] text-slate-400">Fuel + Priority</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(fuelCost * 1.8)}</span>
-                    <span className="text-[10px] text-slate-400">Weight ({weightKg}kg)</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(weightSurcharge * 1.8)}</span>
-                    {categorySurcharge > 0 && <><span className="text-[10px] text-slate-400">Category fee</span><span className="text-[10px] text-slate-500 text-right">₱{Math.round(categorySurcharge * 1.8)}</span></>}
-                    <span className="text-[10px] text-slate-400">Base fee</span>
-                    <span className="text-[10px] text-slate-500 text-right">₱{Math.round(50 * 1.8)}</span>
-                  </div>
-                )}
+
               </div>
             </div>
           </button>
