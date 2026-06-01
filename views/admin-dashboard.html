@@ -445,7 +445,7 @@
     <div id="s-pod" class="screen">
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select"><option>All Types</option><option>E-Signature</option><option>Geo-Timestamp</option><option>Photo</option></select></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select" id="pod-type-filter" onchange="filterPODs(this.value)"><option value="">All Types</option><option value="Pickup Photo">Pickup Photo</option><option value="Photo">Delivery Photo</option><option value="E-Signature">E-Signature</option><option value="Geo-Timestamp">Geo-Timestamp</option></select></div>
         <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
@@ -3949,8 +3949,10 @@ async function loadPODs() {
       var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
       // Capture type badge
       var ct = p.capture_type || 'Photo';
-      var typeColor = ct === 'Photo' ? 'background:#dcfce7;color:#15803d' : 'background:#f1f5f9;color:#94a3b8';
-      var typeIcon = ct === 'Photo' ? 'photo_camera' : 'hide_image';
+      var typeColor, typeIcon;
+      if (ct === 'Pickup Photo') { typeColor = 'background:#dbeafe;color:#1d4ed8'; typeIcon = 'add_a_photo'; }
+      else if (ct === 'Photo') { typeColor = 'background:#dcfce7;color:#15803d'; typeIcon = 'photo_camera'; }
+      else { typeColor = 'background:#f1f5f9;color:#94a3b8'; typeIcon = 'hide_image'; }
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
       // Media — thumbnail with click-to-zoom lightbox
       var media = p.photo
@@ -3985,6 +3987,17 @@ function viewPODPhoto(src, deliveryNum) {
   document.getElementById('pod-img').src = src;
   overlay.style.display = 'flex';
   requestAnimationFrame(function(){ overlay.style.opacity = '1'; });
+}
+
+function filterPODs(type) {
+  var rows = document.querySelectorAll('#s-pod .tbl-wrap tbody tr');
+  rows.forEach(function(row) {
+    if (!type) { row.style.display = ''; return; }
+    var badge = row.querySelector('td:nth-child(3)');
+    if (!badge) { row.style.display = ''; return; }
+    var text = badge.textContent.trim();
+    row.style.display = (text.indexOf(type) !== -1) ? '' : 'none';
+  });
 }
 
 loadPODs();
