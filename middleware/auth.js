@@ -46,6 +46,7 @@ async function requireAdmin(req, res, next) {
         const { query: dbQuery } = require('../config/db');
         const created = new Date(tenant.created_at);
         const now = new Date();
+        console.log(`[AUTH-BILLING] Tenant ${tenant.slug}: plan=${tenant.plan}, created=${created.toISOString()}, now=${now.toISOString()}`);
         let cycleStart = new Date(created);
         let cycleEnd = new Date(cycleStart);
         cycleEnd.setMonth(cycleEnd.getMonth() + 1);
@@ -54,31 +55,47 @@ async function requireAdmin(req, res, next) {
           cycleEnd = new Date(cycleStart);
           cycleEnd.setMonth(cycleEnd.getMonth() + 1);
         }
+        console.log(`[AUTH-BILLING] Tenant ${tenant.slug}: cycleStart=${cycleStart.toISOString()}, cycleEnd=${cycleEnd.toISOString()}`);
         // Skip first billing cycle (covered by initial payment)
         const firstCycleEnd = new Date(created);
         firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+        console.log(`[AUTH-BILLING] Tenant ${tenant.slug}: firstCycleEnd=${firstCycleEnd.toISOString()}, skip=${cycleStart.getTime() < firstCycleEnd.getTime()}`);
         if (cycleStart.getTime() >= firstCycleEnd.getTime()) {
+          const csDate = cycleStart.toISOString().split('T')[0];
+          const ceDate = cycleEnd.toISOString().split('T')[0];
           const [pmts] = await dbQuery(
             "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ? AND created_at < ?",
-            [tenant.tenant_id, cycleStart.toISOString().split('T')[0], cycleEnd.toISOString().split('T')[0]]
+            [tenant.tenant_id, csDate, ceDate]
           );
+          console.log(`[AUTH-BILLING] Tenant ${tenant.slug}: payments in cycle [${csDate}, ${ceDate}) = ${pmts[0].cnt}`);
           if (pmts[0].cnt === 0) {
-            const cycleStartDate = new Date(cycleStart.toISOString().split('T')[0]);
+            const cycleStartDate = new Date(csDate);
             const todayDate = new Date(now.toISOString().split('T')[0]);
             const daysOverdue = Math.floor((todayDate - cycleStartDate) / (1000 * 60 * 60 * 24));
+            console.log(`[AUTH-BILLING] Tenant ${tenant.slug}: daysOverdue=${daysOverdue}`);
             if (daysOverdue >= 3) {
-              await dbQuery(
-                "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
-                [tenant.tenant_id]
-              );
+              console.log(`[AUTH-BILLING] ⛔ SUSPENDING tenant ${tenant.slug} NOW!`);
+              // Use simple UPDATE (suspended_at column may not exist yet)
+              try {
+                await dbQuery(
+                  "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
+                  [tenant.tenant_id]
+                );
+              } catch (colErr) {
+                // Fallback: columns don't exist, just update status
+                console.log(`[AUTH-BILLING] Fallback UPDATE (no suspended_at column): ${colErr.message}`);
+                await dbQuery(
+                  "UPDATE TENANT SET status = 'suspended' WHERE tenant_id = ? AND status = 'active'",
+                  [tenant.tenant_id]
+                );
+              }
               tenant.status = 'suspended';
-              console.log(`[AUTH] Auto-suspended tenant ${tenant.slug} (${daysOverdue} days overdue)`);
+              console.log(`[AUTH-BILLING] ✅ Tenant ${tenant.slug} is now SUSPENDED`);
             }
           }
         }
       } catch (billingErr) {
-        // Non-blocking — don't prevent admin access if billing check fails
-        console.error('[AUTH] Billing check error:', billingErr.message);
+        console.error('[AUTH-BILLING] ❌ ERROR:', billingErr.message, billingErr.stack);
       }
     }
 
