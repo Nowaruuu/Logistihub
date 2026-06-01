@@ -7,6 +7,7 @@ const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit    = require('express-rate-limit');
 const path         = require('path');
+const { sendSuspensionEmail } = require('./config/mailer');
 
 // ─── Route modules ────────────────────────────────────────────────────────────
 const pagesRouter      = require('./routes/pages');
@@ -261,6 +262,26 @@ app.listen(PORT, async () => {
               await query("UPDATE TENANT SET status = 'suspended' WHERE tenant_id = ? AND status = 'active'", [t.tenant_id]);
             }
             console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue)`);
+
+            // Send suspension email to tenant admin
+            try {
+              const PLAN_MAP = { startup: { label: 'Padala', price: 1499 }, enterprise: { label: 'Negosyo', price: 4999 }, global: { label: 'Korporasyon', price: 14999 } };
+              const planInfo = PLAN_MAP[planKey] || PLAN_MAP['startup'];
+              const [[adminRow]] = await query(
+                "SELECT s.name, s.contact_email, s.username FROM STAFF s WHERE s.tenant_id = ? AND s.role = 'Admin' LIMIT 1",
+                [t.tenant_id]
+              );
+              if (adminRow) {
+                const adminEmail = adminRow.contact_email || adminRow.username;
+                const [[tenantRow]] = await query('SELECT company_name FROM TENANT WHERE tenant_id = ?', [t.tenant_id]);
+                if (adminEmail) {
+                  await sendSuspensionEmail(adminEmail, adminRow.name || 'Admin', tenantRow?.company_name || t.slug, t.slug, planInfo.label, planInfo.price);
+                  console.log(`   📧 Suspension email sent to ${adminEmail} (${t.slug})`);
+                }
+              }
+            } catch (emailErr) {
+              console.error(`   [EMAIL] Failed to send suspension email for ${t.slug}:`, emailErr.message);
+            }
           }
         }
       } catch (err) {

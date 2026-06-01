@@ -2,6 +2,7 @@
 
 const jwt = require('jsonwebtoken');
 const { getTenantById, logAudit } = require('../config/db');
+const { sendSuspensionEmail } = require('../config/mailer');
 
 // ─── Superadmin Auth ──────────────────────────────────────────────────────────
 function requireSuperadmin(req, res, next) {
@@ -78,6 +79,26 @@ async function requireAdmin(req, res, next) {
               }
               tenant.status = 'suspended';
               console.log(`[AUTH] Auto-suspended tenant ${tenant.slug} (${daysOverdue} days overdue)`);
+
+              // Send suspension email
+              try {
+                const PLAN_MAP = { startup: { label: 'Padala', price: 1499 }, enterprise: { label: 'Negosyo', price: 4999 }, global: { label: 'Korporasyon', price: 14999 } };
+                const planKey = (tenant.plan || 'startup').toLowerCase();
+                const planInfo = PLAN_MAP[planKey] || PLAN_MAP['startup'];
+                const [[adminRow]] = await dbQuery(
+                  "SELECT s.name, s.contact_email, s.username FROM STAFF s WHERE s.tenant_id = ? AND s.role = 'Admin' LIMIT 1",
+                  [tenant.tenant_id]
+                );
+                if (adminRow) {
+                  const adminEmail = adminRow.contact_email || adminRow.username;
+                  if (adminEmail) {
+                    await sendSuspensionEmail(adminEmail, adminRow.name || 'Admin', tenant.company_name || tenant.slug, tenant.slug, planInfo.label, planInfo.price);
+                    console.log(`[AUTH] Suspension email sent to ${adminEmail}`);
+                  }
+                }
+              } catch (emailErr) {
+                console.error(`[AUTH] Failed to send suspension email:`, emailErr.message);
+              }
             }
           }
         }

@@ -425,4 +425,68 @@ async function sendApplicationRejectedEmail(email, name, companyName, reason, re
   });
 }
 
-module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail, sendPasswordResetEmail, sendRegistrationOtpEmail, sendStaffWelcomeEmail, sendApplicationReceivedEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail };
+async function sendSuspensionEmail(email, adminName, companyName, slug, planLabel, amountDue) {
+  const payUrl = (process.env.BASE_URL || 'https://logistichub.ddns.net') + '/' + slug + '/admin';
+  const subject = '⛔ Account Suspended — ' + companyName;
+  const html = `
+  <div style="font-family:Arial,sans-serif;background:#f1f5f9;padding:40px 20px;">
+    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background:#7f1d1d;padding:32px;text-align:center;">
+        <div style="color:#fca5a5;font-size:11px;font-weight:700;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">Account Suspended</div>
+        <div style="color:#fff;font-size:22px;font-weight:800;">${companyName}</div>
+        <div style="color:#fca5a5;font-size:12px;">Powered by Logistics OS</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#0a1628;margin:0 0 16px;font-size:20px;">Hi ${adminName},</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          Your workspace <strong>${companyName}</strong> has been <strong style="color:#dc2626;">suspended</strong> due to an overdue subscription payment. All services have been frozen, including:
+        </p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:24px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid #fecaca;">❌ Shipments</span>
+            <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid #fecaca;">❌ Staff Portal</span>
+            <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid #fecaca;">❌ Driver App</span>
+            <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid #fecaca;">❌ Client Portal</span>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Plan</div>
+              <div style="font-size:16px;font-weight:800;color:#0a1628;">${planLabel}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Amount Due</div>
+              <div style="font-size:16px;font-weight:800;color:#ef4444;">₱${Number(amountDue).toLocaleString()}.00</div>
+            </div>
+          </div>
+        </div>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:24px;">
+          To restore your workspace immediately, please pay your outstanding balance:
+        </p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${payUrl}" style="background:#dc2626;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+            Pay Now & Restore Access →
+          </a>
+        </div>
+        <p style="font-size:12px;color:#94a3b8;text-align:center;word-break:break-all;">
+          Or visit: <a href="${payUrl}" style="color:#0a1628;">${payUrl}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+        <p style="font-size:12px;color:#94a3b8;">
+          Your data is safe and will be preserved. Once payment is received, your workspace will be restored instantly. If you believe this is an error, please contact our support team.
+        </p>
+      </div>
+      <div style="background:#f8fafc;padding:16px;text-align:center;font-size:11px;color:#cbd5e1;">
+        © ${new Date().getFullYear()} ${companyName} · Powered by Logistics OS
+      </div>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'noreply@logistihub.com',
+    to: email, subject, html
+  });
+}
+
+module.exports = { sendRegistrationEmail, sendInviteEmail, sendWelcomeEmail, sendForgotCredentialsEmail, sendPasswordResetEmail, sendRegistrationOtpEmail, sendStaffWelcomeEmail, sendApplicationReceivedEmail, sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendSuspensionEmail };
