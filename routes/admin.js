@@ -959,53 +959,16 @@ router.delete('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:slug/api/admin/pods', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
-    // Get delivery PODs
-    let podRows = [];
-    try {
-      const [rows] = await query(
-        `SELECT pod.*, s.status AS shipment_status
-         FROM proof_of_delivery pod
-         LEFT JOIN shipment s ON s.delivery_number = pod.delivery_number AND s.tenant_id = pod.tenant_id
-         WHERE pod.tenant_id = ?
-         ORDER BY pod.pod_id DESC
-         LIMIT 200`,
-        [req.tenantId]
-      );
-      podRows = rows;
-    } catch (e) { console.warn('[GET /admin/pods] proof_of_delivery query failed:', e.message); }
-
-    // Get pickup photos from shipment table
-    let pickupPods = [];
-    try {
-      const [pickupRows] = await query(
-        `SELECT delivery_number, tenant_id, pickup_photo_url, status AS shipment_status, updated_at AS created_at
-         FROM shipment
-         WHERE tenant_id = ? AND pickup_photo_url IS NOT NULL AND pickup_photo_url != ''
-         ORDER BY updated_at DESC
-         LIMIT 200`,
-        [req.tenantId]
-      );
-      pickupPods = pickupRows.map(p => ({
-        pod_id: 'PU-' + p.delivery_number,
-        delivery_number: p.delivery_number,
-        tenant_id: p.tenant_id,
-        photo: p.pickup_photo_url,
-        capture_type: 'Pickup Photo',
-        shipment_status: p.shipment_status,
-        created_at: p.created_at,
-        receiver_name: null,
-        notes: null,
-        latitude: null,
-        longitude: null
-      }));
-    } catch (e) { console.warn('[GET /admin/pods] pickup photo query failed:', e.message); }
-
-    // Merge and sort by created_at descending
-    const all = [...podRows, ...pickupPods].sort((a, b) => 
-      new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    const [rows] = await query(
+      `SELECT pod.*, s.status AS shipment_status, s.pickup_photo_url
+       FROM proof_of_delivery pod
+       LEFT JOIN shipment s ON s.delivery_number = pod.delivery_number AND s.tenant_id = pod.tenant_id
+       WHERE pod.tenant_id = ?
+       ORDER BY pod.pod_id DESC
+       LIMIT 200`,
+      [req.tenantId]
     );
-
-    res.json({ pods: all });
+    res.json({ pods: rows });
   } catch (err) {
     console.error('[GET /admin/pods]', err);
     res.status(500).json({ error: err.message || 'Failed to load PODs.' });

@@ -445,8 +445,8 @@
     <div id="s-pod" class="screen">
       <div class="ph-row"><div><h2>Proof of Delivery</h2><p>Signatures, photos, and geo-timestamps.</p></div></div>
       <div class="card">
-        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span><select class="f-select" id="pod-type-filter" onchange="filterPODs(this.value)"><option value="">All Types</option><option value="Pickup Photo">Pickup Photo</option><option value="Photo">Delivery Photo</option><option value="E-Signature">E-Signature</option><option value="Geo-Timestamp">Geo-Timestamp</option></select></div>
-        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Timestamp</th><th>Media</th></tr></thead><tbody><tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
+        <div class="card-head"><span class="card-title"><span class="material-symbols-outlined">fact_check</span>All PODs</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>POD ID</th><th>Delivery #</th><th>Capture Type</th><th>Timestamp</th><th>Pickup Photo</th><th>Delivery Photo</th></tr></thead><tbody><tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">fact_check</span><p>No PODs yet</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -3935,13 +3935,13 @@ async function paySubscription(btn) {
 async function loadPODs() {
   var tb = document.querySelector('#s-pod .tbl-wrap tbody');
   if(!tb) return;
-  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span></td></tr>';
   try {
     var res = await apiFetch('/' + _SLUG + '/api/admin/pods');
     var d = await res.json();
     var pods = d.pods || [];
     if(!pods.length) {
-      tb.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="material-symbols-outlined">task</span><p>No PODs yet</p></div></td></tr>';
+      tb.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="material-symbols-outlined">task</span><p>No PODs yet</p></div></td></tr>';
       return;
     }
     tb.innerHTML = pods.map(function(p) {
@@ -3949,26 +3949,29 @@ async function loadPODs() {
       var ts = p.created_at ? new Date(p.created_at).toLocaleString() : '-';
       // Capture type badge
       var ct = p.capture_type || 'Photo';
-      var typeColor, typeIcon;
-      if (ct === 'Pickup Photo') { typeColor = 'background:#dbeafe;color:#1d4ed8'; typeIcon = 'add_a_photo'; }
-      else if (ct === 'Photo') { typeColor = 'background:#dcfce7;color:#15803d'; typeIcon = 'photo_camera'; }
-      else { typeColor = 'background:#f1f5f9;color:#94a3b8'; typeIcon = 'hide_image'; }
+      var typeColor = 'background:#dcfce7;color:#15803d';
+      var typeIcon = 'photo_camera';
+      if (ct !== 'Photo') { typeColor = 'background:#f1f5f9;color:#94a3b8'; typeIcon = 'hide_image'; }
       var type = '<span style="' + typeColor + ';padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><span class=\"material-symbols-outlined\" style=\"font-size:11px;\">' + typeIcon + '</span>' + esc(ct) + '</span>';
-      // Media — thumbnail with click-to-zoom lightbox
-      var media = p.photo
-        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:transform .15s;" onclick="viewPODPhoto(this.src,\'' + esc(p.delivery_number || '') + '\')" onmouseover="this.style.transform=\'scale(1.1)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Click to zoom" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><span style="display:none;font-size:11px;color:#dc2626;font-weight:700;">Image Error</span>'
-        : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">No Photo</span>';
+      // Pickup photo thumbnail
+      var pickupMedia = p.pickup_photo_url
+        ? '<img src="' + p.pickup_photo_url + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #dbeafe;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:transform .15s;" onclick="viewPODPhoto(this.src,\'Pickup — ' + esc(p.delivery_number || '') + '\')" onmouseover="this.style.transform=\'scale(1.1)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Click to zoom pickup photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><span style="display:none;font-size:11px;color:#dc2626;font-weight:700;">Error</span>'
+        : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+      // Delivery photo thumbnail
+      var deliveryMedia = p.photo
+        ? '<img src="' + p.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1.5px solid #bbf7d0;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:transform .15s;" onclick="viewPODPhoto(this.src,\'Delivery — ' + esc(p.delivery_number || '') + '\')" onmouseover="this.style.transform=\'scale(1.1)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Click to zoom delivery photo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"/><span style="display:none;font-size:11px;color:#dc2626;font-weight:700;">Error</span>'
+        : '<span style="color:#94a3b8;font-size:11px;">—</span>';
       return '<tr>' +
         '<td><strong>' + esc(String(p.pod_id || p.id || '')) + '</strong></td>' +
         '<td><a href="javascript:void(0)" onclick="goToPayment(\'' + esc(p.delivery_number || '') + '\')" style="color:#3b82f6;font-weight:700;text-decoration:none;cursor:pointer;" title="View in Payments">' + esc(p.delivery_number || '-') + '</a></td>' +
         '<td>' + type + '</td>' +
-
         '<td style="font-size:11px;color:#64748b;">' + ts + '</td>' +
-        '<td>' + media + '</td>' +
+        '<td>' + pickupMedia + '</td>' +
+        '<td>' + deliveryMedia + '</td>' +
       '</tr>';
     }).join('');
   } catch(e) {
-    tb.innerHTML = '<tr><td colspan="5"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="6"><div class="empty" style="color:#dc2626;"><span class="material-symbols-outlined">error</span><p>Failed to load PODs</p></div></td></tr>';
   }
 }
 
@@ -3983,21 +3986,10 @@ function viewPODPhoto(src, deliveryNum) {
     overlay.onclick = function() { overlay.style.opacity = '0'; setTimeout(function(){ overlay.style.display = 'none'; }, 250); };
     document.body.appendChild(overlay);
   }
-  document.getElementById('pod-title').textContent = deliveryNum ? 'POD — ' + deliveryNum : 'Proof of Delivery';
+  document.getElementById('pod-title').textContent = deliveryNum || 'Proof of Delivery';
   document.getElementById('pod-img').src = src;
   overlay.style.display = 'flex';
   requestAnimationFrame(function(){ overlay.style.opacity = '1'; });
-}
-
-function filterPODs(type) {
-  var rows = document.querySelectorAll('#s-pod .tbl-wrap tbody tr');
-  rows.forEach(function(row) {
-    if (!type) { row.style.display = ''; return; }
-    var badge = row.querySelector('td:nth-child(3)');
-    if (!badge) { row.style.display = ''; return; }
-    var text = badge.textContent.trim();
-    row.style.display = (text.indexOf(type) !== -1) ? '' : 'none';
-  });
 }
 
 loadPODs();
