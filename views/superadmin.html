@@ -540,6 +540,8 @@
       btnEl.classList.add('active');
       document.getElementById('topbar-title').innerText = titles[screenId] || screenId;
       document.getElementById('global-search').value = '';
+      // Reset any search-hidden rows on all screens
+      document.querySelectorAll('tbody tr').forEach(function(r) { r.style.display = ''; });
       if (screenId === 'dashboard') loadDashboard();
       if (screenId === 'tenants')   loadAll();
       if (screenId === 'applications') loadApplications();
