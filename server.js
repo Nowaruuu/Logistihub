@@ -223,6 +223,7 @@ app.listen(PORT, async () => {
           "SELECT tenant_id, slug, plan, created_at, status FROM TENANT WHERE status = 'active' AND plan IS NOT NULL AND plan != 'free'"
         );
 
+        console.log(`   [BILLING] Found ${tenants.length} active paid tenants`);
         const now = new Date();
         for (const t of tenants) {
           const planKey = (t.plan || '').toLowerCase();
@@ -243,62 +244,49 @@ app.listen(PORT, async () => {
           // Skip the first billing cycle — the initial upgrade payment covers it
           const firstCycleEnd = new Date(created);
           firstCycleEnd.setMonth(firstCycleEnd.getMonth() + 1);
+          
+          console.log(`   [BILLING] ${t.slug}: plan=${t.plan}, created=${created.toISOString()}, cycle=${cycleStart.toISOString().split('T')[0]} to ${cycleEnd.toISOString().split('T')[0]}, firstCycleEnd=${firstCycleEnd.toISOString().split('T')[0]}, skip=${cycleStart.getTime() < firstCycleEnd.getTime()}`);
+          
           if (cycleStart.getTime() < firstCycleEnd.getTime()) continue;
 
           // Check if there's a RENEWAL payment for the current billing cycle
-          // Use bounded date range so old payments don't leak across cycles
+          const csDate = cycleStart.toISOString().split('T')[0];
+          const ceDate = cycleEnd.toISOString().split('T')[0];
           const [payments] = await query(
             "SELECT COUNT(*) AS cnt FROM SUBSCRIPTION_PAYMENT WHERE tenant_id = ? AND status = 'paid' AND created_at >= ? AND created_at < ?",
-            [t.tenant_id, cycleStart.toISOString().split('T')[0], cycleEnd.toISOString().split('T')[0]]
+            [t.tenant_id, csDate, ceDate]
           );
 
+          console.log(`   [BILLING] ${t.slug}: payments in [${csDate}, ${ceDate}) = ${payments[0].cnt}`);
           if (payments[0].cnt > 0) continue; // Current cycle is paid
 
           // Calculate days overdue from cycle start (date-only, ignore time-of-day)
-          const cycleStartDate = new Date(cycleStart.toISOString().split('T')[0]);
+          const cycleStartDate = new Date(csDate);
           const todayDate = new Date(now.toISOString().split('T')[0]);
           const daysOverdue = Math.floor((todayDate - cycleStartDate) / (1000 * 60 * 60 * 24));
 
-          // Send overdue notification to admin (once per day — check if already sent today)
-          const todayStr = now.toISOString().split('T')[0];
-          const [existingNotif] = await query(
-            "SELECT COUNT(*) AS cnt FROM NOTIFICATION WHERE tenant_id = ? AND type = 'billing_overdue' AND DATE(created_at) = ?",
-            [t.tenant_id, todayStr]
-          ).catch(() => [[{ cnt: 1 }]]); // If table doesn't exist, skip
-
-          if (existingNotif[0].cnt === 0) {
-            // Get admin staff to notify
-            const [admins] = await query(
-              "SELECT staff_id FROM STAFF WHERE tenant_id = ? AND role IN ('admin','manager') AND status = 'active'",
-              [t.tenant_id]
-            ).catch(() => [[]]);
-
-            for (const admin of admins) {
-              await query(
-                `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, is_read, created_at)
-                 VALUES (?, 'staff', ?, ?, ?, 'billing_overdue', 0, NOW())`,
-                [
-                  admin.staff_id, t.tenant_id,
-                  daysOverdue >= 3 ? '⛔ Account Suspended' : '⚠️ Payment Overdue',
-                  daysOverdue >= 3
-                    ? `Your workspace has been suspended due to ${daysOverdue} days of overdue payment. Please renew your subscription to restore access.`
-                    : `Your subscription payment is ${daysOverdue} day(s) overdue. Please pay within ${3 - daysOverdue} day(s) to avoid suspension.`
-                ]
-              ).catch(() => {});
-            }
-          }
+          console.log(`   [BILLING] ${t.slug}: daysOverdue=${daysOverdue}`);
 
           // Grace period: 3 days — after that, suspend
           if (daysOverdue >= 3) {
-            await query(
-              "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
-              [t.tenant_id]
-            );
-            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue, cycle: ${cycleStart.toISOString().split('T')[0]} to ${cycleEnd.toISOString().split('T')[0]})`);
+            console.log(`   [BILLING] ⛔ SUSPENDING ${t.slug} NOW!`);
+            try {
+              await query(
+                "UPDATE TENANT SET status = 'suspended', suspended_at = NOW(), suspension_reason = 'Subscription payment overdue' WHERE tenant_id = ? AND status = 'active'",
+                [t.tenant_id]
+              );
+            } catch (colErr) {
+              console.log(`   [BILLING] Fallback UPDATE: ${colErr.message}`);
+              await query(
+                "UPDATE TENANT SET status = 'suspended' WHERE tenant_id = ? AND status = 'active'",
+                [t.tenant_id]
+              );
+            }
+            console.log(`   ⚠️  Suspended tenant ${t.slug} (${daysOverdue} days overdue, cycle: ${csDate} to ${ceDate})`);
           }
         }
       } catch (err) {
-        console.error('   Billing check error:', err.message);
+        console.error('   Billing check error:', err.message, err.stack);
       }
     }
 
