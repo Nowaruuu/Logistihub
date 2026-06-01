@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Suspended — LogistiHub</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b2e 50%, #1a0a0a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #e2e8f0;
+    }
+    .container {
+      max-width: 560px;
+      width: 100%;
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 40px 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+    }
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .logo-row img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+    .logo-row .name {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #94a3b8;
+    }
+    .icon-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px rgba(220,38,38,0.3);
+    }
+    .icon-circle .material-symbols-outlined {
+      font-size: 40px;
+      color: #fff;
+      font-variation-settings: 'FILL' 1;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .info-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .info-box .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .info-box .value {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .info-box .value.red { color: #ef4444; }
+    .info-box .desc {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .pay-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 32px;
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ea580c, #dc2626);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(234,88,12,0.3);
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+    .pay-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(234,88,12,0.4); }
+    .pay-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
+    .pay-btn .material-symbols-outlined { font-size: 22px; }
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 24px 0;
+    }
+    .billing-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .billing-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+    .billing-row .date { color: #94a3b8; }
+    .billing-row .plan-name { color: #e2e8f0; font-weight: 600; }
+    .billing-row .amount { color: #e2e8f0; font-weight: 700; }
+    .billing-row .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .badge-paid { background: rgba(22,163,74,0.15); color: #22c55e; }
+    .bottom-links {
+      text-align: center;
+      margin-top: 24px;
+    }
+    .bottom-links a {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .bottom-links a:hover { color: #e2e8f0; }
+    .bottom-links .sep { color: #334155; margin: 0 12px; }
+    #loading-msg {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      padding: 20px 0;
+    }
+    .frozen-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+      justify-content: center;
+    }
+    .frozen-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(239,68,68,0.1);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <!-- Logo -->
+      <div class="logo-row">
+        <img id="tenant-logo" src="" alt="" style="display:none;">
+        <span class="name" id="tenant-name"></span>
+      </div>
+
+      <!-- Icon -->
+      <div class="icon-circle">
+        <span class="material-symbols-outlined">block</span>
+      </div>
+
+      <h1>Account Suspended</h1>
+      <p class="subtitle">
+        Your workspace has been suspended due to an overdue subscription payment.<br>
+        All operations are frozen until payment is received.
+      </p>
+
+      <!-- Frozen operations tags -->
+      <div class="frozen-list">
+        <span class="frozen-tag">Shipments</span>
+        <span class="frozen-tag">Staff Access</span>
+        <span class="frozen-tag">Driver App</span>
+        <span class="frozen-tag">Client Portal</span>
+        <span class="frozen-tag">Reports</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Plan info -->
+      <div class="info-grid">
+        <div class="info-box">
+          <div class="label">Current Plan</div>
+          <div class="value" id="plan-name">—</div>
+          <div class="desc" id="plan-desc"></div>
+        </div>
+        <div class="info-box">
+          <div class="label">Amount Due</div>
+          <div class="value red" id="plan-price">—</div>
+          <div class="desc">Monthly subscription</div>
+        </div>
+      </div>
+
+      <!-- Pay Now -->
+      <button class="pay-btn" id="pay-btn" onclick="handlePayNow()" disabled>
+        <span class="material-symbols-outlined">credit_card</span>
+        <span id="pay-btn-text">Loading...</span>
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- Billing History -->
+      <div class="billing-title">Billing History</div>
+      <div id="billing-history">
+        <div id="loading-msg">Loading billing information...</div>
+      </div>
+
+      <!-- Bottom links -->
+      <div class="bottom-links">
+        <a href="" id="login-link">← Back to Login</a>
+        <span class="sep">|</span>
+        <a href="mailto:support@logistichub.app">Contact Support</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var T = window.__TENANT__ || {};
+    var SLUG = T.slug || '';
+    var PLANS = {
+      'startup':    { label: 'Padala',      price: 1499,  desc: 'Up to 10 riders, local deliveries' },
+      'negosyo':    { label: 'Negosyo',     price: 4999,  desc: 'Unlimited riders, live tracking' },
+      'enterprise': { label: 'Negosyo',     price: 4999,  desc: 'Unlimited riders, live tracking' },
+      'korporasyon':{ label: 'Korporasyon', price: 14999, desc: 'Full platform, data export' },
+      'global':     { label: 'Korporasyon', price: 14999, desc: 'Full platform, data export' }
+    };
+
+    // Set tenant info
+    document.getElementById('tenant-name').textContent = T.company_name || SLUG;
+    document.getElementById('login-link').href = '/' + SLUG + '/admin-login';
+    if (T.logo_url) {
+      var logo = document.getElementById('tenant-logo');
+      logo.src = T.logo_url;
+      logo.style.display = 'block';
+    }
+
+    // Load subscription data
+    (async function() {
+      try {
+        // Get admin token from cookie
+        var token = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('admin_token_' + SLUG + '='));
+        var headers = {};
+        if (token) headers['Cookie'] = token;
+
+        var res = await fetch('/' + SLUG + '/api/admin/subscription', { credentials: 'include' });
+        if (res.status === 401) {
+          // Not logged in — show login link
+          document.getElementById('loading-msg').innerHTML = '<a href="/' + SLUG + '/admin-login" style="color:#3b82f6;font-weight:700;">Sign in to view billing details and pay</a>';
+          var planKey = (T.plan || 'startup').toLowerCase();
+          var plan = PLANS[planKey] || PLANS['startup'];
+          document.getElementById('plan-name').textContent = plan.label;
+          document.getElementById('plan-desc').textContent = plan.desc;
+          document.getElementById('plan-price').textContent = '₱' + plan.price.toLocaleString() + '.00';
+          document.getElementById('pay-btn-text').textContent = 'Sign In to Pay';
+          document.getElementById('pay-btn').disabled = false;
+          document.getElementById('pay-btn').onclick = function() { window.location.href = '/' + SLUG + '/admin-login'; };
+          return;
+        }
+
+        var d = await res.json();
+        if (!d.ok) throw new Error(d.error);
+
+        var planKey = (d.plan || T.plan || 'startup').toLowerCase();
+        var plan = PLANS[planKey] || PLANS['startup'];
+
+        document.getElementById('plan-name').textContent = plan.label;
+        document.getElementById('plan-desc').textContent = plan.desc;
+        document.getElementById('plan-price').textContent = '₱' + plan.price.toLocaleString() + '.00';
+        document.getElementById('pay-btn-text').textContent = 'Pay ₱' + plan.price.toLocaleString() + ' Now';
+        document.getElementById('pay-btn').disabled = false;
+
+        // Billing history
+        if (d.payments && d.payments.length) {
+          var html = '';
+          d.payments.forEach(function(p) {
+            var date = new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            html += '<div class="billing-row">' +
+              '<span class="date">' + date + '</span>' +
+              '<span class="plan-name">' + (p.description || p.plan || 'Subscription') + '</span>' +
+              '<span class="amount">₱' + Number(p.amount || 0).toLocaleString() + '</span>' +
+              '<span class="badge badge-paid">' + (p.status || 'paid') + '</span>' +
+              '</div>';
+          });
+          document.getElementById('billing-history').innerHTML = html;
+        } else {
+          document.getElementById('billing-history').innerHTML = '<div style="text-align:center;color:#64748b;font-size:13px;padding:12px 0;">No billing records found</div>';
+        }
+
+      } catch(e) {
+        console.error('Subscription load error:', e);
+        var planKey = (T.plan || 'startup').toLowerCase();
+        var plan = PLANS[planKey] || PLANS['startup'];
+        document.getElementById('plan-name').textContent = plan.label;
+        document.getElementById('plan-desc').textContent = plan.desc;
+        document.getElementById('plan-price').textContent = '₱' + plan.price.toLocaleString() + '.00';
+        document.getElementById('pay-btn-text').textContent = 'Pay ₱' + plan.price.toLocaleString() + ' Now';
+        document.getElementById('pay-btn').disabled = false;
+        document.getElementById('loading-msg').textContent = 'Could not load billing history';
+      }
+    })();
+
+    async function handlePayNow() {
+      var btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      document.getElementById('pay-btn-text').textContent = 'Processing...';
+
+      try {
+        var res = await fetch('/' + SLUG + '/api/admin/renew', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.status === 401) {
+          window.location.href = '/' + SLUG + '/admin-login';
+          return;
+        }
+
+        var d = await res.json();
+        if (!d.ok) throw new Error(d.error || 'Payment failed');
+
+        if (d.checkout_url) {
+          window.location.href = d.checkout_url;
+        }
+      } catch(e) {
+        alert('Payment error: ' + e.message);
+        btn.disabled = false;
+        var planKey = (T.plan || 'startup').toLowerCase();
+        var plan = PLANS[planKey] || PLANS['startup'];
+        document.getElementById('pay-btn-text').textContent = 'Pay ₱' + plan.price.toLocaleString() + ' Now';
+      }
+    }
+  </script>
+</body>
+</html>
