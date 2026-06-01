@@ -1366,28 +1366,96 @@
     // ── EXPORT FUNCTIONS ──────────────────────────────────────────────────
     function exportSalesCSV() {
       const rows = document.querySelectorAll('#sales-top-tenants-tbody tr');
-      if (!rows.length) { showToast('No data to export.', 'error'); return; }
-      let csv = 'Tenant Name,Plan,Revenue,Status\n';
+      if (!rows.length || (rows.length === 1 && rows[0].querySelector('td[colspan]'))) {
+        showToast('No data to export.', 'error'); return;
+      }
+      // Summary
+      const revYtd = (document.getElementById('val-rev-ytd')?.textContent || '').trim();
+      const avgRev = (document.getElementById('val-avg-rev')?.textContent || '').trim();
+      const pending = (document.getElementById('val-pending-inv')?.textContent || '').trim();
+
+      let csv = 'Sales & Revenue Report,' + new Date().toLocaleDateString() + '\n';
+      csv += 'Total Revenue (YTD),' + revYtd + '\n';
+      csv += 'Avg Revenue Per Tenant,' + avgRev + '\n';
+      csv += 'Pending Invoices,' + pending + '\n';
+      csv += '\n';
+      csv += 'Tenant Name,Plan,Revenue,Status\n';
       rows.forEach(tr => {
         const cells = tr.querySelectorAll('td');
-        if (cells.length >= 4) csv += Array.from(cells).map(c => '"' + c.textContent.trim() + '"').join(',') + '\n';
+        if (cells.length >= 4) {
+          csv += Array.from(cells).map(c => '"' + c.textContent.trim().replace(/"/g, '""') + '"').join(',') + '\n';
+        }
       });
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'sales_report_' + new Date().toISOString().slice(0,10) + '.csv';
       a.click();
+      showToast('CSV exported!');
     }
 
     function exportSalesPDF() {
-      // Simple print-based PDF
-      const content = document.getElementById('screen-sales').innerHTML;
+      const rows = document.querySelectorAll('#sales-top-tenants-tbody tr');
+      const revYtd = (document.getElementById('val-rev-ytd')?.textContent || '₱0').trim();
+      const avgRev = (document.getElementById('val-avg-rev')?.textContent || '₱0').trim();
+      const pending = (document.getElementById('val-pending-inv')?.textContent || '0').trim();
+      const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+      // Build table rows
+      let tableRows = '';
+      rows.forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 4) {
+          const status = cells[3].textContent.trim();
+          const statusColor = status === 'active' ? '#16a34a' : status === 'suspended' ? '#dc2626' : '#92400e';
+          const statusBg = status === 'active' ? '#dcfce7' : status === 'suspended' ? '#fee2e2' : '#fef3c7';
+          tableRows += '<tr>' +
+            '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;">' + cells[0].textContent.trim() + '</td>' +
+            '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;">' + cells[1].textContent.trim() + '</td>' +
+            '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:600;">' + cells[2].textContent.trim() + '</td>' +
+            '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;"><span style="background:' + statusBg + ';color:' + statusColor + ';padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;">' + status + '</span></td>' +
+          '</tr>';
+        }
+      });
+
+      const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sales Report</title>' +
+        '<style>' +
+          'body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:0;padding:40px;}' +
+          '@media print{body{padding:20px;}}' +
+        '</style></head><body>' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">' +
+          '<div><h1 style="font-size:22px;margin:0 0 4px;">Sales & Revenue Report</h1>' +
+          '<p style="color:#64748b;font-size:13px;margin:0;">Generated on ' + date + '</p></div>' +
+          '<div style="text-align:right;"><div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">LogistiHub</div>' +
+          '<div style="font-size:10px;color:#94a3b8;">Developer Platform</div></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:16px;margin-bottom:32px;">' +
+          '<div style="flex:1;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:18px;">' +
+            '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total Revenue (YTD)</div>' +
+            '<div style="font-size:24px;font-weight:800;color:#0f172a;">' + revYtd + '</div></div>' +
+          '<div style="flex:1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:18px;">' +
+            '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Avg Revenue Per Tenant</div>' +
+            '<div style="font-size:24px;font-weight:800;color:#0f172a;">' + avgRev + '</div></div>' +
+          '<div style="flex:1;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:18px;">' +
+            '<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Pending Invoices</div>' +
+            '<div style="font-size:24px;font-weight:800;color:#0f172a;">' + pending + '</div></div>' +
+        '</div>' +
+        '<h2 style="font-size:15px;margin:0 0 12px;color:#0f172a;">Top Performing Tenants</h2>' +
+        '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">' +
+          '<thead><tr style="background:#f8fafc;">' +
+            '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #e2e8f0;">Tenant Name</th>' +
+            '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #e2e8f0;">Plan</th>' +
+            '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #e2e8f0;">Revenue</th>' +
+            '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #e2e8f0;">Status</th>' +
+          '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="4" style="padding:20px;text-align:center;color:#94a3b8;">No data</td></tr>') +
+        '</tbody></table>' +
+        '<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#94a3b8;">© ' + new Date().getFullYear() + ' LogistiHub — Auto-generated report</div>' +
+        '</body></html>';
+
       const win = window.open('', '_blank');
-      win.document.write('<h1 style="font-size:18px;">Sales & Revenue Report — ' + new Date().toLocaleDateString() + '</h1>');
-      win.document.write(content);
-      win.document.write('</body></html>');
+      win.document.write(html);
       win.document.close();
-      win.print();
+      setTimeout(function() { win.print(); }, 300);
     }
 
     // ── TOAST ──────────────────────────────────────────────────────────────
