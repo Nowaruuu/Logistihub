@@ -112,8 +112,11 @@ export default function DriverNavigate() {
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [showProofModal, setShowProofModal] = useState(false);
+  const [showPickupPhotoModal, setShowPickupPhotoModal] = useState(false);
   const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const [pickupPhoto, setPickupPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickupFileRef = useRef<HTMLInputElement>(null);
   const watchRef = useRef<number | null>(null);
 
   // Default to destination if we can't get location yet
@@ -183,6 +186,26 @@ export default function DriverNavigate() {
     reader.readAsDataURL(file);
   };
 
+  const handleCapturePickupPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = (h * MAX) / w; w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        setPickupPhoto(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCompleteDelivery = async (photo?: string | null) => {
     if (!job) return;
     setCompleting(true);
@@ -232,6 +255,10 @@ export default function DriverNavigate() {
       setShowProofModal(true);
       return;
     }
+    if (action.nextStatus === 'Out for Delivery') {
+      setShowPickupPhotoModal(true);
+      return;
+    }
     setCompleting(true);
     try {
       const res = await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
@@ -249,6 +276,34 @@ export default function DriverNavigate() {
       // Force re-render
       setCompleting(false);
       setCompleting(false);
+    } catch (err) {
+      alert('Network error. Please try again.');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const handleConfirmPickup = async (photo?: string | null) => {
+    if (!job) return;
+    setCompleting(true);
+    setShowPickupPhotoModal(false);
+    try {
+      const res = await fetch(mobileUrl(`/driver/status/${job.trackingNumber}`), {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          status: 'Out for Delivery',
+          location: job.origin || 'Pickup',
+          pickup_photo: photo || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to update status.');
+        return;
+      }
+      // Update local job status so button changes
+      if (job) (job as any).status = 'Out for Delivery';
     } catch (err) {
       alert('Network error. Please try again.');
     } finally {
@@ -480,6 +535,71 @@ export default function DriverNavigate() {
               </button>
             </div>
             <p className="text-slate-600 text-[10px] text-center mt-3">Photo helps verify delivery was completed successfully</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pickup Photo Modal ── */}
+      {showPickupPhotoModal && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 rounded-t-3xl border-t border-slate-700/50 p-6 pb-8">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-white font-extrabold text-lg">Pickup Photo</h3>
+              <button onClick={() => setShowPickupPhotoModal(false)} className="size-8 rounded-full bg-white/10 flex items-center justify-center">
+                <X className="size-4 text-white" />
+              </button>
+            </div>
+
+            <input
+              ref={pickupFileRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCapturePickupPhoto}
+              className="hidden"
+            />
+
+            {pickupPhoto ? (
+              <div className="relative mb-4">
+                <img src={pickupPhoto} alt="Pickup" className="w-full h-48 object-cover rounded-2xl border border-slate-700" />
+                <button
+                  onClick={() => { setPickupPhoto(null); pickupFileRef.current?.click(); }}
+                  className="absolute top-2 right-2 px-3 py-1.5 bg-black/60 backdrop-blur text-white text-xs font-bold rounded-full flex items-center gap-1"
+                >
+                  <Camera className="size-3" /> Retake
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => pickupFileRef.current?.click()}
+                className="w-full h-48 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center gap-3 mb-4 active:bg-slate-800 transition-colors"
+              >
+                <div className="size-14 rounded-full bg-blue-600/15 flex items-center justify-center">
+                  <Camera className="size-7 text-blue-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-white font-bold text-sm">Take Photo</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Photo of package at pickup</p>
+                </div>
+              </button>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmPickup(pickupPhoto)}
+                disabled={!pickupPhoto}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
+              >
+                <CheckCircle2 className="size-4" /> Confirm Pickup
+              </button>
+              <button
+                onClick={() => handleConfirmPickup(null)}
+                className="px-4 py-3.5 bg-slate-800 text-slate-400 font-bold text-xs rounded-xl active:scale-[0.98] transition-all"
+              >
+                Skip
+              </button>
+            </div>
+            <p className="text-slate-600 text-[10px] text-center mt-3">Photo of the package helps verify its condition at pickup</p>
           </div>
         </div>
       )}

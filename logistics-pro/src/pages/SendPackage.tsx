@@ -114,6 +114,7 @@ export default function SendPackage() {
   const PHONE_MAX_LEN = 13;
   const [pickupNotes, setPickupNotes] = useState('');
   const [destNotes, setDestNotes] = useState('');
+  const [deliveryNote, setDeliveryNote] = useState('');
   const [weight, setWeight] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'ton'>('kg');
   const [category, setCategory] = useState('PACKAGE');
@@ -423,7 +424,7 @@ export default function SendPackage() {
     setError('');
     if (!user) return;
     if (!pickup.trim()) { setError('Pickup address is required'); return; }
-    if (!destination.trim()) { setError('Destination is required'); return; }
+    if (!destination.trim()) { setError('Drop off address is required'); return; }
     if (!senderName.trim()) { setError('Sender name is required'); return; }
     if (senderName.trim().length > NAME_MAX_LEN) { setError(`Sender name must be ${NAME_MAX_LEN} characters or less`); return; }
     if (!senderPhone.trim()) { setError('Sender phone number is required'); return; }
@@ -467,6 +468,7 @@ export default function SendPackage() {
         receiverPhone,
         origin: pickupNotes ? `${pickup} — ${pickupNotes}` : pickup,
         destination: destNotes ? `${destination} — ${destNotes}` : destination,
+        notes: deliveryNote.trim() || undefined,
         estimatedArrival: method === 'standard' ? stdEta : expEta,
         weight: weightKg,
         size: PACKAGE_CATEGORIES.find(c => c.id === category)?.label || 'Standard Package',
@@ -683,7 +685,7 @@ export default function SendPackage() {
               value={pickupNotes}
               onChange={e => setPickupNotes(e.target.value)}
               className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="Exact address details (e.g. Blk 5 Lot 7)"
+              placeholder="Address Note (e.g. Blk 5 Lot 7)"
             />
           </div>
 
@@ -705,10 +707,10 @@ export default function SendPackage() {
           </div>
         </div>
 
-        {/* ── Destination Address with Auto-search ── */}
+        {/* ── Drop Off Address with Auto-search ── */}
         <div className="group relative">
           <div className="flex items-center justify-between mb-2 ml-1">
-            <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Destination Address</label>
+            <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Drop Off Address</label>
             <div className="flex gap-1.5">
               <button 
                 type="button"
@@ -747,12 +749,12 @@ export default function SendPackage() {
               onChange={(e) => handleDestChange(e.target.value)}
               onBlur={handleDestBlur}
               className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:text-slate-100" 
-              placeholder="Search receiver's address" 
+              placeholder="Search drop off address" 
             />
           </div>
           {/* Search + suggestions wrapper - must be above map */}
           <div className="relative z-50">
-          {/* Destination address suggestions */}
+          {/* Drop off address suggestions */}
           {destResults.length > 0 && (
             <div className="absolute z-[9999] left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto mt-1">
               {destResults.map((r, i) => (
@@ -787,7 +789,7 @@ export default function SendPackage() {
             </div>
           )}
 
-          {/* Destination address details */}
+          {/* Drop off address note */}
           <div className="relative mt-2">
             <NotebookPen className="absolute left-3 top-3 text-slate-400 size-4" />
             <input
@@ -795,7 +797,7 @@ export default function SendPackage() {
               value={destNotes}
               onChange={e => setDestNotes(e.target.value)}
               className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all"
-              placeholder="Exact address details (e.g. Unit 4B, near 7-Eleven)"
+              placeholder="Address Note (e.g. Unit 4B, near 7-Eleven)"
             />
           </div>
         </div>
@@ -1002,6 +1004,25 @@ export default function SendPackage() {
         </button>
       </section>
 
+      {/* ── Delivery Note (Note to Driver) ── */}
+      <section className="mt-6 px-5">
+        <h3 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Delivery Note</h3>
+        <div className="relative">
+          <NotebookPen className="absolute left-3 top-3 text-slate-400 size-4" />
+          <textarea
+            value={deliveryNote}
+            onChange={e => setDeliveryNote(e.target.value)}
+            rows={2}
+            maxLength={200}
+            className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none text-sm placeholder:text-slate-400 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-orange-600/20 focus:border-orange-600 transition-all resize-none"
+            placeholder="Note to driver (e.g. Please call upon arrival, Leave at the gate)"
+          />
+          {deliveryNote.length > 0 && (
+            <span className="absolute right-3 bottom-2 text-[10px] text-slate-400">{deliveryNote.length}/200</span>
+          )}
+        </div>
+      </section>
+
       {/* ── Distance Info / Warning ── */}
       {distKm > 0 && (
         <section className="mt-4 px-5">
@@ -1011,7 +1032,7 @@ export default function SendPackage() {
               <div>
                 <p className="text-sm font-bold text-red-700 dark:text-red-400">Distance Limit Exceeded</p>
                 <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-0.5">
-                  Route is ~{Math.round(distKm)}km — max allowed is {maxDistanceKm}km. Choose a closer destination.
+                  Route is ~{Math.round(distKm)}km — max allowed is {maxDistanceKm}km. Choose a closer drop off location.
                 </p>
               </div>
             </div>
@@ -1215,7 +1236,7 @@ export default function SendPackage() {
                       <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">{pickupNotes ? `${pickup} — ${pickupNotes}` : pickup}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black uppercase text-green-600 mb-0.5">Destination</p>
+                      <p className="text-[9px] font-black uppercase text-green-600 mb-0.5">Drop Off</p>
                       <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">{destNotes ? `${destination} — ${destNotes}` : destination}</p>
                     </div>
                   </div>
@@ -1261,6 +1282,12 @@ export default function SendPackage() {
                     <span className="text-slate-400">Estimated Arrival</span>
                     <p className="font-bold text-slate-900 dark:text-white">{etaLabel}</p>
                   </div>
+                  {deliveryNote.trim() && (
+                    <div className="col-span-2 border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">
+                      <span className="text-slate-400">Note to Driver</span>
+                      <p className="font-bold text-slate-900 dark:text-white">{deliveryNote.trim()}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

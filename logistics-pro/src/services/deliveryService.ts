@@ -22,7 +22,7 @@ export const deliveryService = {
   /**
    * Create a new delivery shipment
    */
-  async createDelivery(deliveryData: Partial<Delivery> & { item_type_flag?: string; vehicle_type?: string; receiverPhone?: string; senderPhone?: string }): Promise<string> {
+  async createDelivery(deliveryData: Partial<Delivery> & { item_type_flag?: string; vehicle_type?: string; receiverPhone?: string; senderPhone?: string; notes?: string }): Promise<string> {
     const result = await createDelivery({
       pickup_location: deliveryData.origin || '',
       dropoff_location: deliveryData.destination || '',
@@ -43,6 +43,7 @@ export const deliveryService = {
       total_fee: deliveryData.totalFee,
       content_description: deliveryData.origin,
       estimated_arrival: deliveryData.estimatedArrival,
+      notes: deliveryData.notes || undefined,
     });
     return result.delivery_number;
   },
@@ -61,8 +62,8 @@ export const deliveryService = {
   /**
    * Update delivery status (driver only)
    */
-  async updateStatus(deliveryNumber: string, status: string, location?: string, proof_photo?: string, lat?: number | null, lng?: number | null): Promise<void> {
-    await updateDeliveryStatus(deliveryNumber, status, location, proof_photo, lat, lng);
+  async updateStatus(deliveryNumber: string, status: string, location?: string, proof_photo?: string, lat?: number | null, lng?: number | null, pickup_photo?: string): Promise<void> {
+    await updateDeliveryStatus(deliveryNumber, status, location, proof_photo, lat, lng, pickup_photo);
   },
 
   /**

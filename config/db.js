@@ -134,6 +134,11 @@ pool.getConnection()
 
       // APP_USER combined name column for profile updates
       "ALTER TABLE APP_USER ADD COLUMN name VARCHAR(255) DEFAULT NULL",
+
+      // Pickup photo (taken by driver when picking up package)
+      "ALTER TABLE shipment ADD COLUMN pickup_photo_url LONGTEXT DEFAULT NULL",
+      // Delivery note (customer note to driver)
+      "ALTER TABLE shipment ADD COLUMN delivery_note TEXT DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {

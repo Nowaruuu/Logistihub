@@ -112,6 +112,7 @@ export async function createDelivery(deliveryData: {
   total_fee?: number;
   content_description?: string;
   estimated_arrival?: string;
+  notes?: string;
 }) {
   const res = await fetch(mobileUrl('/deliveries'), {
     method: 'POST',
@@ -131,11 +132,11 @@ export async function getDeliveryDetail(deliveryNumber: string) {
   return res.json();
 }
 
-export async function updateDeliveryStatus(id: string, status: string, location?: string, proof_photo?: string, lat?: number | null, lng?: number | null) {
+export async function updateDeliveryStatus(id: string, status: string, location?: string, proof_photo?: string, lat?: number | null, lng?: number | null, pickup_photo?: string) {
   const res = await fetch(mobileUrl(`/driver/status/${id}`), {
     method: 'PUT',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ status, location, proof_photo, lat: lat ?? null, lng: lng ?? null })
+    body: JSON.stringify({ status, location, proof_photo, pickup_photo, lat: lat ?? null, lng: lng ?? null })
   });
   if (!res.ok) throw new Error('Failed to update status');
   return res.json();

@@ -106,7 +106,9 @@ function TrackShipmentInner() {
   const [pickupGPS, setPickupGPS] = useState<[number, number] | null>(null);
   const [destGPS, setDestGPS] = useState<[number, number] | null>(null);
   const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const [pickupPhoto, setPickupPhoto] = useState<string | null>(null);
   const [showPhotoZoom, setShowPhotoZoom] = useState(false);
+  const [zoomPhoto, setZoomPhoto] = useState<string | null>(null);
   // Rating
   const [userRating, setUserRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
@@ -164,6 +166,10 @@ function TrackShipmentInner() {
         // Proof of delivery photo
         if (s.proof_photo_url) setProofPhoto(s.proof_photo_url);
         else setProofPhoto(null);
+
+        // Pickup photo
+        if (s.pickup_photo_url) setPickupPhoto(s.pickup_photo_url);
+        else setPickupPhoto(null);
 
         const raw: CheckpointItem[] = (result.history || []).map((h: any) => ({
           status: h.status || '',
@@ -356,41 +362,67 @@ function TrackShipmentInner() {
               <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{delivery.origin || 'Origin'}</p>
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase text-green-600 mb-0.5">Destination</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{delivery.destination || 'Destination'}</p>
+              <p className="text-[9px] font-black uppercase text-green-600 mb-0.5">Drop Off</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{delivery.destination || 'Drop Off'}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Proof of Delivery ── */}
-      {isDelivered && proofPhoto && (
+      {/* ── Delivery Photos (Pickup & Proof of Delivery) ── */}
+      {(pickupPhoto || (isDelivered && proofPhoto)) && (
         <div className="mx-4 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="px-4 pt-4 pb-2 flex items-center gap-2">
             <CheckCircle2 className="size-3.5 text-green-500" />
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Proof of Delivery</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Delivery Photos</p>
           </div>
-          <div className="px-4 pb-4">
-            <button onClick={() => setShowPhotoZoom(true)} className="relative w-full group">
-              <img
-                src={proofPhoto}
-                alt="Proof of delivery"
-                className="w-full h-52 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
-              />
-              <div className="absolute inset-0 bg-black/0 group-active:bg-black/20 rounded-xl flex items-center justify-center transition-all">
-                <div className="bg-black/50 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5 opacity-80">
-                  <ZoomIn className="size-3 text-white" />
-                  <span className="text-white text-[10px] font-bold">Tap to zoom</span>
-                </div>
+          <div className="px-4 pb-4 space-y-3">
+            {/* Pickup Photo */}
+            {pickupPhoto && (
+              <div>
+                <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1.5">Pickup Photo</p>
+                <button onClick={() => { setZoomPhoto(pickupPhoto); setShowPhotoZoom(true); }} className="relative w-full group">
+                  <img
+                    src={pickupPhoto}
+                    alt="Pickup photo"
+                    className="w-full h-44 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-active:bg-black/20 rounded-xl flex items-center justify-center transition-all">
+                    <div className="bg-black/50 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5 opacity-80">
+                      <ZoomIn className="size-3 text-white" />
+                      <span className="text-white text-[10px] font-bold">Tap to zoom</span>
+                    </div>
+                  </div>
+                </button>
+                <p className="text-[10px] text-slate-400 mt-1.5 text-center">Photo taken by driver at pickup</p>
               </div>
-            </button>
-            <p className="text-[10px] text-slate-400 mt-2 text-center">Photo taken by driver upon delivery</p>
+            )}
+            {/* Delivered Photo */}
+            {isDelivered && proofPhoto && (
+              <div>
+                <p className="text-[10px] font-bold text-green-500 uppercase tracking-wider mb-1.5">Proof of Delivery</p>
+                <button onClick={() => { setZoomPhoto(proofPhoto); setShowPhotoZoom(true); }} className="relative w-full group">
+                  <img
+                    src={proofPhoto}
+                    alt="Proof of delivery"
+                    className="w-full h-44 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-active:bg-black/20 rounded-xl flex items-center justify-center transition-all">
+                    <div className="bg-black/50 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5 opacity-80">
+                      <ZoomIn className="size-3 text-white" />
+                      <span className="text-white text-[10px] font-bold">Tap to zoom</span>
+                    </div>
+                  </div>
+                </button>
+                <p className="text-[10px] text-slate-400 mt-1.5 text-center">Photo taken by driver upon delivery</p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* ── Fullscreen Photo Zoom ── */}
-      {showPhotoZoom && proofPhoto && (
+      {showPhotoZoom && zoomPhoto && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
           onClick={() => setShowPhotoZoom(false)}
@@ -406,8 +438,8 @@ function TrackShipmentInner() {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={proofPhoto}
-              alt="Proof of delivery - zoomed"
+              src={zoomPhoto}
+              alt="Photo - zoomed"
               className="max-w-none w-full object-contain"
               style={{ touchAction: 'pinch-zoom', maxHeight: '85vh' }}
             />

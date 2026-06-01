@@ -525,7 +525,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     pickup_location, dropoff_location, pickup_lat, pickup_lng,
     dropoff_lat, dropoff_lng, sender_name, sender_phone, receiver_name, receiver_phone,
     receiver_address, item_type_flag, vehicle_type, weight, size,
-    shipping_method, total_fee, content_description, estimated_arrival
+    shipping_method, total_fee, content_description, estimated_arrival, notes
   } = req.body;
 
   if (!pickup_location || !dropoff_location) {
@@ -610,14 +610,14 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
         pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, distance_km,
         receiver_name, receiver_phone, receiver_address,
         item_type_flag, vehicle_type, weight, size, shipping_method, total_fee,
-        estimated_arrival, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
+        estimated_arrival, delivery_note, status, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())`,
       [
         deliveryNumber, tid, userId, sender_name || null, sender_phone || null, pickup_location, dropoff_location,
         pickup_lat || null, pickup_lng || null, dropoff_lat || null, dropoff_lng || null, computed_distance_km || null,
         receiver_name || null, receiver_phone || null, receiver_address || null,
         itemType, vehicle_type || null, weight || null, size || null, shipping_method || 'Standard',
-        computed_total_fee, estimated_arrival || '3-5 business days'
+        computed_total_fee, estimated_arrival || '3-5 business days', notes || null
       ]
     );
 
@@ -1281,7 +1281,7 @@ router.get('/track/:dn', async (req, res) => {
               pickup_lat, pickup_lng, dropoff_lat, dropoff_lng,
               estimated_arrival, created_at,
               driver_lat, driver_lng, driver_location_updated_at,
-              proof_photo_url
+              proof_photo_url, pickup_photo_url
        FROM shipment WHERE delivery_number = ? AND tenant_id = ? LIMIT 1`,
       [dn, tid]
     );
@@ -1581,7 +1581,7 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
   const tid = req.tenantId;
   const dn = req.params.dn;
-  const { status, location, proof_photo } = req.body;
+  const { status, location, proof_photo, pickup_photo } = req.body;
   const staffName = req.staff.name || 'Driver';
 
   const staffId = req.staff.staff_id;
@@ -1629,6 +1629,14 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
     }
 
     await query('UPDATE shipment SET status = ? WHERE delivery_number = ? AND tenant_id = ?', [status, dn, tid]);
+
+    // Save pickup photo when driver picks up the package (transition to Out for Delivery)
+    if (status === 'Out for Delivery' && pickup_photo) {
+      try {
+        await query('UPDATE shipment SET pickup_photo_url = ? WHERE delivery_number = ? AND tenant_id = ?', [pickup_photo, dn, tid]);
+        console.log('[Pickup Photo] Saved pickup_photo_url to shipment:', dn);
+      } catch(e) { console.warn('[Pickup Photo] Failed:', e.message); }
+    }
 
     // Save proof of delivery photo if provided
     if (status === 'Delivered') {
