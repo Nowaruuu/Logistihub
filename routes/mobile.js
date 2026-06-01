@@ -8,11 +8,18 @@ const { query, logAudit } = require('../config/db');
 const router = express.Router({ mergeParams: true });
 
 // ─── Unified Auth Middleware ──────────────────────────────────────────────────
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Authentication required.' });
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // Check if tenant is still active
+    if (payload.tenant_id) {
+      const [tenants] = await query('SELECT status FROM TENANT WHERE tenant_id = ? LIMIT 1', [payload.tenant_id]);
+      if (tenants.length && tenants[0].status === 'suspended') {
+        return res.status(403).json({ error: 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.', suspended: true });
+      }
+    }
     // Normalize role: 'user'/'User' → req.user, anything else (Driver, Manager…) → req.staff
     const roleLower = (payload.role || '').toLowerCase();
     if (roleLower === 'user') {
@@ -22,7 +29,10 @@ const authMiddleware = (req, res, next) => {
     }
     req.tenantId = payload.tenant_id;
     next();
-  } catch {
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired session.' });
+    }
     return res.status(401).json({ error: 'Invalid or expired session.' });
   }
 };
