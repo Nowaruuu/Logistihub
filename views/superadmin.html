@@ -232,12 +232,24 @@
       <!-- ==================== TENANTS (MANAGEMENT) ==================== -->
       <div id="screen-tenants" class="screen">
         <div class="card">
-          <div class="card-header"><div class="card-title">Tenant Management</div></div>
+          <div class="card-header"><div class="card-title"><span class="material-symbols-rounded" style="color:#10b981;">check_circle</span> Active Tenants</div></div>
           <div class="table-responsive">
             <table>
-              <thead><tr><th>Tenant ID</th><th>Company Name</th><th>Admin Contact</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Company Name</th><th>Admin Contact</th><th>Plan</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
               <tbody id="tenants-tbody">
-                <tr><td colspan="6" style="text-align:center;">No tenants found</td></tr>
+                <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:24px;">
+          <div class="card-header"><div class="card-title"><span class="material-symbols-rounded" style="color:#ef4444;">block</span> Suspended Tenants</div></div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Company Name</th><th>Admin Contact</th><th>Plan</th><th>Reason</th><th>Suspended</th><th>Actions</th></tr></thead>
+              <tbody id="suspended-tbody">
+                <tr><td colspan="6" style="text-align:center;color:#94a3b8;">No suspended tenants</td></tr>
               </tbody>
             </table>
           </div>
@@ -858,41 +870,81 @@
         
         if (response.status === 401) {
           console.warn("Unauthorized! Redirecting...");
-          window.location.href = '/superadmin-login'; // Force login if session is dead
+          window.location.href = '/superadmin-login';
           return;
         }
 
         const data = await response.json();
-        const tb = document.getElementById('tenants-tbody');
+        const activeTb = document.getElementById('tenants-tbody');
+        const suspendedTb = document.getElementById('suspended-tbody');
 
         if (!response.ok) throw new Error(data.error || 'Server Error');
 
-        if (!data || data.length === 0) {
-          tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">Authenticated, but no tenants exist in DB.</td></tr>';
-          return;
+        // Split into active and suspended
+        const active = (data || []).filter(t => t.status !== 'suspended');
+        const suspended = (data || []).filter(t => t.status === 'suspended');
+
+        // Render active tenants
+        if (!active.length) {
+          activeTb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No active tenants</td></tr>';
+        } else {
+          const planColors = {'Padala':'bg-neutral','Negosyo':'bg-pending','Korporasyon':'bg-active'};
+          activeTb.innerHTML = active.map(t => {
+            const planBadge = planColors[t.plan] || 'bg-neutral';
+            return `
+            <tr>
+              <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
+              <td>${t.admin_email || 'N/A'}</td>
+              <td><span class="badge ${planBadge}">${t.plan || 'trial'}</span></td>
+              <td><span class="badge bg-active">${t.status}</span></td>
+              <td>${new Date(t.created_at).toLocaleDateString()}</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="setTenantStatus(${t.tenant_id},'suspended')">
+                  <span class="material-symbols-rounded" style="font-size:14px;">pause</span> Suspend
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTenantById(${t.tenant_id},'${t.company_name.replace(/'/g,"\\'")}')"
+                  style="background:#ef4444;color:#fff;border:none;">
+                  <span class="material-symbols-rounded" style="font-size:14px;">delete</span> Delete
+                </button>
+              </td>
+            </tr>`;
+          }).join('');
         }
 
-        tb.innerHTML = data.map(t => {
-          const planColors = {'Padala':'bg-neutral','Negosyo':'bg-pending','Korporasyon':'bg-active'};
-          const planBadge = planColors[t.plan] || 'bg-neutral';
-          return `
-          <tr>
-            <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
-            <td>${t.admin_email || 'N/A'}</td>
-            <td><span class="badge ${planBadge}">${t.plan || 'trial'}</span></td>
-            <td><span class="badge ${t.status==='active'?'bg-active':t.status==='suspended'?'bg-suspended':'bg-pending'}">${t.status}</span>${t.status==='suspended' && t.suspension_reason ? '<br><span style="font-size:10px;color:#94a3b8;font-style:italic;">' + t.suspension_reason + '</span>' : ''}</td>
-            <td>${new Date(t.created_at).toLocaleDateString()}</td>
-            <td style="display:flex;gap:6px;">
-              ${t.status==='active'
-                ? `<button class="btn btn-secondary btn-sm" onclick="setTenantStatus(${t.tenant_id},'suspended')">Suspend</button>`
-                : `<button class="btn btn-primary btn-sm" onclick="setTenantStatus(${t.tenant_id},'active')">Activate</button>`}
-              <button class="btn btn-danger btn-sm" onclick="deleteTenantById(${t.tenant_id},'${t.company_name.replace(/'/g,"\\'")}')"
-                style="background:#ef4444;color:#fff;border:none;">
-                <span class="material-symbols-rounded" style="font-size:14px;">delete</span> Delete
-              </button>
-            </td>
-          </tr>
-        `}).join('');
+        // Render suspended tenants
+        if (!suspended.length) {
+          suspendedTb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No suspended tenants</td></tr>';
+        } else {
+          suspendedTb.innerHTML = suspended.map(t => {
+            const reason = t.suspension_reason || 'No reason provided';
+            const suspDate = t.suspended_at ? new Date(t.suspended_at).toLocaleDateString() : 'Unknown';
+            const isPayment = /overdue|payment|subscription/i.test(reason);
+            const reasonIcon = isPayment ? 'credit_card_off' : 'gavel';
+            const reasonColor = isPayment ? '#f59e0b' : '#ef4444';
+            return `
+            <tr style="background:rgba(239,68,68,0.03);">
+              <td><strong>${t.company_name}</strong><br><span style="font-size:11px;color:#94a3b8;font-family:monospace;">/${t.slug}</span></td>
+              <td>${t.admin_email || 'N/A'}</td>
+              <td><span class="badge bg-neutral">${t.plan || 'trial'}</span></td>
+              <td>
+                <div style="display:flex;align-items:flex-start;gap:6px;">
+                  <span class="material-symbols-rounded" style="font-size:16px;color:${reasonColor};margin-top:1px;">${reasonIcon}</span>
+                  <span style="font-size:12px;color:#64748b;line-height:1.4;">${reason}</span>
+                </div>
+              </td>
+              <td style="font-size:12px;color:#94a3b8;">${suspDate}</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-primary btn-sm" onclick="setTenantStatus(${t.tenant_id},'active')">
+                  <span class="material-symbols-rounded" style="font-size:14px;">play_arrow</span> Activate
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTenantById(${t.tenant_id},'${t.company_name.replace(/'/g,"\\'")}')"
+                  style="background:#ef4444;color:#fff;border:none;">
+                  <span class="material-symbols-rounded" style="font-size:14px;">delete</span> Delete
+                </button>
+              </td>
+            </tr>`;
+          }).join('');
+        }
       } catch (e) {
         console.error("Superadmin Load Error:", e);
       }
