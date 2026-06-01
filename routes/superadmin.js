@@ -377,12 +377,26 @@ router.post('/tenants/invite', requireSuperadmin, async (req, res) => {
 // PATCH /api/superadmin/tenants/:id/status  — suspend / reactivate
 // ─────────────────────────────────────────────────────────────────────────────
 router.patch('/tenants/:id/status', requireSuperadmin, async (req, res) => {
-  const { status } = req.body;
+  const { status, reason } = req.body;
   const allowed = ['active', 'suspended'];
   if (!allowed.includes(status)) {
     return res.status(400).json({ error: `status must be one of: ${allowed.join(', ')}` });
   }
-  await query('UPDATE TENANT SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
+  if (status === 'suspended') {
+    const suspendReason = reason || 'Suspended by administrator';
+    try {
+      await query('UPDATE TENANT SET status = ?, suspended_at = NOW(), suspension_reason = ? WHERE tenant_id = ?', [status, suspendReason, req.params.id]);
+    } catch (_) {
+      await query('UPDATE TENANT SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
+    }
+  } else {
+    // Reactivating — clear suspension fields
+    try {
+      await query('UPDATE TENANT SET status = ?, suspended_at = NULL, suspension_reason = NULL WHERE tenant_id = ?', [status, req.params.id]);
+    } catch (_) {
+      await query('UPDATE TENANT SET status = ? WHERE tenant_id = ?', [status, req.params.id]);
+    }
+  }
   const [[t]] = await query('SELECT company_name, slug FROM TENANT WHERE tenant_id = ?', [req.params.id]);
   logAudit({ actor: req.superadmin?.email || 'superadmin', actor_type: 'superadmin', action: `TENANT_${status.toUpperCase()}`, target: t?.company_name || req.params.id, tenant_slug: t?.slug, ip_address: req.ip });
   res.json({ ok: true, status });

@@ -108,7 +108,7 @@
                 <span class="material-symbols-rounded">gpp_bad</span>
             </div>
             <h1>Workspace Unavailable</h1>
-            <p class="sub">
+            <p class="sub" id="suspension-reason">
                 This workspace has been temporarily suspended by <strong>LogistiHub</strong> due to an overdue subscription payment.
             </p>
         </section>
@@ -133,6 +133,16 @@
         document.getElementById('company-name').textContent = T.company_name || 'this workspace';
         if (T.logo_url) {
             document.getElementById('logo-box').innerHTML = '<img src="' + T.logo_url + '" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">';
+        }
+        // Dynamic suspension message based on reason
+        var reasonEl = document.getElementById('suspension-reason');
+        if (reasonEl && T.suspension_reason) {
+            var reason = T.suspension_reason.toLowerCase();
+            if (reason.indexOf('overdue') !== -1 || reason.indexOf('payment') !== -1 || reason.indexOf('subscription') !== -1) {
+                reasonEl.innerHTML = 'This workspace has been temporarily suspended by <strong>LogistiHub</strong> due to an overdue subscription payment.';
+            } else {
+                reasonEl.innerHTML = 'This workspace has been temporarily suspended by the <strong>platform administrator</strong>.';
+            }
         }
     </script>
 </body>

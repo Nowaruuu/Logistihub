@@ -15,9 +15,14 @@ const authMiddleware = async (req, res, next) => {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     // Check if tenant is still active
     if (payload.tenant_id) {
-      const [tenants] = await query('SELECT status FROM TENANT WHERE tenant_id = ? LIMIT 1', [payload.tenant_id]);
+      const [tenants] = await query('SELECT status, suspension_reason FROM TENANT WHERE tenant_id = ? LIMIT 1', [payload.tenant_id]);
       if (tenants.length && tenants[0].status === 'suspended') {
-        return res.status(403).json({ error: 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.', suspended: true });
+        const reason = tenants[0].suspension_reason || '';
+        const isPayment = /overdue|payment|subscription/i.test(reason);
+        const msg = isPayment
+          ? 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.'
+          : 'This workspace has been temporarily suspended by the platform administrator. Please contact your company administrator.';
+        return res.status(403).json({ error: msg, suspended: true });
       }
     }
     // Normalize role: 'user'/'User' → req.user, anything else (Driver, Manager…) → req.staff
@@ -74,8 +79,13 @@ router.get('/tenant-config', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Workspace not found.' });
     const t = rows[0];
     if (t.status === 'suspended') {
+      const reason = t.suspension_reason || '';
+      const isPayment = /overdue|payment|subscription/i.test(reason);
+      const msg = isPayment
+        ? 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.'
+        : 'This workspace has been temporarily suspended by the platform administrator. Please contact your company administrator.';
       return res.status(403).json({
-        error: 'This workspace has been temporarily suspended by LogistiHub due to an overdue subscription payment. Please contact your company administrator.',
+        error: msg,
         suspended: true,
         company_name: t.company_name || slug
       });
