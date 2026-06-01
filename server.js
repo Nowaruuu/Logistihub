@@ -254,8 +254,10 @@ app.listen(PORT, async () => {
 
           if (payments[0].cnt > 0) continue; // Current cycle is paid
 
-          // Calculate days overdue from cycle start
-          const daysOverdue = Math.floor((now - cycleStart) / (1000 * 60 * 60 * 24));
+          // Calculate days overdue from cycle start (date-only, ignore time-of-day)
+          const cycleStartDate = new Date(cycleStart.toISOString().split('T')[0]);
+          const todayDate = new Date(now.toISOString().split('T')[0]);
+          const daysOverdue = Math.floor((todayDate - cycleStartDate) / (1000 * 60 * 60 * 24));
 
           // Send overdue notification to admin (once per day — check if already sent today)
           const todayStr = now.toISOString().split('T')[0];
