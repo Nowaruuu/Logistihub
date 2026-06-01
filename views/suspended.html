@@ -326,6 +326,24 @@
                 document.getElementById('pay-btn-text').textContent = 'Pay \u20b1' + plan.price.toLocaleString() + ' Now';
             }
         }
+
+        // Auto-check if tenant has been reactivated (e.g. after PayMongo payment)
+        var _statusCheckInterval = setInterval(async function() {
+            try {
+                var res = await fetch('/' + SLUG + '/api/admin/me', { credentials: 'include' });
+                if (res.ok) {
+                    // Tenant is active again — redirect to dashboard
+                    clearInterval(_statusCheckInterval);
+                    document.querySelector('.hero-section').innerHTML =
+                        '<div style="text-align:center;padding:60px 0;">' +
+                        '<div style="width:64px;height:64px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">' +
+                        '<span class="material-symbols-rounded" style="color:#10b981;font-size:32px;">check_circle</span></div>' +
+                        '<h2 style="color:#0f172a;margin-bottom:8px;">Account Reactivated!</h2>' +
+                        '<p style="color:#64748b;margin-bottom:24px;">Your payment was received. Redirecting to dashboard...</p></div>';
+                    setTimeout(function() { window.location.href = '/' + SLUG + '/admin'; }, 2000);
+                }
+            } catch(e) { /* still suspended, keep checking */ }
+        }, 10000); // Check every 10 seconds
     </script>
 </body>
 </html>
