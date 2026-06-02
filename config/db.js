@@ -20,11 +20,26 @@ const pool = mysql.createPool({
   connectTimeout:       20000,    // 20s to establish a connection
 });
 
-// ─── Test connection on startup ───────────────────────────────────────────────
-pool.getConnection()
-  .then(async conn => {
-    console.log('✅  MySQL connected:', process.env.DB_NAME);
-    conn.release();
+// ─── Test connection on startup (with retry) ─────────────────────────────────
+async function connectWithRetry(maxRetries = 10, delayMs = 3000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const conn = await pool.getConnection();
+      console.log('✅  MySQL connected:', process.env.DB_NAME);
+      conn.release();
+      return;
+    } catch (err) {
+      console.error(`❌  MySQL connection attempt ${attempt}/${maxRetries} failed:`, err.message);
+      if (attempt === maxRetries) {
+        console.error('❌  All MySQL connection attempts exhausted. Exiting.');
+        process.exit(1);
+      }
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+}
+
+connectWithRetry().then(async () => {
 
     // ── Auto-migrations: add missing columns safely ────────────────────────
     const migrations = [
@@ -69,11 +84,13 @@ pool.getConnection()
       "ALTER TABLE shipment ADD COLUMN driver_lat DECIMAL(10,8) DEFAULT NULL",
       "ALTER TABLE shipment ADD COLUMN driver_lng DECIMAL(11,8) DEFAULT NULL",
       "ALTER TABLE shipment ADD COLUMN driver_location_updated_at DATETIME DEFAULT NULL",
+      // Backfill PODs from shipment — only if proof_of_delivery is empty (first run only)
       `INSERT IGNORE INTO proof_of_delivery (delivery_number, tenant_id, photo, receiver_name, notes, created_at)
        SELECT s.delivery_number, s.tenant_id, s.proof_photo_url, s.receiver_name, 'Auto-backfilled', s.created_at
        FROM shipment s
        WHERE s.status = 'Delivered'
-       AND NOT EXISTS (SELECT 1 FROM proof_of_delivery p WHERE p.delivery_number = s.delivery_number AND p.tenant_id = s.tenant_id)`,
+       AND NOT EXISTS (SELECT 1 FROM proof_of_delivery p WHERE p.delivery_number = s.delivery_number AND p.tenant_id = s.tenant_id)
+       LIMIT 500`,
       // ─── FOREIGN KEY CONSTRAINTS (ERD relationships) ──────────────────────
       "ALTER TABLE STAFF ADD CONSTRAINT fk_staff_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
       "ALTER TABLE APP_USER ADD CONSTRAINT fk_appuser_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE CASCADE",
@@ -102,7 +119,7 @@ pool.getConnection()
       // ─── PHASE 2: Defense Revisions ─────────────────────────────────────────
       // #5 — AUDIT_LOG FK to TENANT (via tenant_slug → slug)
       "ALTER TABLE AUDIT_LOG ADD COLUMN tenant_id INT DEFAULT NULL",
-      "UPDATE AUDIT_LOG a JOIN TENANT t ON a.tenant_slug = t.slug SET a.tenant_id = t.tenant_id WHERE a.tenant_id IS NULL",
+      "UPDATE AUDIT_LOG a JOIN TENANT t ON a.tenant_slug = t.slug SET a.tenant_id = t.tenant_id WHERE a.tenant_id IS NULL LIMIT 500",
       "ALTER TABLE AUDIT_LOG ADD CONSTRAINT fk_audit_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE SET NULL",
 
       // #4 — Vehicle ownership type (company-owned vs employee-owned)
@@ -154,11 +171,8 @@ pool.getConnection()
       }
     }
     console.log('  ✅ All migrations checked.');
-  })
-  .catch(err => {
-    console.error('❌  MySQL connection failed:', err.message);
-    process.exit(1);
   });
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
