@@ -119,7 +119,7 @@ connectWithRetry().then(async () => {
       // ─── PHASE 2: Defense Revisions ─────────────────────────────────────────
       // #5 — AUDIT_LOG FK to TENANT (via tenant_slug → slug)
       "ALTER TABLE AUDIT_LOG ADD COLUMN tenant_id INT DEFAULT NULL",
-      "UPDATE AUDIT_LOG a JOIN TENANT t ON a.tenant_slug = t.slug SET a.tenant_id = t.tenant_id WHERE a.tenant_id IS NULL LIMIT 500",
+      "UPDATE AUDIT_LOG SET tenant_id = (SELECT t.tenant_id FROM TENANT t WHERE t.slug = AUDIT_LOG.tenant_slug LIMIT 1) WHERE tenant_id IS NULL AND tenant_slug IS NOT NULL",
       "ALTER TABLE AUDIT_LOG ADD CONSTRAINT fk_audit_tenant FOREIGN KEY (tenant_id) REFERENCES TENANT(tenant_id) ON DELETE SET NULL",
 
       // #4 — Vehicle ownership type (company-owned vs employee-owned)
