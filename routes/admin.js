@@ -16,7 +16,7 @@ router.post('/:slug/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
   const { slug } = req.params;
 
-  const [tenants] = await query("SELECT * FROM TENANT WHERE slug = ? AND status = 'active' LIMIT 1", [slug]);
+  const [tenants] = await query("SELECT * FROM TENANT WHERE slug = ? AND status IN ('active', 'suspended') LIMIT 1", [slug]);
   if (!tenants.length) return res.status(404).json({ error: 'Workspace not found.' });
   const tenant = tenants[0];
 

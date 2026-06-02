@@ -286,7 +286,16 @@ router.post('/staff-login', async (req, res) => {
 
   const [tenants] = await query("SELECT tenant_id, status, suspension_reason FROM TENANT WHERE slug = ? LIMIT 1", [slug]);
   if (!tenants.length || (tenants[0].status !== 'active' && tenants[0].status !== 'suspended')) return res.status(404).json({ error: 'Workspace not found.' });
-  if (tenants[0].status === 'suspended') {
+  const isSuspended = tenants[0].status === 'suspended';
+  const tenantId = tenants[0].tenant_id;
+
+  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1", [tenantId, email]);
+  if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
+  
+  const staff = rows[0];
+
+  // If suspended, only allow Admin to log in (so they can pay)
+  if (isSuspended && staff.role !== 'Admin') {
     const reason = tenants[0].suspension_reason || '';
     const isPayment = /overdue|payment|subscription/i.test(reason);
     const msg = isPayment
@@ -294,12 +303,7 @@ router.post('/staff-login', async (req, res) => {
       : 'This workspace has been temporarily suspended by the platform administrator. Please contact your company administrator.';
     return res.status(403).json({ error: msg, suspended: true });
   }
-  const tenantId = tenants[0].tenant_id;
 
-  const [rows] = await query("SELECT * FROM STAFF WHERE tenant_id = ? AND username = ? LIMIT 1", [tenantId, email]);
-  if (!rows.length) return res.status(401).json({ error: 'Invalid credentials.' });
-  
-  const staff = rows[0];
   if (staff.status === 'suspended') return res.status(403).json({ error: 'Account is suspended. Please contact your administrator.' });
   if (staff.status !== 'active' && staff.status !== 'Available' && staff.status !== null) return res.status(401).json({ error: 'Account is not active.' });
   
