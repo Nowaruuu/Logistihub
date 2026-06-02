@@ -120,20 +120,8 @@ router.get('/onboarding', (req, res) => {
 });
 
 router.get('/:slug/admin', async (req, res) => {
-  const tenant = await resolveTenant(req.params.slug, res, { allowSuspended: true });
+  const tenant = await resolveTenant(req.params.slug, res, { suspendedView: 'admin' });
   if (!tenant) return;
-  // If suspended and admin is NOT logged in, redirect to suspended page
-  if (tenant.status === 'suspended') {
-    const jwt = require('jsonwebtoken');
-    const token = req.cookies?.[`admin_token_${req.params.slug}`];
-    let isLoggedIn = false;
-    if (token) {
-      try { const p = jwt.verify(token, process.env.JWT_SECRET); if (p.role === 'admin' || p.role === 'Admin') isLoggedIn = true; } catch {}
-    }
-    if (!isLoggedIn) {
-      return res.status(403).send(injectTenantData(readView('suspended.html'), tenant));
-    }
-  }
   res.send(injectTenantData(readView('admin-dashboard.html'), tenant));
 });
 
