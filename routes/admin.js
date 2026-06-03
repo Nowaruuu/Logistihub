@@ -1319,21 +1319,34 @@ router.post('/:slug/api/admin/vehicles/:plate/assign', requireAdmin, requireSlug
   const plate = req.params.plate;
   if (!driver_id) return res.status(400).json({ error: 'driver_id is required.' });
   try {
-    const [veh] = await query("SELECT plate_number FROM vehicle WHERE plate_number = ? AND tenant_id = ? AND status = 'Available' LIMIT 1", [plate, tid]);
-    if (!veh.length) return res.status(400).json({ error: 'Vehicle not available for assignment.' });
+    const [veh] = await query("SELECT plate_number, vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1", [plate, tid]);
+    if (!veh.length) return res.status(404).json({ error: 'Vehicle not found.' });
+
+    // Unassign any previous driver from this vehicle
+    await query("UPDATE STAFF SET vehicle_plate = NULL, vehicle_type = NULL WHERE vehicle_plate = ? AND tenant_id = ?", [plate, tid]);
 
     // Cancel any pending requests for this driver
     await query("UPDATE VEHICLE_REQUEST SET status = 'denied' WHERE driver_id = ? AND tenant_id = ? AND status = 'pending'", [driver_id, tid]);
 
-    // Create staff_assignment request (driver must accept)
+    // Directly assign vehicle to the driver
     await query(
-      `INSERT INTO VEHICLE_REQUEST (tenant_id, vehicle_plate, driver_id, request_type, status, initiated_by)
-       VALUES (?, ?, ?, 'staff_assignment', 'pending', ?)`,
-      [tid, plate, driver_id, req.adminId || null]
+      "UPDATE STAFF SET vehicle_plate = ?, vehicle_type = ? WHERE staff_id = ? AND tenant_id = ?",
+      [plate, veh[0].vehicle_type || null, driver_id, tid]
     );
-    // Mark vehicle as tentatively On-Duty
+
+    // Mark vehicle as On-Duty
     await query("UPDATE vehicle SET status = 'On-Duty' WHERE plate_number = ? AND tenant_id = ?", [plate, tid]);
-    res.json({ ok: true, message: 'Assignment sent to driver for acceptance.' });
+
+    // Also log as an approved vehicle request for audit trail
+    try {
+      await query(
+        `INSERT INTO VEHICLE_REQUEST (tenant_id, vehicle_plate, driver_id, request_type, status, initiated_by)
+         VALUES (?, ?, ?, 'staff_assignment', 'approved', ?)`,
+        [tid, plate, driver_id, req.adminId || null]
+      );
+    } catch(_) { /* table might not exist */ }
+
+    res.json({ ok: true, message: 'Vehicle assigned to driver successfully.' });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
