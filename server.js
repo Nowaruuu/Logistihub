@@ -178,6 +178,9 @@ app.listen(PORT, async () => {
     try { await query('ALTER TABLE vehicle MODIFY COLUMN image_url LONGTEXT'); } catch(_) {}
     try { await query('ALTER TABLE vehicle ADD COLUMN ownership_type VARCHAR(20) DEFAULT "company"'); } catch(_) {}
     try { await query('ALTER TABLE TENANT ADD COLUMN pricing_config JSON DEFAULT NULL'); } catch(_) {}
+    // Ensure photo columns are LONGTEXT (base64 images are large)
+    try { await query('ALTER TABLE shipment MODIFY COLUMN proof_photo_url LONGTEXT DEFAULT NULL'); } catch(_) {}
+    try { await query('ALTER TABLE shipment MODIFY COLUMN pickup_photo_url LONGTEXT DEFAULT NULL'); } catch(_) {}
 
     // Backfill distance_km for existing shipments that have lat/lng but no distance
     try {
