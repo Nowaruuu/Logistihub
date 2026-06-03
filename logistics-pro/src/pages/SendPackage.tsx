@@ -25,8 +25,8 @@ const PACKAGE_CATEGORIES = [
 const VEHICLE_TYPES = [
   // Motorcycle: delivery motos typically 50kg max payload
   { id: 'motorcycle', label: 'Motorcycle', icon: Bike, maxKg: 50, fuelRate: 2.20, desc: 'Small parcels, documents', fuelType: 'Gasoline' },
-  // Sedan: 150–200 kg max per PH DBM standards
-  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 200, fuelRate: 4.70, desc: 'Medium packages up to 200 kg', fuelType: 'Gasoline' },
+  // Sedan: 300–400 kg for PH delivery standards
+  { id: 'sedan', label: 'Sedan', icon: Car, maxKg: 400, fuelRate: 4.70, desc: 'Medium packages up to 400 kg', fuelType: 'Gasoline' },
   // Van (L300 / Hiace): 940–1,200 kg
   { id: 'van', label: 'Van', icon: Truck, maxKg: 1000, fuelRate: 6.11, desc: 'Multiple boxes, up to 1,000 kg', fuelType: 'Diesel' },
   // Truck (4–6 wheeler): up to 5,000 kg

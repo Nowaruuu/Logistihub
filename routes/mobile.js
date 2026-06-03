@@ -1567,7 +1567,7 @@ router.post('/driver/accept/:dn', authMiddleware, async (req, res) => {
     // ── WEIGHT CAPACITY CHECK ─────────────────────────────────────────────────
     // Default max weight (kg) per vehicle type based on PH standards
     const VEHICLE_WEIGHT_LIMITS_KG = {
-      motorcycle: 50, sedan: 200, suv: 300, pickup: 1000,
+      motorcycle: 50, sedan: 400, suv: 300, pickup: 1000,
       van: 1000, truck: 5000, trailer: 15000
     };
     const packageWeightKg = parseFloat(rows[0].weight) || 0;
