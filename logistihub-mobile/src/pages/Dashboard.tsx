@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 export default function Dashboard() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,6 +16,7 @@ export default function Dashboard() {
   const [saveErr, setSaveErr] = useState('');
   const [saveOk, setSaveOk] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function openEdit() {
     setEditForm({
@@ -54,27 +54,30 @@ export default function Dashboard() {
     try { await logout(); navigate('/'); } catch (_) { navigate('/'); }
   }
 
-  async function handlePickPhoto() {
-    try {
-      const photo = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: true,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Prompt,
-      });
-      if (!photo.base64String) return;
-      const base64Image = `data:image/${photo.format};base64,${photo.base64String}`;
+  function handlePickPhoto() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+    // Read as base64
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Image = reader.result as string;
+      if (!base64Image || !base64Image.startsWith('data:image/')) return;
       setUploadingPhoto(true);
       try {
         await uploadProfilePicture(base64Image);
-      } catch (e: any) {
-        console.error('Profile picture upload failed', e);
+      } catch (err: any) {
+        console.error('Profile picture upload failed', err);
       } finally {
         setUploadingPhoto(false);
       }
-    } catch (_) {
-      // User cancelled
-    }
+    };
+    reader.readAsDataURL(file);
   }
 
   const initials = user
@@ -127,6 +130,13 @@ export default function Dashboard() {
                 ? <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#fff', animation: 'spin 1s linear infinite' }}>progress_activity</span>
                 : <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#fff' }}>photo_camera</span>}
             </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0a1628', marginTop: 12 }}>{user?.first_name} {user?.last_name}</h2>
           <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>{user?.email}</p>
