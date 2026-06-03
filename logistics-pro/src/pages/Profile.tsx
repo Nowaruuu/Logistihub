@@ -338,7 +338,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {profile.role === 'driver' && driverData && (
+      {profile.role === 'driver' && (vehicleInfo?.vehicle_plate || driverData) && (
         <div className="px-6 mb-6">
           <div className="bg-slate-900 dark:bg-slate-900 p-5 rounded-3xl shadow-xl border border-slate-800 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -350,11 +350,17 @@ export default function Profile() {
               </div>
               <div>
                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none">Primary Vehicle</p>
-                <p className="text-white font-bold text-lg mt-1">{driverData.vehicleModel}</p>
+                <p className="text-white font-bold text-lg mt-1">
+                  {vehicleInfo?.model || vehicleInfo?.vehicle_type || driverData?.vehicleModel || '—'}
+                </p>
                 <div className="flex items-center gap-3 mt-1.5">
-                  <div className="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono font-bold tracking-wider">{driverData.plateNumber}</div>
+                  <div className="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono font-bold tracking-wider">
+                    {vehicleInfo?.vehicle_plate || driverData?.plateNumber || '—'}
+                  </div>
                   <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{driverData.status}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                    {vehicleInfo?.vehicle_type || driverData?.status || 'Active'}
+                  </span>
                 </div>
               </div>
             </div>
