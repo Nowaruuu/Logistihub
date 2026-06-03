@@ -636,7 +636,7 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
     // ── WEIGHT CAPACITY CHECK ─────────────────────────────────────────────────
     if (assigned_vehicle_plate) {
       const VEHICLE_WEIGHT_LIMITS_KG = {
-        motorcycle: 50, sedan: 200, suv: 300, pickup: 1000,
+        motorcycle: 50, sedan: 400, suv: 300, pickup: 1000,
         van: 1000, truck: 5000, trailer: 15000
       };
 
