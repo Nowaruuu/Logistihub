@@ -3052,7 +3052,8 @@ function renderVehicles(list) {
     var delBtn    = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\', \'' + (v.ownership_type||'company') + '\', \'' + (v.image_url ? '1' : '') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     var assignBtn = (plate && v.status === 'Available') ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
-    var ownerBadge = v.ownership_type === 'employee' ? '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Employee</span>' : '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">Company</span>';
+    var isDriver = v.ownership_type === 'employee' || (v.ownership_doc && /driver|registered by driver/i.test(v.ownership_doc));
+    var ownerBadge = isDriver ? '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Driver</span>' : '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">Company</span>';
     var imgCell = v.image_url
       ? '<div onclick="viewVehicleImage(\'' + v.image_url.replace(/'/g, "\\'") + '\', \'' + esc(plate) + '\')" style="cursor:pointer;" title="Click to zoom"><img src="' + v.image_url + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;transition:transform .15s;" onmouseover="this.style.transform=\'scale(1.15)\'" onmouseout="this.style.transform=\'scale(1)\'"></div>'
       : '<div onclick="showNoImageToast()" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="No image available"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8;">directions_car</span></div>';
@@ -3255,6 +3256,26 @@ async function openAssignVehicleModal(plate) {
   modal.innerHTML = '<div style="background:#fff;border-radius:20px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.2);">' + html + '</div>';
   modal.style.display = 'flex';
   modal.onclick = function(e){ if(e.target===modal) document.getElementById('assign-vehicle-modal').style.display='none'; };
+}
+
+async function submitAssignVehicle() {
+  var driverSelect = document.getElementById('assign-driver-select');
+  if (!driverSelect) return;
+  var driverId = driverSelect.value;
+  if (!driverId || !_assignVehiclePlate) { showToast('Please select a driver.', 'error'); return; }
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(_assignVehiclePlate) + '/assign', {
+      method: 'POST',
+      body: JSON.stringify({ driver_id: parseInt(driverId) })
+    });
+    var d = await r.json();
+    if (!r.ok) { showToast(d.error || 'Assignment failed.', 'error'); return; }
+    showToast(d.message || 'Driver assigned successfully!', 'success');
+    document.getElementById('assign-vehicle-modal').style.display = 'none';
+    loadVehicles();
+  } catch(e) {
+    showToast('Network error: ' + e.message, 'error');
+  }
 }
 
 async function deleteStaff(id, btn) {
