@@ -887,6 +887,33 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /profile-picture — upload profile picture for user or staff
+router.put('/profile-picture', authMiddleware, async (req, res) => {
+  const { image } = req.body;
+  if (!image || !image.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'A valid base64 image (data:image/...) is required.' });
+  }
+  // ~2MB limit for base64 string (base64 is ~33% larger than binary)
+  if (image.length > 2.8 * 1024 * 1024) {
+    return res.status(400).json({ error: 'Image must be under 2MB.' });
+  }
+
+  try {
+    if (req.user) {
+      await query('UPDATE APP_USER SET profile_picture = ? WHERE user_id = ? AND tenant_id = ?', [image, req.user.user_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Profile picture updated.', profile_picture: image });
+    }
+    if (req.staff) {
+      await query('UPDATE STAFF SET profile_picture = ? WHERE staff_id = ? AND tenant_id = ?', [image, req.staff.staff_id, req.tenantId]);
+      return res.json({ ok: true, message: 'Profile picture updated.', profile_picture: image });
+    }
+    res.status(403).json({ error: 'Forbidden.' });
+  } catch (err) {
+    console.error('[PUT /profile-picture]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // ─── DELIVERY CHAT & CALL ────────────────────────────────────────────────────
 
 // Helper: ensure DELIVERY_CHAT table exists

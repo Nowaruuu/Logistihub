@@ -447,6 +447,7 @@ router.get('/me', async (req, res) => {
           plate_number:  s.vehicle_plate || s.plate_number || null,
           rating:           avgRating,
           total_deliveries: totalDeliveries,
+          profile_picture:  s.profile_picture || null,
         }
       });
     }
@@ -454,7 +455,7 @@ router.get('/me', async (req, res) => {
     // APP_USER (customers)
     if (!payload.user_id) return res.status(403).json({ error: 'Forbidden.' });
     const [rows] = await query(
-      `SELECT user_id, tenant_id, first_name, last_name, email, phone, status, created_at
+      `SELECT user_id, tenant_id, first_name, last_name, email, phone, status, created_at, profile_picture
        FROM APP_USER WHERE user_id = ? AND tenant_id = ? LIMIT 1`,
       [payload.user_id, payload.tenant_id]
     );
@@ -472,6 +473,7 @@ router.get('/me', async (req, res) => {
         tenant_id: u.tenant_id,
         createdAt: u.created_at,
         user_id:   u.user_id,
+        profile_picture: u.profile_picture || null,
       }
     });
   } catch (err) {

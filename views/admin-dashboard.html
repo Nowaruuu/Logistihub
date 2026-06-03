@@ -52,7 +52,7 @@
   <div class="sidebar-bottom">
     <div class="user-row" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
       <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
-        <div class="uavatar" style="flex-shrink:0;"><span class="material-symbols-outlined">person</span></div>
+        <div class="uavatar" id="sidebar-avatar" style="flex-shrink:0;"><span class="material-symbols-outlined">person</span></div>
         <div style="overflow:hidden;">
           <div class="uname" id="sidebar-username" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
           <div class="uemail" id="sidebar-role" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">ADMIN</div>
@@ -1119,6 +1119,11 @@ function checkSession() {
     if (d && d.admin) {
       document.getElementById('sidebar-username').textContent = d.admin.name || d.admin.email.split('@')[0];
       document.getElementById('sidebar-role').textContent = d.admin.role || 'ADMIN';
+      // Update sidebar avatar with profile picture
+      var avatarEl = document.getElementById('sidebar-avatar');
+      if (avatarEl && d.admin.profile_picture) {
+        avatarEl.innerHTML = '<img src="' + d.admin.profile_picture + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />';
+      }
     }
   }).catch(function() {});
 }
@@ -1366,7 +1371,11 @@ function renderAppUsers(users){
   tbody.innerHTML=users.map(function(u){
     var date=u.created_at?new Date(u.created_at).toLocaleDateString():'N/A';
     var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
-    return '<tr><td><strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td>'+esc(u.contact_email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
+    var uInitial = (u.full_name||u.name||'?').charAt(0).toUpperCase();
+    var uAvatar = u.profile_picture
+      ? '<img src="' + u.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle;" />'
+      : '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle;">' + uInitial + '</span>';
+    return '<tr><td style="white-space:nowrap;">' + uAvatar + '<strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td>'+esc(u.contact_email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
 }
 function filterAppUsers(){
@@ -2989,8 +2998,12 @@ function renderStaff(list) {
         licBadge = '<span style="background:#f1f5f9;color:#94a3b8;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Not Uploaded</span>';
       }
     }
+    var staffInitials = (s.name || s.first_name || '?').charAt(0).toUpperCase();
+    var staffAvatar = s.profile_picture
+      ? '<img src="' + s.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle;" />'
+      : '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle;">' + staffInitials + '</span>';
     return '<tr>' +
-      '<td><strong>' + esc(s.name || s.first_name || '-') + '</strong></td>' +
+      '<td style="white-space:nowrap;">' + staffAvatar + '<strong>' + esc(s.name || s.first_name || '-') + '</strong></td>' +
       '<td><span style="background:' + rc + ';padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">' + esc(s.role||'-') + '</span></td>' +
       '<td style="font-family:monospace;font-size:12px;">' + esc(s.username||'-') + '</td>' +
       '<td style="font-size:12px;">' + esc(s.phone || '\u2014') + '</td>' +

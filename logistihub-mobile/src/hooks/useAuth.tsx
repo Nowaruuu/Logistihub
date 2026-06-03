@@ -16,6 +16,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   setSlug: (slug: string) => void;
   updateProfile: (payload: { first_name?: string; last_name?: string; phone?: string }) => Promise<void>;
+  uploadProfilePicture: (base64Image: string) => Promise<void>;
 }
 
 interface RegisterPayload {
@@ -146,8 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const uploadProfilePicture = async (base64Image: string) => {
+    if (!slug) throw new Error('No workspace');
+    const { profile_picture } = await API.uploadProfilePicture(slug, base64Image);
+    const updated = { ...user, profile_picture } as AppUser;
+    setUser(updated);
+    localStorage.setItem('lh_user', JSON.stringify(updated));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, isSuspended, suspendedCompany, login, register, logout, setSlug, updateProfile }}>
+    <AuthContext.Provider value={{ user, tenant, slug, token, isLoading, isSuspended, suspendedCompany, login, register, logout, setSlug, updateProfile, uploadProfilePicture }}>
       {children}
     </AuthContext.Provider>
   );

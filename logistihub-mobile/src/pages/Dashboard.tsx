@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 export default function Dashboard() {
   const { slug } = useParams<{ slug: string }>();
-  const { user, tenant, logout, updateProfile } = useAuth();
+  const { user, tenant, logout, updateProfile, uploadProfilePicture } = useAuth();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState('');
   const [saveOk, setSaveOk] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   function openEdit() {
     setEditForm({
@@ -52,6 +54,29 @@ export default function Dashboard() {
     try { await logout(); navigate('/'); } catch (_) { navigate('/'); }
   }
 
+  async function handlePickPhoto() {
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: true,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Prompt,
+      });
+      if (!photo.base64String) return;
+      const base64Image = `data:image/${photo.format};base64,${photo.base64String}`;
+      setUploadingPhoto(true);
+      try {
+        await uploadProfilePicture(base64Image);
+      } catch (e: any) {
+        console.error('Profile picture upload failed', e);
+      } finally {
+        setUploadingPhoto(false);
+      }
+    } catch (_) {
+      // User cancelled
+    }
+  }
+
   const initials = user
     ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
     : '?';
@@ -87,8 +112,21 @@ export default function Dashboard() {
         </div>
 
         <div style={{ background: '#fff', borderRadius: '16px 16px 0 0', padding: '24px 24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 0 }}>
-          <div style={{ width: 76, height: 76, borderRadius: '50%', background: '#0a1628', border: '4px solid #fff', boxShadow: '0 4px 20px rgba(10,22,40,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginTop: -10, flexShrink: 0 }}>
-            {initials}
+          <div style={{ position: 'relative', width: 76, height: 76, marginTop: -10, flexShrink: 0 }}>
+            <div style={{ width: 76, height: 76, borderRadius: '50%', background: '#0a1628', border: '4px solid #fff', boxShadow: '0 4px 20px rgba(10,22,40,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', overflow: 'hidden' }}>
+              {user?.profile_picture
+                ? <img src={user.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : initials}
+            </div>
+            <button
+              onClick={handlePickPhoto}
+              disabled={uploadingPhoto}
+              style={{ position: 'absolute', bottom: -2, right: -2, width: 28, height: 28, borderRadius: '50%', border: '2px solid #fff', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+            >
+              {uploadingPhoto
+                ? <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#fff', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+                : <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#fff' }}>photo_camera</span>}
+            </button>
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0a1628', marginTop: 12 }}>{user?.first_name} {user?.last_name}</h2>
           <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>{user?.email}</p>

@@ -156,6 +156,10 @@ connectWithRetry().then(async () => {
       "ALTER TABLE shipment ADD COLUMN pickup_photo_url LONGTEXT DEFAULT NULL",
       // Delivery note (customer note to driver)
       "ALTER TABLE shipment ADD COLUMN delivery_note TEXT DEFAULT NULL",
+
+      // Profile pictures for staff and app users
+      "ALTER TABLE STAFF ADD COLUMN profile_picture LONGTEXT DEFAULT NULL",
+      "ALTER TABLE APP_USER ADD COLUMN profile_picture LONGTEXT DEFAULT NULL",
     ];
     for (const sql of migrations) {
       try {

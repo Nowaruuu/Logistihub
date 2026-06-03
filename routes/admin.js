@@ -67,8 +67,19 @@ router.post('/:slug/api/admin/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, (req, res) => {
-  res.json({ admin: req.admin, tenant: req.tenant });
+router.get('/:slug/api/admin/me', requireAdmin, requireSlugMatch, async (req, res) => {
+  // Enrich admin data with profile_picture from STAFF table
+  let adminData = { ...req.admin };
+  try {
+    const [rows] = await query(
+      'SELECT profile_picture FROM STAFF WHERE username = ? AND tenant_id = ? LIMIT 1',
+      [req.admin.email, req.tenantId]
+    );
+    if (rows.length && rows[0].profile_picture) {
+      adminData.profile_picture = rows[0].profile_picture;
+    }
+  } catch (_) { /* column may not exist yet */ }
+  res.json({ admin: adminData, tenant: req.tenant });
 });
 
 // Recent login sessions (for notification panel device detection)

@@ -17,6 +17,7 @@ export interface AppUser {
   address: string;
   status: string;
   created_at: string;
+  profile_picture?: string;
 }
 
 export interface AuthState {

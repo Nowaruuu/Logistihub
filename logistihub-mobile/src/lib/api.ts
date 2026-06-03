@@ -101,6 +101,13 @@ export async function updateProfile(
   });
 }
 
+export async function uploadProfilePicture(slug: string, base64Image: string) {
+  return request<{ ok: boolean; profile_picture: string }>(`/${slug}/api/mobile/profile-picture`, {
+    method: 'PUT',
+    body: JSON.stringify({ image: base64Image }),
+  });
+}
+
 // ── Tenant info ───────────────────────────────────────────────────────────────
 // This endpoint must exist on the backend: GET /:slug/api/tenant-info
 export async function getTenantInfo(slug: string) {
