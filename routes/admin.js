@@ -948,11 +948,29 @@ router.get('/:slug/api/admin/vehicles', requireAdmin, requireSlugMatch, async (r
 
 router.delete('/:slug/api/admin/vehicles/:plate', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
-    await query('DELETE FROM vehicle WHERE plate_number = ? AND tenant_id = ?', [req.params.plate, req.tenantId]);
+    const plate = req.params.plate;
+    const tid = req.tenantId;
+    // Clear driver assignment before deleting vehicle
+    await query('UPDATE STAFF SET vehicle_plate = NULL, vehicle_type = NULL WHERE vehicle_plate = ? AND tenant_id = ?', [plate, tid]);
+    await query('DELETE FROM vehicle WHERE plate_number = ? AND tenant_id = ?', [plate, tid]);
     res.json({ ok: true });
   } catch(err) {
     console.error('[DELETE /admin/vehicles]', err);
     res.status(500).json({ error: err.message || 'Failed to delete vehicle.' });
+  }
+});
+
+// POST unassign driver from a vehicle
+router.post('/:slug/api/admin/vehicles/:plate/unassign', requireAdmin, requireSlugMatch, async (req, res) => {
+  const plate = req.params.plate;
+  const tid = req.tenantId;
+  try {
+    await query('UPDATE STAFF SET vehicle_plate = NULL, vehicle_type = NULL WHERE vehicle_plate = ? AND tenant_id = ?', [plate, tid]);
+    await query("UPDATE vehicle SET status = 'Available' WHERE plate_number = ? AND tenant_id = ?", [plate, tid]);
+    res.json({ ok: true, message: 'Driver removed from vehicle.' });
+  } catch(err) {
+    console.error('[POST /admin/vehicles/unassign]', err);
+    res.status(500).json({ error: err.message || 'Failed to unassign driver.' });
   }
 });
 

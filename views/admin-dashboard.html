@@ -3055,6 +3055,7 @@ function renderVehicles(list) {
     var delBtn    = plate ? '<button onclick="deleteVehicle(\'' + plate + '\',this)" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px 6px;border-radius:6px;" title="Remove"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">delete</span></button>' : '';
     var updateBtn = plate ? '<button onclick="openUpdateVehicleModal(\'' + plate + '\', \'' + (v.vehicle_type||'') + '\', \'' + (v.capacity_tons||'') + '\', \'' + (v.status||'Available') + '\', \'' + esc(v.model||'') + '\', \'' + (v.ownership_type||'company') + '\', \'' + (v.image_url ? '1' : '') + '\')" style="background:none;border:none;cursor:pointer;color:#3b82f6;padding:3px 6px;border-radius:6px;" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">edit</span></button>' : '';
     var assignBtn = (plate && (v.status === 'Available' || v.status === 'On-Duty')) ? '<button onclick="openAssignVehicleModal(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#f59e0b;padding:3px 6px;border-radius:6px;" title="Assign to Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_add</span></button>' : '';
+    var unassignBtn = (plate && v.assigned_driver_name) ? '<button onclick="unassignVehicle(\'' + plate + '\')" style="background:none;border:none;cursor:pointer;color:#8b5cf6;padding:3px 6px;border-radius:6px;" title="Remove Driver"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">person_remove</span></button>' : '';
     var isDriver = v.ownership_type === 'employee' || (v.ownership_doc && /driver|registered by driver/i.test(v.ownership_doc));
     var ownerBadge = isDriver ? '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Driver</span>' : '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">Company</span>';
     var imgCell = v.image_url
@@ -3069,7 +3070,7 @@ function renderVehicles(list) {
       '<td>' + ownerBadge + '</td>' +
       '<td><span class="badge ' + (stColors[v.status]||'b-pending') + '">' + esc(v.status||'-') + '</span></td>' +
       '<td>' + esc(v.assigned_driver_name||'-') + '</td>' +
-      '<td><div style="display:flex;gap:2px;">' + assignBtn + updateBtn + delBtn + '</div></td></tr>';
+      '<td><div style="display:flex;gap:2px;">' + unassignBtn + assignBtn + updateBtn + delBtn + '</div></td></tr>';
   }).join('');
 }
 
@@ -3224,8 +3225,8 @@ async function openAssignVehicleModal(plate) {
       _staffData = Array.isArray(d) ? d : (d.staff || []);
     } catch(e) { _staffData = []; }
   }
-  var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver';});
-  if(!drivers.length) { showToast('No drivers found.'); return; }
+  var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && s.license_status==='verified';});
+  if(!drivers.length) { showToast('No drivers with verified license found. Please verify a driver\'s license first.', 'error'); return; }
   var opts = drivers.map(function(d){var cur=d.vehicle_plate?' (current: '+esc(d.vehicle_plate)+')':' (no vehicle)';return '<option value="'+d.staff_id+'">'+esc(d.name)+cur+'</option>';}).join('');
   var html = '<div style="padding:28px 24px 24px;">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +
@@ -3317,6 +3318,18 @@ async function deleteVehicle(id, btn) {
     if(!r.ok) { showToast(d.error || 'Delete failed.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
     loadVehicles();
   } catch(e) { showToast('Network error.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+async function unassignVehicle(plate) {
+  if(!plate || !confirm('Remove the assigned driver from vehicle ' + plate + '?')) return;
+  try {
+    var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(plate) + '/unassign', { method: 'POST' });
+    var d = await r.json();
+    if(!r.ok) { showToast(d.error || 'Failed to remove driver.', 'error'); return; }
+    showToast(d.message || 'Driver removed from vehicle.', 'success');
+    loadVehicles();
+    loadStaff();
+  } catch(e) { showToast('Network error.', 'error'); }
 }
 
 // Hook navigation to load staff/vehicles
