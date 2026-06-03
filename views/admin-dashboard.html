@@ -1373,7 +1373,7 @@ function renderAppUsers(users){
     var status=u.is_active===false?'<span class="badge b-declined">Inactive</span>':'<span class="badge b-delivered">Active</span>';
     var uInitial = (u.full_name||u.name||'?').charAt(0).toUpperCase();
     var uAvatar = u.profile_picture
-      ? '<img src="' + u.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle;" />'
+      ? '<div onclick="viewVehicleImage(\'' + u.profile_picture.replace(/'/g, "\\'") + '\', \'' + esc(u.full_name||u.name||'User') + '\')" style="display:inline-block;cursor:pointer;vertical-align:middle;margin-right:8px;" title="Click to zoom"><img src="' + u.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;transition:transform .15s;" onmouseover="this.style.transform=\'scale(1.15)\'" onmouseout="this.style.transform=\'scale(1)\'"></div>'
       : '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle;">' + uInitial + '</span>';
     return '<tr><td style="white-space:nowrap;">' + uAvatar + '<strong>'+esc(u.full_name||u.name||'N/A')+'</strong></td><td>'+esc(u.email||'N/A')+'</td><td>'+esc(u.contact_email||'N/A')+'</td><td><span class="badge '+(rc[u.role]||'b-pending')+'">'+esc(u.role||'N/A')+'</span></td><td>'+date+'</td><td>'+status+'</td></tr>';
   }).join('');
@@ -3000,7 +3000,7 @@ function renderStaff(list) {
     }
     var staffInitials = (s.name || s.first_name || '?').charAt(0).toUpperCase();
     var staffAvatar = s.profile_picture
-      ? '<img src="' + s.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle;" />'
+      ? '<div onclick="viewVehicleImage(\'' + s.profile_picture.replace(/'/g, "\\'") + '\', \'' + esc(s.name||s.first_name||'Staff') + '\')" style="display:inline-block;cursor:pointer;vertical-align:middle;margin-right:8px;" title="Click to zoom"><img src="' + s.profile_picture + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;transition:transform .15s;" onmouseover="this.style.transform=\'scale(1.15)\'" onmouseout="this.style.transform=\'scale(1)\'"></div>'
       : '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle;">' + staffInitials + '</span>';
     return '<tr>' +
       '<td style="white-space:nowrap;">' + staffAvatar + '<strong>' + esc(s.name || s.first_name || '-') + '</strong></td>' +
@@ -3081,7 +3081,7 @@ function viewVehicleImage(url, plate) {
     overlay.onclick = function() { overlay.style.opacity = '0'; setTimeout(function(){ overlay.style.display = 'none'; }, 250); };
     document.body.appendChild(overlay);
   }
-  document.getElementById('vimg-title').textContent = plate ? 'Vehicle: ' + plate : 'Vehicle Image';
+  document.getElementById('vimg-title').textContent = plate || 'Image';
   document.getElementById('vimg-src').src = url;
   overlay.style.display = 'flex';
   requestAnimationFrame(function() { overlay.style.opacity = '1'; });
