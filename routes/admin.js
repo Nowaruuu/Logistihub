@@ -1081,7 +1081,7 @@ router.put('/:slug/api/admin/settings', requireAdmin, requireSlugMatch, async (r
 
 router.get('/:slug/api/admin/app-users', requireAdmin, requireSlugMatch, async (req, res) => {
   try {
-    const [users] = await query('SELECT user_id, CONCAT(first_name, \' \', last_name) AS full_name, email, contact_email, role, status, created_at FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC', [req.tenant.tenant_id]);
+    const [users] = await query('SELECT user_id, CONCAT(first_name, \' \', last_name) AS full_name, email, contact_email, role, status, created_at, profile_picture FROM APP_USER WHERE tenant_id = ? ORDER BY created_at DESC', [req.tenant.tenant_id]);
     res.json({ users });
   } catch(e) {
     res.status(500).json({ error: e.message });
