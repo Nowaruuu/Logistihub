@@ -453,27 +453,44 @@ export default function DriverDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => handleDeclineJob(job.trackingNumber)}
-                      disabled={!isOnline || isAtCapacity || accepting === job.id}
-                      className="py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-950/20 dark:hover:text-red-400 dark:hover:border-red-900/40 disabled:opacity-40"
-                    >
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => handleAcceptJob(job.id)}
-                      disabled={!isOnline || isAtCapacity || accepting === job.id}
-                      className={cn(
-                        'py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
-                        isAtCapacity
-                          ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                          : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
-                      )}
-                    >
-                      {accepting === job.id ? 'Accepting...' : isAtCapacity ? `Full (${MAX_ACTIVE_JOBS}/${MAX_ACTIVE_JOBS})` : `Accept (${activeCount}/${MAX_ACTIVE_JOBS})`}
-                    </button>
-                  </div>
+                  {(job as any).assigned_to_me ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => handleDeclineJob(job.trackingNumber)}
+                        disabled={!isOnline || accepting === job.id}
+                        className="py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 disabled:opacity-40"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        onClick={() => handleAcceptJob(job.id)}
+                        disabled={!isOnline || isAtCapacity || accepting === job.id}
+                        className={cn(
+                          'py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
+                          isAtCapacity
+                            ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
+                        )}
+                      >
+                        {accepting === job.id ? 'Accepting...' : isAtCapacity ? `Full (${MAX_ACTIVE_JOBS}/${MAX_ACTIVE_JOBS})` : 'Accept'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <button
+                        onClick={() => handleAcceptJob(job.id)}
+                        disabled={!isOnline || isAtCapacity || accepting === job.id}
+                        className={cn(
+                          'w-full py-3.5 font-bold rounded-xl transition-all active:scale-[0.98] text-sm',
+                          isAtCapacity
+                            ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:brightness-110 disabled:opacity-50 disabled:grayscale'
+                        )}
+                      >
+                        {accepting === job.id ? 'Accepting...' : isAtCapacity ? `Full (${MAX_ACTIVE_JOBS}/${MAX_ACTIVE_JOBS})` : `Accept (${activeCount}/${MAX_ACTIVE_JOBS})`}
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               ))
             )}

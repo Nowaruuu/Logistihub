@@ -1479,7 +1479,21 @@ router.get('/driver/jobs', authMiddleware, async (req, res) => {
       });
     }
 
-    res.json({ jobs: filteredJobs });
+    // Also include jobs specifically assigned to this driver by admin (Pending + has assigned_driver_id = me)
+    const [assignedRows] = await query(
+      `SELECT s.* FROM shipment s
+       WHERE s.tenant_id = ? AND s.status = 'Pending' AND s.assigned_driver_id = ?
+       ORDER BY s.created_at DESC LIMIT 10`,
+      [tid, staffId]
+    );
+    // Mark assigned jobs so frontend knows to show Decline
+    const assignedJobs = assignedRows.map(j => ({ ...j, assigned_to_me: true }));
+    // Merge: assigned jobs first, then open jobs (no duplicates)
+    const assignedDns = new Set(assignedJobs.map(j => j.delivery_number));
+    const openJobs = filteredJobs.filter(j => !assignedDns.has(j.delivery_number));
+    const allJobs = [...assignedJobs, ...openJobs];
+
+    res.json({ jobs: allJobs });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
