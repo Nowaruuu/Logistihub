@@ -553,7 +553,15 @@ export default function DriverDashboard() {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="grid grid-cols-2 gap-3 px-5 pb-3">
+                  <div className={`grid gap-3 px-5 pb-3 ${(assignment.status === 'Pending' || assignment.status === 'Processing') ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                    {(assignment.status === 'Pending' || assignment.status === 'Processing') && (
+                      <button
+                        onClick={() => handleDeclineJob(assignment.trackingNumber)}
+                        className="flex items-center justify-center gap-2 py-3.5 bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 font-bold rounded-xl active:scale-[0.98] transition-all text-sm"
+                      >
+                        Decline
+                      </button>
+                    )}
                     <button
                       onClick={() => navigate('/driver/navigate', {
                         state: {
@@ -591,7 +599,7 @@ export default function DriverDashboard() {
                         {completing === assignment.id ? (
                           <><Loader2 className="size-4 animate-spin" /> Starting...</>
                         ) : (
-                          <><Truck className="size-4" /> Start Pickup</>
+                          <><Truck className="size-4" /> Accept</>
                         )}
                       </button>
                     ) : assignment.status === 'In Transit' ? (
