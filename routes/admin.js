@@ -1313,6 +1313,24 @@ router.post('/:slug/api/admin/vehicles/:plate/assign', requireAdmin, requireSlug
     const [veh] = await query("SELECT plate_number, vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1", [plate, tid]);
     if (!veh.length) return res.status(404).json({ error: 'Vehicle not found.' });
 
+    // ── License verification check ──
+    const [driverRows] = await query(
+      "SELECT name, license_status, license_expiry FROM STAFF WHERE staff_id = ? AND tenant_id = ? LIMIT 1",
+      [driver_id, tid]
+    );
+    if (!driverRows.length) return res.status(404).json({ error: 'Driver not found.' });
+    const driver = driverRows[0];
+    if (driver.license_status !== 'verified') {
+      return res.status(400).json({
+        error: `Cannot assign vehicle to ${driver.name}. Driver's license is not verified (status: ${driver.license_status || 'Not Uploaded'}). Please verify their license first.`
+      });
+    }
+    if (driver.license_expiry && new Date(driver.license_expiry) < new Date()) {
+      return res.status(400).json({
+        error: `Cannot assign vehicle to ${driver.name}. Driver's license has expired (${new Date(driver.license_expiry).toLocaleDateString()}). Please update their license first.`
+      });
+    }
+
     // Unassign any previous driver from this vehicle
     await query("UPDATE STAFF SET vehicle_plate = NULL, vehicle_type = NULL WHERE vehicle_plate = ? AND tenant_id = ?", [plate, tid]);
 
