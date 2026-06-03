@@ -146,7 +146,7 @@ export default function SendPackage() {
   };
   const [enabledCatIds, setEnabledCatIds] = useState<string[]>(['PACKAGE','VEHICLE','FOOD','DOC','BULK']);
   // Max distance limit (from tenant config)
-  const [maxDistanceKm, setMaxDistanceKm] = useState(100);
+  const [maxDistanceKm, setMaxDistanceKm] = useState(500);
   // Server-provided pricing config (admin-customizable)
   const [pricingConfig, setPricingConfig] = useState<any>(null);
   // Split payment support
