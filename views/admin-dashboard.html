@@ -3220,9 +3220,9 @@ async function openAssignVehicleModal(plate) {
       _staffData = Array.isArray(d) ? d : (d.staff || []);
     } catch(e) { _staffData = []; }
   }
-  var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver' && !s.vehicle_plate;});
-  if(!drivers.length) { showToast('No unassigned drivers found. All drivers already have vehicles assigned.'); return; }
-  var opts = drivers.map(function(d){return '<option value="'+d.staff_id+'">'+esc(d.name)+'</option>';}).join('');
+  var drivers = (_staffData||[]).filter(function(s){return s.role==='Driver';});
+  if(!drivers.length) { showToast('No drivers found.'); return; }
+  var opts = drivers.map(function(d){var cur=d.vehicle_plate?' (current: '+esc(d.vehicle_plate)+')':' (no vehicle)';return '<option value="'+d.staff_id+'">'+esc(d.name)+cur+'</option>';}).join('');
   var html = '<div style="padding:28px 24px 24px;">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +
       '<div style="display:flex;align-items:center;gap:10px;">' +

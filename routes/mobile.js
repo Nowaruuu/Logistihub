@@ -255,7 +255,8 @@ router.get('/driver/vehicle', authMiddleware, async (req, res) => {
 // PUT /driver/vehicle — register/update driver's vehicle
 router.put('/driver/vehicle', authMiddleware, async (req, res) => {
   if (!req.staff) return res.status(403).json({ error: 'Drivers only.' });
-  const { vehicle_plate, vehicle_type, model, vehicle_photo } = req.body;
+  const { vehicle_plate, vehicle_type, model, vehicle_photo, capacity_kg } = req.body;
+  const capacityTons = capacity_kg ? (parseFloat(capacity_kg) / 1000).toFixed(3) : null;
   if (!vehicle_plate || !vehicle_type) {
     return res.status(400).json({ error: 'vehicle_plate and vehicle_type are required.' });
   }
@@ -321,15 +322,16 @@ router.put('/driver/vehicle', authMiddleware, async (req, res) => {
       // New plate — insert into fleet
       await query(
         `INSERT INTO vehicle (tenant_id, plate_number, vehicle_type, model, capacity_tons, status, ownership_doc, image_url)
-         VALUES (?, ?, ?, ?, NULL, 'Available', ?, ?)`,
-        [tid, plate, vehicle_type, model || null, `Registered by driver: ${driverName}`, vehicle_photo]
+         VALUES (?, ?, ?, ?, ?, 'Available', ?, ?)`,
+        [tid, plate, vehicle_type, model || null, capacityTons, `Registered by driver: ${driverName}`, vehicle_photo]
       );
     } else {
       // Plate already exists — update model, ownership note, and photo if provided
       await query(
         `UPDATE vehicle SET model = COALESCE(?, model), ownership_doc = ?,
+         capacity_tons = COALESCE(?, capacity_tons),
          image_url = COALESCE(?, image_url) WHERE plate_number = ? AND tenant_id = ?`,
-        [model || null, `Driver: ${driverName}`, vehicle_photo || null, plate, tid]
+        [model || null, `Driver: ${driverName}`, capacityTons, vehicle_photo || null, plate, tid]
       );
     }
 

@@ -24,6 +24,7 @@ export default function VehicleInfo() {
   const [vehicleModel, setVehicleModel] = useState('');
   const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null); // base64 data URL
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
+  const [capacityKg, setCapacityKg] = useState('');
   const [licenseStatus, setLicenseStatus] = useState<string>('not_uploaded');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,6 +40,7 @@ export default function VehicleInfo() {
         if (d.model)         setVehicleModel(d.model);
         if (d.license_status) setLicenseStatus(d.license_status);
         if (d.image_url)     setExistingPhotoUrl(d.image_url);
+        if (d.capacity_tons) setCapacityKg(String(Math.round(parseFloat(d.capacity_tons) * 1000)));
       })
       .catch(() => { /* no vehicle yet */ })
       .finally(() => setLoading(false));
@@ -86,7 +88,8 @@ export default function VehicleInfo() {
           vehicle_plate: vehiclePlate,
           vehicle_type: vehicleType,
           model: vehicleModel || null,
-          vehicle_photo: vehiclePhoto || undefined, // only send if new photo taken
+          vehicle_photo: vehiclePhoto || undefined,
+          capacity_kg: capacityKg ? parseFloat(capacityKg) : null,
         }),
       });
       const data = await res.json();
@@ -320,6 +323,29 @@ export default function VehicleInfo() {
               placeholder="e.g. Toyota Hi-Ace 2021"
               className="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600 transition-all"
             />
+          </div>
+
+          {/* Max Weight Capacity */}
+          <div>
+            <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">
+              Max Weight Capacity <span className="text-slate-400 font-normal normal-case">(kg)</span>
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                inputMode="numeric"
+                value={capacityKg}
+                onChange={e => setCapacityKg(e.target.value)}
+                placeholder="e.g. 500"
+                className="w-full px-4 py-3.5 pr-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600 transition-all"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">kg</span>
+            </div>
+            {capacityKg && parseFloat(capacityKg) > 0 && (
+              <p className="text-[11px] text-slate-400 mt-1.5 px-1">
+                = {(parseFloat(capacityKg) / 1000).toFixed(2)} tons
+              </p>
+            )}
           </div>
         </div>
       </div>

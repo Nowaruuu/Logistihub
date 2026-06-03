@@ -182,6 +182,7 @@ export default function Profile() {
                 src={profile.profile_picture}
                 alt="Avatar"
                 className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'U')}&background=ea580c&color=fff&size=256&bold=true`; }}
               />
             ) : (
               <img 
@@ -212,20 +213,30 @@ export default function Profile() {
               const file = e.target.files?.[0];
               if (!file) return;
               e.target.value = '';
-              const reader = new FileReader();
-              reader.onload = async () => {
-                const base64 = reader.result as string;
-                if (!base64?.startsWith('data:image/')) return;
-                setUploadingPhoto(true);
-                try {
-                  await uploadProfilePicture(base64);
-                } catch (err) {
-                  console.error('Profile picture upload failed', err);
-                } finally {
-                  setUploadingPhoto(false);
-                }
-              };
-              reader.readAsDataURL(file);
+              // Compress image to max 256x256 and quality 0.7
+              const compress = (file: File): Promise<string> => new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const MAX = 256;
+                  let w = img.width, h = img.height;
+                  if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                  else { w = Math.round(w * MAX / h); h = MAX; }
+                  canvas.width = w; canvas.height = h;
+                  canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+                  resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = URL.createObjectURL(file);
+              });
+              setUploadingPhoto(true);
+              try {
+                const base64 = await compress(file);
+                await uploadProfilePicture(base64);
+              } catch (err) {
+                console.error('Profile picture upload failed', err);
+              } finally {
+                setUploadingPhoto(false);
+              }
             }}
           />
           <button 
