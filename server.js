@@ -182,6 +182,15 @@ app.listen(PORT, async () => {
     try { await query('ALTER TABLE shipment MODIFY COLUMN proof_photo_url LONGTEXT DEFAULT NULL'); } catch(_) {}
     try { await query('ALTER TABLE shipment MODIFY COLUMN pickup_photo_url LONGTEXT DEFAULT NULL'); } catch(_) {}
 
+    // Sync STAFF.vehicle_type from fleet table for all drivers with a vehicle_plate
+    try {
+      await query(`UPDATE STAFF s
+        JOIN vehicle v ON s.vehicle_plate = v.plate_number AND s.tenant_id = v.tenant_id
+        SET s.vehicle_type = v.vehicle_type
+        WHERE s.vehicle_plate IS NOT NULL AND (s.vehicle_type IS NULL OR s.vehicle_type != v.vehicle_type)`);
+      console.log('   ✅ Synced STAFF vehicle_types from fleet table');
+    } catch(_) {}
+
     // Backfill distance_km for existing shipments that have lat/lng but no distance
     try {
       const [needDist] = await query(

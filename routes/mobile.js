@@ -1748,6 +1748,8 @@ router.put('/driver/status/:dn', authMiddleware, async (req, res) => {
     //   In-Transit       → Out for Delivery | Failed
     //   Out for Delivery → Delivered | Failed
     const TRANSITIONS = {
+      'Pending':          ['In-Transit'],
+      'Processing':       ['In-Transit'],
       'In-Transit':       ['Out for Delivery', 'Failed'],
       'Out for Delivery': ['Delivered', 'Failed'],
     };
