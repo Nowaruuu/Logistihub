@@ -19,6 +19,7 @@ export interface UserProfile {
   role: 'user' | 'driver' | 'admin';
   tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   createdAt: string;
+  profile_picture?: string;
 }
 
 export interface Driver {

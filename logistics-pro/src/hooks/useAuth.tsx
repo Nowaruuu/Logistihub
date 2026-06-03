@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getProfile } from '../lib/api';
+import { getProfile, uploadProfilePicture as apiUploadProfilePicture } from '../lib/api';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -9,6 +9,7 @@ interface AuthContextType {
   signIn: (userData: any, loginResponse?: any) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  uploadProfilePicture: (base64Image: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,7 @@ function buildProfile(data: any): UserProfile {
     role: normalizedRole as any,
     tier: data.tier || 'Bronze',
     createdAt: data.createdAt || data.created_at || new Date().toISOString(),
+    profile_picture: data.profile_picture || undefined,
   };
 }
 
@@ -127,8 +129,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const uploadProfilePicture = async (base64Image: string) => {
+    const { profile_picture } = await apiUploadProfilePicture(base64Image);
+    if (profile) {
+      const updated = { ...profile, profile_picture };
+      setProfile(updated);
+      setUser({ uid: updated.uid, ...updated });
+      // Also update the cached raw data
+      const cached = localStorage.getItem('auth_profile');
+      try {
+        const raw = cached ? JSON.parse(cached) : {};
+        raw.profile_picture = profile_picture;
+        localStorage.setItem('auth_profile', JSON.stringify(raw));
+      } catch { /* ignore */ }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, refreshProfile, uploadProfilePicture }}>
       {children}
     </AuthContext.Provider>
   );

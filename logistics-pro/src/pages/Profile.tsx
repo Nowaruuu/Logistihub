@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { deliveryService } from '../services/deliveryService';
 import { userService } from '../services/userService';
 import { seedService } from '../services/seedService';
-import { MapPin, CreditCard, Bell, HelpCircle, LogOut, Edit2, ChevronRight, Award, Plus, Trash2, Database, Truck, Star, Wallet, FileText, Activity, Save, X, Settings } from 'lucide-react';
+import { MapPin, CreditCard, Bell, HelpCircle, LogOut, Edit2, ChevronRight, Award, Plus, Trash2, Database, Truck, Star, Wallet, FileText, Activity, Save, X, Settings, Camera } from 'lucide-react';
 import { Driver } from '../types';
 import { cn } from '../lib/utils';
 
 export default function Profile() {
-  const { profile, signOut, refreshProfile } = useAuth();
+  const { profile, signOut, refreshProfile, uploadProfilePicture } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [driverData, setDriverData] = useState<Driver | null>(null);
   const [vehicleInfo, setVehicleInfo] = useState<{ vehicle_plate: string; vehicle_type: string } | null>(null);
   const [loadingDriver, setLoadingDriver] = useState(false);
@@ -175,13 +177,57 @@ export default function Profile() {
         <div className="relative">
           <div className="absolute inset-0 bg-orange-600/20 rounded-full blur-2xl -z-10 animate-pulse"></div>
           <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-36 w-36 ring-4 ring-white dark:ring-slate-800 shadow-2xl overflow-hidden">
-            <img 
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'U')}&background=ea580c&color=fff&size=256&bold=true`} 
-              alt="Avatar"
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+            {profile.profile_picture ? (
+              <img 
+                src={profile.profile_picture}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'U')}&background=ea580c&color=fff&size=256&bold=true`} 
+                alt="Avatar"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            )}
           </div>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingPhoto}
+            className="absolute bottom-1 left-1 p-2 rounded-full border-4 border-white dark:border-slate-900 shadow-lg bg-blue-500 hover:bg-blue-600 text-white transition-all transform active:scale-95 disabled:opacity-50"
+          >
+            {uploadingPhoto ? (
+              <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <Camera className="size-4" />
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              e.target.value = '';
+              const reader = new FileReader();
+              reader.onload = async () => {
+                const base64 = reader.result as string;
+                if (!base64?.startsWith('data:image/')) return;
+                setUploadingPhoto(true);
+                try {
+                  await uploadProfilePicture(base64);
+                } catch (err) {
+                  console.error('Profile picture upload failed', err);
+                } finally {
+                  setUploadingPhoto(false);
+                }
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
           <button 
             onClick={() => setIsEditing(!isEditing)}
             className={cn(

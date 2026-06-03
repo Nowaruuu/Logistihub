@@ -84,6 +84,16 @@ export async function updateProfile(profileData: { phone?: string; first_name?: 
   return res.json();
 }
 
+export async function uploadProfilePicture(base64Image: string) {
+  const res = await fetch(mobileUrl('/profile-picture'), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ image: base64Image }),
+  });
+  if (!res.ok) throw new Error('Failed to upload profile picture');
+  return res.json();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DELIVERIES / SHIPMENTS
 // ═══════════════════════════════════════════════════════════════════════════════
