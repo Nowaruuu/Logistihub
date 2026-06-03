@@ -153,8 +153,8 @@ router.get('/tenant-config', async (req, res) => {
 
     // Per-vehicle max distances
     const DEFAULT_VEHICLE_MAX_DISTANCES = {
-      motorcycle: 50, sedan: 100, van: 150, pickup: 200, suv: 200,
-      truck: 300, flatbed: 500, trailer: 500,
+      motorcycle: 20, sedan: 70, van: 150, pickup: 200, suv: 100,
+      truck: 500, flatbed: 500, trailer: 500,
     };
     let vehicleMaxDist = { ...DEFAULT_VEHICLE_MAX_DISTANCES };
     if (pricingConfig && pricingConfig.vehicle_max_distances) {
@@ -604,12 +604,12 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
 
     // Per-vehicle-type max distance (km) — can be overridden in tenant pricing_config.vehicle_max_distances
     const DEFAULT_VEHICLE_MAX_DISTANCES = {
-      motorcycle: 50,
-      sedan: 100,
+      motorcycle: 20,
+      sedan: 70,
       van: 150,
       pickup: 200,
-      suv: 200,
-      truck: 300,
+      suv: 100,
+      truck: 500,
       flatbed: 500,
       trailer: 500,
     };
