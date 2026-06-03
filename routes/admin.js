@@ -1334,8 +1334,7 @@ router.post('/:slug/api/admin/vehicles/:plate/assign', requireAdmin, requireSlug
       [plate, veh[0].vehicle_type || null, driver_id, tid]
     );
 
-    // Mark vehicle as On-Duty
-    await query("UPDATE vehicle SET status = 'On-Duty' WHERE plate_number = ? AND tenant_id = ?", [plate, tid]);
+    // Keep vehicle status as-is (Available) — only goes On-Duty when actually delivering
 
     // Also log as an approved vehicle request for audit trail
     try {
