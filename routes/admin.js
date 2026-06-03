@@ -694,11 +694,10 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
 
     // Get driver name + user_id for notification
     const [driverInfo] = await query(
-      'SELECT name, user_id FROM STAFF WHERE staff_id = ? LIMIT 1',
+      'SELECT name FROM STAFF WHERE staff_id = ? LIMIT 1',
       [assigned_driver_id]
     );
     const driverName = driverInfo[0]?.name || 'Driver';
-    const driverUserId = driverInfo[0]?.user_id || null;
 
     // Log to shipment history
     await query(
@@ -723,16 +722,7 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
         `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, related_tracking)
          VALUES (?, 'staff', ?, ?, ?, 'Shipments', ?)`,
         [assigned_driver_id, tid, notifTitle, notifMsg, dn]
-      );
-
-      // Also notify via app_user record if driver has a linked user account
-      if (driverUserId) {
-        await query(
-          `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, related_tracking)
-           VALUES (?, 'app_user', ?, ?, ?, 'Shipments', ?)`,
-          [driverUserId, tid, notifTitle, notifMsg, dn]
-        );
-      }
+      )
     } catch (notifErr) {
       console.warn('[assign] Notification insert failed (non-critical):', notifErr.message);
     }
