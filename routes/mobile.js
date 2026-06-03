@@ -448,8 +448,16 @@ router.put('/driver/vehicle-request/:id/respond', authMiddleware, async (req, re
     const request = rows[0];
 
     if (action === 'accept') {
-      // Assign vehicle to driver
-      await query('UPDATE STAFF SET vehicle_plate = ? WHERE staff_id = ? AND tenant_id = ?', [request.vehicle_plate, driverId, tid]);
+      // Assign vehicle to driver — also sync vehicle_type from fleet table
+      const [vRows] = await query(
+        'SELECT vehicle_type FROM vehicle WHERE plate_number = ? AND tenant_id = ? LIMIT 1',
+        [request.vehicle_plate, tid]
+      );
+      const newVehicleType = vRows.length ? vRows[0].vehicle_type : null;
+      await query(
+        'UPDATE STAFF SET vehicle_plate = ?, vehicle_type = ? WHERE staff_id = ? AND tenant_id = ?',
+        [request.vehicle_plate, newVehicleType, driverId, tid]
+      );
       await query('UPDATE vehicle SET status = ? WHERE plate_number = ? AND tenant_id = ?', ['On-Duty', request.vehicle_plate, tid]);
       await query('UPDATE VEHICLE_REQUEST SET status = ? WHERE id = ?', ['approved', request.id]);
       res.json({ ok: true, message: 'Vehicle accepted and assigned to you.' });
