@@ -3266,6 +3266,7 @@ async function submitAssignVehicle() {
   try {
     var r = await apiFetch('/' + _SLUG + '/api/admin/vehicles/' + encodeURIComponent(_assignVehiclePlate) + '/assign', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ driver_id: parseInt(driverId) })
     });
     var d = await r.json();
