@@ -151,6 +151,20 @@ router.get('/tenant-config', async (req, res) => {
       }
     } catch(_) {}
 
+    // Per-vehicle max distances
+    const DEFAULT_VEHICLE_MAX_DISTANCES = {
+      motorcycle: 50, sedan: 100, van: 150, pickup: 200, suv: 200,
+      truck: 300, flatbed: 500, trailer: 500,
+    };
+    let vehicleMaxDist = { ...DEFAULT_VEHICLE_MAX_DISTANCES };
+    if (pricingConfig && pricingConfig.vehicle_max_distances) {
+      vehicleMaxDist = { ...DEFAULT_VEHICLE_MAX_DISTANCES, ...pricingConfig.vehicle_max_distances };
+    }
+    const globalMax = t.max_distance_km || 500;
+    for (const vt of Object.keys(vehicleMaxDist)) {
+      vehicleMaxDist[vt] = Math.min(vehicleMaxDist[vt], globalMax);
+    }
+
     res.json({
       company_name: t.company_name || '',
       logo_url: t.logo_url || null,
@@ -158,7 +172,8 @@ router.get('/tenant-config', async (req, res) => {
       available_vehicles: vehicleTypes,
       vehicle_capacities: capacityMap || {},
       supported_categories: supportedCats,
-      max_distance_km: t.max_distance_km || 100,
+      max_distance_km: globalMax,
+      vehicle_max_distances: vehicleMaxDist,
       pricing_config: pricingConfig,
     });
   } catch (err) {
@@ -578,7 +593,7 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     }
   }
 
-  // #3 — Distance limit check (prevent super-far deliveries)
+  // #3 — Per-vehicle-type distance limit check
   if (pickup_lat && pickup_lng && dropoff_lat && dropoff_lng) {
     // Calculate Haversine distance for quick server-side check
     const R = 6371;
@@ -586,15 +601,73 @@ router.post('/deliveries', authMiddleware, async (req, res) => {
     const dLon = (dropoff_lng - pickup_lng) * Math.PI / 180;
     const a = Math.sin(dLat/2)**2 + Math.cos(pickup_lat*Math.PI/180)*Math.cos(dropoff_lat*Math.PI/180)*Math.sin(dLon/2)**2;
     const straightLineDist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    // Fetch tenant's max distance (default 100km)
-    const [[tenantCfg]] = await query('SELECT max_distance_km FROM TENANT WHERE tenant_id = ?', [tid]);
-    const maxDistKm = tenantCfg?.max_distance_km || 100;
+
+    // Per-vehicle-type max distance (km) — can be overridden in tenant pricing_config.vehicle_max_distances
+    const DEFAULT_VEHICLE_MAX_DISTANCES = {
+      motorcycle: 50,
+      sedan: 100,
+      van: 150,
+      pickup: 200,
+      suv: 200,
+      truck: 300,
+      flatbed: 500,
+      trailer: 500,
+    };
+
+    // Check if tenant has custom overrides in pricing_config
+    let vehicleMaxDistances = { ...DEFAULT_VEHICLE_MAX_DISTANCES };
+    try {
+      const [[tenantPc]] = await query('SELECT pricing_config, max_distance_km FROM TENANT WHERE tenant_id = ?', [tid]);
+      if (tenantPc?.pricing_config) {
+        const pc = typeof tenantPc.pricing_config === 'string' ? JSON.parse(tenantPc.pricing_config) : tenantPc.pricing_config;
+        if (pc.vehicle_max_distances) {
+          vehicleMaxDistances = { ...DEFAULT_VEHICLE_MAX_DISTANCES, ...pc.vehicle_max_distances };
+        }
+      }
+      // Tenant-level global cap still applies (if set and lower)
+      const globalMax = tenantPc?.max_distance_km || 500;
+      for (const vt of Object.keys(vehicleMaxDistances)) {
+        vehicleMaxDistances[vt] = Math.min(vehicleMaxDistances[vt], globalMax);
+      }
+    } catch(_) {}
+
+    const selectedVehicle = (vehicle_type || 'sedan').toLowerCase();
+    const maxDistForVehicle = vehicleMaxDistances[selectedVehicle] || 100;
+
     // Road distance is typically ~1.3x straight-line, so be generous with the check
-    if (straightLineDist > maxDistKm * 1.2) {
+    if (straightLineDist > maxDistForVehicle * 1.2) {
+      // Find alternative vehicles that CAN reach this distance
+      const compatibleTypes = CATEGORY_VEHICLES[itemType.toUpperCase()] || Object.keys(DEFAULT_VEHICLE_MAX_DISTANCES);
+      const alternatives = compatibleTypes
+        .filter(vt => vt !== selectedVehicle && (vehicleMaxDistances[vt] || 0) * 1.2 >= straightLineDist)
+        .map(vt => `${vt} (up to ${vehicleMaxDistances[vt]}km)`);
+
+      // Check which alternatives the tenant actually has in their fleet
+      let availableAlternatives = [];
+      if (alternatives.length > 0) {
+        try {
+          const [fleetVehicles] = await query(
+            `SELECT LOWER(vehicle_type) AS vtype FROM vehicle WHERE tenant_id = ? AND status != 'Retired' GROUP BY LOWER(vehicle_type)`,
+            [tid]
+          );
+          const fleetTypes = fleetVehicles.map(v => v.vtype);
+          availableAlternatives = compatibleTypes
+            .filter(vt => vt !== selectedVehicle && (vehicleMaxDistances[vt] || 0) * 1.2 >= straightLineDist && fleetTypes.includes(vt));
+        } catch(_) {}
+      }
+
+      let suggestion = '';
+      if (availableAlternatives.length > 0) {
+        suggestion = ` Try switching to: ${availableAlternatives.map(vt => `${vt} (up to ${vehicleMaxDistances[vt]}km)`).join(', ')}.`;
+      } else if (alternatives.length > 0) {
+        suggestion = ` Vehicles that could reach: ${alternatives.join(', ')} — but your fleet doesn't have them. Contact your admin.`;
+      }
+
       return res.status(400).json({
-        error: `Route distance (~${Math.round(straightLineDist)}km) exceeds the maximum allowed distance of ${maxDistKm}km. Please choose a closer destination or contact your admin.`,
-        max_distance_km: maxDistKm,
-        estimated_distance_km: Math.round(straightLineDist)
+        error: `A ${selectedVehicle} can only travel up to ${maxDistForVehicle}km, but this route is ~${Math.round(straightLineDist)}km.${suggestion}`,
+        max_distance_km: maxDistForVehicle,
+        estimated_distance_km: Math.round(straightLineDist),
+        alternatives: availableAlternatives,
       });
     }
     // Store computed distance for expense calculations
