@@ -630,7 +630,8 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       }
     }
 
-    const newStatus = driverAtCapacity ? 'Queued' : 'In-Transit';
+    // Assignment sets status to Pending — driver must accept before it goes In-Transit
+    const newStatus = driverAtCapacity ? 'Queued' : 'Pending';
 
     // ── WEIGHT CAPACITY CHECK ─────────────────────────────────────────────────
     if (assigned_vehicle_plate) {
@@ -705,18 +706,18 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       [dn, tid, newStatus,
        driverAtCapacity
          ? `Shipment queued for driver ${driverName}. Will start after a current delivery is completed.`
-         : `Driver ${driverName} assigned by staff and pickup started.`,
-       req.admin?.name || 'Manager']
+         : `Driver ${driverName} assigned by admin. Awaiting driver acceptance.`,
+       req.admin?.name || 'Admin']
     );
 
     // 🔔 Notify the driver that they've been assigned by staff
     // (driver may not have been watching available jobs — this ensures they know)
     try {
       const assignedBy = req.admin?.name || 'The system';
-      const notifTitle = driverAtCapacity ? '📦 Delivery Queued for You' : '📦 You\'ve Been Assigned a Delivery';
+      const notifTitle = driverAtCapacity ? '📦 Delivery Queued for You' : '📦 New Delivery Assigned — Accept or Decline';
       const notifMsg = driverAtCapacity
         ? `${assignedBy} has queued delivery ${dn} for you. It will start automatically when you complete your current delivery.`
-        : `${assignedBy} has assigned delivery ${dn} to you. Please check your Active tab and head to the pickup location.`;
+        : `${assignedBy} has assigned delivery ${dn} to you. Please review and accept or decline it.`;
 
       await query(
         `INSERT INTO NOTIFICATION (user_id, user_type, tenant_id, title, message, type, related_tracking)
@@ -732,7 +733,7 @@ router.put('/:slug/api/admin/shipments/:delivery_number/assign', requireAdmin, r
       queued: driverAtCapacity,
       message: driverAtCapacity
         ? `Driver is at max capacity (${driverActiveJobs.length} active). Shipment queued — ${driverName} will start after completing a delivery.`
-        : `Driver ${driverName} assigned. Shipment is now In-Transit. (${driverActiveJobs.length + 1} active deliveries)`
+        : `Driver ${driverName} assigned. Awaiting driver acceptance.`
     });
   } catch (err) {
     console.error('[PUT /admin/shipments/assign]', err);

@@ -1543,9 +1543,12 @@ function renderShipmentsTable(){
     var plate = s.assigned_vehicle_plate ? esc(s.assigned_vehicle_plate) : '\u2014';
     var sender = s.sender_name ? esc(s.sender_name) : esc(s.client_name||'N/A');
     var receiver = s.receiver_name ? esc(s.receiver_name) : '\u2014';
-    var canReassign = s.status !== 'Delivered' && s.status !== 'Failed';
+    var canReassign = (s.status === 'Pending' || s.status === 'Declined' || s.status === 'Queued');
     var isDeclined = s.status==='Declined';
-    var reassignBtn = canReassign ? '<button onclick="openAdminReassignModal(\''+esc(s.delivery_number)+'\','+(s.assigned_driver_id||'null')+',\''+esc(s.assigned_vehicle_plate||'')+'\',\''+esc(s.status||'Pending')+'\')" style="padding:4px 10px;font-size:11px;border:1.5px solid '+(isDeclined?'#ef4444':'#e2e8f0')+';border-radius:7px;background:'+(isDeclined?'#fef2f2':'#eff6ff')+';cursor:pointer;font-family:inherit;font-weight:700;color:'+(isDeclined?'#dc2626':'#2563eb')+';white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-outlined" style="font-size:13px;">'+(isDeclined?'person_search':'person_add')+'</span>'+(isDeclined?'Reassign':'Assign')+'</button>' : '';
+    var hasDriver = s.assigned_driver_id && s.driver_name && s.driver_name !== 'Unassigned';
+    var btnLabel = isDeclined ? 'Reassign' : (hasDriver ? 'Reassign' : 'Assign');
+    var btnIcon = isDeclined || hasDriver ? 'person_search' : 'person_add';
+    var reassignBtn = canReassign ? '<button onclick="openAdminReassignModal(\''+esc(s.delivery_number)+'\','+(s.assigned_driver_id||'null')+',\''+esc(s.assigned_vehicle_plate||'')+'\',\''+esc(s.status||'Pending')+'\')" style="padding:4px 10px;font-size:11px;border:1.5px solid '+(isDeclined?'#ef4444':'#e2e8f0')+';border-radius:7px;background:'+(isDeclined?'#fef2f2':'#eff6ff')+';cursor:pointer;font-family:inherit;font-weight:700;color:'+(isDeclined?'#dc2626':'#2563eb')+';white-space:nowrap;display:inline-flex;align-items:center;gap:3px;"><span class="material-symbols-outlined" style="font-size:13px;">'+btnIcon+'</span>'+btnLabel+'</button>' : '';
     return '<tr><td><strong>'+esc(s.delivery_number||'')+'</strong></td><td>'+esc(s.awb||'\u2014')+'</td><td>'+sender+'</td><td>'+receiver+'</td><td><span class="type-pill '+tc+'">'+esc(s.item_type_flag||'PKG')+'</span></td><td style="max-width:260px;white-space:normal;word-break:break-word;font-size:11px;line-height:1.4;">'+route+'</td><td>'+esc(s.driver_name||'Unassigned')+'</td><td>'+veh+'</td><td>'+plate+'</td><td><span class="badge '+sc+'">'+esc(s.status||'Pending')+'</span></td><td style="white-space:nowrap;font-size:11px;">'+dateOrdered+'</td><td style="white-space:nowrap;font-size:11px;">'+dateDelivered+'</td><td>'+reassignBtn+'</td></tr>';
   }).join('');
 }
