@@ -2980,11 +2980,11 @@ function renderStaff(list) {
     var licBadge = '-';
     if (s.role === 'Driver') {
       if (licStatus === 'verified') {
-        licBadge = '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">check_circle</span>Verified</span>';
+        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #bbf7d0;cursor:pointer;font-family:inherit;" title="View License"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">check_circle</span>✓ Verified</button>';
       } else if (licStatus === 'pending_review') {
         licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fde68a;cursor:pointer;font-family:inherit;"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:2px;">schedule</span>Pending - Review</button>';
       } else if (licStatus === 'expired') {
-        licBadge = '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Expired</span>';
+        licBadge = '<button onclick="openLicenseModal(\'' + sid + '\')" style="background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fecaca;cursor:pointer;font-family:inherit;" title="View License">Expired</button>';
       } else {
         licBadge = '<span style="background:#f1f5f9;color:#94a3b8;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Not Uploaded</span>';
       }
@@ -3350,6 +3350,10 @@ function openLicenseModal(staffId) {
     img.style.display = 'none';
     noImg.style.display = 'block';
   }
+  // Show/hide action buttons based on status
+  var isPending = s.license_status === 'pending_review';
+  document.getElementById('license-reject-btn').style.display = isPending ? '' : 'none';
+  document.getElementById('license-approve-btn').style.display = isPending ? '' : 'none';
   document.getElementById('modal-license').style.display = 'flex';
 }
 function closeLicenseModal() { document.getElementById('modal-license').style.display = 'none'; _licenseStaffId = null; }
